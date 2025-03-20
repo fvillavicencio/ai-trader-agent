@@ -1,0 +1,13 @@
+{
+  "name": "ai-trader-agent",
+  "version": "1.0.0",
+  "description": "AI-driven trading decision agent that analyzes financial data and delivers trading decisions via email",
+  "main": "local_test.js",
+  "scripts": {
+    "test": "node local_test.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1"
+  }
+}
