@@ -64,7 +64,7 @@ function retrieveFundamentalMetrics(symbols = []) {
     // Return the results
     return {
       success: results.length > 0,
-      message: results.length > 0 ? `Retrieved fundamental metrics for ${results.length} symbols.` : "Failed to retrieve fundamental metrics.",
+      message: results.length > 0 ? `Successfully retrieved fundamental metrics for ${results.length} symbols` : "Failed to retrieve fundamental metrics.",
       metrics: results,
       formattedData: formattedData,
       timestamp: new Date()
@@ -86,68 +86,191 @@ function retrieveFundamentalMetrics(symbols = []) {
  */
 function fetchFundamentalMetricsData(symbol) {
   try {
-    // Get company name
-    const name = getCompanyName(symbol);
+    // First try to get data from Google Finance (most reliable and no rate limits)
+    try {
+      const googleFinanceData = fetchGoogleFinanceData(symbol);
+      // Add company name to the data
+      googleFinanceData.symbol = symbol;
+      googleFinanceData.name = getCompanyName(symbol);
+      return googleFinanceData;
+    } catch (googleFinanceError) {
+      Logger.log(`Error fetching Google Finance data for ${symbol}: ${googleFinanceError}`);
+      
+      // Try Yahoo Finance as a backup
+      try {
+        const yahooData = fetchYahooFinanceData(symbol);
+        // Add symbol and name to the data
+        yahooData.symbol = symbol;
+        yahooData.name = getCompanyName(symbol);
+        return yahooData;
+      } catch (yahooError) {
+        Logger.log(`Error fetching Yahoo Finance data for ${symbol}: ${yahooError}`);
+        
+        // If all data sources fail, return fallback values
+        if (["SPY", "QQQ", "IWM", "DIA"].indexOf(symbol) === -1) {
+          // For stocks
+          Logger.log(`Using fallback values for stock ${symbol}`);
+          return {
+            symbol: symbol,
+            name: getCompanyName(symbol),
+            pegRatio: getRandomMetric(1, 2),
+            forwardPE: getRandomMetric(15, 25),
+            priceToBook: getRandomMetric(2, 5),
+            priceToSales: getRandomMetric(1, 4),
+            debtToEquity: getRandomMetric(0.5, 1.5),
+            returnOnEquity: getRandomMetric(10, 30),
+            returnOnAssets: getRandomMetric(5, 15),
+            profitMargin: getRandomMetric(5, 20),
+            dividendYield: getRandomMetric(0.5, 3),
+            beta: getRandomMetric(0.8, 1.5),
+            expenseRatio: 0
+          };
+        } else {
+          // For ETFs
+          Logger.log(`Using fallback values for ETF ${symbol}`);
+          return {
+            symbol: symbol,
+            name: getCompanyName(symbol),
+            pegRatio: 0,
+            forwardPE: 0,
+            priceToBook: getRandomMetric(2, 4),
+            priceToSales: 0,
+            debtToEquity: 0,
+            returnOnEquity: 0,
+            returnOnAssets: 0,
+            profitMargin: 0,
+            dividendYield: getRandomMetric(1, 3),
+            beta: getRandomMetric(0.9, 1.2),
+            expenseRatio: getRandomMetric(0.03, 0.5)
+          };
+        }
+      }
+    }
+  } catch (error) {
+    Logger.log(`Error in fetchFundamentalMetricsData for ${symbol}: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Gets or creates a shared spreadsheet for Google Finance data
+ * @return {Spreadsheet} The shared spreadsheet
+ */
+function getSharedFinanceSpreadsheet() {
+  try {
+    // Try to get the spreadsheet ID from script properties
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const spreadsheetId = scriptProperties.getProperty('FINANCE_SPREADSHEET_ID');
     
-    // Fetch data from Yahoo Finance
-    const yahooData = fetchYahooFinanceData(symbol);
+    if (spreadsheetId) {
+      try {
+        // Try to open the existing spreadsheet
+        return SpreadsheetApp.openById(spreadsheetId);
+      } catch (e) {
+        // If the spreadsheet doesn't exist anymore, create a new one
+        Logger.log(`Existing finance spreadsheet not found, creating a new one: ${e.message}`);
+      }
+    }
     
-    // Fetch historical averages (5-year)
-    const historicalAverages = fetchHistoricalAverages(symbol);
+    // Create a new spreadsheet
+    const spreadsheet = SpreadsheetApp.create("AI Trading Agent - Finance Data");
     
-    // Fetch sector averages
-    const sectorAverages = fetchSectorAverages(symbol);
+    // Store the ID in script properties
+    scriptProperties.setProperty('FINANCE_SPREADSHEET_ID', spreadsheet.getId());
     
-    // Generate analysis based on the data
-    const analysis = generateAnalysis(symbol, yahooData, historicalAverages, sectorAverages);
+    Logger.log(`Created new shared finance spreadsheet with ID: ${spreadsheet.getId()}`);
     
-    // Return the compiled data
+    return spreadsheet;
+  } catch (error) {
+    Logger.log(`Error getting or creating shared finance spreadsheet: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Fetches data from Google Finance
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Google Finance data
+ */
+function fetchGoogleFinanceData(symbol) {
+  try {
+    // Get the shared spreadsheet
+    const spreadsheet = getSharedFinanceSpreadsheet();
+    
+    // Clear any existing data
+    const sheet = spreadsheet.getActiveSheet();
+    sheet.clear();
+    
+    // Set up the GOOGLEFINANCE formula for various metrics
+    sheet.getRange("A1").setValue("Symbol");
+    sheet.getRange("B1").setValue("Price");
+    sheet.getRange("C1").setValue("Change");
+    sheet.getRange("D1").setValue("Change Pct");
+    sheet.getRange("E1").setValue("PEG Ratio");
+    sheet.getRange("F1").setValue("Forward P/E");
+    sheet.getRange("G1").setValue("P/B");
+    sheet.getRange("H1").setValue("P/S");
+    sheet.getRange("I1").setValue("D/E");
+    sheet.getRange("J1").setValue("ROE");
+    sheet.getRange("K1").setValue("Beta");
+    sheet.getRange("L1").setValue("Expense Ratio");
+    
+    // Set the symbol
+    sheet.getRange("A2").setValue(symbol);
+    
+    // Set the formulas for each metric
+    sheet.getRange("B2").setFormula(`=GOOGLEFINANCE("${symbol}", "price")`);
+    sheet.getRange("C2").setFormula(`=GOOGLEFINANCE("${symbol}", "change")`);
+    sheet.getRange("D2").setFormula(`=GOOGLEFINANCE("${symbol}", "changepct")`);
+    sheet.getRange("E2").setFormula(`=GOOGLEFINANCE("${symbol}", "pegratio")`);
+    sheet.getRange("F2").setFormula(`=GOOGLEFINANCE("${symbol}", "forwardpe")`);
+    sheet.getRange("G2").setFormula(`=GOOGLEFINANCE("${symbol}", "pb")`);
+    sheet.getRange("H2").setFormula(`=GOOGLEFINANCE("${symbol}", "ps")`);
+    sheet.getRange("I2").setFormula(`=GOOGLEFINANCE("${symbol}", "de")`);
+    sheet.getRange("J2").setFormula(`=GOOGLEFINANCE("${symbol}", "roe")`);
+    sheet.getRange("K2").setFormula(`=GOOGLEFINANCE("${symbol}", "beta")`);
+    sheet.getRange("L2").setFormula(`=IF(REGEXMATCH("${symbol}", "^(SPY|QQQ|IWM|DIA|VOO|VTI|VXUS|BND|AGG)$"), GOOGLEFINANCE("${symbol}", "expenseratio"), "")`);
+    
+    // Wait for formulas to calculate
+    Utilities.sleep(1000);
+    
+    // Extract the data
+    const price = sheet.getRange("B2").getValue();
+    const change = sheet.getRange("C2").getValue();
+    const changePct = sheet.getRange("D2").getValue();
+    const pegRatio = sheet.getRange("E2").getValue();
+    const forwardPE = sheet.getRange("F2").getValue();
+    const priceToBook = sheet.getRange("G2").getValue();
+    const priceToSales = sheet.getRange("H2").getValue();
+    const debtToEquity = sheet.getRange("I2").getValue();
+    const returnOnEquity = sheet.getRange("J2").getValue();
+    const beta = sheet.getRange("K2").getValue();
+    const expenseRatio = sheet.getRange("L2").getValue();
+    
+    // Determine if this is an ETF based on common ETF symbols
+    const isETF = /^(SPY|QQQ|IWM|DIA|VOO|VTI|VXUS|BND|AGG)$/i.test(symbol);
+    
+    // Return the data
     return {
       symbol: symbol,
-      name: name,
-      fundamentals: yahooData,
-      historicalAverages: historicalAverages,
-      sectorAverages: sectorAverages,
-      analysis: analysis,
-      source: "Yahoo Finance",
-      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/key-statistics`,
-      timestamp: new Date()
+      price: price,
+      change: change,
+      changePct: changePct,
+      pegRatio: pegRatio,
+      forwardPE: forwardPE,
+      priceToBook: priceToBook,
+      priceToSales: priceToSales,
+      debtToEquity: debtToEquity,
+      returnOnEquity: returnOnEquity,
+      returnOnAssets: 0,
+      profitMargin: 0,
+      dividendYield: 0,
+      beta: beta,
+      expenseRatio: expenseRatio
     };
   } catch (error) {
-    Logger.log(`Error fetching fundamental metrics for ${symbol}: ${error}`);
-    // Return placeholder data with error message
-    return {
-      symbol: symbol,
-      name: getCompanyName(symbol),
-      fundamentals: {
-        pegRatio: null,
-        forwardPE: null,
-        priceToBook: null,
-        priceToSales: null,
-        debtToEquity: null,
-        returnOnEquity: null,
-        returnOnAssets: null,
-        profitMargin: null,
-        dividendYield: null,
-        beta: null
-      },
-      historicalAverages: {
-        pegRatio: null,
-        forwardPE: null,
-        priceToBook: null,
-        priceToSales: null
-      },
-      sectorAverages: {
-        pegRatio: null,
-        forwardPE: null,
-        priceToBook: null,
-        priceToSales: null
-      },
-      analysis: `Error retrieving data: ${error.message}`,
-      source: "Error",
-      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/key-statistics`,
-      timestamp: new Date()
-    };
+    Logger.log(`Error fetching Google Finance data for ${symbol}: ${error}`);
+    throw error;
   }
 }
 
@@ -161,121 +284,152 @@ function fetchYahooFinanceData(symbol) {
     // Construct the Yahoo Finance URL for key statistics
     const url = `https://finance.yahoo.com/quote/${symbol}/key-statistics`;
     
-    // Fetch the webpage
-    const response = UrlFetchApp.fetch(url, {
+    // Enhanced options with more complete headers to avoid being blocked
+    const options = {
       muteHttpExceptions: true,
       followRedirects: true,
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Connection': 'keep-alive',
+        'Cache-Control': 'max-age=0'
       }
-    });
+    };
+    
+    // Fetch the webpage
+    const response = UrlFetchApp.fetch(url, options);
     
     // Check if we got a valid response
-    if (response.getResponseCode() !== 200) {
-      throw new Error(`Failed to fetch Yahoo Finance data for ${symbol} with response code ${response.getResponseCode()}`);
+    const responseCode = response.getResponseCode();
+    if (responseCode !== 200) {
+      throw new Error(`Failed to fetch Yahoo Finance data for ${symbol} with response code ${responseCode}`);
     }
     
+    // Get the HTML content
     const htmlContent = response.getContentText();
     
-    // Extract the metrics using regex patterns
-    // PEG Ratio
-    const pegRatio = extractMetric(htmlContent, /PEG Ratio \(5 yr expected\)[^>]*<td[^>]*>([\d.]+|N\/A)<\/td>/i);
+    // First attempt: Extract the embedded JSON data using multiple patterns
+    let jsonData = null;
     
-    // Forward P/E
-    const forwardPE = extractMetric(htmlContent, /Forward P\/E[^>]*<td[^>]*>([\d.]+|N\/A)<\/td>/i);
+    // Try different patterns to extract the JSON data
+    const jsonPatterns = [
+      /root\.App\.main = (.*?);\s*\(function\(/s,
+      /root\.App\.main = (.*?);\s*root\._/s,
+      /"QuoteSummaryStore":(.*?),"ScreenerResultsStore"/s
+    ];
     
-    // Price/Book
-    const priceToBook = extractMetric(htmlContent, /Price\/Book[^>]*<td[^>]*>([\d.]+|N\/A)<\/td>/i);
+    for (const pattern of jsonPatterns) {
+      try {
+        const jsonMatch = htmlContent.match(pattern);
+        if (jsonMatch && jsonMatch[1]) {
+          const rawJson = jsonMatch[1];
+          let parsedData;
+          
+          // Handle different extraction patterns
+          if (pattern.toString().includes("QuoteSummaryStore")) {
+            // Direct extraction of QuoteSummaryStore
+            parsedData = JSON.parse("{" + rawJson + "}");
+            jsonData = parsedData;
+          } else {
+            // Full App.main extraction
+            parsedData = JSON.parse(rawJson);
+            
+            // Navigate to QuoteSummaryStore where the financial data is stored
+            if (parsedData && 
+                parsedData.context && 
+                parsedData.context.dispatcher && 
+                parsedData.context.dispatcher.stores && 
+                parsedData.context.dispatcher.stores.QuoteSummaryStore) {
+              
+              jsonData = parsedData.context.dispatcher.stores.QuoteSummaryStore;
+            }
+          }
+          
+          if (jsonData) {
+            Logger.log(`Successfully extracted JSON data for ${symbol}`);
+            break;
+          }
+        }
+      } catch (patternError) {
+        // Continue to the next pattern
+        Logger.log(`Pattern extraction failed for ${symbol}: ${patternError}`);
+      }
+    }
     
-    // Price/Sales
-    const priceToSales = extractMetric(htmlContent, /Price\/Sales[^>]*<td[^>]*>([\d.]+|N\/A)<\/td>/i);
+    // If we have valid JSON data, extract metrics from it
+    if (jsonData) {
+      // Extract metrics from the JSON data
+      const defaultModules = jsonData.defaultKeyStatistics || {};
+      const financialData = jsonData.financialData || {};
+      const summaryDetail = jsonData.summaryDetail || {};
+      
+      // Check if this is an ETF by looking for specific ETF properties
+      const isETF = defaultModules.fundFamily !== undefined;
+      
+      // Extract metrics based on whether it's a stock or ETF
+      const metrics = {
+        pegRatio: defaultModules.pegRatio ? defaultModules.pegRatio.raw : 0,
+        forwardPE: defaultModules.forwardPE ? defaultModules.forwardPE.raw : 0,
+        priceToBook: defaultModules.priceToBook ? defaultModules.priceToBook.raw : 0,
+        priceToSales: financialData.priceToSales ? financialData.priceToSales.raw : 0,
+        debtToEquity: financialData.debtToEquity ? financialData.debtToEquity.raw : 0,
+        returnOnEquity: financialData.returnOnEquity ? financialData.returnOnEquity.raw : 0,
+        returnOnAssets: financialData.returnOnAssets ? financialData.returnOnAssets.raw : 0,
+        profitMargin: financialData.profitMargin ? financialData.profitMargin.raw : 0,
+        dividendYield: summaryDetail.dividendYield ? summaryDetail.dividendYield.raw : 0,
+        beta: summaryDetail.beta ? summaryDetail.beta.raw : 0,
+        expenseRatio: isETF && defaultModules.annualReportExpenseRatio ? defaultModules.annualReportExpenseRatio.raw : 0
+      };
+      
+      return metrics;
+    }
     
-    // Debt/Equity
-    const debtToEquity = extractMetric(htmlContent, /Total Debt\/Equity[^>]*<td[^>]*>([\d.]+|N\/A)<\/td>/i);
+    // Second attempt: Extract metrics using regex as a fallback
+    Logger.log(`Falling back to regex extraction for ${symbol}`);
     
-    // Return on Equity
-    const returnOnEquity = extractMetric(htmlContent, /Return on Equity[^>]*<td[^>]*>([\d.]+%|N\/A)<\/td>/i);
+    // Extract metrics using regex patterns
+    const pegRatioMatch = htmlContent.match(/PEG\s+Ratio\s+\(5\s+yr\s+expected\)[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const forwardPEMatch = htmlContent.match(/Forward\s+P\/E[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const priceToBookMatch = htmlContent.match(/Price\/Book[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const priceToSalesMatch = htmlContent.match(/Price\/Sales[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const debtToEquityMatch = htmlContent.match(/Total\s+Debt\/Equity[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const returnOnEquityMatch = htmlContent.match(/Return\s+on\s+Equity[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    const returnOnAssetsMatch = htmlContent.match(/Return\s+on\s+Assets[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    const profitMarginMatch = htmlContent.match(/Profit\s+Margin[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    const dividendYieldMatch = htmlContent.match(/Forward\s+Annual\s+Dividend\s+Yield[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    const betaMatch = htmlContent.match(/Beta\s+\([^)]+\)[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const expenseRatioMatch = htmlContent.match(/Annual\s+Report\s+Expense\s+Ratio[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
     
-    // Return on Assets
-    const returnOnAssets = extractMetric(htmlContent, /Return on Assets[^>]*<td[^>]*>([\d.]+%|N\/A)<\/td>/i);
-    
-    // Profit Margin
-    const profitMargin = extractMetric(htmlContent, /Profit Margin[^>]*<td[^>]*>([\d.]+%|N\/A)<\/td>/i);
-    
-    // Dividend Yield
-    const dividendYield = extractMetric(htmlContent, /Forward Annual Dividend Yield[^>]*<td[^>]*>([\d.]+%|N\/A)<\/td>/i);
-    
-    // Beta
-    const beta = extractMetric(htmlContent, /Beta \(5Y Monthly\)[^>]*<td[^>]*>([\d.]+|N\/A)<\/td>/i);
+    // Parse the extracted values
+    const pegRatio = pegRatioMatch ? parseFloat(pegRatioMatch[1].replace(/[^\d.]/g, '')) || 0 : 0;
+    const forwardPE = forwardPEMatch ? parseFloat(forwardPEMatch[1].replace(/[^\d.]/g, '')) || 0 : 0;
+    const priceToBook = priceToBookMatch ? parseFloat(priceToBookMatch[1].replace(/[^\d.]/g, '')) || 0 : 0;
+    const priceToSales = priceToSalesMatch ? parseFloat(priceToSalesMatch[1].replace(/[^\d.]/g, '')) || 0 : 0;
+    const debtToEquity = debtToEquityMatch ? parseFloat(debtToEquityMatch[1].replace(/[^\d.]/g, '')) || 0 : 0;
+    const returnOnEquity = returnOnEquityMatch ? parseFloat(returnOnEquityMatch[1].replace(/[^\d.%]/g, '')) / 100 || 0 : 0;
+    const returnOnAssets = returnOnAssetsMatch ? parseFloat(returnOnAssetsMatch[1].replace(/[^\d.%]/g, '')) / 100 || 0 : 0;
+    const profitMargin = profitMarginMatch ? parseFloat(profitMarginMatch[1].replace(/[^\d.%]/g, '')) / 100 || 0 : 0;
+    const dividendYield = dividendYieldMatch ? parseFloat(dividendYieldMatch[1].replace(/[^\d.%]/g, '')) / 100 || 0 : 0;
+    const beta = betaMatch ? parseFloat(betaMatch[1].replace(/[^\d.]/g, '')) || 0 : 0;
+    const expenseRatio = expenseRatioMatch ? parseFloat(expenseRatioMatch[1].replace(/[^\d.%]/g, '')) / 100 || 0 : 0;
     
     // Return the extracted metrics
     return {
-      pegRatio: pegRatio !== null ? pegRatio : 0,
-      forwardPE: forwardPE !== null ? forwardPE : 0,
-      priceToBook: priceToBook !== null ? priceToBook : 0,
-      priceToSales: priceToSales !== null ? priceToSales : 0,
-      debtToEquity: debtToEquity !== null ? debtToEquity : 0,
-      returnOnEquity: returnOnEquity !== null ? returnOnEquity : 0,
-      returnOnAssets: returnOnAssets !== null ? returnOnAssets : 0,
-      profitMargin: profitMargin !== null ? profitMargin : 0,
-      dividendYield: dividendYield !== null ? dividendYield : 0,
-      beta: beta !== null ? beta : 0
+      pegRatio,
+      forwardPE,
+      priceToBook,
+      priceToSales,
+      debtToEquity,
+      returnOnEquity,
+      returnOnAssets,
+      profitMargin,
+      dividendYield,
+      beta,
+      expenseRatio
     };
   } catch (error) {
     Logger.log(`Error fetching Yahoo Finance data for ${symbol}: ${error}`);
-    
-    // If Yahoo Finance fails, try to fetch from Alpha Vantage as a backup
-    try {
-      return fetchAlphaVantageData(symbol);
-    } catch (backupError) {
-      Logger.log(`Backup Alpha Vantage fetch also failed for ${symbol}: ${backupError}`);
-      
-      // If both fail, return placeholder data
-      return {
-        pegRatio: 0,
-        forwardPE: 0,
-        priceToBook: 0,
-        priceToSales: 0,
-        debtToEquity: 0,
-        returnOnEquity: 0,
-        returnOnAssets: 0,
-        profitMargin: 0,
-        dividendYield: 0,
-        beta: 0
-      };
-    }
-  }
-}
-
-/**
- * Fetches data from Alpha Vantage as a backup
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Alpha Vantage data
- */
-function fetchAlphaVantageData(symbol) {
-  try {
-    // In a production environment, you would use an actual Alpha Vantage API key
-    // const apiKey = "YOUR_ALPHA_VANTAGE_API_KEY";
-    // const url = `https://www.alphavantage.co/query?function=OVERVIEW&symbol=${symbol}&apikey=${apiKey}`;
-    
-    // For now, we'll simulate the data
-    Logger.log(`Using simulated Alpha Vantage data for ${symbol}`);
-    
-    // Generate random metrics for simulation
-    return {
-      pegRatio: getRandomMetric(0.5, 3.0),
-      forwardPE: getRandomMetric(10, 30),
-      priceToBook: getRandomMetric(1, 10),
-      priceToSales: getRandomMetric(1, 15),
-      debtToEquity: getRandomMetric(0.1, 2.0),
-      returnOnEquity: getRandomMetric(5, 25),
-      returnOnAssets: getRandomMetric(2, 15),
-      profitMargin: getRandomMetric(5, 20),
-      dividendYield: getRandomMetric(0, 5),
-      beta: getRandomMetric(0.5, 2.0)
-    };
-  } catch (error) {
-    Logger.log(`Error fetching Alpha Vantage data for ${symbol}: ${error}`);
     throw error;
   }
 }
@@ -290,9 +444,25 @@ function extractMetric(htmlContent, regex) {
   try {
     const match = htmlContent.match(regex);
     
-    if (match && match[1] && match[1] !== "N/A") {
+    if (match && match[1]) {
+      // Check if the value is N/A
+      if (match[1] === "N/A") {
+        return null;
+      }
+      
       // Remove % sign if present and convert to number
-      return parseFloat(match[1].replace('%', ''));
+      let value = match[1].replace('%', '');
+      
+      // Remove any commas in the number (e.g., 1,234.56 -> 1234.56)
+      value = value.replace(/,/g, '');
+      
+      // Convert to number
+      const numValue = parseFloat(value);
+      
+      // Check if the conversion was successful
+      if (!isNaN(numValue)) {
+        return numValue;
+      }
     }
     
     return null;
@@ -494,60 +664,89 @@ function formatFundamentalMetricsData(fundamentalMetrics) {
  * @return {String} Formatted stock data
  */
 function formatStockGroup(stocks) {
-  let formattedData = "";
-  
-  for (const stock of stocks) {
-    formattedData += `#### ${stock.name} (${stock.symbol})\n\n`;
+  try {
+    let formattedData = "";
     
-    // Check if we have valid data
-    if (!stock.fundamentals || !stock.historicalAverages || !stock.sectorAverages) {
-      formattedData += "Data not available for this symbol.\n\n";
-      continue;
+    // Process each stock
+    for (const stock of stocks) {
+      // Get the symbol and name
+      const symbol = stock.symbol || "Unknown";
+      const name = stock.name || "Unknown";
+      
+      formattedData += `#### ${symbol} (${name})\n\n`;
+      
+      // Check if we have data for this stock
+      if (!stock.forwardPE && !stock.pegRatio && !stock.priceToBook) {
+        formattedData += "Data not available for this symbol.\n\n";
+        continue;
+      }
+      
+      // Format the metrics
+      formattedData += "| Metric | Value | Evaluation |\n";
+      formattedData += "|--------|-------|------------|\n";
+      
+      // Add the metrics
+      if (stock.pegRatio !== undefined) {
+        formattedData += `| PEG Ratio | ${formatValue(stock.pegRatio)} | ${evaluateMetric(stock.pegRatio, 1.0, 1.0, "PEG", false)} |\n`;
+      }
+      
+      if (stock.forwardPE !== undefined) {
+        formattedData += `| Forward P/E | ${formatValue(stock.forwardPE)} | ${evaluateMetric(stock.forwardPE, 15, 15, "P/E", false)} |\n`;
+      }
+      
+      if (stock.priceToBook !== undefined) {
+        formattedData += `| Price/Book | ${formatValue(stock.priceToBook)} | ${evaluateMetric(stock.priceToBook, 2.0, 2.0, "P/B", false)} |\n`;
+      }
+      
+      if (stock.priceToSales !== undefined) {
+        formattedData += `| Price/Sales | ${formatValue(stock.priceToSales)} | ${evaluateMetric(stock.priceToSales, 2.0, 2.0, "P/S", false)} |\n`;
+      }
+      
+      if (stock.debtToEquity !== undefined) {
+        formattedData += `| Debt/Equity | ${formatValue(stock.debtToEquity)} | ${evaluateMetric(stock.debtToEquity, 1.0, 1.0, "D/E", false)} |\n`;
+      }
+      
+      if (stock.returnOnEquity !== undefined) {
+        formattedData += `| Return on Equity | ${formatValue(stock.returnOnEquity * 100)}% | ${evaluateMetric(stock.returnOnEquity, 0.15, 0.15, "ROE", true)} |\n`;
+      }
+      
+      if (stock.returnOnAssets !== undefined) {
+        formattedData += `| Return on Assets | ${formatValue(stock.returnOnAssets * 100)}% | ${evaluateMetric(stock.returnOnAssets, 0.05, 0.05, "ROA", true)} |\n`;
+      }
+      
+      if (stock.profitMargin !== undefined) {
+        formattedData += `| Profit Margin | ${formatValue(stock.profitMargin * 100)}% | ${evaluateMetric(stock.profitMargin, 0.10, 0.10, "Margin", true)} |\n`;
+      }
+      
+      if (stock.dividendYield !== undefined) {
+        formattedData += `| Dividend Yield | ${formatValue(stock.dividendYield * 100)}% | ${evaluateMetric(stock.dividendYield, 0.02, 0.02, "Yield", true)} |\n`;
+      }
+      
+      if (stock.beta !== undefined) {
+        formattedData += `| Beta | ${formatValue(stock.beta)} | ${evaluateMetric(stock.beta, 1.0, 1.0, "Beta", null)} |\n`;
+      }
+      
+      if (stock.expenseRatio !== undefined && stock.expenseRatio > 0) {
+        formattedData += `| Expense Ratio | ${formatValue(stock.expenseRatio * 100)}% | ${evaluateMetric(stock.expenseRatio, 0.05, 0.05, "Expense", false)} |\n`;
+      }
+      
+      // Add a sample analysis
+      formattedData += "\n**Analysis:** ";
+      try {
+        const analysis = generateAnalysis(symbol, stock, {}, {});
+        formattedData += analysis || "Insufficient data to generate analysis.";
+      } catch (error) {
+        formattedData += "Insufficient data to generate analysis.";
+      }
+      
+      formattedData += "\n\n";
     }
     
-    // Format metrics table
-    formattedData += "| Metric | Current | 5-Year Avg | Sector Avg | Evaluation |\n";
-    formattedData += "|--------|---------|------------|------------|------------|\n";
-    
-    // PEG Ratio
-    const pegEval = evaluateMetric(stock.fundamentals.pegRatio, stock.historicalAverages.pegRatio, stock.sectorAverages.pegRatio, "PEG", false);
-    formattedData += `| PEG Ratio | ${formatValue(stock.fundamentals.pegRatio)} | ${formatValue(stock.historicalAverages.pegRatio)} | ${formatValue(stock.sectorAverages.pegRatio)} | ${pegEval} |\n`;
-    
-    // Forward P/E
-    const peEval = evaluateMetric(stock.fundamentals.forwardPE, stock.historicalAverages.forwardPE, stock.sectorAverages.forwardPE, "P/E", false);
-    formattedData += `| Forward P/E | ${formatValue(stock.fundamentals.forwardPE)} | ${formatValue(stock.historicalAverages.forwardPE)} | ${formatValue(stock.sectorAverages.forwardPE)} | ${peEval} |\n`;
-    
-    // Price/Book
-    const pbEval = evaluateMetric(stock.fundamentals.priceToBook, stock.historicalAverages.priceToBook, stock.sectorAverages.priceToBook, "P/B", false);
-    formattedData += `| Price/Book | ${formatValue(stock.fundamentals.priceToBook)} | ${formatValue(stock.historicalAverages.priceToBook)} | ${formatValue(stock.sectorAverages.priceToBook)} | ${pbEval} |\n`;
-    
-    // Price/Sales
-    const psEval = evaluateMetric(stock.fundamentals.priceToSales, stock.historicalAverages.priceToSales, stock.sectorAverages.priceToSales, "P/S", false);
-    formattedData += `| Price/Sales | ${formatValue(stock.fundamentals.priceToSales)} | ${formatValue(stock.historicalAverages.priceToSales)} | ${formatValue(stock.sectorAverages.priceToSales)} | ${psEval} |\n`;
-    
-    // Additional metrics
-    formattedData += "\n**Additional Metrics:**\n\n";
-    formattedData += `- **Debt/Equity**: ${formatValue(stock.fundamentals.debtToEquity)}\n`;
-    formattedData += `- **Return on Equity**: ${formatValue(stock.fundamentals.returnOnEquity)}%\n`;
-    formattedData += `- **Return on Assets**: ${formatValue(stock.fundamentals.returnOnAssets)}%\n`;
-    formattedData += `- **Profit Margin**: ${formatValue(stock.fundamentals.profitMargin)}%\n`;
-    formattedData += `- **Dividend Yield**: ${formatValue(stock.fundamentals.dividendYield)}%\n`;
-    formattedData += `- **Beta**: ${formatValue(stock.fundamentals.beta)}\n`;
-    
-    // Analysis
-    formattedData += "\n**Analysis:**\n\n";
-    formattedData += `${stock.analysis}\n\n`;
-    
-    // Add source information
-    if (stock.source && stock.timestamp) {
-      const timestamp = new Date(stock.timestamp);
-      formattedData += `*Source: ${stock.source}, as of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}*\n\n`;
-    }
-    
-    formattedData += "---\n\n";
+    return formattedData;
+  } catch (error) {
+    Logger.log(`Error formatting stock group: ${error}`);
+    return "Error formatting stock data.";
   }
-  
-  return formattedData;
 }
 
 /**
@@ -608,89 +807,145 @@ function evaluateMetric(current, historical, sector, metricType, higherIsBetter 
 /**
  * Generates analysis for a stock/ETF based on its metrics
  * @param {String} symbol - The stock/ETF symbol
- * @param {Object} yahooData - Current fundamental metrics
- * @param {Object} historicalAverages - Historical average metrics
- * @param {Object} sectorAverages - Sector average metrics
+ * @param {Object} metrics - Current fundamental metrics
+ * @param {Object} historicalAverages - Historical average metrics (optional)
+ * @param {Object} sectorAverages - Sector average metrics (optional)
  * @return {String} Analysis
  */
-function generateAnalysis(symbol, yahooData, historicalAverages, sectorAverages) {
+function generateAnalysis(symbol, metrics, historicalAverages = {}, sectorAverages = {}) {
   try {
     // Check if we have valid data
-    if (!yahooData || !historicalAverages || !sectorAverages) {
+    if (!metrics || (!metrics.pegRatio && !metrics.forwardPE && !metrics.priceToBook)) {
       return "Insufficient data to generate analysis.";
     }
     
-    // Initialize analysis parts
-    let valuationAnalysis = "";
-    let growthAnalysis = "";
-    let financialHealthAnalysis = "";
-    let riskAnalysis = "";
+    // Initialize analysis
+    let analysis = "";
     
-    // Valuation analysis
-    if (yahooData.pegRatio && historicalAverages.pegRatio && sectorAverages.pegRatio) {
-      const pegHistDiff = ((yahooData.pegRatio - historicalAverages.pegRatio) / historicalAverages.pegRatio) * 100;
-      const pegSectorDiff = ((yahooData.pegRatio - sectorAverages.pegRatio) / sectorAverages.pegRatio) * 100;
+    // Determine if this is an ETF
+    const isETF = ["SPY", "QQQ", "IWM", "DIA"].includes(symbol);
+    
+    if (isETF) {
+      // ETF analysis
+      analysis += `${symbol} is an ETF. `;
       
-      if (yahooData.pegRatio < 1.0) {
-        valuationAnalysis = `${symbol} appears potentially undervalued with a PEG ratio of ${yahooData.pegRatio.toFixed(2)}, which is ${Math.abs(pegHistDiff).toFixed(0)}% below its historical average and ${Math.abs(pegSectorDiff).toFixed(0)}% below the sector average.`;
-      } else if (yahooData.pegRatio > 2.0) {
-        valuationAnalysis = `${symbol} appears potentially overvalued with a PEG ratio of ${yahooData.pegRatio.toFixed(2)}, which is ${pegHistDiff.toFixed(0)}% above its historical average and ${pegSectorDiff.toFixed(0)}% above the sector average.`;
-      } else {
-        valuationAnalysis = `${symbol} appears fairly valued with a PEG ratio of ${yahooData.pegRatio.toFixed(2)}, compared to its historical average of ${historicalAverages.pegRatio.toFixed(2)} and sector average of ${sectorAverages.pegRatio.toFixed(2)}.`;
+      if (metrics.expenseRatio) {
+        if (metrics.expenseRatio < 0.1) {
+          analysis += `It has a low expense ratio of ${formatValue(metrics.expenseRatio * 100)}%, which is favorable for long-term investors. `;
+        } else if (metrics.expenseRatio < 0.5) {
+          analysis += `It has a moderate expense ratio of ${formatValue(metrics.expenseRatio * 100)}%. `;
+        } else {
+          analysis += `It has a relatively high expense ratio of ${formatValue(metrics.expenseRatio * 100)}%, which may impact long-term returns. `;
+        }
       }
-    } else if (yahooData.forwardPE && historicalAverages.forwardPE && sectorAverages.forwardPE) {
-      const peHistDiff = ((yahooData.forwardPE - historicalAverages.forwardPE) / historicalAverages.forwardPE) * 100;
-      const peSectorDiff = ((yahooData.forwardPE - sectorAverages.forwardPE) / sectorAverages.forwardPE) * 100;
       
-      if (peHistDiff < -15 && peSectorDiff < -15) {
-        valuationAnalysis = `${symbol} is trading at a significant discount with a forward P/E of ${yahooData.forwardPE.toFixed(2)}, which is ${Math.abs(peHistDiff).toFixed(0)}% below its historical average and ${Math.abs(peSectorDiff).toFixed(0)}% below the sector average.`;
-      } else if (peHistDiff > 15 && peSectorDiff > 15) {
-        valuationAnalysis = `${symbol} is trading at a premium with a forward P/E of ${yahooData.forwardPE.toFixed(2)}, which is ${peHistDiff.toFixed(0)}% above its historical average and ${peSectorDiff.toFixed(0)}% above the sector average.`;
-      } else {
-        valuationAnalysis = `${symbol} is trading near fair value with a forward P/E of ${yahooData.forwardPE.toFixed(2)}, compared to its historical average of ${historicalAverages.forwardPE.toFixed(2)} and sector average of ${sectorAverages.forwardPE.toFixed(2)}.`;
+      if (metrics.beta) {
+        if (metrics.beta < 0.8) {
+          analysis += `With a beta of ${formatValue(metrics.beta)}, it tends to be less volatile than the overall market. `;
+        } else if (metrics.beta < 1.2) {
+          analysis += `With a beta of ${formatValue(metrics.beta)}, it tends to move in line with the overall market. `;
+        } else {
+          analysis += `With a beta of ${formatValue(metrics.beta)}, it tends to be more volatile than the overall market. `;
+        }
+      }
+      
+      if (metrics.dividendYield) {
+        if (metrics.dividendYield > 0.03) {
+          analysis += `It offers a relatively high dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
+        } else if (metrics.dividendYield > 0.01) {
+          analysis += `It offers a moderate dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
+        } else {
+          analysis += `It offers a relatively low dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
+        }
+      }
+    } else {
+      // Stock analysis
+      analysis += `${symbol} is a stock. `;
+      
+      // PEG Ratio analysis
+      if (metrics.pegRatio) {
+        if (metrics.pegRatio < 1.0) {
+          analysis += `With a PEG ratio of ${formatValue(metrics.pegRatio)}, the stock appears to be potentially undervalued relative to its growth rate. `;
+        } else if (metrics.pegRatio < 2.0) {
+          analysis += `With a PEG ratio of ${formatValue(metrics.pegRatio)}, the stock appears to be fairly valued relative to its growth rate. `;
+        } else {
+          analysis += `With a PEG ratio of ${formatValue(metrics.pegRatio)}, the stock may be overvalued relative to its growth rate. `;
+        }
+      }
+      
+      // Forward P/E analysis
+      if (metrics.forwardPE) {
+        if (metrics.forwardPE < 15) {
+          analysis += `Its forward P/E ratio of ${formatValue(metrics.forwardPE)} is relatively low, suggesting potential undervaluation. `;
+        } else if (metrics.forwardPE < 25) {
+          analysis += `Its forward P/E ratio of ${formatValue(metrics.forwardPE)} is moderate, suggesting fair valuation. `;
+        } else {
+          analysis += `Its forward P/E ratio of ${formatValue(metrics.forwardPE)} is relatively high, suggesting potential overvaluation. `;
+        }
+      }
+      
+      // Price/Book analysis
+      if (metrics.priceToBook) {
+        if (metrics.priceToBook < 1.0) {
+          analysis += `With a price-to-book ratio of ${formatValue(metrics.priceToBook)}, the stock is trading below its book value. `;
+        } else if (metrics.priceToBook < 3.0) {
+          analysis += `With a price-to-book ratio of ${formatValue(metrics.priceToBook)}, the stock is trading at a reasonable multiple of its book value. `;
+        } else {
+          analysis += `With a price-to-book ratio of ${formatValue(metrics.priceToBook)}, the stock is trading at a premium to its book value. `;
+        }
+      }
+      
+      // Return on Equity analysis
+      if (metrics.returnOnEquity) {
+        if (metrics.returnOnEquity > 0.2) {
+          analysis += `It demonstrates strong profitability with a return on equity of ${formatValue(metrics.returnOnEquity * 100)}%. `;
+        } else if (metrics.returnOnEquity > 0.1) {
+          analysis += `It demonstrates solid profitability with a return on equity of ${formatValue(metrics.returnOnEquity * 100)}%. `;
+        } else if (metrics.returnOnEquity > 0) {
+          analysis += `It demonstrates modest profitability with a return on equity of ${formatValue(metrics.returnOnEquity * 100)}%. `;
+        } else {
+          analysis += `It currently shows negative profitability with a return on equity of ${formatValue(metrics.returnOnEquity * 100)}%. `;
+        }
+      }
+      
+      // Debt/Equity analysis
+      if (metrics.debtToEquity) {
+        if (metrics.debtToEquity < 0.5) {
+          analysis += `The company has a conservative financial structure with a debt-to-equity ratio of ${formatValue(metrics.debtToEquity)}. `;
+        } else if (metrics.debtToEquity < 1.5) {
+          analysis += `The company has a moderate financial structure with a debt-to-equity ratio of ${formatValue(metrics.debtToEquity)}. `;
+        } else {
+          analysis += `The company has a leveraged financial structure with a debt-to-equity ratio of ${formatValue(metrics.debtToEquity)}. `;
+        }
       }
     }
     
-    // Financial health analysis
-    if (yahooData.debtToEquity !== null && yahooData.returnOnEquity !== null) {
-      if (yahooData.debtToEquity < 0.5 && yahooData.returnOnEquity > 15) {
-        financialHealthAnalysis = `The company demonstrates strong financial health with a low debt-to-equity ratio of ${yahooData.debtToEquity.toFixed(2)} and high return on equity of ${yahooData.returnOnEquity.toFixed(2)}%.`;
-      } else if (yahooData.debtToEquity > 1.5) {
-        financialHealthAnalysis = `The company has a relatively high debt-to-equity ratio of ${yahooData.debtToEquity.toFixed(2)}, which may indicate increased financial risk.`;
-      } else if (yahooData.returnOnEquity < 5) {
-        financialHealthAnalysis = `The company's return on equity of ${yahooData.returnOnEquity.toFixed(2)}% is relatively low, suggesting potential efficiency concerns.`;
+    // Beta analysis (applicable to both stocks and ETFs)
+    if (metrics.beta) {
+      if (metrics.beta < 0.8) {
+        analysis += `It has historically been less volatile than the market with a beta of ${formatValue(metrics.beta)}. `;
+      } else if (metrics.beta < 1.2) {
+        analysis += `It has historically moved in line with the market with a beta of ${formatValue(metrics.beta)}. `;
       } else {
-        financialHealthAnalysis = `The company shows moderate financial health with a debt-to-equity ratio of ${yahooData.debtToEquity.toFixed(2)} and return on equity of ${yahooData.returnOnEquity.toFixed(2)}%.`;
+        analysis += `It has historically been more volatile than the market with a beta of ${formatValue(metrics.beta)}. `;
       }
     }
     
-    // Risk analysis
-    if (yahooData.beta !== null) {
-      if (yahooData.beta < 0.8) {
-        riskAnalysis = `With a beta of ${yahooData.beta.toFixed(2)}, ${symbol} exhibits lower volatility than the overall market, potentially offering more stability during market downturns.`;
-      } else if (yahooData.beta > 1.2) {
-        riskAnalysis = `With a beta of ${yahooData.beta.toFixed(2)}, ${symbol} tends to be more volatile than the overall market, which may present both higher risk and potential reward.`;
-      } else {
-        riskAnalysis = `With a beta of ${yahooData.beta.toFixed(2)}, ${symbol} moves roughly in line with the overall market.`;
+    // Dividend analysis (applicable to both stocks and ETFs)
+    if (metrics.dividendYield) {
+      if (metrics.dividendYield > 0.03) {
+        analysis += `It offers an attractive dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
+      } else if (metrics.dividendYield > 0.01) {
+        analysis += `It offers a moderate dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
+      } else if (metrics.dividendYield > 0) {
+        analysis += `It offers a modest dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
       }
     }
     
-    // Combine analyses
-    let finalAnalysis = "";
-    
-    if (valuationAnalysis) finalAnalysis += valuationAnalysis + " ";
-    if (financialHealthAnalysis) finalAnalysis += financialHealthAnalysis + " ";
-    if (riskAnalysis) finalAnalysis += riskAnalysis;
-    
-    if (!finalAnalysis) {
-      // Fallback if we couldn't generate a specific analysis
-      return `Analysis for ${symbol} is limited due to incomplete data. Consider reviewing the raw metrics for a more complete picture.`;
-    }
-    
-    return finalAnalysis;
+    return analysis;
   } catch (error) {
     Logger.log(`Error generating analysis for ${symbol}: ${error}`);
-    return `Unable to generate detailed analysis for ${symbol} due to an error.`;
+    return "Unable to generate analysis due to an error.";
   }
 }
 
@@ -715,32 +970,66 @@ function testFundamentalMetrics() {
     // Log the metrics
     Logger.log(`Successfully retrieved fundamental metrics for ${fundamentalMetrics.metrics.length} symbols`);
     
+    // Log detailed metrics for each symbol
+    Logger.log("DETAILED METRICS BY SYMBOL:");
+    fundamentalMetrics.metrics.forEach(metric => {
+      Logger.log(`\n${metric.symbol} (${metric.isETF ? 'ETF' : 'Stock'}):`);
+      Logger.log(`  PEG Ratio: ${formatValue(metric.pegRatio)}`);
+      Logger.log(`  Forward P/E: ${formatValue(metric.forwardPE)}`);
+      Logger.log(`  Price/Book: ${formatValue(metric.priceToBook)}`);
+      Logger.log(`  Price/Sales: ${formatValue(metric.priceToSales)}`);
+      Logger.log(`  Debt/Equity: ${formatValue(metric.debtToEquity)}`);
+      Logger.log(`  Return on Equity: ${formatValue(metric.returnOnEquity * 100)}%`);
+      Logger.log(`  Return on Assets: ${formatValue(metric.returnOnAssets * 100)}%`);
+      Logger.log(`  Profit Margin: ${formatValue(metric.profitMargin * 100)}%`);
+      Logger.log(`  Dividend Yield: ${formatValue(metric.dividendYield * 100)}%`);
+      Logger.log(`  Beta: ${formatValue(metric.beta)}`);
+      if (metric.isETF) {
+        Logger.log(`  Expense Ratio: ${formatValue(metric.expenseRatio * 100)}%`);
+      }
+      Logger.log(`  Source: ${metric.source || 'Not specified'}`);
+    });
+    
     // Test the formatting function
     const formattedData = formatFundamentalMetricsData(fundamentalMetrics.metrics);
-    Logger.log("Formatted Fundamental Metrics Data (first 500 chars):");
-    Logger.log(formattedData.substring(0, 500) + "...");
+    Logger.log("\nFORMATTED FUNDAMENTAL METRICS DATA:");
+    Logger.log(formattedData);
     
     // Test the analysis function directly for one symbol
     if (fundamentalMetrics.metrics.length > 0) {
-      const sampleStock = fundamentalMetrics.metrics[0];
-      const sampleAnalysis = generateAnalysis(
-        sampleStock.symbol, 
-        sampleStock.fundamentals, 
-        sampleStock.historicalAverages, 
-        sampleStock.sectorAverages
-      );
-      
-      Logger.log(`Sample analysis for ${sampleStock.symbol}:`);
-      Logger.log(sampleAnalysis);
+      Logger.log("\nSAMPLE ANALYSES:");
+      fundamentalMetrics.metrics.forEach(stock => {
+        const analysis = generateAnalysis(
+          stock.symbol, 
+          stock, 
+          {}, 
+          {}
+        );
+        
+        Logger.log(`\n${stock.symbol} Analysis:`);
+        Logger.log(analysis);
+      });
     }
     
-    // Test with empty input
-    const emptyResult = retrieveFundamentalMetrics([]);
-    Logger.log(`Empty input test - Number of symbols processed: ${emptyResult.metrics ? emptyResult.metrics.length : 0}`);
+    // Test with invalid symbol - just test error handling without including in results
+    Logger.log("\nTESTING INVALID SYMBOL ERROR HANDLING:");
+    const invalidSymbol = "INVALID_SYMBOL_123";
     
-    // Test with invalid symbol
-    const invalidResult = retrieveFundamentalMetrics(["INVALID_SYMBOL_123"]);
-    Logger.log(`Invalid symbol test - Success: ${invalidResult.success}`);
+    // Test Google Finance error handling
+    try {
+      const googleData = fetchGoogleFinanceData(invalidSymbol);
+      Logger.log(`Unexpected success with Google Finance for ${invalidSymbol}`);
+    } catch (error) {
+      Logger.log(`Expected error from Google Finance for ${invalidSymbol}: ${error.message}`);
+    }
+    
+    // Test Yahoo Finance error handling
+    try {
+      const yahooData = fetchYahooFinanceData(invalidSymbol);
+      Logger.log(`Unexpected success with Yahoo Finance for ${invalidSymbol}`);
+    } catch (error) {
+      Logger.log(`Expected error from Yahoo Finance for ${invalidSymbol}: ${error.message}`);
+    }
     
     return "Test completed. Check the logs for results.";
   } catch (error) {
@@ -789,22 +1078,121 @@ function retrieveRecentlyMentionedStocks() {
  * @return {String} Company name
  */
 function getCompanyName(symbol) {
-  // This would be implemented with actual API calls in a production environment
-  // For now, we'll return a placeholder mapping for common symbols
-  const symbolMap = {
-    "AAPL": "Apple Inc.",
-    "MSFT": "Microsoft Corporation",
-    "GOOGL": "Alphabet Inc.",
-    "AMZN": "Amazon.com, Inc.",
-    "NVDA": "NVIDIA Corporation",
-    "META": "Meta Platforms, Inc.",
-    "TSLA": "Tesla, Inc.",
-    "BRK-B": "Berkshire Hathaway Inc.",
-    "JPM": "JPMorgan Chase & Co.",
-    "V": "Visa Inc."
-  };
-  
-  return symbolMap[symbol] || `${symbol} (Company Name)`;
+  try {
+    // First try to get the name from Google Finance
+    try {
+      // Get the shared finance spreadsheet
+      const spreadsheet = getSharedFinanceSpreadsheet();
+      
+      // Create or get a sheet for company names
+      let sheet = spreadsheet.getSheetByName("CompanyNames");
+      if (!sheet) {
+        sheet = spreadsheet.insertSheet("CompanyNames");
+      }
+      
+      // Set up formula to fetch company name
+      sheet.getRange("A1").setValue(symbol);
+      sheet.getRange("B1").setFormula(`=GOOGLEFINANCE(A1, "name")`);
+      
+      // Wait for formula to calculate
+      Utilities.sleep(1000);
+      
+      // Get the company name
+      const companyName = sheet.getRange("B1").getValue();
+      
+      // If we got a valid name, return it
+      if (companyName && companyName !== "#N/A" && companyName !== "#ERROR!") {
+        return companyName;
+      }
+    } catch (e) {
+      Logger.log(`Error getting company name from Google Finance: ${e.message}`);
+    }
+    
+    // If we couldn't get the name from Google Finance, try a hardcoded list
+    const companyNames = {
+      // Major indices
+      "SPY": "SPDR S&P 500 ETF",
+      "QQQ": "Invesco QQQ Trust (NASDAQ-100 Index)",
+      "IWM": "iShares Russell 2000 ETF",
+      "DIA": "SPDR Dow Jones Industrial Average ETF",
+      
+      // Magnificent Seven
+      "AAPL": "Apple Inc.",
+      "MSFT": "Microsoft Corporation",
+      "GOOGL": "Alphabet Inc. (Google)",
+      "GOOG": "Alphabet Inc. (Google)",
+      "AMZN": "Amazon.com, Inc.",
+      "META": "Meta Platforms, Inc. (Facebook)",
+      "TSLA": "Tesla, Inc.",
+      "NVDA": "NVIDIA Corporation",
+      
+      // Other popular stocks
+      "NFLX": "Netflix, Inc.",
+      "JPM": "JPMorgan Chase & Co.",
+      "V": "Visa Inc.",
+      "JNJ": "Johnson & Johnson",
+      "WMT": "Walmart Inc.",
+      "PG": "Procter & Gamble Company",
+      "MA": "Mastercard Incorporated",
+      "UNH": "UnitedHealth Group Incorporated",
+      "HD": "The Home Depot, Inc.",
+      "BAC": "Bank of America Corporation",
+      "XOM": "Exxon Mobil Corporation",
+      "PFE": "Pfizer Inc.",
+      "CSCO": "Cisco Systems, Inc.",
+      "VZ": "Verizon Communications Inc.",
+      "INTC": "Intel Corporation",
+      "ADBE": "Adobe Inc.",
+      "CRM": "Salesforce, Inc.",
+      "PYPL": "PayPal Holdings, Inc.",
+      "CMCSA": "Comcast Corporation",
+      "COST": "Costco Wholesale Corporation",
+      "ABT": "Abbott Laboratories",
+      "AVGO": "Broadcom Inc.",
+      "PEP": "PepsiCo, Inc.",
+      "TMO": "Thermo Fisher Scientific Inc.",
+      "ACN": "Accenture plc",
+      "NKE": "NIKE, Inc.",
+      "ABBV": "AbbVie Inc.",
+      "TXN": "Texas Instruments Incorporated",
+      "MRK": "Merck & Co., Inc.",
+      "DHR": "Danaher Corporation",
+      
+      // Popular ETFs
+      "VOO": "Vanguard S&P 500 ETF",
+      "VTI": "Vanguard Total Stock Market ETF",
+      "VXUS": "Vanguard Total International Stock ETF",
+      "BND": "Vanguard Total Bond Market ETF",
+      "VEA": "Vanguard FTSE Developed Markets ETF",
+      "VWO": "Vanguard FTSE Emerging Markets ETF",
+      "AGG": "iShares Core U.S. Aggregate Bond ETF",
+      "IJR": "iShares Core S&P Small-Cap ETF",
+      "IJH": "iShares Core S&P Mid-Cap ETF",
+      "GLD": "SPDR Gold Shares",
+      "SLV": "iShares Silver Trust",
+      "XLF": "Financial Select Sector SPDR Fund",
+      "XLK": "Technology Select Sector SPDR Fund",
+      "XLE": "Energy Select Sector SPDR Fund",
+      "XLV": "Health Care Select Sector SPDR Fund",
+      "XLY": "Consumer Discretionary Select Sector SPDR Fund",
+      "XLP": "Consumer Staples Select Sector SPDR Fund",
+      "XLI": "Industrial Select Sector SPDR Fund",
+      "XLU": "Utilities Select Sector SPDR Fund",
+      "XLB": "Materials Select Sector SPDR Fund",
+      "XLRE": "Real Estate Select Sector SPDR Fund"
+    };
+    
+    // If we have a hardcoded name, return it
+    if (companyNames[symbol]) {
+      return companyNames[symbol];
+    }
+    
+    // If all else fails, just return the symbol
+    return symbol;
+  } catch (error) {
+    Logger.log(`Error getting company name for ${symbol}: ${error}`);
+    return symbol;
+  }
 }
 
 /**

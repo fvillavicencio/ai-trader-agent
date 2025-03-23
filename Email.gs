@@ -485,3 +485,111 @@ function getCurrentYearMonth() {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   return `${year}${month}`;
 }
+
+/**
+ * Sends an email with the generated Perplexity prompt
+ * 
+ * @param {string} prompt - The prompt that will be sent to Perplexity
+ */
+function sendPromptEmail(prompt) {
+  try {
+    const currentDate = new Date();
+    const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+    
+    // Create HTML email template
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 800px;
+      margin: 0 auto;
+      background-color: #f9f9f9;
+    }
+    .container {
+      padding: 25px;
+      border-radius: 8px;
+      background-color: #ffffff;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 20px;
+    }
+    .header h1 {
+      color: #444;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+    .header p {
+      color: #666;
+      font-size: 16px;
+      margin-top: 5px;
+    }
+    pre {
+      background-color: #f5f5f5;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: monospace;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    .footer {
+      margin-top: 40px;
+      font-size: 14px;
+      color: #777;
+      border-top: 1px solid #eee;
+      padding-top: 20px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AI Trading Analysis - Generated Prompt</h1>
+      <p>Generated on ${formattedDate}</p>
+    </div>
+    
+    <h2>Prompt Being Sent to Perplexity API:</h2>
+    <pre>${prompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+    
+    <div class="footer">
+      <p>This is an automated email from the AI Trading Agent.</p>
+      <p>Generated on ${formattedDate}</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+    // Create plain text version as fallback
+    const plainTextBody = `AI Trading Analysis - Generated Prompt\n\nGenerated on ${formattedDate}\n\nPrompt Being Sent to Perplexity API:\n\n${prompt}\n\nThis is an automated email from the AI Trading Agent.`;
+    
+    // Send the email
+    const subject = `${EMAIL_SUBJECT_PREFIX} Generated Prompt - ${Utilities.formatDate(currentDate, TIME_ZONE, "yyyy-MM-dd HH:mm")}`;
+    
+    GmailApp.sendEmail(
+      RECIPIENT_EMAILS.join(','),
+      subject,
+      plainTextBody,
+      {
+        htmlBody: htmlBody,
+        name: "AI Trading Agent"
+      }
+    );
+    
+    Logger.log("Prompt email sent successfully");
+  } catch (error) {
+    Logger.log("Error sending prompt email: " + error);
+  }
+}

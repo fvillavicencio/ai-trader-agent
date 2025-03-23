@@ -62,8 +62,26 @@ function getPerplexityAnalysis() {
   try {
     Logger.log("Starting analysis with Perplexity API...");
     
+    // Retrieve all data from our modules
+    Logger.log("Retrieving all trading data...");
+    const allData = retrieveAllData();
+    
+    if (!allData.success) {
+      Logger.log("Error retrieving data: " + allData.message);
+      throw new Error("Failed to retrieve trading data: " + allData.message);
+    }
+    
+    Logger.log("Successfully retrieved all trading data");
+    
+    // Generate the Perplexity prompt with all our data
+    const prompt = generatePerplexityPrompt(allData);
+    Logger.log("Generated Perplexity prompt");
+    
+    // Send the prompt via email before passing it to Perplexity
+    sendPromptEmail(prompt);
+    Logger.log("Sent prompt email");
+    
     const apiKey = getPerplexityApiKey();
-    const prompt = getTradingAnalysisPrompt();
     
     const payload = {
       model: "sonar-pro",  // Updated to the latest model name
@@ -435,3 +453,153 @@ function sendErrorEmail(subject, error) {
  * NOTE: Trigger management has been moved to Setup.gs
  * Please use the setupTriggers() function in Setup.gs to create or modify triggers
  */
+
+/**
+ * Formats market sentiment data for inclusion in the prompt
+ * 
+ * @param {Object} marketSentiment - The market sentiment data
+ * @return {string} Formatted market sentiment data
+ */
+function formatMarketSentimentData(marketSentiment) {
+  try {
+    let formattedData = "### Market Sentiment Data (Retrieved directly from sources)\n\n";
+    
+    // Format CNBC analyst comments
+    if (marketSentiment.cnbcAnalysts && marketSentiment.cnbcAnalysts.length > 0) {
+      formattedData += "#### CNBC Analyst Comments (Last 24 hours)\n\n";
+      
+      for (const comment of marketSentiment.cnbcAnalysts) {
+        const timestamp = new Date(comment.timestamp);
+        const formattedTimestamp = Utilities.formatDate(timestamp, TIME_ZONE, "MMM dd, yyyy hh:mm a 'ET'");
+        
+        formattedData += `- **${comment.analyst}**: "${comment.comment}"\n`;
+        formattedData += `  - Source: ${comment.source}\n`;
+        formattedData += `  - Time: ${formattedTimestamp}\n\n`;
+      }
+    } else {
+      formattedData += "#### CNBC Analyst Comments\n\n";
+      formattedData += "No recent comments found from CNBC analysts in the last 24 hours.\n\n";
+    }
+    
+    // Format Dan Niles insights
+    if (marketSentiment.danNilesInsights && marketSentiment.danNilesInsights.length > 0) {
+      formattedData += "#### Dan Niles Insights (Last 24 hours)\n\n";
+      
+      for (const insight of marketSentiment.danNilesInsights) {
+        const timestamp = new Date(insight.timestamp);
+        const formattedTimestamp = Utilities.formatDate(timestamp, TIME_ZONE, "MMM dd, yyyy hh:mm a 'ET'");
+        
+        formattedData += `- **Dan Niles** (${insight.source}): `;
+        
+        if (insight.content) {
+          formattedData += `"${insight.content}"\n`;
+        } else if (insight.title) {
+          formattedData += `${insight.title}\n`;
+        }
+        
+        if (insight.url) {
+          formattedData += `  - Source: ${insight.url}\n`;
+        }
+        
+        formattedData += `  - Time: ${formattedTimestamp}\n\n`;
+      }
+    } else {
+      formattedData += "#### Dan Niles Insights\n\n";
+      formattedData += "No recent insights found from Dan Niles in the last 24 hours.\n\n";
+    }
+    
+    return formattedData;
+  } catch (error) {
+    Logger.log("Error in formatMarketSentimentData: " + error);
+    return "Error formatting market sentiment data: " + error;
+  }
+}
+
+/**
+ * Enhances the prompt with retrieved data
+ * 
+ * @param {string} originalPrompt - The original analysis prompt
+ * @param {Object} data - Object containing retrieved data for different sections
+ * @return {string} Enhanced prompt with retrieved data
+ */
+function enhancePromptWithData(originalPrompt, data) {
+  try {
+    let enhancedPrompt = originalPrompt;
+    
+    // Add a section explaining that we're providing retrieved data
+    enhancedPrompt += "\n\n## IMPORTANT: RETRIEVED DATA\n\n";
+    enhancedPrompt += "The following data has been directly retrieved from various sources within the last 24 hours. ";
+    enhancedPrompt += "Please use this data for your analysis instead of searching for it again. ";
+    enhancedPrompt += "This ensures you have the most recent and accurate information.\n\n";
+    
+    // Add market sentiment data if available
+    if (data.marketSentiment) {
+      enhancedPrompt += data.marketSentiment + "\n";
+    }
+    
+    // Add other data sections as they are implemented
+    // (We'll add these in future updates)
+    
+    // Add a reminder to use the provided data
+    enhancedPrompt += "\n## REMINDER\n\n";
+    enhancedPrompt += "Please use the data provided above for your analysis. ";
+    enhancedPrompt += "For any data points not provided, you may search for the most current information available.\n";
+    
+    return enhancedPrompt;
+  } catch (error) {
+    Logger.log("Error in enhancePromptWithData: " + error);
+    return originalPrompt; // Return the original prompt if there's an error
+  }
+}
+
+/**
+ * Test function to retrieve market sentiment data and display the enhanced prompt
+ */
+function testMarketSentimentEnhancement() {
+  try {
+    Logger.log("Testing market sentiment data retrieval and prompt enhancement...");
+    
+    // Get the current date
+    const currentDate = new Date();
+    
+    // Retrieve market sentiment data
+    Logger.log("Retrieving market sentiment data...");
+    const marketSentiment = retrieveMarketSentiment(currentDate);
+    Logger.log(`Retrieved ${marketSentiment.cnbcAnalysts ? marketSentiment.cnbcAnalysts.length : 0} CNBC analyst comments and ${marketSentiment.danNilesInsights ? marketSentiment.danNilesInsights.length : 0} Dan Niles insights`);
+    
+    // Format the market sentiment data
+    const marketSentimentData = formatMarketSentimentData(marketSentiment);
+    
+    // Get the original prompt
+    const originalPrompt = getTradingAnalysisPrompt();
+    
+    // Enhance the prompt with the retrieved data
+    const enhancedPrompt = enhancePromptWithData(originalPrompt, {
+      marketSentiment: marketSentimentData
+    });
+    
+    // Log the enhanced prompt
+    Logger.log("Enhanced Prompt:");
+    Logger.log(enhancedPrompt);
+    
+    return "Market sentiment data retrieval and prompt enhancement test completed successfully. Check logs for details.";
+  } catch (error) {
+    Logger.log("Error in testMarketSentimentEnhancement: " + error);
+    return "Error: " + error;
+  }
+}
+
+/**
+ * Test function to run the market sentiment analysis and display the result
+ */
+function runTestMarketSentiment() {
+  try {
+    Logger.log("Running market sentiment test...");
+    // Call the testMarketSentiment function from MarketSentiment.gs
+    testMarketSentiment();
+    return "Market sentiment test completed successfully.";
+  } catch (error) {
+    Logger.log("Error in runTestMarketSentiment: " + error);
+    return "Error: " + error;
+  }
+}

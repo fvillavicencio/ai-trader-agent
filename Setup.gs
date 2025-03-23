@@ -16,7 +16,7 @@ function setupTradingAgent() {
     // Display setup start message
     Logger.log("Starting AI Trading Agent setup...");
     
-    // Step 1: Store the OpenAI API key in script properties (if provided)
+    // Step 1: Store the Perplexity API key in script properties (if provided)
     setupApiKey();
     
     // Step 2: Create time-based triggers
@@ -41,25 +41,25 @@ function setupTradingAgent() {
 }
 
 /**
- * Stores the OpenAI API key in script properties
+ * Stores the Perplexity API key in script properties
  */
 function setupApiKey() {
   Logger.log("Setting up API key in script properties...");
   
   // Check if API key is already stored in script properties
   const scriptProperties = PropertiesService.getScriptProperties();
-  let apiKey = scriptProperties.getProperty('OPENAI_API_KEY');
+  let apiKey = scriptProperties.getProperty('PERPLEXITY_API_KEY');
   
   if (!apiKey) {
     // If no API key is found in script properties, use the one from Config.gs
-    apiKey = OPENAI_API_KEY;
+    apiKey = PERPLEXITY_API_KEY;
     
     // Only store the API key if it's not the placeholder value
-    if (apiKey && apiKey !== "YOUR_OPENAI_API_KEY") {
-      scriptProperties.setProperty('OPENAI_API_KEY', apiKey);
+    if (apiKey && apiKey !== "YOUR_PERPLEXITY_API_KEY") {
+      scriptProperties.setProperty('PERPLEXITY_API_KEY', apiKey);
       Logger.log("API key stored in script properties.");
     } else {
-      throw new Error("Valid OpenAI API key not found. Please update the OPENAI_API_KEY in Config.gs or set it in Script Properties.");
+      throw new Error("Valid Perplexity API key not found. Please update the PERPLEXITY_API_KEY in Config.gs or set it in Script Properties.");
     }
   } else {
     Logger.log("API key already exists in script properties.");
@@ -75,25 +75,92 @@ function setupTriggers() {
   // Delete any existing triggers to avoid duplicates
   deleteExistingTriggers();
   
-  // Create morning trigger (9:15 AM ET)
+  // Create morning trigger (Monday to Friday)
   ScriptApp.newTrigger('runTradingAnalysis')
     .timeBased()
     .atHour(MORNING_SCHEDULE_HOUR)
     .nearMinute(MORNING_SCHEDULE_MINUTE)
-    .everyDays(1)
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
     .inTimezone(TIME_ZONE)
     .create();
-  Logger.log(`Morning trigger created: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE}`);
   
-  // Create evening trigger (6:00 PM ET)
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(MORNING_SCHEDULE_HOUR)
+    .nearMinute(MORNING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.TUESDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(MORNING_SCHEDULE_HOUR)
+    .nearMinute(MORNING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.WEDNESDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(MORNING_SCHEDULE_HOUR)
+    .nearMinute(MORNING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.THURSDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(MORNING_SCHEDULE_HOUR)
+    .nearMinute(MORNING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.FRIDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  Logger.log(`Morning triggers created: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (Monday-Friday)`);
+  
+  // Create evening trigger (Monday to Thursday)
   ScriptApp.newTrigger('runTradingAnalysis')
     .timeBased()
     .atHour(EVENING_SCHEDULE_HOUR)
     .nearMinute(EVENING_SCHEDULE_MINUTE)
-    .everyDays(1)
+    .onWeekDay(ScriptApp.WeekDay.MONDAY)
     .inTimezone(TIME_ZONE)
     .create();
-  Logger.log(`Evening trigger created: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE}`);
+  
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(EVENING_SCHEDULE_HOUR)
+    .nearMinute(EVENING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.TUESDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(EVENING_SCHEDULE_HOUR)
+    .nearMinute(EVENING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.WEDNESDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(EVENING_SCHEDULE_HOUR)
+    .nearMinute(EVENING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.THURSDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  // Sunday evening trigger
+  ScriptApp.newTrigger('runTradingAnalysis')
+    .timeBased()
+    .atHour(EVENING_SCHEDULE_HOUR)
+    .nearMinute(EVENING_SCHEDULE_MINUTE)
+    .onWeekDay(ScriptApp.WeekDay.SUNDAY)
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  Logger.log(`Evening triggers created: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE} (Sunday-Thursday)`);
 }
 
 /**
@@ -116,9 +183,9 @@ function validateSetup() {
   Logger.log("Validating setup...");
   
   // Check if API key is valid
-  const apiKey = getOpenAIApiKey();
-  if (!apiKey || apiKey === "YOUR_OPENAI_API_KEY") {
-    throw new Error("Invalid OpenAI API key. Please update it in Config.gs or Script Properties.");
+  const apiKey = getPerplexityApiKey();
+  if (!apiKey || apiKey === "YOUR_PERPLEXITY_API_KEY") {
+    throw new Error("Invalid Perplexity API key. Please update it in Config.gs or Script Properties.");
   }
   
   // Check if required functions exist
@@ -148,9 +215,9 @@ function sendSetupConfirmation() {
 The AI Trading Agent has been successfully set up!
 
 Configuration Details:
-- Morning Analysis: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE}
-- Evening Analysis: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE}
-- Model: ${OPENAI_MODEL}
+- Morning Analysis: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (Monday-Friday)
+- Evening Analysis: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE} (Sunday-Thursday)
+- Schedule: Runs twice daily from Sunday evening to Friday morning (excluding Saturday, Friday evening, and Sunday morning)
 - Recipients: ${RECIPIENT_EMAILS.join(", ")}
 
 The agent will begin sending trading analysis emails at the next scheduled time.
@@ -174,9 +241,9 @@ function testTradingAnalysis() {
   Logger.log("Running test trading analysis...");
   
   try {
-    // Get the trading analysis from OpenAI
-    const analysisResult = getOpenAIAnalysis();
-    Logger.log("Analysis received from OpenAI.");
+    // Get the trading analysis from Perplexity
+    const analysisResult = getPerplexityAnalysis();
+    Logger.log("Analysis received from Perplexity.");
     
     // Extract the decision and justification from the analysis
     const { decision, justification } = parseAnalysisResult(analysisResult);
