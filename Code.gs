@@ -2,7 +2,7 @@
  * AI Trading Agent - Main Script
  * 
  * This script analyzes financial data and sends trading decisions via email.
- * It uses the Perplexity API to get real-time market data through web browsing.
+ * It uses OpenAI API for data analysis.
  */
 
 /**
@@ -12,8 +12,8 @@ function runTradingAnalysis() {
   try {
     Logger.log("Starting trading analysis...");
     
-    // Get the analysis from Perplexity
-    const analysisResult = getPerplexityAnalysis();
+    // Get the analysis from OpenAI
+    const analysisResult = getOpenAITradingAnalysis();
     
     // Parse the analysis result to extract the decision and justification
     const { decision, justification, analysisJson } = parseAnalysisResult(analysisResult);
@@ -44,23 +44,13 @@ function testTradingAnalysis() {
 }
 
 /**
- * Gets the Perplexity API key from script properties
+ * Calls the OpenAI API to get the trading analysis
  * 
- * @return {string} - The Perplexity API key
+ * @return {string} - The analysis result from OpenAI
  */
-function getPerplexityApiKey() {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  return scriptProperties.getProperty('PERPLEXITY_API_KEY');
-}
-
-/**
- * Calls the Perplexity API to get the trading analysis
- * 
- * @return {string} - The analysis result from Perplexity
- */
-function getPerplexityAnalysis() {
+function getOpenAITradingAnalysis() {
   try {
-    Logger.log("Starting analysis with Perplexity API...");
+    Logger.log("Starting analysis with OpenAI API...");
     
     // Retrieve all data from our modules
     Logger.log("Retrieving all trading data...");
@@ -73,36 +63,33 @@ function getPerplexityAnalysis() {
     
     Logger.log("Successfully retrieved all trading data");
     
-    // Generate the Perplexity prompt with all our data
+    // Generate the prompt with all our data
     const prompt = generatePerplexityPrompt(allData);
-    Logger.log("Generated Perplexity prompt");
+    Logger.log("Generated analysis prompt");
     
-    // Send the prompt via email before passing it to Perplexity
+    // Send the prompt via email before passing it to OpenAI
     sendPromptEmail(prompt);
     Logger.log("Sent prompt email");
     
-    const apiKey = getPerplexityApiKey();
+    const apiKey = getOpenAIApiKey();
     
     const payload = {
-      model: "sonar-pro",  // Updated to the latest model name
+      model: "gpt-4.5-turbo",  // Using GPT-4.5 model
       messages: [
         {
           role: "system",
-          content: "You are an AI agent tasked with providing actionable trading recommendations in JSON format. Your analysis should be accurate, clearly sourced, and include timestamps (Eastern Time) and URLs for cited data points when available. Use the most current data you can find through web browsing.\n\nIMPORTANT: Return ONLY raw JSON without any markdown formatting, code blocks, or explanatory text. Do not wrap your response in ```json``` or any other formatting. Your entire response must be a valid, parseable JSON object with the following structure:\n\n{\n  \"decision\": \"Buy Now | Sell Now | Watch for Better Price Action\",\n  \"summary\": \"Brief summary of the recommendation\",\n  \"analysis\": {\n    \"marketSentiment\": [\n      {\"analyst\": \"Analyst Name\", \"comment\": \"Quote or summary\", \"source\": \"Source URL\", \"timestamp\": \"Date and time ET\"}\n    ],\n    \"marketIndicators\": {\n      \"fearGreedIndex\": {\"value\": 0, \"interpretation\": \"Description\"},\n      \"vix\": {\"value\": 0, \"trend\": \"Description\"},\n      \"upcomingEvents\": [\n        {\"event\": \"Event name\", \"date\": \"Date\"}\n      ]\n    },\n    \"fundamentalMetrics\": [\n      {\"symbol\": \"Ticker\", \"name\": \"Company Name\", \"pegRatio\": 0, \"forwardPE\": 0, \"comment\": \"Analysis\"}\n    ],\n    \"macroeconomicFactors\": {\n      \"treasuryYields\": {\"twoYear\": 0, \"tenYear\": 0, \"date\": \"YYYY-MM-DD\", \"source\": \"URL\", \"yieldCurve\": \"normal|inverted|flat\", \"implications\": \"Description\"},\n      \"fedPolicy\": {\"federalFundsRate\": 0.00, \"fomcMeetingDate\": \"YYYY-MM-DD\", \"forwardGuidance\": \"Description\", \"source\": \"URL\"},\n      \"inflation\": {\"cpi\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"pce\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"trend\": \"Description\", \"impactOnFedPolicy\": \"Description\"},\n      \"geopoliticalRisks\": [{\"description\": \"Description\", \"regionsAffected\": [\"Region\"], \"potentialMarketImpact\": \"Description\", \"newsSource\": \"URL\"}]\n    }\n  },\n  \"justification\": \"Detailed explanation for the decision\"\n}"
+          content: "You are an AI agent tasked with providing actionable trading recommendations in JSON format. Your analysis should be accurate, clearly sourced, and include timestamps (Eastern Time) and URLs for cited data points when available. Use ONLY the data provided in the prompt - do not attempt to browse the web or retrieve additional information.\n\nIMPORTANT: Return ONLY raw JSON without any markdown formatting, code blocks, or explanatory text. Do not wrap your response in ```json``` or any other formatting. Your entire response must be a valid, parseable JSON object with the following structure:\n\n{\n  \"decision\": \"Buy Now | Sell Now | Watch for Better Price Action\",\n  \"summary\": \"Brief summary of the recommendation\",\n  \"analysis\": {\n    \"marketSentiment\": [\n      {\"analyst\": \"Analyst Name\", \"comment\": \"Quote or summary\", \"source\": \"Source URL\", \"timestamp\": \"Date and time ET\"}\n    ],\n    \"marketIndicators\": {\n      \"fearGreedIndex\": {\"value\": 0, \"interpretation\": \"Description\"},\n      \"vix\": {\"value\": 0, \"trend\": \"Description\"},\n      \"upcomingEvents\": [\n        {\"event\": \"Event name\", \"date\": \"Date\"}\n      ]\n    },\n    \"fundamentalMetrics\": [\n      {\"symbol\": \"Ticker\", \"name\": \"Company Name\", \"pegRatio\": 0, \"forwardPE\": 0, \"comment\": \"Analysis\"}\n    ],\n    \"macroeconomicFactors\": {\n      \"treasuryYields\": {\"twoYear\": 0, \"tenYear\": 0, \"date\": \"YYYY-MM-DD\", \"source\": \"URL\", \"yieldCurve\": \"normal|inverted|flat\", \"implications\": \"Description\"},\n      \"fedPolicy\": {\"federalFundsRate\": 0.00, \"fomcMeetingDate\": \"YYYY-MM-DD\", \"forwardGuidance\": \"Description\", \"source\": \"URL\"},\n      \"inflation\": {\"cpi\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"pce\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"trend\": \"Description\", \"impactOnFedPolicy\": \"Description\"},\n      \"geopoliticalRisks\": [{\"description\": \"Description\", \"regionsAffected\": [\"Region\"], \"potentialMarketImpact\": \"Description\", \"newsSource\": \"URL\"}]\n    }\n  },\n  \"justification\": \"Detailed explanation for the decision\"\n}"
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      // Add parameters to enable web browsing capabilities
-      search_mode: "websearch",
       max_tokens: 4000,
-      temperature: 0.7,
-      frequency_penalty: 0.5
+      temperature: 0.7
     };
     
-    Logger.log("Sending request to Perplexity API...");
+    Logger.log("Sending request to OpenAI API...");
     
     const options = {
       method: 'post',
@@ -114,11 +101,11 @@ function getPerplexityAnalysis() {
       muteHttpExceptions: true
     };
     
-    const response = UrlFetchApp.fetch('https://api.perplexity.ai/chat/completions', options);
+    const response = UrlFetchApp.fetch('https://api.openai.com/v1/chat/completions', options);
     const responseCode = response.getResponseCode();
     const responseText = response.getContentText();
     
-    Logger.log("Perplexity API response code: " + responseCode);
+    Logger.log("OpenAI API response code: " + responseCode);
     
     if (responseCode !== 200) {
       Logger.log("API Error: " + responseCode);
@@ -143,7 +130,7 @@ I was unable to retrieve real-time market data due to an API error (HTTP ${respo
 4. Macroeconomic Factors:
    Unable to access current Treasury yields, Fed statements, and economic indicators.
 
-Given the lack of real-time data, the most prudent course of action is to watch for better price action. Please check that the Perplexity API is functioning correctly and try again later.`;
+Given the lack of real-time data, the most prudent course of action is to watch for better price action. Please check that the OpenAI API is functioning correctly and try again later.`;
     }
     
     const result = JSON.parse(responseText);
@@ -170,12 +157,12 @@ I received an unexpected response format from the API and could not retrieve rea
 4. Macroeconomic Factors:
    Unable to access current Treasury yields, Fed statements, and economic indicators.
 
-Given the lack of real-time data, the most prudent course of action is to watch for better price action. Please check that the Perplexity API is functioning correctly and try again later.`;
+Given the lack of real-time data, the most prudent course of action is to watch for better price action. Please check that the OpenAI API is functioning correctly and try again later.`;
     }
     
     return result.choices[0].message.content;
   } catch (error) {
-    Logger.log("Error in getPerplexityAnalysis: " + error.toString());
+    Logger.log("Error in getOpenAITradingAnalysis: " + error.toString());
     throw error;
   }
 }
@@ -183,7 +170,7 @@ Given the lack of real-time data, the most prudent course of action is to watch 
 /**
  * Extracts the trading decision and justification from the analysis result
  * 
- * @param {string} analysisResult - The analysis result from Perplexity
+ * @param {string} analysisResult - The analysis result from OpenAI
  * @return {Object} - Object containing the decision and justification
  */
 function parseAnalysisResult(analysisResult) {
@@ -594,9 +581,8 @@ function testMarketSentimentEnhancement() {
  */
 function runTestMarketSentiment() {
   try {
-    Logger.log("Running market sentiment test...");
-    // Call the testMarketSentiment function from MarketSentiment.gs
-    testMarketSentiment();
+    const result = retrieveMarketSentiment();
+    Logger.log(JSON.stringify(result, null, 2));
     return "Market sentiment test completed successfully.";
   } catch (error) {
     Logger.log("Error in runTestMarketSentiment: " + error);
