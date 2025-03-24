@@ -20,16 +20,16 @@ function retrieveAllData() {
     const currentDate = new Date();
     
     // Step 1: Retrieve market sentiment data
-    Logger.log("Step 1: Retrieving market sentiment data...");
+    Logger.log("Retrieving market sentiment data...");
     const marketSentiment = retrieveMarketSentiment();
     
     // Extract any stock symbols mentioned in the market sentiment data
     let mentionedStocks = [];
-    if (marketSentiment && marketSentiment.success && marketSentiment.analysts) {
+    if (marketSentiment && marketSentiment.analysts) {
       // Extract stock symbols from analyst comments
       marketSentiment.analysts.forEach(analyst => {
-        if (analyst.mentionedStocks && Array.isArray(analyst.mentionedStocks)) {
-          mentionedStocks = mentionedStocks.concat(analyst.mentionedStocks);
+        if (analyst.mentionedSymbols && Array.isArray(analyst.mentionedSymbols)) {
+          mentionedStocks = mentionedStocks.concat(analyst.mentionedSymbols);
         }
       });
       
@@ -39,15 +39,15 @@ function retrieveAllData() {
     }
     
     // Step 2: Retrieve key market indicators
-    Logger.log("Step 2: Retrieving key market indicators...");
+    Logger.log("Retrieving key market indicators...");
     const keyMarketIndicators = retrieveKeyMarketIndicators();
     
     // Step 3: Retrieve fundamental metrics for mentioned stocks
-    Logger.log(`Step 3: Retrieving fundamental metrics for ${mentionedStocks.length} stocks...`);
+    Logger.log(`Retrieving fundamental metrics for ${mentionedStocks.length} stocks...`);
     const fundamentalMetrics = retrieveFundamentalMetrics(mentionedStocks);
     
     // Step 4: Retrieve macroeconomic factors
-    Logger.log("Step 4: Retrieving macroeconomic factors...");
+    Logger.log("Retrieving macroeconomic factors...");
     const macroeconomicFactors = retrieveMacroeconomicFactors();
     
     // Compile all data
@@ -107,20 +107,25 @@ function generatePerplexityPrompt(allData) {
     dataSection += "MARKET SENTIMENT DATA:\n";
     if (allData.marketSentiment && allData.marketSentiment.success) {
       const sentimentData = allData.marketSentiment;
-      dataSection += `- Last Updated: ${new Date(sentimentData.lastUpdated).toLocaleString()}\n`;
+      dataSection += `- Last Updated: ${new Date(sentimentData.timestamp).toLocaleString()}\n`;
       
-      if (sentimentData.analysts && sentimentData.analysts.length > 0) {
+      if (sentimentData.data && sentimentData.data.analysts && sentimentData.data.analysts.length > 0) {
         dataSection += "- Analyst Commentary:\n";
-        sentimentData.analysts.forEach(analyst => {
-          dataSection += `  * ${analyst.name}: "${analyst.comment}" (Source: ${analyst.source}, ${new Date(analyst.timestamp).toLocaleString()})\n`;
-          if (analyst.mentionedStocks && analyst.mentionedStocks.length > 0) {
-            dataSection += `    Mentioned stocks: ${analyst.mentionedStocks.join(', ')}\n`;
+        sentimentData.data.analysts.forEach(analyst => {
+          // Fix the undefined analyst commentary issue by using commentary field instead of content
+          const commentary = analyst.commentary || "No recent commentary available";
+          const source = analyst.source || "N/A";
+          const timestamp = analyst.timestamp ? new Date(analyst.timestamp).toLocaleString() : "N/A";
+          
+          dataSection += `  * ${analyst.name}: "${commentary}" (Source: ${source}, ${timestamp})\n`;
+          if (analyst.mentionedSymbols && analyst.mentionedSymbols.length > 0) {
+            dataSection += `    Mentioned stocks: ${analyst.mentionedSymbols.join(', ')}\n`;
           }
         });
       }
       
-      if (sentimentData.overallSentiment) {
-        dataSection += `- Overall Market Sentiment: ${sentimentData.overallSentiment}\n`;
+      if (sentimentData.data && sentimentData.data.overallMarketSentiment) {
+        dataSection += `- Overall Market Sentiment: ${sentimentData.data.overallMarketSentiment}\n`;
       }
     } else {
       dataSection += "- No market sentiment data available\n";
@@ -135,7 +140,7 @@ function generatePerplexityPrompt(allData) {
       if (indicatorsData.majorIndices && indicatorsData.majorIndices.length > 0) {
         dataSection += "- Major Indices:\n";
         indicatorsData.majorIndices.forEach(index => {
-          dataSection += `  * ${index.name}: ${index.price} (${index.percentChange >= 0 ? '+' : ''}${index.percentChange.toFixed(2)}%)\n`;
+          dataSection += `  * ${index.name}: ${index.price} (${index.percentChange >= 0 ? '+' : ''}${formatValue(index.percentChange)}%)\n`;
         });
         
         // Add timestamp if available
@@ -148,7 +153,7 @@ function generatePerplexityPrompt(allData) {
       if (indicatorsData.sectorPerformance && indicatorsData.sectorPerformance.length > 0) {
         dataSection += "- Sector Performance:\n";
         indicatorsData.sectorPerformance.forEach(sector => {
-          dataSection += `  * ${sector.name}: ${sector.percentChange >= 0 ? '+' : ''}${sector.percentChange.toFixed(2)}%\n`;
+          dataSection += `  * ${sector.name}: ${sector.percentChange >= 0 ? '+' : ''}${formatValue(sector.percentChange)}%\n`;
         });
         
         // Add timestamp if available
@@ -168,12 +173,26 @@ function generatePerplexityPrompt(allData) {
       
       // VIX
       if (indicatorsData.volatilityIndices && indicatorsData.volatilityIndices.length > 0) {
-        const vix = indicatorsData.volatilityIndices.find(index => index.name.includes("VIX") || index.symbol === "VIX");
+        const vix = indicatorsData.volatilityIndices.find(index => index.name.includes("VIX") || index.symbol === "^VIX");
         if (vix) {
           dataSection += `- VIX (Volatility Index): ${vix.value}\n`;
-          dataSection += `  * Change: ${vix.change >= 0 ? '+' : ''}${vix.change.toFixed(2)}\n`;
+          dataSection += `  * Change: ${vix.change >= 0 ? '+' : ''}${formatValue(vix.change)}\n`;
+          dataSection += `  * Trend: ${vix.trend}\n`;
+          dataSection += `  * Analysis: ${vix.analysis}\n`;
           dataSection += `  * Last Updated: ${new Date(vix.timestamp || new Date()).toLocaleString()}\n`;
         }
+        
+        // Also include NASDAQ VIX if available
+        const vxn = indicatorsData.volatilityIndices.find(index => index.name.includes("NASDAQ") || index.symbol === "^VXN");
+        if (vxn) {
+          dataSection += `- NASDAQ Volatility Index: ${vxn.value}\n`;
+          dataSection += `  * Change: ${vxn.change >= 0 ? '+' : ''}${formatValue(vxn.change)}\n`;
+          dataSection += `  * Trend: ${vxn.trend}\n`;
+          dataSection += `  * Analysis: ${vxn.analysis}\n`;
+          dataSection += `  * Last Updated: ${new Date(vxn.timestamp || new Date()).toLocaleString()}\n`;
+        }
+      } else {
+        dataSection += "- Volatility data not available\n";
       }
       
       // Economic Events
@@ -212,7 +231,7 @@ function generatePerplexityPrompt(allData) {
           dataSection += `    - Price/Sales: ${formatValue(metric.priceToSales)}\n`;
           dataSection += `    - Debt/Equity: ${formatValue(metric.debtToEquity)}\n`;
           dataSection += `    - Return on Equity: ${formatValue(metric.returnOnEquity * 100)}%\n`;
-          dataSection += `    - Beta: ${formatValue(metric.beta)}\n`;
+          dataSection += `    - Beta: ${formatValue(metric.beta, true)}\n`;
           if (metric.isETF) {
             dataSection += `    - Expense Ratio: ${formatValue(metric.expenseRatio * 100)}%\n`;
           }
@@ -234,22 +253,47 @@ function generatePerplexityPrompt(allData) {
         dataSection += "- Treasury Yields:\n";
         const yields = macroData.treasuryYields.yields || [];
         
-        // Display all available yields
-        yields.forEach(yield => {
-          if (yield && yield.term && yield.yield !== undefined) {
-            dataSection += `  * ${yield.term} Treasury Yield: ${yield.yield.toFixed(2)}% `;
-            if (yield.change !== undefined) {
-              dataSection += `(Change: ${yield.change >= 0 ? '+' : ''}${yield.change.toFixed(2)}%)\n`;
-            } else {
-              dataSection += '\n';
+        // Check if yields is an array (new structure) or object (old structure)
+        if (Array.isArray(yields)) {
+          // New structure: array of objects with term, yield, and change properties
+          yields.forEach(yieldObj => {
+            if (yieldObj.yield !== undefined) {
+              dataSection += `  * ${yieldObj.term} Treasury Yield: ${formatValue(yieldObj.yield)}% `;
+              
+              // Add change information if available
+              if (yieldObj.change !== undefined) {
+                dataSection += `(Change: ${yieldObj.change >= 0 ? '+' : ''}${formatValue(yieldObj.change)}%)\n`;
+              } else {
+                dataSection += '\n';
+              }
             }
-          }
-        });
+          });
+        } else {
+          // Old structure: object with term keys and yield values
+          // Convert the yields object to entries and iterate through them
+          Object.entries(yields).forEach(([term, value]) => {
+            if (value !== undefined) {
+              // Format the term for display (e.g., "twoYear" -> "Two Year")
+              const formattedTerm = term.replace(/([A-Z])/g, ' $1')
+                                      .replace(/^./, str => str.toUpperCase());
+              
+              dataSection += `  * ${formattedTerm} Treasury Yield: ${formatValue(value)}% `;
+              
+              // Add change information if available
+              if (macroData.treasuryYields.changes && macroData.treasuryYields.changes[term] !== undefined) {
+                const change = macroData.treasuryYields.changes[term];
+                dataSection += `(Change: ${change >= 0 ? '+' : ''}${formatValue(change)}%)\n`;
+              } else {
+                dataSection += '\n';
+              }
+            }
+          });
+        }
         
         // Add yield curve information
         if (macroData.treasuryYields.yieldCurve) {
           dataSection += `  * Yield Curve Status: ${macroData.treasuryYields.yieldCurve.status}\n`;
-          dataSection += `  * 10Y-2Y Spread: ${macroData.treasuryYields.yieldCurve.tenYearTwoYearSpread.toFixed(2)}%\n`;
+          dataSection += `  * 10Y-2Y Spread: ${formatValue(macroData.treasuryYields.yieldCurve.tenYearTwoYearSpread)}%\n`;
           dataSection += `  * Inverted: ${macroData.treasuryYields.yieldCurve.isInverted ? 'Yes' : 'No'}\n`;
           dataSection += `  * Analysis: ${macroData.treasuryYields.yieldCurve.analysis}\n`;
         }
@@ -302,85 +346,102 @@ function generatePerplexityPrompt(allData) {
       }
       
       // Inflation
-      if (macroData.inflation) {
+      if (macroData.inflation && !macroData.inflation.error) {
         dataSection += "- Inflation Data:\n";
         
         // CPI data
         if (macroData.inflation.cpi) {
-          dataSection += `  * CPI (Current): ${macroData.inflation.cpi.currentRate}%\n`;
-          dataSection += `  * CPI (Year-over-Year): ${macroData.inflation.cpi.yearOverYearChange}%\n`;
-          dataSection += `  * Core CPI: ${macroData.inflation.cpi.coreRate}%\n`;
+          const cpiYoY = formatValue(macroData.inflation.cpi.yearOverYearChange);
+          const cpiCore = formatValue(macroData.inflation.cpi.coreRate);
+          const cpiChange = macroData.inflation.cpi.change;
+          
+          dataSection += `  * CPI (Year-over-Year): ${cpiYoY}%`;
+          if (cpiChange !== undefined) {
+            dataSection += ` (${cpiChange >= 0 ? '+' : ''}${formatValue(cpiChange)}% from previous month)\n`;
+          } else {
+            dataSection += `\n`;
+          }
+          
+          dataSection += `  * Core CPI (Year-over-Year): ${cpiCore}%\n`;
+          
           if (macroData.inflation.cpi.lastUpdated) {
             dataSection += `  * CPI Last Updated: ${new Date(macroData.inflation.cpi.lastUpdated).toLocaleString()}\n`;
           }
+          
           if (macroData.inflation.cpi.source) {
-            dataSection += `  * CPI Source: ${macroData.inflation.cpi.source}\n`;
+            dataSection += `  * CPI Source: ${macroData.inflation.cpi.source}`;
+            if (macroData.inflation.cpi.sourceUrl) {
+              dataSection += ` (${macroData.inflation.cpi.sourceUrl})`;
+            }
+            dataSection += `\n`;
           }
-          if (macroData.inflation.cpi.isEstimate) {
-            dataSection += `  * Note: CPI data is estimated due to retrieval issues\n`;
-          }
-        }
-        
-        // PPI data
-        if (macroData.inflation.ppi) {
-          dataSection += `  * PPI (Current): ${macroData.inflation.ppi.currentRate}%\n`;
-          dataSection += `  * PPI (Year-over-Year): ${macroData.inflation.ppi.yearOverYearChange}%\n`;
-          dataSection += `  * Core PPI: ${macroData.inflation.ppi.coreRate}%\n`;
-          if (macroData.inflation.ppi.lastUpdated) {
-            dataSection += `  * PPI Last Updated: ${new Date(macroData.inflation.ppi.lastUpdated).toLocaleString()}\n`;
-          }
-          if (macroData.inflation.ppi.source) {
-            dataSection += `  * PPI Source: ${macroData.inflation.ppi.source}\n`;
-          }
-          if (macroData.inflation.ppi.isEstimate) {
-            dataSection += `  * Note: PPI data is estimated due to retrieval issues\n`;
-          }
+        } else {
+          dataSection += "  * CPI data not available\n";
         }
         
         // PCE data
         if (macroData.inflation.pce) {
-          dataSection += `  * PCE (Current): ${macroData.inflation.pce.currentRate}%\n`;
-          dataSection += `  * PCE (Year-over-Year): ${macroData.inflation.pce.yearOverYearChange}%\n`;
-          dataSection += `  * Core PCE: ${macroData.inflation.pce.coreRate}%\n`;
+          const pceYoY = formatValue(macroData.inflation.pce.yearOverYearChange);
+          const pceCore = formatValue(macroData.inflation.pce.coreRate);
+          const pceChange = macroData.inflation.pce.change;
+          
+          dataSection += `  * PCE (Year-over-Year): ${pceYoY}%`;
+          if (pceChange !== undefined) {
+            dataSection += ` (${pceChange >= 0 ? '+' : ''}${formatValue(pceChange)}% from previous month)\n`;
+          } else {
+            dataSection += `\n`;
+          }
+          
+          dataSection += `  * Core PCE (Year-over-Year): ${pceCore}%\n`;
+          dataSection += `  * Note: PCE is the Federal Reserve's preferred inflation measure\n`;
+          
           if (macroData.inflation.pce.lastUpdated) {
             dataSection += `  * PCE Last Updated: ${new Date(macroData.inflation.pce.lastUpdated).toLocaleString()}\n`;
           }
+          
           if (macroData.inflation.pce.source) {
-            dataSection += `  * PCE Source: ${macroData.inflation.pce.source}\n`;
+            dataSection += `  * PCE Source: ${macroData.inflation.pce.source}`;
+            if (macroData.inflation.pce.sourceUrl) {
+              dataSection += ` (${macroData.inflation.pce.sourceUrl})`;
+            }
+            dataSection += `\n`;
           }
-          dataSection += `  * Note: PCE is the Federal Reserve's preferred inflation measure\n`;
-          if (macroData.inflation.pce.isEstimate) {
-            dataSection += `  * Note: PCE data is estimated due to retrieval issues\n`;
-          }
+        } else {
+          dataSection += "  * PCE data not available\n";
         }
         
         // Inflation expectations
         if (macroData.inflation.expectations) {
-          dataSection += `  * Inflation Expectations: 1-Year (${macroData.inflation.expectations.oneYear}%), 5-Year (${macroData.inflation.expectations.fiveYear}%), 10-Year (${macroData.inflation.expectations.tenYear}%)\n`;
+          dataSection += `  * Inflation Expectations: 1-Year (${formatValue(macroData.inflation.expectations.oneYear)}%), 5-Year (${formatValue(macroData.inflation.expectations.fiveYear)}%), 10-Year (${formatValue(macroData.inflation.expectations.tenYear)}%)\n`;
+          
           if (macroData.inflation.expectations.lastUpdated) {
             dataSection += `  * Expectations Last Updated: ${new Date(macroData.inflation.expectations.lastUpdated).toLocaleString()}\n`;
           }
+          
           if (macroData.inflation.expectations.source) {
             dataSection += `  * Expectations Source: ${macroData.inflation.expectations.source}\n`;
           }
-          if (macroData.inflation.expectations.isEstimate) {
-            dataSection += `  * Note: Inflation expectations data is estimated due to retrieval issues\n`;
-          }
+        } else {
+          dataSection += "  * Inflation expectations data not available\n";
         }
         
         // Inflation analysis
         if (macroData.inflation.analysis) {
-          dataSection += `\n**Inflation Analysis**:\n${macroData.inflation.analysis}\n`;
+          dataSection += `\n**Inflation Analysis**:\n${macroData.inflation.analysis}\n\n`;
         }
         
         // Source and timestamp
         if (macroData.inflation.source && macroData.inflation.lastUpdated) {
-          dataSection += `  * Source: ${macroData.inflation.source}`;
+          dataSection += `  * Overall Source: ${macroData.inflation.source}`;
           if (macroData.inflation.sourceUrl) {
             dataSection += ` (${macroData.inflation.sourceUrl})`;
           }
           dataSection += `\n  * Last Updated: ${new Date(macroData.inflation.lastUpdated).toLocaleString()}\n`;
         }
+      } else if (macroData.inflation && macroData.inflation.error) {
+        dataSection += `- Inflation Data: Error retrieving data (${macroData.inflation.message})\n`;
+      } else {
+        dataSection += "- Inflation data not available\n";
       }
       
       // Geopolitical Risks
@@ -457,13 +518,50 @@ function testPerplexityPrompt() {
 }
 
 /**
- * Helper function to format values for display
- * @param {number} value - The value to format
+ * Helper function to format values for display in the prompt
+ * @param {any} value - The value to format
+ * @param {boolean} allowNA - Whether to allow N/A values (default: false)
  * @return {string} The formatted value
  */
-function formatValue(value) {
-  if (value === undefined || value === null || isNaN(value)) {
-    return "N/A";
+function formatValue(value, allowNA = false) {
+  // If the value is zero, we want to display it as 0.00, not N/A
+  if (value === 0) {
+    return "0.00";
   }
-  return value.toFixed(2);
+  
+  if (value === undefined || value === null) {
+    return allowNA ? "N/A" : "0.00";
+  }
+  
+  // Handle string values
+  if (typeof value === 'string') {
+    // If the string is "N/A", return 0.00 or N/A based on allowNA
+    if (value === "N/A") {
+      return allowNA ? "N/A" : "0.00";
+    }
+    
+    // Check if the string can be converted to a number
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      return numValue.toFixed(2);
+    }
+    return value; // Return the string as is if it's not a valid number
+  }
+  
+  // Handle numeric values
+  if (typeof value === 'number' && !isNaN(value)) {
+    return value.toFixed(2);
+  }
+  
+  // Handle objects and arrays - convert to string to prevent errors
+  if (typeof value === 'object') {
+    try {
+      return JSON.stringify(value);
+    } catch (e) {
+      return "Complex Object";
+    }
+  }
+  
+  // For any other type or NaN
+  return String(value);
 }
