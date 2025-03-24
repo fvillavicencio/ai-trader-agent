@@ -64,7 +64,7 @@ function getOpenAITradingAnalysis() {
     Logger.log("Successfully retrieved all trading data");
     
     // Generate the prompt with all our data
-    const prompt = generatePerplexityPrompt(allData);
+    const prompt = generateOpenAIPrompt(allData);
     Logger.log("Generated analysis prompt");
     
     // Send the prompt via email before passing it to OpenAI
@@ -74,11 +74,11 @@ function getOpenAITradingAnalysis() {
     const apiKey = getOpenAIApiKey();
     
     const payload = {
-      model: "gpt-4.5-turbo",  // Using GPT-4.5 model
+      model: "gpt-4-turbo-preview",  // Using GPT-4 Turbo Preview instead of non-existent GPT-4.5
       messages: [
         {
           role: "system",
-          content: "You are an AI agent tasked with providing actionable trading recommendations in JSON format. Your analysis should be accurate, clearly sourced, and include timestamps (Eastern Time) and URLs for cited data points when available. Use ONLY the data provided in the prompt - do not attempt to browse the web or retrieve additional information.\n\nIMPORTANT: Return ONLY raw JSON without any markdown formatting, code blocks, or explanatory text. Do not wrap your response in ```json``` or any other formatting. Your entire response must be a valid, parseable JSON object with the following structure:\n\n{\n  \"decision\": \"Buy Now | Sell Now | Watch for Better Price Action\",\n  \"summary\": \"Brief summary of the recommendation\",\n  \"analysis\": {\n    \"marketSentiment\": [\n      {\"analyst\": \"Analyst Name\", \"comment\": \"Quote or summary\", \"source\": \"Source URL\", \"timestamp\": \"Date and time ET\"}\n    ],\n    \"marketIndicators\": {\n      \"fearGreedIndex\": {\"value\": 0, \"interpretation\": \"Description\"},\n      \"vix\": {\"value\": 0, \"trend\": \"Description\"},\n      \"upcomingEvents\": [\n        {\"event\": \"Event name\", \"date\": \"Date\"}\n      ]\n    },\n    \"fundamentalMetrics\": [\n      {\"symbol\": \"Ticker\", \"name\": \"Company Name\", \"pegRatio\": 0, \"forwardPE\": 0, \"comment\": \"Analysis\"}\n    ],\n    \"macroeconomicFactors\": {\n      \"treasuryYields\": {\"twoYear\": 0, \"tenYear\": 0, \"date\": \"YYYY-MM-DD\", \"source\": \"URL\", \"yieldCurve\": \"normal|inverted|flat\", \"implications\": \"Description\"},\n      \"fedPolicy\": {\"federalFundsRate\": 0.00, \"fomcMeetingDate\": \"YYYY-MM-DD\", \"forwardGuidance\": \"Description\", \"source\": \"URL\"},\n      \"inflation\": {\"cpi\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"pce\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"trend\": \"Description\", \"impactOnFedPolicy\": \"Description\"},\n      \"geopoliticalRisks\": [{\"description\": \"Description\", \"regionsAffected\": [\"Region\"], \"potentialMarketImpact\": \"Description\", \"newsSource\": \"URL\"}]\n    }\n  },\n  \"justification\": \"Detailed explanation for the decision\"\n}"
+          content: "You are an AI agent tasked with providing actionable trading recommendations in JSON format. Your analysis should be accurate and based ONLY on the data provided in the prompt - do not attempt to browse the web or retrieve additional information.\n\nIMPORTANT: Return ONLY raw JSON without any markdown formatting, code blocks, or explanatory text. Do not wrap your response in ```json``` or any other formatting. Your entire response must be a valid, parseable JSON object with the structure specified in the prompt."
         },
         {
           role: "user",
@@ -201,65 +201,169 @@ function parseAnalysisResult(analysisResult) {
     let analysisJson;
     try {
       analysisJson = JSON.parse(cleanedResult);
+      Logger.log("Successfully parsed analysis JSON");
+    } catch (jsonError) {
+      Logger.log("Error parsing JSON: " + jsonError);
       
-      // Extract the decision from the JSON
-      let decision = analysisJson.decision || "Watch for Better Price Action";
+      // If JSON parsing fails, try to extract the decision and justification directly
+      const decisionMatch = analysisResult.match(/Recommendation:\s*(Buy Now|Sell Now|Watch for Better Price Action)/i);
+      const justificationMatch = analysisResult.match(/Justification:\s*([\s\S]*?)(?:\n\n|$)/i);
       
-      // Use the full JSON as justification
-      const justification = JSON.stringify(analysisJson, null, 2);
+      const decision = decisionMatch ? decisionMatch[1] : "Watch for Better Price Action";
+      const justification = justificationMatch ? justificationMatch[1].trim() : "Unable to parse justification from response.";
       
-      return { 
-        decision: decision, 
+      // Return the extracted decision and justification
+      return {
+        decision: decision,
         justification: justification,
-        analysisJson: analysisJson
-      };
-    } catch (e) {
-      // If parsing still fails, log the error with more details
-      Logger.log("Error parsing JSON: " + e);
-      Logger.log("Error position: " + e.message);
-      
-      // Log a portion of the JSON around the error position if possible
-      const errorMatch = e.message.match(/position (\d+)/);
-      if (errorMatch && errorMatch[1]) {
-        const position = parseInt(errorMatch[1]);
-        const start = Math.max(0, position - 50);
-        const end = Math.min(cleanedResult.length, position + 50);
-        Logger.log("JSON snippet around error: " + cleanedResult.substring(start, end));
-      }
-      
-      // Try to extract decision using regex as a fallback
-      const decisionMatch = cleanedResult.match(/decision["\s:]+([^"]+)/i);
-      let decision = "Watch for Better Price Action"; // Default
-      
-      if (decisionMatch && decisionMatch[1]) {
-        decision = decisionMatch[1].trim();
-        // Clean up any trailing commas or quotes
-        decision = decision.replace(/[",}]/g, '').trim();
-      }
-      
-      return { 
-        decision: decision, 
-        justification: cleanedResult,
         analysisJson: null
       };
     }
-  } catch (outerError) {
-    // Catch any errors in the preprocessing steps
-    Logger.log("Error in preprocessing JSON: " + outerError);
     
-    // Fall back to a very basic extraction
-    let decision = "Watch for Better Price Action"; // Default
+    // Extract the decision and justification from the parsed JSON
+    let decision = "Watch for Better Price Action"; // Default decision
+    let justification = ""; // Default empty justification
     
-    // Try to extract decision using a simple pattern
-    if (analysisResult.includes("Buy Now")) {
-      decision = "Buy Now";
-    } else if (analysisResult.includes("Sell Now")) {
-      decision = "Sell Now";
+    if (analysisJson) {
+      // Extract decision
+      if (analysisJson.decision) {
+        decision = analysisJson.decision;
+      }
+      
+      // Extract justification
+      if (analysisJson.justification) {
+        justification = analysisJson.justification;
+      } else if (analysisJson.summary) {
+        justification = analysisJson.summary;
+      }
+      
+      // If there's an analysis section, enhance the justification with it
+      if (analysisJson.analysis) {
+        let enhancedJustification = justification + "\n\n";
+        
+        // Add market sentiment analysis
+        if (analysisJson.analysis.marketSentiment && analysisJson.analysis.marketSentiment.length > 0) {
+          enhancedJustification += "Market Sentiment:\n";
+          analysisJson.analysis.marketSentiment.forEach(sentiment => {
+            enhancedJustification += `- ${sentiment.analyst}: "${sentiment.comment}"\n`;
+          });
+          enhancedJustification += "\n";
+        }
+        
+        // Add market indicators analysis
+        if (analysisJson.analysis.marketIndicators) {
+          enhancedJustification += "Market Indicators:\n";
+          const indicators = analysisJson.analysis.marketIndicators;
+          
+          if (indicators.fearGreedIndex) {
+            enhancedJustification += `- Fear & Greed Index: ${indicators.fearGreedIndex.value} (${indicators.fearGreedIndex.interpretation})\n`;
+          }
+          
+          if (indicators.vix) {
+            enhancedJustification += `- VIX: ${indicators.vix.value} (${indicators.vix.trend})\n`;
+          }
+          
+          if (indicators.upcomingEvents && indicators.upcomingEvents.length > 0) {
+            enhancedJustification += "- Upcoming Events:\n";
+            indicators.upcomingEvents.forEach(event => {
+              enhancedJustification += `  * ${event.event} (${event.date})\n`;
+            });
+          }
+          
+          enhancedJustification += "\n";
+        }
+        
+        // Add fundamental metrics analysis
+        if (analysisJson.analysis.fundamentalMetrics && analysisJson.analysis.fundamentalMetrics.length > 0) {
+          enhancedJustification += "Fundamental Metrics:\n";
+          
+          // First, identify any stocks mentioned by analysts
+          const mentionedStocks = [];
+          if (analysisJson.analysis.marketSentiment) {
+            analysisJson.analysis.marketSentiment.forEach(sentiment => {
+              if (sentiment.mentionedSymbols && Array.isArray(sentiment.mentionedSymbols)) {
+                mentionedStocks.push(...sentiment.mentionedSymbols);
+              }
+            });
+          }
+          
+          // Process mentioned stocks first
+          const processedSymbols = [];
+          if (mentionedStocks.length > 0) {
+            enhancedJustification += "Stocks Mentioned by Analysts:\n";
+            mentionedStocks.forEach(mentionedSymbol => {
+              const stockMetric = analysisJson.analysis.fundamentalMetrics.find(metric => 
+                metric.symbol && metric.symbol.toUpperCase() === mentionedSymbol.toUpperCase()
+              );
+              
+              if (stockMetric) {
+                enhancedJustification += `- ${stockMetric.symbol} (${stockMetric.name}): ${stockMetric.comment || 'No specific analysis'}\n`;
+                processedSymbols.push(stockMetric.symbol);
+              }
+            });
+            enhancedJustification += "\n";
+          }
+          
+          // Process remaining stocks
+          enhancedJustification += "Other Key Stocks/ETFs:\n";
+          analysisJson.analysis.fundamentalMetrics.forEach(metric => {
+            if (!processedSymbols.includes(metric.symbol)) {
+              enhancedJustification += `- ${metric.symbol} (${metric.name}): ${metric.comment || 'No specific analysis'}\n`;
+            }
+          });
+          
+          enhancedJustification += "\n";
+        }
+        
+        // Add macroeconomic factors analysis
+        if (analysisJson.analysis.macroeconomicFactors) {
+          enhancedJustification += "Macroeconomic Factors:\n";
+          const macro = analysisJson.analysis.macroeconomicFactors;
+          
+          if (macro.treasuryYields) {
+            enhancedJustification += `- Treasury Yields: 2Y (${macro.treasuryYields.twoYear}%), 10Y (${macro.treasuryYields.tenYear}%)\n`;
+            enhancedJustification += `  * Yield Curve: ${macro.treasuryYields.yieldCurve}\n`;
+            enhancedJustification += `  * Implications: ${macro.treasuryYields.implications}\n`;
+          }
+          
+          if (macro.fedPolicy) {
+            enhancedJustification += `- Fed Policy: Federal Funds Rate (${macro.fedPolicy.federalFundsRate}%)\n`;
+            enhancedJustification += `  * Next FOMC Meeting: ${macro.fedPolicy.fomcMeetingDate}\n`;
+            enhancedJustification += `  * Forward Guidance: ${macro.fedPolicy.forwardGuidance}\n`;
+          }
+          
+          if (macro.inflation) {
+            enhancedJustification += `- Inflation: CPI Core (${macro.inflation.cpi.core}%), PCE Core (${macro.inflation.pce.core}%)\n`;
+            enhancedJustification += `  * Trend: ${macro.inflation.trend}\n`;
+            enhancedJustification += `  * Impact on Fed Policy: ${macro.inflation.impactOnFedPolicy}\n`;
+          }
+          
+          if (macro.geopoliticalRisks && macro.geopoliticalRisks.length > 0) {
+            enhancedJustification += "- Geopolitical Risks:\n";
+            macro.geopoliticalRisks.forEach(risk => {
+              enhancedJustification += `  * ${risk.description} (Regions: ${risk.regionsAffected.join(', ')})\n`;
+              enhancedJustification += `    Impact: ${risk.potentialMarketImpact}\n`;
+            });
+          }
+        }
+        
+        justification = enhancedJustification;
+      }
     }
     
+    // Return the extracted decision and justification
     return {
       decision: decision,
-      justification: analysisResult,
+      justification: justification,
+      analysisJson: analysisJson
+    };
+  } catch (error) {
+    Logger.log("Error in parseAnalysisResult: " + error);
+    
+    // Return a default response in case of error
+    return {
+      decision: "Watch for Better Price Action",
+      justification: "Unable to parse the analysis result: " + error,
       analysisJson: null
     };
   }
@@ -588,4 +692,107 @@ function runTestMarketSentiment() {
     Logger.log("Error in runTestMarketSentiment: " + error);
     return "Error: " + error;
   }
+}
+
+/**
+ * Test function to verify that mentioned stocks are properly included in the fundamental metrics analysis
+ */
+function testMentionedStocksAnalysis() {
+  try {
+    Logger.log("Starting test for mentioned stocks analysis...");
+    
+    // Retrieve all data for trading analysis
+    Logger.log("Retrieving all data for trading analysis...");
+    const allData = retrieveAllData();
+    
+    if (!allData.success) {
+      Logger.log(`Error retrieving data: ${allData.message}`);
+      return;
+    }
+    
+    // Extract mentioned stocks from market sentiment data using the improved function
+    const mentionedStocks = extractMentionedStocks(allData.marketSentiment);
+    
+    Logger.log(`Found ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.length > 0 ? mentionedStocks.join(', ') : 'None'}`);
+    
+    // Check if mentioned stocks are included in fundamental metrics
+    const includedStocks = [];
+    const missingStocks = [];
+    
+    if (allData.fundamentalMetrics && allData.fundamentalMetrics.success && 
+        allData.fundamentalMetrics.data && Array.isArray(allData.fundamentalMetrics.data)) {
+      
+      const analyzedStocks = allData.fundamentalMetrics.data.map(stock => stock.symbol);
+      
+      mentionedStocks.forEach(stock => {
+        if (analyzedStocks.includes(stock)) {
+          includedStocks.push(stock);
+        } else {
+          missingStocks.push(stock);
+        }
+      });
+    }
+    
+    // Store the results for final logging
+    const results = {
+      success: true,
+      mentionedStocks: mentionedStocks,
+      includedStocks: includedStocks,
+      missingStocks: missingStocks
+    };
+    
+    Logger.log(`Found ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.length > 0 ? mentionedStocks.join(', ') : 'None'}`);
+    Logger.log(`Included mentioned stocks: ${includedStocks.length > 0 ? includedStocks.join(', ') : 'None'}`);
+    Logger.log(`Missing mentioned stocks: ${missingStocks.length > 0 ? missingStocks.join(', ') : 'None'}`);
+    
+    return results;
+  } catch (error) {
+    Logger.log(`Error testing mentioned stocks analysis: ${error}`);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Runs all test functions to verify the stock extraction and analysis functionality
+ */
+function runAllTests() {
+  Logger.log("=== RUNNING ALL TESTS ===");
+  
+  // Test 1: Mentioned Stocks Extraction
+  Logger.log("\n=== TEST 1: Mentioned Stocks Extraction ===");
+  try {
+    const extractionResult = testMentionedStocksExtraction();
+    Logger.log(`Test result: ${extractionResult.success ? 'SUCCESS' : 'FAILURE'}`);
+    if (extractionResult.extractedStocks) {
+      Logger.log(`Extracted stocks: ${extractionResult.extractedStocks.join(', ')}`);
+    }
+    if (extractionResult.missingStocks && extractionResult.missingStocks.length > 0) {
+      Logger.log(`Missing stocks: ${extractionResult.missingStocks.join(', ')}`);
+    }
+  } catch (error) {
+    Logger.log(`Error running extraction test: ${error}`);
+  }
+  
+  // Test 2: Mentioned Stocks Analysis
+  Logger.log("\n=== TEST 2: Mentioned Stocks Analysis ===");
+  try {
+    const analysisResult = testMentionedStocksAnalysis();
+    Logger.log(`Test result: ${analysisResult.success ? 'SUCCESS' : 'FAILURE'}`);
+    if (analysisResult.mentionedStocks) {
+      Logger.log(`Mentioned stocks: ${analysisResult.mentionedStocks.join(', ')}`);
+    }
+    if (analysisResult.includedStocks) {
+      Logger.log(`Included stocks: ${analysisResult.includedStocks.join(', ')}`);
+    }
+    if (analysisResult.missingStocks) {
+      Logger.log(`Missing stocks: ${analysisResult.missingStocks.join(', ')}`);
+    }
+  } catch (error) {
+    Logger.log(`Error running analysis test: ${error}`);
+  }
+  
+  Logger.log("\n=== ALL TESTS COMPLETED ===");
 }

@@ -57,8 +57,41 @@ function extractMentionedStocks(marketSentimentData) {
   // Extract from analysts
   if (marketSentimentData.analysts && Array.isArray(marketSentimentData.analysts)) {
     marketSentimentData.analysts.forEach(analyst => {
-      if (analyst.mentionedSymbols && Array.isArray(analyst.mentionedSymbols)) {
+      // Check both mentionedStocks and mentionedSymbols for backward compatibility
+      if (analyst.mentionedStocks && Array.isArray(analyst.mentionedStocks)) {
+        analyst.mentionedStocks.forEach(symbol => {
+          if (symbol && !mentionedStocks.includes(symbol)) {
+            mentionedStocks.push(symbol);
+          }
+        });
+      } else if (analyst.mentionedSymbols && Array.isArray(analyst.mentionedSymbols)) {
+        // For backward compatibility
+        analyst.mentionedStocks = analyst.mentionedSymbols; // Add mentionedStocks property
         analyst.mentionedSymbols.forEach(symbol => {
+          if (symbol && !mentionedStocks.includes(symbol)) {
+            mentionedStocks.push(symbol);
+          }
+        });
+      } else {
+        // Try to extract stock symbols from the commentary
+        const extractedSymbols = extractSymbolsFromText(analyst.commentary || "");
+        if (extractedSymbols.length > 0) {
+          analyst.mentionedStocks = extractedSymbols;
+          extractedSymbols.forEach(symbol => {
+            if (!mentionedStocks.includes(symbol)) {
+              mentionedStocks.push(symbol);
+            }
+          });
+        }
+      }
+    });
+  }
+  
+  // Extract from sentiment indicators
+  if (marketSentimentData.sentimentIndicators && Array.isArray(marketSentimentData.sentimentIndicators)) {
+    marketSentimentData.sentimentIndicators.forEach(indicator => {
+      if (indicator.mentionedStocks && Array.isArray(indicator.mentionedStocks)) {
+        indicator.mentionedStocks.forEach(symbol => {
           if (symbol && !mentionedStocks.includes(symbol)) {
             mentionedStocks.push(symbol);
           }
@@ -68,6 +101,33 @@ function extractMentionedStocks(marketSentimentData) {
   }
   
   return mentionedStocks;
+}
+
+/**
+ * Extracts stock symbols from text
+ * @param {String} text - The text to extract symbols from
+ * @return {Array} Array of extracted stock symbols
+ */
+function extractSymbolsFromText(text) {
+  if (!text) return [];
+  
+  // Common stock symbols pattern (1-5 uppercase letters)
+  const symbolPattern = /\b[A-Z]{1,5}\b/g;
+  
+  // Exclude common words that might be mistaken for stock symbols
+  const excludeWords = [
+    "I", "A", "AN", "THE", "AND", "OR", "BUT", "IF", "THEN", "ELSE", "FOR", "TO", "IN", "ON", "AT", "BY", 
+    "WITH", "FROM", "OF", "IS", "ARE", "AM", "BE", "BEEN", "WAS", "WERE", "US", "CEO", "CFO", "CTO", "COO",
+    "GDP", "CPI", "PCE", "FED", "FOMC", "IMF", "ECB", "USD", "EUR", "JPY", "GBP", "CNY", "BUY", "SELL"
+  ];
+  
+  // Extract potential symbols
+  const matches = text.match(symbolPattern) || [];
+  
+  // Filter out excluded words and duplicates
+  const symbols = [...new Set(matches.filter(symbol => !excludeWords.includes(symbol)))];
+  
+  return symbols;
 }
 
 /**
@@ -177,48 +237,70 @@ function parseOpenAIResponse(response) {
     // Extract the content from the response
     const content = response.choices[0].message.content;
     
-    // Try multiple approaches to extract JSON
-    let marketSentimentData;
+    // Try to extract JSON using regex
+    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
     
-    // First, try to extract JSON using regex for JSON object pattern
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
+    let jsonData;
     if (jsonMatch) {
-      try {
-        marketSentimentData = JSON.parse(jsonMatch[0]);
-        Logger.log("Successfully extracted market sentiment JSON using regex pattern");
-      } catch (parseError) {
-        Logger.log("Error parsing extracted market sentiment JSON: " + parseError);
-      }
+      // Parse the JSON
+      jsonData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      Logger.log("Successfully extracted market sentiment JSON using regex pattern");
+    } else {
+      // If we can't extract JSON, return an error
+      throw new Error("Could not extract JSON from OpenAI response");
     }
     
-    // If that fails, try to extract JSON from code blocks
-    if (!marketSentimentData) {
-      const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (codeBlockMatch && codeBlockMatch[1]) {
-        try {
-          marketSentimentData = JSON.parse(codeBlockMatch[1].trim());
-          Logger.log("Successfully extracted market sentiment JSON from code block");
-        } catch (parseError) {
-          Logger.log("Error parsing market sentiment JSON from code block: " + parseError);
+    // Ensure the data has the expected structure
+    if (!jsonData.analysts || !Array.isArray(jsonData.analysts)) {
+      throw new Error("Invalid market sentiment data structure: missing analysts array");
+    }
+    
+    // Ensure each analyst has the required fields and mentionedStocks is an array
+    jsonData.analysts.forEach(analyst => {
+      analyst.mentionedStocks = analyst.mentionedStocks || analyst.mentionedSymbols || [];
+      
+      // If mentionedStocks is a string, convert it to an array
+      if (typeof analyst.mentionedStocks === 'string') {
+        analyst.mentionedStocks = analyst.mentionedStocks.split(',').map(s => s.trim());
+      }
+      
+      // Ensure mentionedStocks is an array
+      if (!Array.isArray(analyst.mentionedStocks)) {
+        analyst.mentionedStocks = [];
+      }
+      
+      // Remove mentionedSymbols to standardize on mentionedStocks
+      delete analyst.mentionedSymbols;
+    });
+    
+    // Ensure sentiment indicators have the required fields
+    if (jsonData.sentimentIndicators && Array.isArray(jsonData.sentimentIndicators)) {
+      jsonData.sentimentIndicators.forEach(indicator => {
+        indicator.mentionedStocks = indicator.mentionedStocks || indicator.mentionedSymbols || [];
+        
+        // If mentionedStocks is a string, convert it to an array
+        if (typeof indicator.mentionedStocks === 'string') {
+          indicator.mentionedStocks = indicator.mentionedStocks.split(',').map(s => s.trim());
         }
-      }
+        
+        // Ensure mentionedStocks is an array
+        if (!Array.isArray(indicator.mentionedStocks)) {
+          indicator.mentionedStocks = [];
+        }
+        
+        // Remove mentionedSymbols to standardize on mentionedStocks
+        delete indicator.mentionedSymbols;
+      });
     }
     
-    // If both approaches fail, try to parse the entire content as JSON
-    if (!marketSentimentData) {
-      try {
-        marketSentimentData = JSON.parse(content);
-        Logger.log("Successfully parsed entire market sentiment content as JSON");
-      } catch (parseError) {
-        Logger.log("Error parsing entire market sentiment content as JSON: " + parseError);
-        throw new Error("Could not extract JSON from OpenAI response for market sentiment");
-      }
-    }
-    
-    return marketSentimentData;
+    return jsonData;
   } catch (error) {
     Logger.log(`Error parsing OpenAI response: ${error}`);
-    throw new Error(`Failed to parse OpenAI response: ${error}`);
+    return {
+      analysts: [],
+      sentimentIndicators: [],
+      error: `Error parsing OpenAI response: ${error}`
+    };
   }
 }
 
@@ -227,56 +309,56 @@ function parseOpenAIResponse(response) {
  * @return {String} The prompt for OpenAI
  */
 function getOpenAIMarketSentimentPrompt() {
-  const currentDate = new Date().toISOString();
-  return `
-  Provide a comprehensive market sentiment analysis with the following components:
+  const currentDate = new Date();
+  const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
+  
+  return `You are a financial analyst assistant. Analyze recent market sentiment from CNBC analysts and other financial experts.
 
-  1. Analyst Commentary: Include comments from at least 5 prominent Wall Street analysts or strategists from the past 24 hours. For each analyst, provide:
-     - Name and firm
-     - Their specific commentary (direct quotes when possible)
-     - Sentiment (Bullish, Neutral, Bearish)
-     - Any specific stocks or sectors they mentioned (use ticker symbols)
-     - Source of their commentary
+Current Date: ${formattedDate}
 
-  2. Sentiment Indicators: Include at least 5 current market sentiment indicators such as:
-     - VIX (current value and recent trend)
-     - Put/Call Ratio
-     - CNN Fear & Greed Index
-     - AAII Investor Sentiment Survey
-     - Bullish/Bearish Percentage
-     - Any other relevant sentiment metrics
-     - For each indicator, provide the current value, interpretation, and source
+Task: Generate a comprehensive market sentiment analysis based on recent commentary from CNBC analysts and other financial experts. Include the following:
 
-  Format your response as a valid JSON object with this structure:
-  {
-    "overallMarketSentiment": "Bullish/Neutral/Bearish",
-    "sentimentSummary": "Brief 1-2 sentence summary of overall market sentiment",
-    "analysts": [
-      {
-        "name": "Analyst Name",
-        "firm": "Firm Name",
-        "commentary": "Direct quote or summary of their commentary",
-        "sentiment": "Bullish/Neutral/Bearish",
-        "mentionedSymbols": ["AAPL", "MSFT"],
-        "source": "Source Name",
-        "url": "https://source-url.com"
-      }
-    ],
-    "sentimentIndicators": [
-      {
-        "name": "Indicator Name",
-        "value": "Current value",
-        "interpretation": "Brief interpretation",
-        "source": "Source Name",
-        "url": "https://source-url.com"
-      }
-    ]
-  }
+1. Recent commentary from CNBC analysts (Dan Nathan, Josh Brown, Steve Weiss, Joe Terranova)
+2. Recent insights from Dan Niles, Mohamed El-Erian, and other prominent financial figures if available
+3. Recent sentiment indicators from major financial institutions
 
-  DO NOT include any explanatory text, apologies, or content outside the JSON format.
-  Provide EXACT URLs to specific articles or data sources, not just homepage URLs.
-  Current date: ${currentDate}
-  `;
+Format your response as a valid JSON object with the following structure:
+
+{
+  "analysts": [
+    {
+      "name": "Analyst Name",
+      "firm": "Firm Name",
+      "commentary": "Direct quote or summary of their commentary",
+      "sentiment": "Bullish/Neutral/Bearish",
+      "mentionedStocks": ["AAPL", "MSFT"],
+      "source": "Source Name",
+      "url": "https://source-url.com"
+    }
+  ],
+  "sentimentIndicators": [
+    {
+      "name": "Indicator Name",
+      "value": "Current Value",
+      "interpretation": "What this value suggests",
+      "trend": "Increasing/Decreasing/Stable",
+      "mentionedStocks": ["AAPL", "MSFT"],
+      "source": "Source Name"
+    }
+  ],
+  "overallSentiment": "Bullish/Neutral/Bearish",
+  "summary": "Brief summary of the overall market sentiment"
+}
+
+Important guidelines:
+1. For each analyst, include their most recent commentary (within the last week if possible)
+2. For each analyst, identify any specific stocks they mentioned and include them in the mentionedStocks array
+3. For each sentiment indicator, include the most recent value and what it suggests
+4. Provide a brief summary of the overall market sentiment
+5. Ensure all data is accurate and from reputable sources
+6. Format the response as a valid JSON object
+
+Your response should ONLY include the JSON object, without any additional text.`;
 }
 
 /**
@@ -299,6 +381,98 @@ function testMarketSentiment() {
     return marketSentiment;
   } catch (error) {
     Logger.log(`Error testing market sentiment: ${error}`);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Tests the extraction of mentioned stocks from market sentiment data
+ */
+function testMentionedStocksExtraction() {
+  try {
+    Logger.log("Testing extraction of mentioned stocks from market sentiment data...");
+    
+    // Create a sample market sentiment data object
+    const sampleData = {
+      analysts: [
+        {
+          name: "Dan Nathan",
+          firm: "RiskReversal Advisors",
+          commentary: "I'm cautious on tech stocks like AAPL and MSFT given current valuations.",
+          sentiment: "Bearish",
+          mentionedStocks: ["AAPL", "MSFT"]
+        },
+        {
+          name: "Josh Brown",
+          firm: "Ritholtz Wealth Management",
+          commentary: "NVDA continues to show strength in the AI space.",
+          sentiment: "Bullish",
+          mentionedSymbols: ["NVDA"] // Using old format to test backward compatibility
+        },
+        {
+          name: "Steve Weiss",
+          firm: "Short Hills Capital Partners",
+          commentary: "I think Amazon (AMZN) and Google (GOOGL) are well-positioned for the next quarter.",
+          sentiment: "Bullish"
+          // No mentioned stocks array, should extract from commentary
+        }
+      ],
+      sentimentIndicators: [
+        {
+          name: "VIX",
+          value: "15.2",
+          interpretation: "Low volatility indicates market complacency",
+          mentionedStocks: ["SPY"]
+        }
+      ]
+    };
+    
+    // Extract mentioned stocks
+    const mentionedStocks = extractMentionedStocks(sampleData);
+    
+    // Log the results
+    Logger.log(`Extracted ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.join(', ')}`);
+    
+    // Verify that stocks were extracted correctly
+    const expectedStocks = ["AAPL", "MSFT", "NVDA", "AMZN", "GOOGL", "SPY"];
+    const missingStocks = expectedStocks.filter(stock => !mentionedStocks.includes(stock));
+    const unexpectedStocks = mentionedStocks.filter(stock => !expectedStocks.includes(stock));
+    
+    if (missingStocks.length > 0) {
+      Logger.log(`WARNING: Failed to extract these expected stocks: ${missingStocks.join(', ')}`);
+    } else {
+      Logger.log("SUCCESS: All expected stocks were extracted correctly");
+    }
+    
+    if (unexpectedStocks.length > 0) {
+      Logger.log(`WARNING: Extracted these unexpected stocks: ${unexpectedStocks.join(', ')}`);
+    }
+    
+    // Verify that the mentionedStocks property was added to all analysts
+    let allAnalystsHaveMentionedStocks = true;
+    sampleData.analysts.forEach((analyst, index) => {
+      if (!analyst.mentionedStocks || !Array.isArray(analyst.mentionedStocks)) {
+        Logger.log(`WARNING: Analyst at index ${index} does not have a mentionedStocks array`);
+        allAnalystsHaveMentionedStocks = false;
+      }
+    });
+    
+    if (allAnalystsHaveMentionedStocks) {
+      Logger.log("SUCCESS: All analysts have a mentionedStocks array");
+    }
+    
+    return {
+      success: true,
+      extractedStocks: mentionedStocks,
+      missingStocks: missingStocks,
+      unexpectedStocks: unexpectedStocks,
+      allAnalystsHaveMentionedStocks: allAnalystsHaveMentionedStocks
+    };
+  } catch (error) {
+    Logger.log(`Error testing mentioned stocks extraction: ${error}`);
     return {
       success: false,
       error: error.toString()

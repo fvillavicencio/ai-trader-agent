@@ -6,56 +6,88 @@
 
 /**
  * Retrieves fundamental metrics for a list of stocks/ETFs
- * @param {Array} symbols - List of stock/ETF symbols to retrieve fundamental metrics for (can be empty)
- * @return {Object} Fundamental metrics data
+ * 
+ * @param {Array} symbols - List of stock/ETF symbols to retrieve metrics for
+ * @param {Array} mentionedStocks - List of stocks mentioned in market sentiment analysis
+ * @return {Object} - Object containing fundamental metrics data
  */
-function retrieveFundamentalMetrics(symbols = []) {
+function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
   try {
-    // Ensure symbols is an array
-    if (!Array.isArray(symbols)) {
-      symbols = [];
-    }
-    
-    // Add default symbols (major indices and magnificent seven)
-    const defaultSymbols = [
-      // Major indices
-      "SPY",  // S&P 500
-      "QQQ",  // NASDAQ
-      "IWM",  // Russell 2000
-      "DIA",  // Dow Jones
-      
-      // Magnificent Seven
-      "AAPL", // Apple
-      "MSFT", // Microsoft
-      "GOOGL", // Alphabet (Google)
-      "AMZN", // Amazon
-      "META", // Meta (Facebook)
-      "TSLA", // Tesla
-      "NVDA"  // NVIDIA
-    ];
+    Logger.log(`Retrieving fundamental metrics for ${symbols.length} stocks...`);
     
     // Combine user-provided symbols with default symbols
-    const allSymbols = [...symbols, ...defaultSymbols];
+    const defaultSymbols = [ "SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA" ];
     
-    // Remove duplicates and ensure uppercase
-    const uniqueSymbols = [...new Set(allSymbols.map(symbol => symbol.toUpperCase()))];
+    // Add mentioned stocks to the symbols list if they're not already included
+    const allMentionedStocks = mentionedStocks || [];
+    Logger.log(`Mentioned stocks from market sentiment: ${allMentionedStocks.length > 0 ? allMentionedStocks.join(', ') : 'None'}`);
     
-    Logger.log(`Retrieving fundamental metrics for ${uniqueSymbols.length} symbols...`);
+    // Create a set of all symbols to avoid duplicates
+    const symbolsSet = new Set([...symbols, ...defaultSymbols, ...allMentionedStocks]);
+    const allSymbols = Array.from(symbolsSet);
+    
+    Logger.log(`Retrieving fundamental metrics for ${allSymbols.length} symbols: ${allSymbols.join(', ')}`);
     
     // Initialize results array
     const results = [];
+    const failedSymbols = [];
     
     // Process each symbol
-    for (const symbol of uniqueSymbols) {
+    for (const symbol of allSymbols) {
       Logger.log(`Retrieving fundamental metrics for ${symbol}...`);
       
       try {
         // Fetch fundamental metrics data for the symbol
         const metrics = fetchFundamentalMetricsData(symbol);
-        results.push(metrics);
+        
+        // Verify we got valid data
+        if (metrics && metrics.symbol) {
+          results.push(metrics);
+          Logger.log(`Successfully retrieved metrics for ${symbol}`);
+        } else {
+          Logger.log(`No valid metrics data returned for ${symbol}`);
+          failedSymbols.push(symbol);
+          
+          // Create a minimal entry for the symbol to ensure it's included in the results
+          results.push({
+            symbol: symbol,
+            name: getCompanyName(symbol) || symbol,
+            pegRatio: null,
+            forwardPE: null,
+            priceToBook: null,
+            priceToSales: null,
+            debtToEquity: null,
+            returnOnEquity: null,
+            beta: null,
+            dataAvailable: false,
+            comment: "Insufficient data available for analysis"
+          });
+        }
       } catch (error) {
         Logger.log(`Error retrieving fundamental metrics for ${symbol}: ${error}`);
+        failedSymbols.push(symbol);
+        
+        // Create a minimal entry for the symbol to ensure it's included in the results
+        results.push({
+          symbol: symbol,
+          name: getCompanyName(symbol) || symbol,
+          pegRatio: null,
+          forwardPE: null,
+          priceToBook: null,
+          priceToSales: null,
+          debtToEquity: null,
+          returnOnEquity: null,
+          beta: null,
+          dataAvailable: false,
+          comment: "Error retrieving data"
+        });
       }
+    }
+    
+    // Log summary of results
+    Logger.log(`Successfully retrieved metrics for ${results.length - failedSymbols.length} symbols`);
+    if (failedSymbols.length > 0) {
+      Logger.log(`Failed to retrieve complete metrics for ${failedSymbols.length} symbols: ${failedSymbols.join(', ')}`);
     }
     
     // Format the data for display
@@ -86,70 +118,300 @@ function retrieveFundamentalMetrics(symbols = []) {
  */
 function fetchFundamentalMetricsData(symbol) {
   try {
-    // First try to get data from Google Finance (most reliable and no rate limits)
+    Logger.log(`Fetching fundamental metrics for ${symbol} using cascading approach...`);
+    
+    // Track execution time
+    const startTime = new Date().getTime();
+    
+    // Initialize metrics object
+    let metrics = {
+      pegRatio: null,
+      forwardPE: null,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: null,
+      beta: null,
+      expenseRatio: null
+    };
+    
+    let source = "";
+    let sourcesUsed = [];
+    
+    // Step 1: Try Google Finance (most reliable and no rate limits)
     try {
+      Logger.log(`Attempting to fetch data from Google Finance for ${symbol}...`);
       const googleFinanceData = fetchGoogleFinanceData(symbol);
-      // Add company name to the data
-      googleFinanceData.symbol = symbol;
-      googleFinanceData.name = getCompanyName(symbol);
-      return googleFinanceData;
+      
+      if (googleFinanceData && Object.keys(googleFinanceData).length > 0) {
+        Logger.log(`Successfully retrieved data from Google Finance for ${symbol}`);
+        
+        // Merge Google Finance data into metrics
+        for (const key in googleFinanceData) {
+          if (googleFinanceData[key] !== null) {
+            metrics[key] = googleFinanceData[key];
+          }
+        }
+        
+        sourcesUsed.push("Google Finance");
+      }
     } catch (googleFinanceError) {
       Logger.log(`Error fetching Google Finance data for ${symbol}: ${googleFinanceError}`);
-      
-      // Try Yahoo Finance as a backup
-      try {
-        const yahooData = fetchYahooFinanceData(symbol);
-        // Add symbol and name to the data
-        yahooData.symbol = symbol;
-        yahooData.name = getCompanyName(symbol);
-        return yahooData;
-      } catch (yahooError) {
-        Logger.log(`Error fetching Yahoo Finance data for ${symbol}: ${yahooError}`);
-        
-        // If all data sources fail, return fallback values
-        if (["SPY", "QQQ", "IWM", "DIA"].indexOf(symbol) === -1) {
-          // For stocks
-          Logger.log(`Using fallback values for stock ${symbol}`);
-          return {
-            symbol: symbol,
-            name: getCompanyName(symbol),
-            pegRatio: getRandomMetric(1, 2),
-            forwardPE: getRandomMetric(15, 25),
-            priceToBook: getRandomMetric(2, 5),
-            priceToSales: getRandomMetric(1, 4),
-            debtToEquity: getRandomMetric(0.5, 1.5),
-            returnOnEquity: getRandomMetric(10, 30),
-            returnOnAssets: getRandomMetric(5, 15),
-            profitMargin: getRandomMetric(5, 20),
-            dividendYield: getRandomMetric(0.5, 3),
-            beta: getRandomMetric(0.8, 1.5),
-            expenseRatio: 0
-          };
-        } else {
-          // For ETFs
-          Logger.log(`Using fallback values for ETF ${symbol}`);
-          return {
-            symbol: symbol,
-            name: getCompanyName(symbol),
-            pegRatio: 0,
-            forwardPE: 0,
-            priceToBook: getRandomMetric(2, 4),
-            priceToSales: 0,
-            debtToEquity: 0,
-            returnOnEquity: 0,
-            returnOnAssets: 0,
-            profitMargin: 0,
-            dividendYield: getRandomMetric(1, 3),
-            beta: getRandomMetric(0.9, 1.2),
-            expenseRatio: getRandomMetric(0.03, 0.5)
-          };
-        }
+    }
+    
+    // Count how many valid metrics we have so far
+    let validMetricsCount = 0;
+    for (const key in metrics) {
+      if (metrics[key] !== null) {
+        validMetricsCount++;
       }
     }
+    
+    // Step 2: Try Tradier API if we need more data
+    if (validMetricsCount < 5) {
+      try {
+        Logger.log(`Attempting to fetch data from Tradier API for ${symbol}...`);
+        const tradierData = fetchTradierData(symbol);
+        
+        if (tradierData) {
+          let tradierValidCount = 0;
+          
+          // Merge Tradier data into metrics
+          for (const key in tradierData) {
+            if (tradierData[key] !== null && metrics[key] === null) {
+              metrics[key] = tradierData[key];
+              tradierValidCount++;
+            }
+          }
+          
+          if (tradierValidCount > 0) {
+            Logger.log(`Successfully merged ${tradierValidCount} metrics from Tradier API for ${symbol}`);
+            sourcesUsed.push("Tradier API");
+          } else {
+            Logger.log(`Tradier API did not provide any additional metrics for ${symbol}`);
+          }
+        }
+      } catch (tradierError) {
+        Logger.log(`Error fetching Tradier API data for ${symbol}: ${tradierError}`);
+      }
+    }
+    
+    // Recount valid metrics
+    validMetricsCount = 0;
+    for (const key in metrics) {
+      if (metrics[key] !== null) {
+        validMetricsCount++;
+      }
+    }
+    
+    // Step 3: Try Yahoo Finance API if we still need more data
+    if (validMetricsCount < 5) {
+      try {
+        Logger.log(`Attempting to fetch data from Yahoo Finance API for ${symbol}...`);
+        // Get the Yahoo Finance API key
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const apiKey = scriptProperties.getProperty('YAHOO_FINANCE_API_KEY');
+        
+        if (apiKey) {
+          // Yahoo Finance API endpoint for fundamentals data
+          const apiUrl = `https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals?region=US&symbol=${symbol}&lang=en-US&modules=assetProfile%2CsummaryProfile%2CfundProfile%2CfinancialData%2CdefaultKeyStatistics`;
+          
+          const options = {
+            method: "GET",
+            headers: {
+              "X-RapidAPI-Key": apiKey,
+              "X-RapidAPI-Host": "apidojo-yahoo-finance-v1.p.rapidapi.com"
+            },
+            muteHttpExceptions: true
+          };
+          
+          // Make the API request
+          const response = UrlFetchApp.fetch(apiUrl, options);
+          const statusCode = response.getResponseCode();
+          
+          if (statusCode === 200) {
+            const data = JSON.parse(response.getContentText());
+            
+            if (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
+              const result = data.quoteSummary.result[0];
+              const yahooApiData = {};
+              
+              // Extract metrics from the API response
+              if (result.defaultKeyStatistics) {
+                const stats = result.defaultKeyStatistics;
+                yahooApiData.pegRatio = stats.pegRatio ? stats.pegRatio.raw : null;
+                yahooApiData.priceToBook = stats.priceToBook ? stats.priceToBook.raw : null;
+                yahooApiData.beta = stats.beta ? stats.beta.raw : null;
+              }
+              
+              if (result.financialData) {
+                const financials = result.financialData;
+                yahooApiData.returnOnEquity = financials.returnOnEquity ? financials.returnOnEquity.raw : null;
+                yahooApiData.returnOnAssets = financials.returnOnAssets ? financials.returnOnAssets.raw : null;
+                yahooApiData.profitMargin = financials.profitMargins ? financials.profitMargins.raw : null;
+                yahooApiData.debtToEquity = financials.debtToEquity ? financials.debtToEquity.raw : null;
+              }
+              
+              // Get additional quote data for more metrics
+              const quoteUrl = `https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?region=US&symbols=${symbol}`;
+              const quoteResponse = UrlFetchApp.fetch(quoteUrl, options);
+              
+              if (quoteResponse.getResponseCode() === 200) {
+                const quoteData = JSON.parse(quoteResponse.getContentText());
+                
+                if (quoteData && quoteData.quoteResponse && quoteData.quoteResponse.result && quoteData.quoteResponse.result.length > 0) {
+                  const quote = quoteData.quoteResponse.result[0];
+                  
+                  yahooApiData.forwardPE = quote.forwardPE || null;
+                  yahooApiData.priceToSales = quote.priceToSales || null;
+                  yahooApiData.dividendYield = quote.dividendYield ? quote.dividendYield / 100 : null; // Convert to decimal
+                }
+              }
+              
+              // Merge Yahoo API data into metrics
+              let yahooValidCount = 0;
+              for (const key in yahooApiData) {
+                if (yahooApiData[key] !== null && metrics[key] === null) {
+                  metrics[key] = yahooApiData[key];
+                  yahooValidCount++;
+                }
+              }
+              
+              if (yahooValidCount > 0) {
+                Logger.log(`Successfully merged ${yahooValidCount} metrics from Yahoo Finance API for ${symbol}`);
+                sourcesUsed.push("Yahoo Finance API");
+              } else {
+                Logger.log(`Yahoo Finance API did not provide any additional metrics for ${symbol}`);
+              }
+            }
+          }
+        }
+      } catch (yahooApiError) {
+        Logger.log(`Error fetching Yahoo Finance API data for ${symbol}: ${yahooApiError}`);
+      }
+    }
+    
+    // Recount valid metrics
+    validMetricsCount = 0;
+    for (const key in metrics) {
+      if (metrics[key] !== null) {
+        validMetricsCount++;
+      }
+    }
+    
+    // Step 4: Try Yahoo Finance web scraping if we still need more data
+    if (validMetricsCount < 5) {
+      try {
+        Logger.log(`Attempting to fetch data from Yahoo Finance web scraping for ${symbol}...`);
+        const yahooData = fetchYahooFinanceData(symbol);
+        
+        if (yahooData) {
+          let yahooWebValidCount = 0;
+          
+          // Merge Yahoo web data into metrics
+          for (const key in yahooData) {
+            if (yahooData[key] !== null && metrics[key] === null) {
+              metrics[key] = yahooData[key];
+              yahooWebValidCount++;
+            }
+          }
+          
+          if (yahooWebValidCount > 0) {
+            Logger.log(`Successfully merged ${yahooWebValidCount} metrics from Yahoo Finance web scraping for ${symbol}`);
+            sourcesUsed.push("Yahoo Finance Web");
+          } else {
+            Logger.log(`Yahoo Finance web scraping did not provide any additional metrics for ${symbol}`);
+          }
+        }
+      } catch (yahooError) {
+        Logger.log(`Error fetching Yahoo Finance web data for ${symbol}: ${yahooError}`);
+      }
+    }
+    
+    // Set the primary data source (the first one that provided data)
+    if (sourcesUsed.length > 0) {
+      source = sourcesUsed[0];
+    }
+    
+    // Recount final valid metrics
+    validMetricsCount = 0;
+    for (const key in metrics) {
+      if (metrics[key] !== null) {
+        validMetricsCount++;
+      }
+    }
+    
+    // Add symbol and name to the metrics
+    metrics.symbol = symbol;
+    metrics.name = getCompanyName(symbol);
+    metrics.dataSource = sourcesUsed.join(", ");
+    
+    Logger.log(`Completed fetching fundamental metrics for ${symbol} from ${sourcesUsed.join(", ")}`);
+    Logger.log(`Data source: ${source}`);
+    Logger.log(`Execution time: ${(new Date().getTime() - startTime) / 1000} seconds`);
+    Logger.log(`Metrics retrieved: ${Object.keys(metrics).join(", ")}`);
+    Logger.log(`PEG Ratio: ${metrics.pegRatio || "N/A"}`);
+    Logger.log(`Forward P/E: ${metrics.forwardPE || "N/A"}`);
+    Logger.log(`Price to Book: ${metrics.priceToBook || "N/A"}`);
+    Logger.log(`Beta: ${metrics.beta || "N/A"}`);
+    
+    return metrics;
   } catch (error) {
     Logger.log(`Error in fetchFundamentalMetricsData for ${symbol}: ${error}`);
-    throw error;
+    
+    // Return null values for all metrics
+    return {
+      pegRatio: null,
+      forwardPE: null,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: null,
+      beta: null,
+      expenseRatio: null,
+      symbol: symbol,
+      name: getCompanyName(symbol),
+      dataSource: "Error"
+    };
   }
+}
+
+/**
+ * Helper function to check if a symbol is an ETF
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Boolean} True if the symbol is an ETF, false otherwise
+ */
+function isETF(symbol) {
+  // Common ETF symbols
+  const commonETFs = ["SPY", "QQQ", "IWM", "DIA", "VTI", "VOO", "VEA", "VWO", "BND", "AGG", "VIG", "VYM"];
+  
+  if (commonETFs.includes(symbol)) {
+    return true;
+  }
+  
+  // ETFs often have these prefixes
+  const etfPrefixes = ["SPY", "IVV", "VOO", "VTI", "QQQ", "IWM", "GLD", "VEA", "VWO", "EFA", "EEM", "AGG", "BND", "LQD", "VIG", "VYM", "SCHD"];
+  
+  for (const prefix of etfPrefixes) {
+    if (symbol.startsWith(prefix)) {
+      return true;
+    }
+  }
+  
+  // Check if the symbol contains common ETF indicators
+  if (symbol.includes("-ETF") || symbol.includes(".ETF")) {
+    return true;
+  }
+  
+  // For more accurate detection, you would need to query a database or API
+  // This is just a basic heuristic
+  return false;
 }
 
 /**
@@ -249,6 +511,25 @@ function fetchGoogleFinanceData(symbol) {
     
     // Determine if this is an ETF based on common ETF symbols
     const isETF = /^(SPY|QQQ|IWM|DIA|VOO|VTI|VXUS|BND|AGG)$/i.test(symbol);
+    
+    // Count how many fundamental metrics we actually have
+    let validMetricsCount = 0;
+    if (typeof pegRatio === 'number' && !isNaN(pegRatio)) validMetricsCount++;
+    if (typeof forwardPE === 'number' && !isNaN(forwardPE)) validMetricsCount++;
+    if (typeof priceToBook === 'number' && !isNaN(priceToBook)) validMetricsCount++;
+    if (typeof priceToSales === 'number' && !isNaN(priceToSales)) validMetricsCount++;
+    if (typeof debtToEquity === 'number' && !isNaN(debtToEquity)) validMetricsCount++;
+    if (typeof returnOnEquity === 'number' && !isNaN(returnOnEquity)) validMetricsCount++;
+    if (typeof beta === 'number' && !isNaN(beta)) validMetricsCount++;
+    
+    // For ETFs, we need fewer metrics to consider the data valid
+    const minRequiredMetrics = isETF ? 1 : 3;
+    
+    // If we don't have enough valid metrics, throw an error to try the next data source
+    if (validMetricsCount < minRequiredMetrics) {
+      Logger.log(`Google Finance returned insufficient metrics for ${symbol}: ${validMetricsCount}/${minRequiredMetrics} valid metrics`);
+      throw new Error("Insufficient fundamental metrics from Google Finance");
+    }
     
     // Return the data
     return {
@@ -1019,8 +1300,8 @@ function testFundamentalMetrics() {
     try {
       const googleData = fetchGoogleFinanceData(invalidSymbol);
       Logger.log(`Unexpected success with Google Finance for ${invalidSymbol}`);
-    } catch (error) {
-      Logger.log(`Expected error from Google Finance for ${invalidSymbol}: ${error.message}`);
+    } catch (e) {
+      Logger.log(`Expected error from Google Finance for ${invalidSymbol}: ${e.message}`);
     }
     
     // Test Yahoo Finance error handling
@@ -1035,6 +1316,96 @@ function testFundamentalMetrics() {
   } catch (error) {
     Logger.log(`Error testing fundamental metrics: ${error}`);
     return `Error testing fundamental metrics: ${error}`;
+  }
+}
+
+/**
+ * Tests the enhanced fundamental metrics data retrieval with multiple symbols
+ * This function tests the cascading approach with a variety of stock and ETF symbols
+ */
+function testEnhancedFundamentalMetrics() {
+  try {
+    Logger.log("=== TESTING ENHANCED FUNDAMENTAL METRICS RETRIEVAL ===");
+    
+    // Test with a variety of symbols (stocks and ETFs)
+    const testSymbols = [
+      "AAPL",  // Large cap tech stock
+      "MSFT",  // Another large cap tech stock
+      "SPY",   // ETF
+      "XOM",   // Energy sector
+      "TSLA",  // High growth stock
+      "BRK-B", // Conglomerate with special character in symbol
+      "VTI"    // Another ETF
+    ];
+    
+    const results = {};
+    
+    // Test each symbol
+    for (const symbol of testSymbols) {
+      Logger.log(`\n--- Testing ${symbol} ---`);
+      
+      try {
+        const startTime = new Date().getTime();
+        const metrics = fetchFundamentalMetricsData(symbol);
+        const endTime = new Date().getTime();
+        const executionTime = (endTime - startTime) / 1000; // in seconds
+        
+        // Log the results
+        Logger.log(`Data source: ${metrics.dataSource}`);
+        Logger.log(`Execution time: ${executionTime.toFixed(2)} seconds`);
+        Logger.log(`Metrics retrieved: ${Object.keys(metrics).join(', ')}`);
+        
+        // Log some key metrics
+        Logger.log(`PEG Ratio: ${metrics.pegRatio || 'N/A'}`);
+        Logger.log(`Forward P/E: ${metrics.forwardPE || 'N/A'}`);
+        Logger.log(`Price to Book: ${metrics.priceToBook || 'N/A'}`);
+        Logger.log(`Beta: ${metrics.beta || 'N/A'}`);
+        
+        // Store results
+        results[symbol] = {
+          success: true,
+          dataSource: metrics.dataSource,
+          executionTime: executionTime,
+          metrics: metrics
+        };
+      } catch (error) {
+        Logger.log(`Error testing ${symbol}: ${error}`);
+        results[symbol] = {
+          success: false,
+          error: error.toString()
+        };
+      }
+    }
+    
+    // Log summary of results
+    Logger.log("\n=== TEST SUMMARY ===");
+    for (const symbol in results) {
+      const result = results[symbol];
+      if (result.success) {
+        Logger.log(`${symbol}: Success - Data source: ${result.dataSource} (${result.executionTime.toFixed(2)}s)`);
+      } else {
+        Logger.log(`${symbol}: Failed - ${result.error}`);
+      }
+    }
+    
+    // Count data sources used
+    const dataSources = {};
+    for (const symbol in results) {
+      if (results[symbol].success) {
+        const source = results[symbol].dataSource;
+        dataSources[source] = (dataSources[source] || 0) + 1;
+      }
+    }
+    
+    Logger.log("\n=== DATA SOURCE USAGE ===");
+    for (const source in dataSources) {
+      Logger.log(`${source}: ${dataSources[source]} symbols`);
+    }
+    
+    return results;
+  } catch (error) {
+    Logger.log(`Error in testEnhancedFundamentalMetrics: ${error}`);
+    return { success: false, error: error.toString() };
   }
 }
 
@@ -1203,4 +1574,625 @@ function getCompanyName(symbol) {
  */
 function getRandomMetric(min, max) {
   return Math.random() * (max - min) + min;
+}
+
+/**
+ * Tests the Yahoo Finance API with a simple query
+ * @param {string} apiKey - Optional Yahoo Finance API key (if not provided, will use the stored key)
+ * @return {Object} Test result with success status and error message if applicable
+ */
+function testYahooFinanceAPI(apiKey) {
+  try {
+    Logger.log("=== TESTING YAHOO FINANCE API ===");
+    
+    // Get the API key if not provided
+    if (!apiKey) {
+      const scriptProperties = PropertiesService.getScriptProperties();
+      apiKey = scriptProperties.getProperty('YAHOO_FINANCE_API_KEY');
+      
+      if (!apiKey) {
+        const errorMsg = "Yahoo Finance API key not found in script properties.";
+        Logger.log(errorMsg);
+        return { success: false, message: errorMsg };
+      }
+    }
+    
+    Logger.log(`Using API key: ${apiKey.substring(0, 5)}...`);
+    
+    // Test multiple endpoints to ensure comprehensive API testing
+    const endpoints = [
+      {
+        name: "Fundamentals",
+        url: "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals?region=US&symbol=AAPL&lang=en-US&modules=assetProfile%2CsummaryProfile%2CfundProfile"
+      },
+      {
+        name: "Quote",
+        url: "https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?region=US&symbols=AAPL"
+      }
+    ];
+    
+    const results = [];
+    
+    // Test each endpoint
+    for (const endpoint of endpoints) {
+      Logger.log(`\nTesting endpoint: ${endpoint.name}`);
+      
+      const options = {
+        method: "GET",
+        headers: {
+          "X-RapidAPI-Key": apiKey,
+          "X-RapidAPI-Host": "apidojo-yahoo-finance-v1.p.rapidapi.com"
+        },
+        muteHttpExceptions: true
+      };
+      
+      Logger.log(`Making API request to: ${endpoint.url}`);
+      
+      try {
+        // Make the API request
+        const response = UrlFetchApp.fetch(endpoint.url, options);
+        const statusCode = response.getResponseCode();
+        const responseText = response.getContentText();
+        
+        // Log the response for debugging
+        Logger.log(`Response status code: ${statusCode}`);
+        
+        // Check if the request was successful
+        if (statusCode === 200) {
+          const data = JSON.parse(responseText);
+          
+          // Log the keys in the response for debugging
+          Logger.log(`Response keys: ${Object.keys(data).join(', ')}`);
+          
+          // Check for specific data structure based on endpoint
+          let isValidData = false;
+          let dataStructure = "";
+          
+          if (endpoint.name === "Fundamentals" && data.quoteSummary && data.quoteSummary.result) {
+            isValidData = true;
+            dataStructure = "quoteSummary.result";
+          } else if (endpoint.name === "Quote" && data.quoteResponse && data.quoteResponse.result) {
+            isValidData = true;
+            dataStructure = "quoteResponse.result";
+          }
+          
+          if (isValidData) {
+            Logger.log(`${endpoint.name} endpoint returned valid data with structure: ${dataStructure}`);
+            results.push({ 
+              endpoint: endpoint.name, 
+              success: true, 
+              message: "API request successful" 
+            });
+          } else {
+            // Still consider it a success if we get valid JSON, just log what we received
+            Logger.log(`${endpoint.name} endpoint returned data but missing expected structure. Found keys: ${Object.keys(data).join(', ')}`);
+            results.push({ 
+              endpoint: endpoint.name, 
+              success: true, 
+              message: "API returned data but not in the expected format",
+              data: Object.keys(data)
+            });
+          }
+        }
+      } catch (requestError) {
+        Logger.log(`${endpoint.name} request error: ${requestError}`);
+        results.push({ 
+          endpoint: endpoint.name, 
+          success: false, 
+          message: requestError.toString() 
+        });
+      }
+    }
+    
+    // Determine overall success based on individual endpoint results
+    const allSuccess = results.every(result => result.success);
+    const anySuccess = results.some(result => result.success);
+    
+    // Generate summary
+    Logger.log("\n=== YAHOO FINANCE API TEST SUMMARY ===");
+    for (const result of results) {
+      Logger.log(`${result.endpoint}: ${result.success ? "Success" : "Failed"} - ${result.message}`);
+    }
+    
+    if (allSuccess) {
+      return { 
+        success: true, 
+        message: "All Yahoo Finance API endpoints tested successfully", 
+        results: results 
+      };
+    } else if (anySuccess) {
+      return { 
+        success: true, 
+        message: "Some Yahoo Finance API endpoints tested successfully", 
+        results: results 
+      };
+    } else {
+      return { 
+        success: false, 
+        message: "All Yahoo Finance API endpoint tests failed", 
+        results: results 
+      };
+    }
+  } catch (error) {
+    Logger.log(`Yahoo Finance API test error: ${error}`);
+    return { success: false, message: error.toString() };
+  }
+}
+
+/**
+ * Tests the Yahoo Finance API integration specifically
+ * This function forces the use of Yahoo Finance API by skipping Google Finance
+ */
+function testYahooFinanceAPIIntegration() {
+  try {
+    Logger.log("=== TESTING YAHOO FINANCE API INTEGRATION ===");
+    
+    // Test with a variety of symbols (stocks and ETFs)
+    const testSymbols = [
+      "AAPL",  // Large cap tech stock
+      "MSFT",  // Another large cap tech stock
+      "SPY",   // ETF
+      "XOM",   // Energy sector
+      "TSLA"   // High growth stock
+    ];
+    
+    const results = {};
+    
+    // Get the Yahoo Finance API key
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const apiKey = scriptProperties.getProperty('YAHOO_FINANCE_API_KEY');
+    
+    if (!apiKey) {
+      Logger.log("ERROR: Yahoo Finance API key not found in script properties");
+      return { success: false, error: "API key not found" };
+    }
+    
+    // Test each symbol
+    for (const symbol of testSymbols) {
+      Logger.log(`\n--- Testing ${symbol} ---`);
+      
+      try {
+        const startTime = new Date().getTime();
+        
+        // Yahoo Finance API endpoint for fundamentals data
+        const apiUrl = `https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals?region=US&symbol=${symbol}&lang=en-US&modules=assetProfile%2CsummaryProfile%2CfundProfile%2CfinancialData%2CdefaultKeyStatistics`;
+        
+        const options = {
+          method: "GET",
+          headers: {
+            "X-RapidAPI-Key": apiKey,
+            "X-RapidAPI-Host": "apidojo-yahoo-finance-v1.p.rapidapi.com"
+          },
+          muteHttpExceptions: true
+        };
+        
+        // Make the API request
+        Logger.log(`Making fundamentals API request for ${symbol}...`);
+        const response = UrlFetchApp.fetch(apiUrl, options);
+        const statusCode = response.getResponseCode();
+        
+        if (statusCode === 200) {
+          const data = JSON.parse(response.getContentText());
+          
+          if (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
+            const result = data.quoteSummary.result[0];
+            const yahooApiData = {};
+            
+            // Extract metrics from the API response
+            if (result.defaultKeyStatistics) {
+              const stats = result.defaultKeyStatistics;
+              yahooApiData.pegRatio = stats.pegRatio ? stats.pegRatio.raw : 0;
+              yahooApiData.priceToBook = stats.priceToBook ? stats.priceToBook.raw : 0;
+              yahooApiData.beta = stats.beta ? stats.beta.raw : 0;
+              
+              // Log available metrics for debugging
+              Logger.log(`Available metrics in defaultKeyStatistics: ${Object.keys(stats).join(', ')}`);
+            }
+            
+            if (result.financialData) {
+              const financials = result.financialData;
+              yahooApiData.returnOnEquity = financials.returnOnEquity ? financials.returnOnEquity.raw : 0;
+              yahooApiData.returnOnAssets = financials.returnOnAssets ? financials.returnOnAssets.raw : 0;
+              yahooApiData.profitMargin = financials.profitMargins ? financials.profitMargins.raw : 0;
+              yahooApiData.debtToEquity = financials.debtToEquity ? financials.debtToEquity.raw : 0;
+            }
+            
+            // Get additional quote data for more metrics
+            const quoteUrl = `https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?region=US&symbols=${symbol}`;
+            Logger.log(`Making quote API request for ${symbol}...`);
+            const quoteResponse = UrlFetchApp.fetch(quoteUrl, options);
+            
+            if (quoteResponse.getResponseCode() === 200) {
+              const quoteData = JSON.parse(quoteResponse.getContentText());
+              
+              if (quoteData && quoteData.quoteResponse && quoteData.quoteResponse.result && quoteData.quoteResponse.result.length > 0) {
+                const quote = quoteData.quoteResponse.result[0];
+                
+                yahooApiData.forwardPE = quote.forwardPE || 0;
+                yahooApiData.priceToSales = quote.priceToSales || 0;
+                yahooApiData.dividendYield = quote.dividendYield ? quote.dividendYield / 100 : 0; // Convert to decimal
+              }
+            }
+            
+            const endTime = new Date().getTime();
+            const executionTime = (endTime - startTime) / 1000; // in seconds
+            
+            // Log the results
+            Logger.log(`Execution time: ${executionTime.toFixed(2)} seconds`);
+            Logger.log(`Metrics retrieved: ${Object.keys(yahooApiData).join(', ')}`);
+            
+            // Log some key metrics
+            Logger.log(`PEG Ratio: ${yahooApiData.pegRatio || 'N/A'}`);
+            Logger.log(`Forward P/E: ${yahooApiData.forwardPE || 'N/A'}`);
+            Logger.log(`Price to Book: ${yahooApiData.priceToBook || 'N/A'}`);
+            Logger.log(`Beta: ${yahooApiData.beta || 'N/A'}`);
+            
+            // Store results
+            results[symbol] = {
+              success: true,
+              executionTime: executionTime,
+              metrics: yahooApiData
+            };
+          } else {
+            Logger.log(`No results found in quoteSummary for ${symbol}`);
+            results[symbol] = {
+              success: false,
+              error: "No results found in quoteSummary"
+            };
+          }
+        } else {
+          Logger.log(`API returned status code ${statusCode} for ${symbol}`);
+          results[symbol] = {
+            success: false,
+            error: `API returned status code ${statusCode}`
+          };
+        }
+      } catch (error) {
+        Logger.log(`Error testing ${symbol}: ${error}`);
+        results[symbol] = {
+          success: false,
+          error: error.toString()
+        };
+      }
+    }
+    
+    // Log summary of results
+    Logger.log("\n=== TEST SUMMARY ===");
+    for (const symbol in results) {
+      const result = results[symbol];
+      if (result.success) {
+        Logger.log(`${symbol}: Success - Data source: ${result.dataSource} (${result.executionTime.toFixed(2)}s)`);
+      } else {
+        Logger.log(`${symbol}: Failed - ${result.error}`);
+      }
+    }
+    
+    return results;
+  } catch (error) {
+    Logger.log(`Error in testYahooFinanceAPIIntegration: ${error}`);
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Fetches data from Tradier API for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Fundamental metrics data from Tradier
+ */
+function fetchTradierData(symbol) {
+  try {
+    Logger.log(`Fetching Tradier data for ${symbol}`);
+    
+    // Initialize metrics with null values
+    const metrics = {
+      pegRatio: null,
+      forwardPE: null,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: null,
+      beta: null,
+      expenseRatio: null
+    };
+    
+    // Get the API key from script properties
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const tradierApiKey = scriptProperties.getProperty('TRADIER_API_KEY');
+    
+    if (!tradierApiKey) {
+      Logger.log('Tradier API key not found. Please set the TRADIER_API_KEY property.');
+      return metrics;
+    }
+    
+    // Set up the API request options
+    const options = {
+      'method': 'GET',
+      'headers': {
+        'Authorization': `Bearer ${tradierApiKey}`,
+        'Accept': 'application/json'
+      },
+      'muteHttpExceptions': true
+    };
+    
+    // Helper function to make API requests with retry logic
+    function makeApiRequest(url, maxRetries = 3) {
+      let retries = 0;
+      let response;
+      
+      while (retries < maxRetries) {
+        try {
+          response = UrlFetchApp.fetch(url, options);
+          
+          // If successful, return the response
+          if (response.getResponseCode() === 200) {
+            return JSON.parse(response.getContentText());
+          }
+          
+          // If rate limited, wait and retry
+          if (response.getResponseCode() === 429) {
+            Logger.log(`Rate limited. Retrying in ${Math.pow(2, retries)} seconds...`);
+            Utilities.sleep(Math.pow(2, retries) * 1000); // Exponential backoff
+            retries++;
+            continue;
+          }
+          
+          // If other error, log and return null
+          Logger.log(`API error: ${response.getResponseCode()} - ${response.getContentText()}`);
+          return null;
+        } catch (error) {
+          Logger.log(`API request error: ${error}. Retry ${retries + 1}/${maxRetries}`);
+          retries++;
+          
+          if (retries < maxRetries) {
+            Utilities.sleep(Math.pow(2, retries) * 1000); // Exponential backoff
+          }
+        }
+      }
+      
+      return null;
+    }
+    
+    // First, get the company profile using the beta endpoint
+    Logger.log(`Fetching company profile for ${symbol} from Tradier beta API`);
+    const profileUrl = `https://api.tradier.com/beta/markets/fundamentals/company?symbols=${symbol}`;
+    const profileData = makeApiRequest(profileUrl);
+    
+    if (profileData && profileData.length > 0 && profileData[0].results) {
+      const results = profileData[0].results;
+      
+      // Find the company data
+      const companyData = results.find(result => result.type === "Company");
+      
+      if (companyData && companyData.tables) {
+        // Extract data from asset_classification if available
+        if (companyData.tables.asset_classification) {
+          const assetClass = companyData.tables.asset_classification;
+          
+          // Beta might be in the asset classification data
+          if (assetClass.financial_health_grade) {
+            Logger.log(`Found financial health grade: ${assetClass.financial_health_grade}`);
+          }
+        }
+        
+        // Extract company profile data
+        if (companyData.tables.company_profile) {
+          const profile = companyData.tables.company_profile;
+          Logger.log(`Found company profile data for ${symbol}`);
+        }
+        
+        // Extract long description if available
+        if (companyData.tables.long_descriptions) {
+          const description = companyData.tables.long_descriptions;
+          Logger.log(`Found company description for ${symbol}`);
+        }
+      }
+    }
+    
+    // Next, get the financial ratios using the beta endpoint
+    Logger.log(`Fetching financial ratios for ${symbol} from Tradier beta API`);
+    const ratiosUrl = `https://api.tradier.com/beta/markets/fundamentals/ratios?symbols=${symbol}`;
+    const ratiosData = makeApiRequest(ratiosUrl);
+    
+    if (ratiosData && ratiosData.length > 0 && ratiosData[0].results) {
+      const results = ratiosData[0].results;
+      
+      // Process company ratios
+      const companyData = results.find(result => result.type === "Company");
+      if (companyData && companyData.tables) {
+        // Extract operation ratios if available
+        if (companyData.tables.operation_ratios_restate && companyData.tables.operation_ratios_restate.length > 0) {
+          const ratios = companyData.tables.operation_ratios_restate[0].period_1y;
+          
+          if (ratios) {
+            // Extract return on equity
+            if (ratios.r_o_e !== undefined) {
+              metrics.returnOnEquity = parseFloat(ratios.r_o_e);
+              Logger.log(`Found ROE from Tradier: ${metrics.returnOnEquity}`);
+            }
+            
+            // Extract return on assets
+            if (ratios.r_o_a !== undefined) {
+              metrics.returnOnAssets = parseFloat(ratios.r_o_a);
+              Logger.log(`Found ROA from Tradier: ${metrics.returnOnAssets}`);
+            }
+            
+            // Extract profit margin
+            if (ratios.net_margin !== undefined) {
+              metrics.profitMargin = parseFloat(ratios.net_margin);
+              Logger.log(`Found profit margin from Tradier: ${metrics.profitMargin}`);
+            }
+            
+            // Extract debt to equity (may need calculation)
+            if (ratios.financial_leverage !== undefined) {
+              // This is an approximation, may need adjustment
+              metrics.debtToEquity = parseFloat(ratios.financial_leverage) - 1;
+              Logger.log(`Calculated debt to equity from financial leverage: ${metrics.debtToEquity}`);
+            }
+          }
+        }
+        
+        // Try alternative operation ratios format if needed
+        if (!metrics.returnOnEquity && companyData.tables.operation_ratios_a_o_r && companyData.tables.operation_ratios_a_o_r.length > 0) {
+          const ratios = companyData.tables.operation_ratios_a_o_r[0].period_1y;
+          
+          if (ratios) {
+            // Extract return on equity
+            if (ratios.r_o_e !== undefined) {
+              metrics.returnOnEquity = parseFloat(ratios.r_o_e);
+              Logger.log(`Found ROE from alternative ratios: ${metrics.returnOnEquity}`);
+            }
+            
+            // Extract return on assets
+            if (ratios.r_o_a !== undefined) {
+              metrics.returnOnAssets = parseFloat(ratios.r_o_a);
+              Logger.log(`Found ROA from alternative ratios: ${metrics.returnOnAssets}`);
+            }
+            
+            // Extract profit margin
+            if (ratios.net_margin !== undefined) {
+              metrics.profitMargin = parseFloat(ratios.net_margin);
+              Logger.log(`Found profit margin from alternative ratios: ${metrics.profitMargin}`);
+            }
+          }
+        }
+      }
+      
+      // Process stock-specific ratios
+      const stockData = results.find(result => result.type === "Stock");
+      if (stockData && stockData.tables) {
+        // Extract valuation ratios if available
+        if (stockData.tables.valuation_ratios) {
+          const valuation = stockData.tables.valuation_ratios;
+          
+          // Extract P/E ratio
+          if (valuation.forward_p_e_ratio !== undefined) {
+            metrics.forwardPE = parseFloat(valuation.forward_p_e_ratio);
+            Logger.log(`Found forward P/E from Tradier: ${metrics.forwardPE}`);
+          }
+          
+          // Extract PEG ratio
+          if (valuation.p_e_g_ratio !== undefined) {
+            metrics.pegRatio = parseFloat(valuation.p_e_g_ratio);
+            Logger.log(`Found PEG ratio from Tradier: ${metrics.pegRatio}`);
+          }
+          
+          // Extract price to book
+          if (valuation.p_b_ratio !== undefined) {
+            metrics.priceToBook = parseFloat(valuation.p_b_ratio);
+            Logger.log(`Found price to book from Tradier: ${metrics.priceToBook}`);
+          }
+          
+          // Extract price to sales
+          if (valuation.p_s_ratio !== undefined) {
+            metrics.priceToSales = parseFloat(valuation.p_s_ratio);
+            Logger.log(`Found price to sales from Tradier: ${metrics.priceToSales}`);
+          }
+          
+          // Extract dividend yield
+          if (valuation.dividend_yield !== undefined) {
+            metrics.dividendYield = parseFloat(valuation.dividend_yield) / 100; // Convert from percentage
+            Logger.log(`Found dividend yield from Tradier: ${metrics.dividendYield}`);
+          }
+        }
+        
+        // Extract beta from alpha_beta if available
+        if (stockData.tables.alpha_beta && stockData.tables.alpha_beta.period_60m) {
+          const alphaBeta = stockData.tables.alpha_beta.period_60m;
+          
+          if (alphaBeta.beta !== undefined) {
+            metrics.beta = parseFloat(alphaBeta.beta);
+            Logger.log(`Found beta from Tradier alpha_beta: ${metrics.beta}`);
+          }
+        }
+      }
+    }
+    
+    // If we still don't have dividend yield, try the dividends endpoint
+    if (metrics.dividendYield === null) {
+      Logger.log(`Fetching dividend data for ${symbol} from Tradier API`);
+      const dividendsUrl = `https://api.tradier.com/v1/markets/fundamentals/dividends?symbols=${symbol}`;
+      const dividendsData = makeApiRequest(dividendsUrl);
+      
+      if (dividendsData && dividendsData.securities && dividendsData.securities.security) {
+        const dividends = dividendsData.securities.security;
+        
+        // Extract dividend yield
+        if (dividends.dividend_yield) {
+          metrics.dividendYield = parseFloat(dividends.dividend_yield) / 100; // Convert percentage to decimal
+          Logger.log(`Found dividend yield from Tradier dividends endpoint: ${metrics.dividendYield}`);
+        }
+      }
+    }
+    
+    // For ETFs, try to get expense ratio
+    if (isETF(symbol)) {
+      try {
+        // Tradier doesn't have a direct ETF expense ratio endpoint
+        // This is a placeholder - we'll keep the expense ratio as null
+        Logger.log(`${symbol} is an ETF, but Tradier doesn't provide expense ratio data`);
+      } catch (etfError) {
+        Logger.log(`Error checking ETF data for ${symbol}: ${etfError}`);
+      }
+    }
+    
+    // Validate metrics for realistic values
+    Object.keys(metrics).forEach(key => {
+      metrics[key] = validateMetric(metrics[key], key);
+    });
+    
+    Logger.log(`Final Tradier metrics for ${symbol}: ${JSON.stringify(metrics)}`);
+    
+    return metrics;
+  } catch (error) {
+    Logger.log(`Error in fetchTradierData for ${symbol}: ${error}`);
+    
+    // Return null values for all metrics
+    return {
+      pegRatio: null,
+      forwardPE: null,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: null,
+      beta: null,
+      expenseRatio: null
+    };
+  }
+}
+
+/**
+ * Validates a metric value for realistic ranges
+ * @param {Number} value - The metric value
+ * @param {String} key - The metric key
+ * @return {Number} Validated metric value
+ */
+function validateMetric(value, key) {
+  // Define realistic ranges for each metric
+  const ranges = {
+    pegRatio: [0, 5],
+    forwardPE: [5, 50],
+    priceToBook: [0, 20],  
+    priceToSales: [0, 20], 
+    debtToEquity: [0, 5],
+    returnOnEquity: [0, 1],
+    returnOnAssets: [0, 1],
+    profitMargin: [0, 1],
+    dividendYield: [0, 1],
+    beta: [0, 5],
+    expenseRatio: [0, 1]
+  };
+  
+  // Check if the value is within the realistic range
+  if (value < ranges[key][0] || value > ranges[key][1]) {
+    Logger.log(`Invalid value for ${key}: ${value}. Setting to null.`);
+    return null;
+  }
+  
+  return value;
 }

@@ -68,6 +68,7 @@ function setupApiKey() {
 
 /**
  * Creates time-based triggers for morning and evening analysis
+ * Uses a more efficient approach with just 2 triggers and day checking in the handler
  */
 function setupTriggers() {
   Logger.log("Setting up time-based triggers...");
@@ -75,92 +76,54 @@ function setupTriggers() {
   // Delete any existing triggers to avoid duplicates
   deleteExistingTriggers();
   
-  // Create morning trigger (Monday to Friday)
-  ScriptApp.newTrigger('runTradingAnalysis')
+  // Create a single morning trigger (daily)
+  ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
     .timeBased()
     .atHour(MORNING_SCHEDULE_HOUR)
     .nearMinute(MORNING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .everyDays(1) // Run every day
     .inTimezone(TIME_ZONE)
     .create();
   
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(MORNING_SCHEDULE_HOUR)
-    .nearMinute(MORNING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.TUESDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
+  Logger.log(`Morning trigger created: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (daily with weekday check)`);
   
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(MORNING_SCHEDULE_HOUR)
-    .nearMinute(MORNING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.WEDNESDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
-  
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(MORNING_SCHEDULE_HOUR)
-    .nearMinute(MORNING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.THURSDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
-  
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(MORNING_SCHEDULE_HOUR)
-    .nearMinute(MORNING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.FRIDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
-  
-  Logger.log(`Morning triggers created: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (Monday-Friday)`);
-  
-  // Create evening trigger (Monday to Thursday)
-  ScriptApp.newTrigger('runTradingAnalysis')
+  // Create a single evening trigger (daily)
+  ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
     .timeBased()
     .atHour(EVENING_SCHEDULE_HOUR)
     .nearMinute(EVENING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.MONDAY)
+    .everyDays(1) // Run every day
     .inTimezone(TIME_ZONE)
     .create();
   
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(EVENING_SCHEDULE_HOUR)
-    .nearMinute(EVENING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.TUESDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
+  Logger.log(`Evening trigger created: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE} (daily with weekday check)`);
+}
+
+/**
+ * Wrapper function that checks if today is an appropriate day to run the analysis
+ * Morning analysis: Monday-Friday
+ * Evening analysis: Sunday-Thursday
+ */
+function runTradingAnalysisWithDayCheck() {
+  const now = new Date();
+  const hour = now.getHours();
+  const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
   
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(EVENING_SCHEDULE_HOUR)
-    .nearMinute(EVENING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.WEDNESDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
+  // Morning trigger (runs Monday-Friday)
+  if (hour === MORNING_SCHEDULE_HOUR && dayOfWeek >= 1 && dayOfWeek <= 5) {
+    Logger.log("Running morning trading analysis (weekday)");
+    runTradingAnalysis();
+    return;
+  }
   
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(EVENING_SCHEDULE_HOUR)
-    .nearMinute(EVENING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.THURSDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
+  // Evening trigger (runs Sunday-Thursday)
+  if (hour === EVENING_SCHEDULE_HOUR && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4))) {
+    Logger.log("Running evening trading analysis (Sunday-Thursday)");
+    runTradingAnalysis();
+    return;
+  }
   
-  // Sunday evening trigger
-  ScriptApp.newTrigger('runTradingAnalysis')
-    .timeBased()
-    .atHour(EVENING_SCHEDULE_HOUR)
-    .nearMinute(EVENING_SCHEDULE_MINUTE)
-    .onWeekDay(ScriptApp.WeekDay.SUNDAY)
-    .inTimezone(TIME_ZONE)
-    .create();
-  
-  Logger.log(`Evening triggers created: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE} (Sunday-Thursday)`);
+  Logger.log("Trigger activated but skipping execution: not a scheduled day for this time slot");
 }
 
 /**
@@ -169,7 +132,8 @@ function setupTriggers() {
 function deleteExistingTriggers() {
   const triggers = ScriptApp.getProjectTriggers();
   for (let i = 0; i < triggers.length; i++) {
-    if (triggers[i].getHandlerFunction() === 'runTradingAnalysis') {
+    if (triggers[i].getHandlerFunction() === 'runTradingAnalysis' || 
+        triggers[i].getHandlerFunction() === 'runTradingAnalysisWithDayCheck') {
       ScriptApp.deleteTrigger(triggers[i]);
     }
   }

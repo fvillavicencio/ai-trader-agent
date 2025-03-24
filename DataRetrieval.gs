@@ -19,44 +19,60 @@ function retrieveAllData() {
     // Get the current date
     const currentDate = new Date();
     
-    // Step 1: Retrieve market sentiment data
-    Logger.log("Retrieving market sentiment data...");
-    const marketSentiment = retrieveMarketSentiment();
-    
-    // Extract any stock symbols mentioned in the market sentiment data
-    let mentionedStocks = [];
-    if (marketSentiment && marketSentiment.analysts) {
-      // Extract stock symbols from analyst comments
-      marketSentiment.analysts.forEach(analyst => {
-        if (analyst.mentionedSymbols && Array.isArray(analyst.mentionedSymbols)) {
-          mentionedStocks = mentionedStocks.concat(analyst.mentionedSymbols);
-        }
-      });
-      
-      // Remove duplicates
-      mentionedStocks = [...new Set(mentionedStocks)];
-      Logger.log(`Found ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.join(', ')}`);
+    // Retrieve market sentiment data
+    const marketSentimentData = retrieveMarketSentiment();
+    if (!marketSentimentData.success) {
+      return {
+        success: false,
+        message: `Error retrieving market sentiment data: ${marketSentimentData.message}`
+      };
     }
     
-    // Step 2: Retrieve key market indicators
-    Logger.log("Retrieving key market indicators...");
-    const keyMarketIndicators = retrieveKeyMarketIndicators();
+    // Extract mentioned stocks from market sentiment data
+    let mentionedStocks = [];
+    if (marketSentimentData.mentionedStocks && Array.isArray(marketSentimentData.mentionedStocks)) {
+      mentionedStocks = marketSentimentData.mentionedStocks;
+    } else {
+      // Fallback to extracting from the data directly
+      mentionedStocks = extractMentionedStocks(marketSentimentData);
+    }
     
-    // Step 3: Retrieve fundamental metrics for mentioned stocks
-    Logger.log(`Retrieving fundamental metrics for ${mentionedStocks.length} stocks...`);
-    const fundamentalMetrics = retrieveFundamentalMetrics(mentionedStocks);
+    Logger.log(`Mentioned stocks from market sentiment: ${mentionedStocks.length > 0 ? mentionedStocks.join(', ') : 'None'}`);
     
-    // Step 4: Retrieve macroeconomic factors
-    Logger.log("Retrieving macroeconomic factors...");
-    const macroeconomicFactors = retrieveMacroeconomicFactors();
+    // Retrieve key market indicators
+    const keyMarketIndicatorsData = retrieveKeyMarketIndicators();
+    if (!keyMarketIndicatorsData.success) {
+      return {
+        success: false,
+        message: `Error retrieving key market indicators data: ${keyMarketIndicatorsData.message}`
+      };
+    }
+    
+    // Retrieve fundamental metrics for mentioned stocks
+    const fundamentalMetricsData = retrieveFundamentalMetrics([], mentionedStocks);
+    if (!fundamentalMetricsData.success) {
+      return {
+        success: false,
+        message: `Error retrieving fundamental metrics data: ${fundamentalMetricsData.message}`
+      };
+    }
+    
+    // Retrieve macroeconomic factors
+    const macroeconomicFactorsData = retrieveMacroeconomicFactors();
+    if (!macroeconomicFactorsData.success) {
+      return {
+        success: false,
+        message: `Error retrieving macroeconomic factors data: ${macroeconomicFactorsData.message}`
+      };
+    }
     
     // Compile all data
     const allData = {
       success: true,
-      marketSentiment: marketSentiment,
-      keyMarketIndicators: keyMarketIndicators,
-      fundamentalMetrics: fundamentalMetrics,
-      macroeconomicFactors: macroeconomicFactors,
+      marketSentiment: marketSentimentData,
+      keyMarketIndicators: keyMarketIndicatorsData,
+      fundamentalMetrics: fundamentalMetricsData,
+      macroeconomicFactors: macroeconomicFactorsData,
       timestamp: currentDate
     };
     
@@ -74,11 +90,85 @@ function retrieveAllData() {
 }
 
 /**
- * Generates a prompt for Perplexity with all the retrieved data
- * @param {Object} allData - The retrieved data
- * @return {String} The prompt for Perplexity
+ * Extract mentioned stocks from market sentiment data
+ * 
+ * @param {Object} marketSentimentData - The market sentiment data
+ * @return {Array} - Array of mentioned stock symbols
  */
-function generatePerplexityPrompt(allData) {
+function extractMentionedStocks(marketSentimentData) {
+  try {
+    if (!marketSentimentData || !marketSentimentData.success) {
+      return [];
+    }
+    
+    const mentionedStocks = [];
+    
+    // Handle the case where mentionedStocks is already in the top level
+    if (marketSentimentData.mentionedStocks && Array.isArray(marketSentimentData.mentionedStocks)) {
+      return marketSentimentData.mentionedStocks;
+    }
+    
+    // Navigate through the nested data structure
+    // The data might be in marketSentimentData.data or marketSentimentData.data.data
+    let dataObject = marketSentimentData.data;
+    
+    // If no data object found, return empty array
+    if (!dataObject) {
+      return [];
+    }
+    
+    // Check if we need to go one level deeper
+    if (dataObject.data && typeof dataObject.data === 'object') {
+      dataObject = dataObject.data;
+    }
+    
+    // Extract from analysts
+    if (dataObject.analysts && Array.isArray(dataObject.analysts)) {
+      dataObject.analysts.forEach(analyst => {
+        if (analyst.mentionedStocks && Array.isArray(analyst.mentionedStocks)) {
+          analyst.mentionedStocks.forEach(stock => {
+            if (stock && !mentionedStocks.includes(stock)) {
+              mentionedStocks.push(stock);
+            }
+          });
+        } else if (analyst.mentionedSymbols && Array.isArray(analyst.mentionedSymbols)) {
+          // For backward compatibility
+          analyst.mentionedSymbols.forEach(stock => {
+            if (stock && !mentionedStocks.includes(stock)) {
+              mentionedStocks.push(stock);
+            }
+          });
+        }
+      });
+    }
+    
+    // Extract from sentiment indicators
+    if (dataObject.sentimentIndicators && Array.isArray(dataObject.sentimentIndicators)) {
+      dataObject.sentimentIndicators.forEach(indicator => {
+        if (indicator.mentionedStocks && Array.isArray(indicator.mentionedStocks)) {
+          indicator.mentionedStocks.forEach(stock => {
+            if (stock && !mentionedStocks.includes(stock)) {
+              mentionedStocks.push(stock);
+            }
+          });
+        }
+      });
+    }
+    
+    Logger.log(`Found ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.join(', ') || 'None'}`);
+    return mentionedStocks;
+  } catch (error) {
+    Logger.log(`Error extracting mentioned stocks: ${error}`);
+    return [];
+  }
+}
+
+/**
+ * Generates a prompt for OpenAI with all the retrieved data
+ * @param {Object} allData - The retrieved data
+ * @return {String} The prompt for OpenAI
+ */
+function generateOpenAIPrompt(allData) {
   try {
     if (!allData.success) {
       return `Error retrieving data: ${allData.message}`;
@@ -118,8 +208,8 @@ function generatePerplexityPrompt(allData) {
           const timestamp = analyst.timestamp ? new Date(analyst.timestamp).toLocaleString() : "N/A";
           
           dataSection += `  * ${analyst.name}: "${commentary}" (Source: ${source}, ${timestamp})\n`;
-          if (analyst.mentionedSymbols && analyst.mentionedSymbols.length > 0) {
-            dataSection += `    Mentioned stocks: ${analyst.mentionedSymbols.join(', ')}\n`;
+          if (analyst.mentionedStocks && analyst.mentionedStocks.length > 0) {
+            dataSection += `    Mentioned stocks: ${analyst.mentionedStocks.join(', ')}\n`;
           }
         });
       }
@@ -173,7 +263,8 @@ function generatePerplexityPrompt(allData) {
       
       // VIX
       if (indicatorsData.volatilityIndices && indicatorsData.volatilityIndices.length > 0) {
-        const vix = indicatorsData.volatilityIndices.find(index => index.name.includes("VIX") || index.symbol === "^VIX");
+        const vix = indicatorsData.volatilityIndices.find(index => 
+          index.name.includes("VIX") || index.symbol === "^VIX");
         if (vix) {
           dataSection += `- VIX (Volatility Index): ${vix.value}\n`;
           dataSection += `  * Change: ${vix.change >= 0 ? '+' : ''}${formatValue(vix.change)}\n`;
@@ -183,7 +274,8 @@ function generatePerplexityPrompt(allData) {
         }
         
         // Also include NASDAQ VIX if available
-        const vxn = indicatorsData.volatilityIndices.find(index => index.name.includes("NASDAQ") || index.symbol === "^VXN");
+        const vxn = indicatorsData.volatilityIndices.find(index => 
+          index.name.includes("NASDAQ") || index.symbol === "^VXN");
         if (vxn) {
           dataSection += `- NASDAQ Volatility Index: ${vxn.value}\n`;
           dataSection += `  * Change: ${vxn.change >= 0 ? '+' : ''}${formatValue(vxn.change)}\n`;
@@ -211,33 +303,51 @@ function generatePerplexityPrompt(allData) {
     if (allData.fundamentalMetrics && allData.fundamentalMetrics.success) {
       const metricsData = allData.fundamentalMetrics;
       
-      if (metricsData.metrics && metricsData.metrics.length > 0) {
-        dataSection += `- Metrics for ${metricsData.metrics.length} stocks/ETFs:\n`;
-        metricsData.metrics.forEach(metric => {
-          dataSection += `  * ${metric.symbol} (${metric.name || 'Unknown'}):\n`;
-          // Add price and price change information
-          if (metric.price !== undefined) {
-            dataSection += `    - Price: $${formatValue(metric.price)} `;
-            if (metric.change !== undefined) {
-              const changeSign = metric.change >= 0 ? '+' : '';
-              dataSection += `(${changeSign}${formatValue(metric.change)}, ${changeSign}${formatValue(metric.changePct)}%)\n`;
-            } else {
-              dataSection += '\n';
-            }
-          }
-          dataSection += `    - PEG Ratio: ${formatValue(metric.pegRatio)}\n`;
-          dataSection += `    - Forward P/E: ${formatValue(metric.forwardPE)}\n`;
-          dataSection += `    - Price/Book: ${formatValue(metric.priceToBook)}\n`;
-          dataSection += `    - Price/Sales: ${formatValue(metric.priceToSales)}\n`;
-          dataSection += `    - Debt/Equity: ${formatValue(metric.debtToEquity)}\n`;
-          dataSection += `    - Return on Equity: ${formatValue(metric.returnOnEquity * 100)}%\n`;
-          dataSection += `    - Beta: ${formatValue(metric.beta, true)}\n`;
-          if (metric.isETF) {
-            dataSection += `    - Expense Ratio: ${formatValue(metric.expenseRatio * 100)}%\n`;
+      // Get the list of mentioned stocks from market sentiment
+      let mentionedStocks = [];
+      if (allData.marketSentiment && allData.marketSentiment.success && 
+          allData.marketSentiment.data && allData.marketSentiment.data.analysts) {
+        allData.marketSentiment.data.analysts.forEach(analyst => {
+          if (analyst.mentionedStocks && Array.isArray(analyst.mentionedStocks)) {
+            mentionedStocks = mentionedStocks.concat(analyst.mentionedStocks);
           }
         });
-      } else {
-        dataSection += "- No stock/ETF metrics available\n";
+        mentionedStocks = [...new Set(mentionedStocks)]; // Remove duplicates
+      }
+      
+      // Log the mentioned stocks for debugging
+      Logger.log(`Mentioned stocks in prompt generation: ${mentionedStocks.join(', ') || 'None'}`);
+      
+      // Count the number of stocks/ETFs with data
+      const stockCount = metricsData.metrics ? metricsData.metrics.length : 0;
+      dataSection += `- Metrics for ${stockCount} stocks/ETFs:\n`;
+      
+      // First, add the mentioned stocks to ensure they appear in the prompt
+      if (mentionedStocks.length > 0 && metricsData.metrics && metricsData.metrics.length > 0) {
+        // Find and add mentioned stocks first
+        mentionedStocks.forEach(mentionedSymbol => {
+          const stockData = metricsData.metrics.find(metric => 
+            metric.symbol && metric.symbol.toUpperCase() === mentionedSymbol.toUpperCase()
+          );
+          
+          if (stockData) {
+            dataSection += formatStockMetrics(stockData);
+            // Add a note that this stock was mentioned by analysts
+            dataSection += `    - Note: This stock was mentioned by analysts in recent commentary\n`;
+          }
+        });
+      }
+      
+      // Then add all other stocks that weren't already added
+      if (metricsData.metrics && metricsData.metrics.length > 0) {
+        metricsData.metrics.forEach(stockData => {
+          // Skip if this is a mentioned stock (already added above)
+          if (mentionedStocks.includes(stockData.symbol)) {
+            return;
+          }
+          
+          dataSection += formatStockMetrics(stockData);
+        });
       }
     } else {
       dataSection += "- No fundamental metrics data available\n";
@@ -492,29 +602,79 @@ function generatePerplexityPrompt(allData) {
     
     return fullPrompt;
   } catch (error) {
-    Logger.log(`Error generating Perplexity prompt: ${error}`);
+    Logger.log(`Error generating OpenAI prompt: ${error}`);
     return `Error generating prompt: ${error}`;
   }
 }
 
 /**
- * Test function to display the Perplexity prompt
- * This function retrieves all data and then generates and displays the Perplexity prompt
+ * Helper function to format stock metrics for the prompt
+ * @param {Object} stockData - The stock data to format
+ * @return {String} Formatted stock metrics
  */
-function testPerplexityPrompt() {
-  Logger.log("Retrieving all data and generating Perplexity prompt...");
+function formatStockMetrics(stockData) {
+  let formattedData = '';
   
-  // Retrieve all data
-  const allData = retrieveAllData();
+  // Format the stock data
+  formattedData += `  * ${stockData.symbol} (${stockData.name || 'Unknown'}):\n`;
   
-  // Generate the Perplexity prompt
-  const prompt = generatePerplexityPrompt(allData);
+  // Add price if available
+  if (stockData.price) {
+    formattedData += `    - Price: $${stockData.price}`;
+    if (stockData.priceChange && stockData.percentChange) {
+      formattedData += ` (${stockData.priceChange >= 0 ? '+' : ''}${formatValue(stockData.priceChange)}, ${stockData.percentChange >= 0 ? '+' : ''}${formatValue(stockData.percentChange)}%)`;
+    }
+    formattedData += '\n';
+  }
   
-  // Log the prompt
-  Logger.log("PERPLEXITY PROMPT:");
-  Logger.log(prompt);
+  // Add PEG Ratio
+  formattedData += `    - PEG Ratio: ${formatValue(stockData.pegRatio)}\n`;
   
-  return prompt;
+  // Add Forward P/E
+  formattedData += `    - Forward P/E: ${formatValue(stockData.forwardPE)}\n`;
+  
+  // Add Price/Book
+  formattedData += `    - Price/Book: ${formatValue(stockData.priceToBook)}\n`;
+  
+  // Add Price/Sales
+  formattedData += `    - Price/Sales: ${formatValue(stockData.priceToSales)}\n`;
+  
+  // Add Debt/Equity
+  formattedData += `    - Debt/Equity: ${formatValue(stockData.debtToEquity)}\n`;
+  
+  // Add Return on Equity
+  formattedData += `    - Return on Equity: ${formatValue(stockData.returnOnEquity * 100)}%\n`;
+  
+  // Add Beta
+  formattedData += `    - Beta: ${formatValue(stockData.beta, true)}\n`;
+  
+  // Add comment if available
+  if (stockData.comment) {
+    formattedData += `    - Analysis: ${stockData.comment}\n`;
+  }
+  
+  return formattedData;
+}
+
+/**
+ * Test function to display the OpenAI prompt
+ * This function retrieves all data and then generates and displays the OpenAI prompt
+ */
+function testOpenAIPrompt() {
+  try {
+    const allData = retrieveAllData();
+    if (!allData.success) {
+      Logger.log(`Error retrieving data: ${allData.message}`);
+      return `Error retrieving data: ${allData.message}`;
+    }
+    
+    const prompt = generateOpenAIPrompt(allData);
+    Logger.log(prompt);
+    return prompt;
+  } catch (error) {
+    Logger.log(`Error testing OpenAI prompt: ${error}`);
+    return `Error: ${error}`;
+  }
 }
 
 /**

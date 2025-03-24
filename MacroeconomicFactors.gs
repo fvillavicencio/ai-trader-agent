@@ -1790,3 +1790,350 @@ function testInflationData() {
     };
   }
 }
+
+/**
+ * Tests the PCE data retrieval from BEA API
+ * Logs detailed information about the API response structure
+ */
+function testPCEData() {
+  try {
+    Logger.log("Testing PCE data retrieval...");
+    
+    // Get BEA API key
+    const apiKey = getBEAApiKey();
+    if (!apiKey) {
+      Logger.log("BEA API key not found");
+      return;
+    }
+    
+    // Set up the request
+    const url = "https://apps.bea.gov/api/data";
+    
+    // Current date
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    
+    // Request parameters - using quarterly data which is more reliable
+    const params = {
+      "UserID": apiKey,
+      "method": "GetData",
+      "datasetname": "NIPA",
+      "TableName": "T20804",
+      "Frequency": "Q",
+      "Year": `${currentYear-1},${currentYear}`,
+      "ResultFormat": "JSON"
+    };
+    
+    // Build the query string
+    const queryString = Object.keys(params)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .join("&");
+    
+    // Make the request
+    const response = UrlFetchApp.fetch(`${url}?${queryString}`, {
+      method: "get",
+      muteHttpExceptions: true
+    });
+    
+    // Check if the request was successful
+    if (response.getResponseCode() !== 200) {
+      Logger.log(`BEA API request failed with response code: ${response.getResponseCode()}`);
+      return;
+    }
+    
+    // Parse the response
+    const responseText = response.getContentText();
+    const data = JSON.parse(responseText);
+    
+    // Log the complete response structure for debugging
+    Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
+    
+    // Detailed logging of the response structure
+    if (data.BEAAPI) {
+      Logger.log("BEAAPI object keys: " + JSON.stringify(Object.keys(data.BEAAPI)));
+      
+      if (data.BEAAPI.Results) {
+        Logger.log("Results object keys: " + JSON.stringify(Object.keys(data.BEAAPI.Results)));
+        
+        // Log the first few data items to understand the structure
+        if (data.BEAAPI.Results.Data && Array.isArray(data.BEAAPI.Results.Data) && data.BEAAPI.Results.Data.length > 0) {
+          Logger.log("Sample data item: " + JSON.stringify(data.BEAAPI.Results.Data[0]));
+          
+          // Log all available series codes for debugging
+          const seriesCodes = [...new Set(data.BEAAPI.Results.Data.map(item => item.SeriesCode))];
+          Logger.log("Available series codes: " + JSON.stringify(seriesCodes));
+        }
+      }
+    }
+    
+    // Check if there's an error message
+    if (data && data.BEAAPI && data.BEAAPI.Error) {
+      Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
+    }
+    
+    // Also try the FRED API as a comparison
+    Logger.log("Testing FRED API for PCE data...");
+    const fredData = fetchPCEDataFromFRED();
+    if (fredData) {
+      Logger.log("FRED API returned valid PCE data");
+      Logger.log(JSON.stringify(fredData));
+    } else {
+      Logger.log("FRED API failed to return valid PCE data");
+    }
+    
+    Logger.log("PCE data test complete");
+  } catch (error) {
+    Logger.log(`Error in PCE data test: ${error}`);
+  }
+}
+
+/**
+ * Runs all macroeconomic data tests
+ */
+function testMacroeconomicData() {
+  Logger.log("Running all macroeconomic data tests...");
+  
+  // Test inflation data
+  testInflationData();
+  
+  // Test PCE data
+  testPCEData();
+  
+  Logger.log("All macroeconomic data tests complete");
+}
+
+/**
+ * Fetches PCE data from BEA API
+ * @return {Object} PCE data or null if failed
+ */
+function fetchPCEDataFromBEA() {
+  try {
+    // Get BEA API key
+    const apiKey = getBEAApiKey();
+    if (!apiKey) {
+      Logger.log("BEA API key not found");
+      return null;
+    }
+    
+    // Set up the request
+    const url = "https://apps.bea.gov/api/data";
+    
+    // Current date
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    
+    // Request parameters - using quarterly data which is more reliable
+    const params = {
+      "UserID": apiKey,
+      "method": "GetData",
+      "datasetname": "NIPA",
+      "TableName": "T20804",
+      "Frequency": "Q",
+      "Year": `${currentYear-1},${currentYear}`,
+      "ResultFormat": "JSON"
+    };
+    
+    // Build the query string
+    const queryString = Object.keys(params)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .join("&");
+    
+    // Make the request
+    const response = UrlFetchApp.fetch(`${url}?${queryString}`, {
+      method: "get",
+      muteHttpExceptions: true
+    });
+    
+    // Check if the request was successful
+    if (response.getResponseCode() !== 200) {
+      Logger.log(`BEA API request failed with response code: ${response.getResponseCode()}`);
+      return null;
+    }
+    
+    // Parse the response
+    const responseText = response.getContentText();
+    const data = JSON.parse(responseText);
+    
+    // Log the response structure for debugging
+    Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
+    
+    // Check if the response contains the expected data
+    if (!data || !data.BEAAPI || !data.BEAAPI.Results || !data.BEAAPI.Results.Data || !Array.isArray(data.BEAAPI.Results.Data)) {
+      Logger.log("BEA API response does not contain expected data structure");
+      
+      // Check if there's an error message
+      if (data && data.BEAAPI && data.BEAAPI.Error) {
+        Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
+      }
+      
+      return null;
+    }
+    
+    // Try to find PCE data with flexible series code matching
+    // First, look for the exact codes we expect
+    let pceData = data.BEAAPI.Results.Data.filter(item => 
+      item.SeriesCode === "DPCERG" // PCE price index
+    );
+    
+    let corePceData = data.BEAAPI.Results.Data.filter(item => 
+      item.SeriesCode === "DPCCRG" // Core PCE price index
+    );
+    
+    // If we didn't find the exact codes, look for any PCE-related codes
+    if (pceData.length === 0) {
+      const seriesCodes = [...new Set(data.BEAAPI.Results.Data.map(item => item.SeriesCode))];
+      Logger.log("Looking for alternative PCE codes. Available codes: " + JSON.stringify(seriesCodes));
+      
+      // Look for any code containing "PCE" and not containing "CORE"
+      const pceCandidates = data.BEAAPI.Results.Data.filter(item => 
+        (item.SeriesCode && item.SeriesCode.includes("PCE") && !item.SeriesCode.includes("CORE")) ||
+        (item.LineDescription && item.LineDescription.includes("PCE") && !item.LineDescription.includes("Core"))
+      );
+      
+      if (pceCandidates.length > 0) {
+        Logger.log("Found alternative PCE data: " + JSON.stringify(pceCandidates[0]));
+        pceData = pceCandidates;
+      }
+    }
+    
+    // If we didn't find core PCE data, look for alternatives
+    if (corePceData.length === 0) {
+      // Look for any code containing both "PCE" and "CORE"
+      const corePceCandidates = data.BEAAPI.Results.Data.filter(item => 
+        (item.SeriesCode && item.SeriesCode.includes("PCE") && item.SeriesCode.includes("CORE")) ||
+        (item.LineDescription && item.LineDescription.includes("PCE") && item.LineDescription.includes("Core"))
+      );
+      
+      if (corePceCandidates.length > 0) {
+        Logger.log("Found alternative Core PCE data: " + JSON.stringify(corePceCandidates[0]));
+        corePceData = corePceCandidates;
+      }
+    }
+    
+    if (pceData.length === 0 || corePceData.length === 0) {
+      Logger.log("BEA API response does not contain expected PCE data after flexible matching");
+      return null;
+    }
+    
+    // Sort data by date (newest first)
+    // First, determine the date format used in the response
+    const dateField = pceData[0].hasOwnProperty('TimePeriod') ? 'TimePeriod' : 
+                     (pceData[0].hasOwnProperty('Quarter') ? 'Quarter' : 'Time Period');
+    
+    Logger.log(`Using date field: ${dateField}`);
+    
+    pceData.sort((a, b) => {
+      const aDate = new Date(a[dateField]);
+      const bDate = new Date(b[dateField]);
+      return bDate - aDate;
+    });
+    
+    corePceData.sort((a, b) => {
+      const aDate = new Date(a[dateField]);
+      const bDate = new Date(b[dateField]);
+      return bDate - aDate;
+    });
+    
+    // Determine the value field used in the response
+    const valueField = pceData[0].hasOwnProperty('DataValue') ? 'DataValue' : 
+                      (pceData[0].hasOwnProperty('Value') ? 'Value' : 'Data Value');
+    
+    Logger.log(`Using value field: ${valueField}`);
+    
+    // Get the latest and previous quarter values
+    const latestPce = parseFloat(pceData[0][valueField]);
+    const previousPce = parseFloat(pceData[1][valueField]);
+    const latestCorePce = parseFloat(corePceData[0][valueField]);
+    const previousCorePce = parseFloat(corePceData[1][valueField]);
+    
+    // Log the values we're using
+    Logger.log(`Latest PCE: ${latestPce}, Previous PCE: ${previousPce}`);
+    Logger.log(`Latest Core PCE: ${latestCorePce}, Previous Core PCE: ${previousCorePce}`);
+    
+    // Calculate year-over-year change
+    // Find the same quarter from last year
+    const latestDate = new Date(pceData[0][dateField]);
+    const latestQuarter = pceData[0][dateField].toString().match(/Q(\d+)/) ? 
+                         pceData[0][dateField].toString().match(/Q(\d+)/)[0] : 
+                         pceData[0][dateField].substring(pceData[0][dateField].length - 2);
+    const latestYear = latestDate.getFullYear();
+    
+    Logger.log(`Latest quarter: ${latestQuarter}, Latest year: ${latestYear}`);
+    
+    const lastYearSameQuarterPce = pceData.find(item => {
+      const itemDate = new Date(item[dateField]);
+      return itemDate.getFullYear() === latestYear - 1 && 
+             item[dateField].toString().includes(latestQuarter);
+    });
+    
+    const lastYearSameQuarterCorePce = corePceData.find(item => {
+      const itemDate = new Date(item[dateField]);
+      return itemDate.getFullYear() === latestYear - 1 && 
+             item[dateField].toString().includes(latestQuarter);
+    });
+    
+    let yearOverYearChange = null;
+    let yearOverYearCoreChange = null;
+    
+    if (lastYearSameQuarterPce) {
+      const lastYearPce = parseFloat(lastYearSameQuarterPce[valueField]);
+      yearOverYearChange = ((latestPce - lastYearPce) / lastYearPce) * 100;
+      Logger.log(`Year-over-year PCE change: ${yearOverYearChange}%`);
+    }
+    
+    if (lastYearSameQuarterCorePce) {
+      const lastYearCorePce = parseFloat(lastYearSameQuarterCorePce[valueField]);
+      yearOverYearCoreChange = ((latestCorePce - lastYearCorePce) / lastYearCorePce) * 100;
+      Logger.log(`Year-over-year Core PCE change: ${yearOverYearCoreChange}%`);
+    }
+    
+    // Calculate quarter-over-quarter percentage change
+    const quarterOverQuarterChange = ((latestPce - previousPce) / previousPce) * 100;
+    const coreQuarterOverQuarterChange = ((latestCorePce - previousCorePce) / previousCorePce) * 100;
+    
+    // Validate the data - ensure values are within reasonable ranges for inflation
+    // Typical inflation rates are between -2% and 15%
+    if (yearOverYearChange !== null && (yearOverYearChange < -2 || yearOverYearChange > 15)) {
+      Logger.log(`Suspicious PCE year-over-year change value: ${yearOverYearChange}%. This is outside normal ranges.`);
+      // Use a calculated value based on quarter-over-quarter change
+      yearOverYearChange = quarterOverQuarterChange * 4;
+      
+      // Still validate the calculated value
+      if (yearOverYearChange < -2 || yearOverYearChange > 15) {
+        Logger.log(`Calculated PCE value still suspicious: ${yearOverYearChange}%. Returning null.`);
+        return null;
+      }
+    }
+    
+    if (yearOverYearCoreChange !== null && (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15)) {
+      Logger.log(`Suspicious Core PCE year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
+      // Use a calculated value based on quarter-over-quarter change
+      yearOverYearCoreChange = coreQuarterOverQuarterChange * 4;
+      
+      // Still validate the calculated value
+      if (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15) {
+        Logger.log(`Calculated Core PCE value still suspicious: ${yearOverYearCoreChange}%. Returning null.`);
+        return null;
+      }
+    }
+    
+    // Create the PCE data object
+    return {
+      currentRate: latestPce,
+      previousRate: previousPce,
+      change: quarterOverQuarterChange,
+      yearOverYearChange: yearOverYearChange !== null ? yearOverYearChange : quarterOverQuarterChange * 4, // Annualize if YoY not available
+      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : coreQuarterOverQuarterChange * 4, // Annualize if YoY not available
+      corePreviousRate: previousCorePce,
+      coreChange: coreQuarterOverQuarterChange,
+      quarter: latestQuarter,
+      year: latestYear,
+      source: "Bureau of Economic Analysis",
+      sourceUrl: "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
+      lastUpdated: new Date()
+    };
+  } catch (error) {
+    Logger.log(`Error fetching PCE data from BEA: ${error}`);
+    return null;
+  }
+}

@@ -29,19 +29,8 @@ function retrieveKeyMarketIndicators() {
       if (macroFactors && macroFactors.success && macroFactors.treasuryYields) {
         treasuryYields = macroFactors.treasuryYields;
       } else {
-        // Create an empty structure if we couldn't get the data
-        treasuryYields = {
-          yields: [],
-          yieldCurve: {
-            status: "Unknown",
-            isInverted: false,
-            tenYearTwoYearSpread: 0,
-            analysis: "No data available"
-          },
-          source: "Not available",
-          sourceUrl: "",
-          lastUpdated: new Date()
-        };
+        // Throw an error if we couldn't get the data - no fallbacks
+        throw new Error("Failed to retrieve treasury yields data. Fresh data is required.");
       }
     }
     
@@ -151,7 +140,6 @@ function formatKeyMarketIndicatorsData(majorIndices, sectorPerformance, volatili
     formattedData += "CNN Fear & Greed Index:\n";
     formattedData += `  - Current Reading: ${fearAndGreedIndex.currentValue || "N/A"} - ${fearAndGreedIndex.rating || "N/A"}\n`;
     formattedData += `  - Analysis: ${fearAndGreedIndex.analysis || "No analysis available"}\n`;
-    
     // Add previous values
     if (fearAndGreedIndex.previousValues) {
       formattedData += `  - Previous Values:\n`;
@@ -159,7 +147,6 @@ function formatKeyMarketIndicatorsData(majorIndices, sectorPerformance, volatili
       formattedData += `    - One Month Ago: ${fearAndGreedIndex.previousValues.oneMonthAgo || "N/A"}\n`;
       formattedData += `    - One Year Ago: ${fearAndGreedIndex.previousValues.oneYearAgo || "N/A"}\n`;
     }
-    
     // Add components
     if (fearAndGreedIndex.components) {
       formattedData += `  - Components:\n`;
@@ -171,13 +158,11 @@ function formatKeyMarketIndicatorsData(majorIndices, sectorPerformance, volatili
       formattedData += `    - Market Momentum: ${fearAndGreedIndex.components.marketMomentum || "N/A"}\n`;
       formattedData += `    - Safe Haven Demand: ${fearAndGreedIndex.components.safeHavenDemand || "N/A"}\n`;
     }
-    
     // Add source information
     if (fearAndGreedIndex.source && fearAndGreedIndex.timestamp) {
       const timestamp = new Date(fearAndGreedIndex.timestamp);
       formattedData += `  - Source: ${fearAndGreedIndex.source} (${fearAndGreedIndex.sourceUrl}), as of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
     }
-    
     formattedData += "\n";
   }
   
@@ -207,7 +192,6 @@ function formatKeyMarketIndicatorsData(majorIndices, sectorPerformance, volatili
         formattedData += `    - Source: ${index.source} (${index.sourceUrl}), as of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
       }
     }
-    
     formattedData += "\n";
   }
   
@@ -239,7 +223,6 @@ function formatKeyMarketIndicatorsData(majorIndices, sectorPerformance, volatili
     if (upcomingEconomicEvents.length > 0 && upcomingEconomicEvents[0].source) {
       formattedData += `  - Source: ${upcomingEconomicEvents[0].source} (${upcomingEconomicEvents[0].sourceUrl})\n`;
     }
-    
     formattedData += "\n";
   }
   
@@ -271,7 +254,6 @@ function formatKeyMarketIndicatorsData(majorIndices, sectorPerformance, volatili
       const timestamp = new Date(sourceInfo.timestamp);
       formattedData += `  - Source: ${sourceInfo.source} (${sourceInfo.sourceUrl}), as of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
     }
-    
     formattedData += "\n";
   }
   
@@ -446,14 +428,8 @@ function fetchIndexData(symbol) {
   } catch (error) {
     Logger.log(`Error fetching index data for ${symbol}: ${error}`);
     
-    // Return an error object instead of fallback data
-    return {
-      error: true,
-      errorMessage: `Failed to fetch data for ${symbol}: ${error.message}`,
-      source: "Yahoo Finance",
-      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/`,
-      timestamp: new Date()
-    };
+    // Throw an error instead of returning fallback data
+    throw new Error(`Failed to fetch data for ${symbol}: ${error.message}`);
   }
 }
 
@@ -567,17 +543,9 @@ function fetchSectorData(symbol) {
     };
   } catch (error) {
     Logger.log(`Error fetching sector data for ${symbol}: ${error}`);
-    // Return a fallback object with error information
-    return {
-      price: 0,
-      change: 0,
-      percentChange: 0,
-      source: "Yahoo Finance",
-      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/`,
-      timestamp: new Date(),
-      error: true,
-      errorMessage: `Failed to fetch data for ${symbol}: ${error}`
-    };
+    
+    // Throw an error instead of returning fallback data
+    throw new Error(`Failed to fetch data for ${symbol}: ${error}`);
   }
 }
 
@@ -587,58 +555,87 @@ function fetchSectorData(symbol) {
  */
 function retrieveVolatilityIndices() {
   try {
-    Logger.log("Retrieving volatility indices data...");
+    Logger.log("Retrieving volatility indices...");
     
-    // This would be implemented with actual API calls in a production environment
-    // For example, using Yahoo Finance API or another financial data provider
+    // Fetch volatility data from Yahoo Finance
+    const volatilityIndices = fetchVolatilityData();
     
-    // Define the volatility indices we want to retrieve
-    const indicesToRetrieve = [
-      { name: "CBOE Volatility Index", symbol: "^VIX" },
-      { name: "CBOE NASDAQ Volatility Index", symbol: "^VXN" }
-    ];
-    
-    // Initialize results array
-    const indices = [];
-    
-    // For each index, fetch the data
-    for (const index of indicesToRetrieve) {
-      try {
-        // This would call an actual API in production
-        const indexData = fetchVolatilityData(index.symbol);
-        indices.push({
-          name: index.name,
-          symbol: index.symbol,
-          value: indexData.value,
-          change: indexData.change,
-          percentChange: indexData.percentChange,
-          trend: indexData.trend,
-          analysis: indexData.analysis,
-          source: indexData.source,
-          sourceUrl: indexData.sourceUrl,
-          timestamp: indexData.timestamp
-        });
-      } catch (error) {
-        Logger.log(`Error retrieving data for ${index.name}: ${error}`);
-      }
+    // If we got valid data, return it
+    if (volatilityIndices && Array.isArray(volatilityIndices) && volatilityIndices.length > 0) {
+      return volatilityIndices;
     }
     
-    Logger.log(`Retrieved ${indices.length} volatility indices.`);
-    return indices;
+    // If we couldn't get data, return an empty array
+    Logger.log("Could not retrieve volatility indices");
+    return [];
+    
   } catch (error) {
-    Logger.log(`Error retrieving volatility indices data: ${error}`);
+    Logger.log(`Error retrieving volatility indices: ${error}`);
     return [];
   }
 }
 
 /**
- * Fetches data for a specific volatility index
- * @param {String} symbol - The volatility index symbol
- * @return {Object} Volatility index data
+ * Fetches volatility data from Yahoo Finance
+ * @return {Array} Array of volatility indices data or null if failed
  */
-function fetchVolatilityData(symbol) {
+function fetchVolatilityData() {
   try {
-    // Use Yahoo Finance API to get real-time data
+    Logger.log("Fetching volatility data...");
+    
+    // Define the symbols for volatility indices
+    const symbols = ["^VIX", "^VXN"];
+    const volatilityIndices = [];
+    
+    // Fetch data for each symbol
+    for (const symbol of symbols) {
+      try {
+        // First attempt: Use Yahoo Finance API to get real-time data
+        Logger.log(`Attempting to fetch volatility data for ${symbol} from Yahoo Finance...`);
+        const yahooData = fetchVolatilityDataFromYahoo(symbol);
+        
+        if (yahooData) {
+          volatilityIndices.push(yahooData);
+          continue; // Successfully got data from Yahoo, move to next symbol
+        }
+        
+        // Second attempt: Try Google Finance if Yahoo Finance failed
+        Logger.log(`Yahoo Finance failed for ${symbol}, trying Google Finance...`);
+        const googleData = fetchVolatilityDataFromGoogleFinance(symbol);
+        
+        if (googleData) {
+          volatilityIndices.push(googleData);
+          continue; // Successfully got data from Google, move to next symbol
+        }
+        
+        // If both attempts failed, log the error
+        Logger.log(`Failed to fetch volatility data for ${symbol} from all sources`);
+      } catch (error) {
+        Logger.log(`Error fetching volatility data for ${symbol}: ${error}`);
+        // Continue to the next symbol instead of returning null for all
+      }
+    }
+    
+    // Return the volatility indices if any were successfully retrieved
+    if (volatilityIndices.length > 0) {
+      return volatilityIndices;
+    } else {
+      Logger.log("No volatility indices could be retrieved");
+      return null;
+    }
+  } catch (error) {
+    Logger.log(`Error fetching volatility data: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches volatility data from Yahoo Finance for a specific symbol
+ * @param {String} symbol - The volatility index symbol (e.g., "^VIX")
+ * @return {Object} Volatility index data or null if failed
+ */
+function fetchVolatilityDataFromYahoo(symbol) {
+  try {
     // Properly encode the symbol to handle special characters like ^
     const encodedSymbol = encodeURIComponent(symbol);
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}`;
@@ -659,89 +656,204 @@ function fetchVolatilityData(symbol) {
     };
     
     const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
     
-    // Check if we got a valid response
-    if (response.getResponseCode() !== 200) {
-      throw new Error(`HTTP error: ${response.getResponseCode()}`);
+    // Check if the request was successful
+    if (responseCode !== 200) {
+      Logger.log(`Yahoo Finance API request failed for ${symbol} with response code: ${responseCode}`);
+      return null;
     }
     
-    const data = JSON.parse(response.getContentText());
+    // Parse the response
+    const responseText = response.getContentText();
+    const data = JSON.parse(responseText);
+    
+    // Check if the response contains the expected data structure
+    if (!data || !data.chart || !data.chart.result || !data.chart.result[0] || !data.chart.result[0].meta) {
+      Logger.log(`Yahoo Finance API response for ${symbol} does not contain expected data structure`);
+      return null;
+    }
     
     // Extract the values
-    const currentValue = data.chart.result[0].meta.regularMarketPrice;
-    const previousClose = data.chart.result[0].meta.previousClose;
-    const change = currentValue - previousClose;
+    const meta = data.chart.result[0].meta;
+    const value = meta.regularMarketPrice;
+    const previousClose = meta.previousClose;
+    
+    // Validate the values
+    if (value === undefined || previousClose === undefined) {
+      Logger.log(`Missing price data for ${symbol}`);
+      return null;
+    }
+    
+    // Calculate change and percent change
+    const change = value - previousClose;
     const percentChange = (change / previousClose) * 100;
     
     // Determine the trend
-    let trend;
-    if (percentChange > 5) {
-      trend = "Strongly Rising";
-    } else if (percentChange > 1) {
+    let trend = "Neutral";
+    if (change > 0) {
       trend = "Rising";
-    } else if (percentChange < -5) {
-      trend = "Strongly Falling";
-    } else if (percentChange < -1) {
+    } else if (change < 0) {
       trend = "Falling";
-    } else {
-      trend = "Stable";
     }
     
-    // Create analysis based on the VIX value
-    let analysis;
+    // Generate analysis
+    let analysis = "";
     if (symbol === "^VIX") {
-      if (currentValue >= 30) {
-        analysis = "The VIX is at elevated levels, indicating significant market fear and potential volatility. This often coincides with market bottoms, but can persist during extended downturns.";
-      } else if (currentValue >= 20) {
-        analysis = "The VIX is above average, suggesting heightened market anxiety and increased volatility. Investors may be pricing in more risk in the short term.";
-      } else if (currentValue >= 15) {
-        analysis = "The VIX is at moderate levels, reflecting normal market conditions with balanced risk perception.";
+      if (value < 15) {
+        analysis = "Low volatility indicates market complacency or stability.";
+      } else if (value >= 15 && value < 25) {
+        analysis = "Moderate volatility suggests normal market conditions.";
+      } else if (value >= 25 && value < 35) {
+        analysis = "Elevated volatility indicates increased market uncertainty.";
       } else {
-        analysis = "The VIX is at low levels, indicating market complacency and low expected volatility. Historically, extremely low VIX readings can precede market corrections.";
+        analysis = "High volatility signals significant market fear or instability.";
       }
     } else if (symbol === "^VXN") {
-      if (currentValue >= 35) {
-        analysis = "The NASDAQ Volatility Index is at elevated levels, indicating significant fear in technology stocks. This often coincides with tech sector bottoms, but can persist during extended downturns.";
-      } else if (currentValue >= 25) {
-        analysis = "The NASDAQ Volatility Index is above average, suggesting heightened anxiety in technology stocks and increased volatility expectations.";
-      } else if (currentValue >= 20) {
-        analysis = "The NASDAQ Volatility Index is at moderate levels, reflecting normal market conditions for technology stocks.";
+      if (value < 20) {
+        analysis = "Low volatility in tech stocks indicates stability.";
+      } else if (value >= 20 && value < 30) {
+        analysis = "Moderate volatility suggests normal conditions for tech stocks.";
+      } else if (value >= 30 && value < 40) {
+        analysis = "Elevated volatility indicates increased uncertainty in tech sector.";
       } else {
-        analysis = "The NASDAQ Volatility Index is at low levels, indicating complacency in technology stocks. Historically, extremely low readings can precede corrections in the tech sector.";
+        analysis = "High volatility signals significant fear or instability in tech stocks.";
       }
-    } else {
-      analysis = "No specific analysis available for this volatility index.";
     }
     
     // Get the timestamp
-    const timestamp = new Date(data.chart.result[0].meta.regularMarketTime * 1000);
+    const timestamp = meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date();
     
-    return {
-      value: currentValue,
+    // Create the volatility index object
+    const name = symbol === "^VIX" ? "CBOE Volatility Index" : "NASDAQ Volatility Index";
+    const volatilityIndex = {
+      symbol: symbol,
+      name: name,
+      value: value,
+      previousClose: previousClose,
       change: change,
       percentChange: percentChange,
       trend: trend,
       analysis: analysis,
+      timestamp: timestamp,
       source: "Yahoo Finance",
-      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/`,
-      timestamp: timestamp
+      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/`
     };
-  } catch (error) {
-    Logger.log(`Error fetching volatility data for ${symbol}: ${error}`);
     
-    // Return an error object
-    return {
-      error: true,
-      errorMessage: `Failed to fetch volatility data for ${symbol}: ${error}`,
-      value: null,
-      change: null,
-      percentChange: null,
-      trend: null,
-      analysis: null,
-      source: "Yahoo Finance",
-      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/`,
-      timestamp: new Date()
+    return volatilityIndex;
+  } catch (error) {
+    Logger.log(`Error in fetchVolatilityDataFromYahoo for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches volatility data from Google Finance for a specific symbol
+ * @param {String} symbol - The volatility index symbol (e.g., "^VIX")
+ * @return {Object} Volatility index data or null if failed
+ */
+function fetchVolatilityDataFromGoogleFinance(symbol) {
+  try {
+    // Get the shared spreadsheet for Google Finance data
+    const spreadsheet = getSharedFinanceSpreadsheet();
+    
+    // Clear any existing data
+    const sheet = spreadsheet.getActiveSheet();
+    sheet.clear();
+    
+    // Set up the GOOGLEFINANCE formula for VIX data
+    sheet.getRange("A1").setValue("Symbol");
+    sheet.getRange("B1").setValue("Price");
+    sheet.getRange("C1").setValue("Previous Close");
+    
+    // Convert Yahoo Finance symbol to Google Finance format
+    // For VIX, Google Finance uses .INX:VIX or INDEXCBOE:VIX
+    let googleSymbol = symbol;
+    if (symbol === "^VIX") {
+      googleSymbol = "INDEXCBOE:VIX";
+    } else if (symbol === "^VXN") {
+      googleSymbol = "INDEXCBOE:VXN";
+    }
+    
+    // Set the symbol
+    sheet.getRange("A2").setValue(googleSymbol);
+    
+    // Set the formulas for price and previous close
+    sheet.getRange("B2").setFormula(`=GOOGLEFINANCE("${googleSymbol}", "price")`);
+    sheet.getRange("C2").setFormula(`=GOOGLEFINANCE("${googleSymbol}", "priceopen")`); // Using open price as an approximation
+    
+    // Wait for formulas to calculate
+    Utilities.sleep(1000);
+    
+    // Extract the data
+    const value = sheet.getRange("B2").getValue();
+    const previousClose = sheet.getRange("C2").getValue();
+    
+    // Validate the values
+    if (isNaN(value) || isNaN(previousClose) || value === 0) {
+      Logger.log(`Invalid or missing data from Google Finance for ${symbol}`);
+      return null;
+    }
+    
+    // Calculate change and percent change
+    const change = value - previousClose;
+    const percentChange = (change / previousClose) * 100;
+    
+    // Determine the trend
+    let trend = "Neutral";
+    if (change > 0) {
+      trend = "Rising";
+    } else if (change < 0) {
+      trend = "Falling";
+    }
+    
+    // Generate analysis
+    let analysis = "";
+    if (symbol === "^VIX") {
+      if (value < 15) {
+        analysis = "Low volatility indicates market complacency or stability.";
+      } else if (value >= 15 && value < 25) {
+        analysis = "Moderate volatility suggests normal market conditions.";
+      } else if (value >= 25 && value < 35) {
+        analysis = "Elevated volatility indicates increased market uncertainty.";
+      } else {
+        analysis = "High volatility signals significant market fear or instability.";
+      }
+    } else if (symbol === "^VXN") {
+      if (value < 20) {
+        analysis = "Low volatility in tech stocks indicates stability.";
+      } else if (value >= 20 && value < 30) {
+        analysis = "Moderate volatility suggests normal conditions for tech stocks.";
+      } else if (value >= 30 && value < 40) {
+        analysis = "Elevated volatility indicates increased uncertainty in tech sector.";
+      } else {
+        analysis = "High volatility signals significant fear or instability in tech stocks.";
+      }
+    }
+    
+    // Get the timestamp
+    const timestamp = new Date();
+    
+    // Create the volatility index object
+    const name = symbol === "^VIX" ? "CBOE Volatility Index" : "NASDAQ Volatility Index";
+    const volatilityIndex = {
+      symbol: symbol,
+      name: name,
+      value: value,
+      previousClose: previousClose,
+      change: change,
+      percentChange: percentChange,
+      trend: trend,
+      analysis: analysis,
+      timestamp: timestamp,
+      source: "Google Finance",
+      sourceUrl: `https://www.google.com/finance/quote/${googleSymbol}`
     };
+    
+    return volatilityIndex;
+  } catch (error) {
+    Logger.log(`Error in fetchVolatilityDataFromGoogleFinance for ${symbol}: ${error}`);
+    return null;
   }
 }
 
@@ -1029,6 +1141,39 @@ function testKeyMarketIndicators() {
 }
 
 /**
+ * Tests the volatility indices data retrieval
+ */
+function testVolatilityIndices() {
+  try {
+    Logger.log("Testing volatility indices data retrieval...");
+    
+    // Retrieve volatility indices data
+    const volatilityIndices = retrieveVolatilityIndices();
+    
+    // Log the results
+    Logger.log("VOLATILITY INDICES TEST RESULTS:");
+    Logger.log(`Retrieved ${volatilityIndices.length} volatility indices.`);
+    
+    // Log each volatility index
+    for (const index of volatilityIndices) {
+      Logger.log(`${index.name} (${index.symbol}):`);
+      Logger.log(`  Value: ${index.value}`);
+      Logger.log(`  Change: ${index.change}`);
+      Logger.log(`  Percent Change: ${index.percentChange}%`);
+      Logger.log(`  Trend: ${index.trend}`);
+      Logger.log(`  Analysis: ${index.analysis}`);
+      Logger.log(`  Source: ${index.source}`);
+      Logger.log(`  Last Updated: ${new Date(index.timestamp).toLocaleString()}`);
+    }
+    
+    return volatilityIndices;
+  } catch (error) {
+    Logger.log(`Error testing volatility indices data retrieval: ${error}`);
+    return [];
+  }
+}
+
+/**
  * Test function to verify the Fear & Greed Index and Treasury Yield data retrieval
  */
 function testMarketDataRetrieval() {
@@ -1203,4 +1348,170 @@ function getTreasurySymbol(term) {
   };
   
   return symbols[term] || "";
+}
+
+/**
+ * Fetches volatility data from Yahoo Finance
+ * @return {Object} Volatility data
+ */
+function fetchVolatilityData() {
+  try {
+    Logger.log("Fetching volatility data from Yahoo Finance...");
+    
+    // Define the symbols for volatility indices
+    const symbols = ["^VIX", "^VXN"];
+    const volatilityIndices = [];
+    
+    // Fetch data for each symbol
+    for (const symbol of symbols) {
+      try {
+        // Use Yahoo Finance API to get real-time data
+        // Properly encode the symbol to handle special characters like ^
+        const encodedSymbol = encodeURIComponent(symbol);
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}`;
+        
+        Logger.log(`Fetching volatility data for ${symbol} from ${url}`);
+        
+        // Enhanced options with more complete headers to avoid "Invalid argument" errors
+        const options = {
+          muteHttpExceptions: true,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+            'Accept': 'application/json',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Connection': 'keep-alive',
+            'Cache-Control': 'max-age=0'
+          },
+          contentType: 'application/json'
+        };
+        
+        const response = UrlFetchApp.fetch(url, options);
+        const responseCode = response.getResponseCode();
+        
+        // Check if the request was successful
+        if (responseCode !== 200) {
+          Logger.log(`Yahoo Finance API request failed for ${symbol} with response code: ${responseCode}`);
+          continue;
+        }
+        
+        // Parse the response
+        const responseText = response.getContentText();
+        const data = JSON.parse(responseText);
+        
+        // Check if the response contains the expected data structure
+        if (!data || !data.chart || !data.chart.result || !data.chart.result[0] || !data.chart.result[0].meta) {
+          Logger.log(`Yahoo Finance API response for ${symbol} does not contain expected data structure`);
+          continue;
+        }
+        
+        // Extract the values
+        const meta = data.chart.result[0].meta;
+        const value = meta.regularMarketPrice;
+        const previousClose = meta.previousClose;
+        
+        // Validate the values
+        if (value === undefined || previousClose === undefined) {
+          Logger.log(`Missing price data for ${symbol}`);
+          continue;
+        }
+        
+        // Calculate change and percent change
+        const change = value - previousClose;
+        const percentChange = (change / previousClose) * 100;
+        
+        // Determine the trend
+        let trend = "Neutral";
+        if (change > 0) {
+          trend = "Rising";
+        } else if (change < 0) {
+          trend = "Falling";
+        }
+        
+        // Generate analysis
+        let analysis = "";
+        if (symbol === "^VIX") {
+          if (value < 15) {
+            analysis = "Low volatility indicates market complacency or stability.";
+          } else if (value >= 15 && value < 25) {
+            analysis = "Moderate volatility suggests normal market conditions.";
+          } else if (value >= 25 && value < 35) {
+            analysis = "Elevated volatility indicates increased market uncertainty.";
+          } else {
+            analysis = "High volatility signals significant market fear or instability.";
+          }
+        } else if (symbol === "^VXN") {
+          if (value < 20) {
+            analysis = "Low volatility in tech stocks indicates stability.";
+          } else if (value >= 20 && value < 30) {
+            analysis = "Moderate volatility suggests normal conditions for tech stocks.";
+          } else if (value >= 30 && value < 40) {
+            analysis = "Elevated volatility indicates increased uncertainty in tech sector.";
+          } else {
+            analysis = "High volatility signals significant fear or instability in tech stocks.";
+          }
+        }
+        
+        // Get the timestamp
+        const timestamp = meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date();
+        
+        // Create the volatility index object
+        const name = symbol === "^VIX" ? "CBOE Volatility Index" : "NASDAQ Volatility Index";
+        const volatilityIndex = {
+          symbol: symbol,
+          name: name,
+          value: value,
+          previousClose: previousClose,
+          change: change,
+          percentChange: percentChange,
+          trend: trend,
+          analysis: analysis,
+          timestamp: timestamp,
+          source: "Yahoo Finance",
+          sourceUrl: `https://finance.yahoo.com/quote/${symbol}/`
+        };
+        
+        volatilityIndices.push(volatilityIndex);
+      } catch (error) {
+        Logger.log(`Error fetching volatility data for ${symbol}: ${error}`);
+        // Continue to the next symbol instead of returning null for all
+      }
+    }
+    
+    // Return the volatility indices if any were successfully retrieved
+    if (volatilityIndices.length > 0) {
+      return volatilityIndices;
+    } else {
+      Logger.log("No volatility indices could be retrieved");
+      return null;
+    }
+  } catch (error) {
+    Logger.log(`Error fetching volatility data: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Retrieves volatility indices
+ * @return {Array} Array of volatility indices
+ */
+function retrieveVolatilityIndices() {
+  try {
+    Logger.log("Retrieving volatility indices...");
+    
+    // Fetch volatility data from Yahoo Finance
+    const volatilityIndices = fetchVolatilityData();
+    
+    // If we got valid data, return it
+    if (volatilityIndices && Array.isArray(volatilityIndices) && volatilityIndices.length > 0) {
+      return volatilityIndices;
+    }
+    
+    // If we couldn't get data, return an empty array
+    Logger.log("Could not retrieve volatility indices");
+    return [];
+    
+  } catch (error) {
+    Logger.log(`Error retrieving volatility indices: ${error}`);
+    return [];
+  }
 }
