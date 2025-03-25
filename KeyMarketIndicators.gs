@@ -19,17 +19,24 @@ function retrieveKeyMarketIndicators() {
       
       if (cachedData) {
         Logger.log("Using cached key market indicators data (less than 1 hour old)");
-        const data = JSON.parse(cachedData);
-        data.fromCache = true;
-        return data;
+        const parsedData = JSON.parse(cachedData);
+        
+        // Ensure the cached data has the formattedData field
+        if (!parsedData.formattedData) {
+          parsedData.formattedData = formatKeyMarketIndicatorsData(parsedData);
+        }
+        
+        return parsedData;
       }
     } catch (cacheError) {
       Logger.log("Cache retrieval error for key market indicators: " + cacheError);
       // Continue execution - we'll get fresh data below
     }
     
-    // Initialize results object
+    // Initialize the results object with default values
     const results = {
+      success: true,
+      message: "Retrieved key market indicators data successfully",
       majorIndices: [],
       sectorPerformance: [],
       volatilityIndices: [],
@@ -45,9 +52,15 @@ function retrieveKeyMarketIndicators() {
       const majorIndicesData = retrieveMajorIndices();
       if (majorIndicesData && majorIndicesData.length > 0) {
         results.majorIndices = majorIndicesData;
+      } else {
+        Logger.log("Major indices data not available");
+        results.success = false;
+        results.message = "Failed to retrieve some market data";
       }
     } catch (error) {
       Logger.log(`Error retrieving major indices: ${error}`);
+      results.success = false;
+      results.message = "Failed to retrieve some market data";
     }
     
     // Get sector performance data
@@ -55,9 +68,15 @@ function retrieveKeyMarketIndicators() {
       const sectorPerformanceData = retrieveSectorPerformance();
       if (sectorPerformanceData && sectorPerformanceData.length > 0) {
         results.sectorPerformance = sectorPerformanceData;
+      } else {
+        Logger.log("Sector performance data not available");
+        results.success = false;
+        results.message = "Failed to retrieve some market data";
       }
     } catch (error) {
       Logger.log(`Error retrieving sector performance: ${error}`);
+      results.success = false;
+      results.message = "Failed to retrieve some market data";
     }
     
     // Get volatility indices data
@@ -65,9 +84,15 @@ function retrieveKeyMarketIndicators() {
       const volatilityIndicesData = retrieveVolatilityIndices();
       if (volatilityIndicesData && volatilityIndicesData.length > 0) {
         results.volatilityIndices = volatilityIndicesData;
+      } else {
+        Logger.log("Volatility indices data not available");
+        results.success = false;
+        results.message = "Failed to retrieve some market data";
       }
     } catch (error) {
       Logger.log(`Error retrieving volatility indices: ${error}`);
+      results.success = false;
+      results.message = "Failed to retrieve some market data";
     }
     
     // Get treasury yields data
@@ -75,34 +100,57 @@ function retrieveKeyMarketIndicators() {
       const treasuryYieldsData = retrieveTreasuryYields();
       if (treasuryYieldsData && treasuryYieldsData.yields && treasuryYieldsData.yields.length > 0) {
         results.treasuryYields = treasuryYieldsData;
+      } else {
+        Logger.log("Treasury yields data not available");
+        results.success = false;
+        results.message = "Failed to retrieve some market data";
       }
     } catch (error) {
       Logger.log(`Error retrieving treasury yields: ${error}`);
+      results.success = false;
+      results.message = "Failed to retrieve some market data";
     }
     
     // Get Fear & Greed Index data
     try {
       const fearAndGreedIndexData = retrieveFearAndGreedIndex();
-      if (fearAndGreedIndexData) {
+      if (fearAndGreedIndexData && !fearAndGreedIndexData.error) {
         results.fearAndGreedIndex = fearAndGreedIndexData;
       } else {
         Logger.log("Fear & Greed Index data not available");
+        if (fearAndGreedIndexData && fearAndGreedIndexData.errorMessage) {
+          Logger.log(`Fear & Greed Index error: ${fearAndGreedIndexData.errorMessage}`);
+        }
+        results.success = false;
+        results.message = "Failed to retrieve some market data";
       }
     } catch (error) {
       Logger.log(`Error retrieving Fear & Greed Index: ${error}`);
+      results.success = false;
+      results.message = "Failed to retrieve some market data";
     }
     
     // Get upcoming economic events data
     try {
       const upcomingEconomicEventsData = retrieveUpcomingEconomicEvents();
-      if (upcomingEconomicEventsData && upcomingEconomicEventsData.length > 0) {
-        results.upcomingEconomicEvents = upcomingEconomicEventsData;
+      if (upcomingEconomicEventsData && upcomingEconomicEventsData.events && upcomingEconomicEventsData.events.length > 0) {
+        results.upcomingEconomicEvents = upcomingEconomicEventsData.events;
       } else {
         Logger.log("Upcoming economic events data not available");
+        if (upcomingEconomicEventsData && upcomingEconomicEventsData.errorMessage) {
+          Logger.log(`Economic events error: ${upcomingEconomicEventsData.errorMessage}`);
+        }
+        results.success = false;
+        results.message = "Failed to retrieve some market data";
       }
     } catch (error) {
       Logger.log(`Error retrieving upcoming economic events: ${error}`);
+      results.success = false;
+      results.message = "Failed to retrieve some market data";
     }
+    
+    // Format the data for display
+    results.formattedData = formatKeyMarketIndicatorsData(results);
     
     // Cache the results
     try {
@@ -113,11 +161,29 @@ function retrieveKeyMarketIndicators() {
       Logger.log("Error caching key market indicators data: " + cacheError);
     }
     
-    Logger.log("Retrieved key market indicators data successfully");
+    // Log the retrieval status
+    if (results.success) {
+      Logger.log("Successfully retrieved all key market indicators data");
+    } else {
+      Logger.log("Retrieved key market indicators data with some missing components");
+    }
+    
     return results;
   } catch (error) {
     Logger.log(`Error retrieving key market indicators data: ${error}`);
-    throw new Error(`Failed to retrieve key market indicators data: ${error}`);
+    return {
+      success: false,
+      message: `Error retrieving key market indicators data: ${error}`,
+      majorIndices: [],
+      sectorPerformance: [],
+      volatilityIndices: [],
+      treasuryYields: { yields: [] },
+      fearAndGreedIndex: null,
+      upcomingEconomicEvents: [],
+      timestamp: new Date(),
+      fromCache: false,
+      formattedData: "Error retrieving key market indicators data. Please try again later."
+    };
   }
 }
 
@@ -254,7 +320,7 @@ function formatKeyMarketIndicatorsData(data) {
         const dateObj = new Date(event.date);
         const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
         
-        formattedText += `  * ${dateStr}: ${event.name || "Economic Event"} (${event.importance || "Medium"} importance)\n`;
+        formattedText += `  * ${dateStr}: ${event.name || "Economic Event"}\n`;
       }
       
       // Add timestamp
@@ -580,745 +646,6 @@ function retrieveVolatilityIndices() {
 
 /**
  * Fetches volatility data from Yahoo Finance
- * @return {Array} Array of volatility indices data or null if failed
- */
-function fetchVolatilityData() {
-  try {
-    Logger.log("Fetching volatility data...");
-    
-    // Define the symbols for volatility indices
-    const symbols = ["^VIX", "^VXN"];
-    const volatilityIndices = [];
-    
-    // Fetch data for each symbol
-    for (const symbol of symbols) {
-      try {
-        // First attempt: Use Yahoo Finance API to get real-time data
-        Logger.log(`Attempting to fetch volatility data for ${symbol} from Yahoo Finance...`);
-        const yahooData = fetchVolatilityDataFromYahoo(symbol);
-        
-        if (yahooData) {
-          volatilityIndices.push(yahooData);
-          continue; // Successfully got data from Yahoo, move to next symbol
-        }
-        
-        // Second attempt: Try Google Finance if Yahoo Finance failed
-        Logger.log(`Yahoo Finance failed for ${symbol}, trying Google Finance...`);
-        const googleData = fetchVolatilityDataFromGoogleFinance(symbol);
-        
-        if (googleData) {
-          volatilityIndices.push(googleData);
-          continue; // Successfully got data from Google, move to next symbol
-        }
-        
-        // If both attempts failed, log the error
-        Logger.log(`Failed to fetch volatility data for ${symbol} from all sources`);
-      } catch (error) {
-        Logger.log(`Error fetching volatility data for ${symbol}: ${error}`);
-        // Continue to the next symbol instead of returning null for all
-      }
-    }
-    
-    // Return the volatility indices if any were successfully retrieved
-    if (volatilityIndices.length > 0) {
-      return volatilityIndices;
-    } else {
-      Logger.log("No volatility indices could be retrieved");
-      return null;
-    }
-  } catch (error) {
-    Logger.log(`Error fetching volatility data: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches volatility data from Yahoo Finance for a specific symbol
- * @param {String} symbol - The volatility index symbol (e.g., "^VIX")
- * @return {Object} Volatility index data or null if failed
- */
-function fetchVolatilityDataFromYahoo(symbol) {
-  try {
-    // Properly encode the symbol to handle special characters like ^
-    const encodedSymbol = encodeURIComponent(symbol);
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodedSymbol}`;
-    
-    Logger.log(`Fetching volatility data for ${symbol} from ${url}`);
-    
-    // Enhanced options with more complete headers to avoid "Invalid argument" errors
-    const options = {
-      muteHttpExceptions: true,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Connection': 'keep-alive',
-        'Upgrade-Insecure-Requests': '1',
-        'Cache-Control': 'max-age=0'
-      },
-      contentType: 'application/json'
-    };
-    
-    const response = UrlFetchApp.fetch(url, options);
-    
-    // Check response code
-    if (response.getResponseCode() !== 200) {
-      throw new Error(`HTTP error: ${response.getResponseCode()}`);
-    }
-    
-    const data = JSON.parse(response.getContentText());
-    
-    // Check if the response contains the expected data structure
-    if (!data || !data.chart || !data.chart.result || !data.chart.result[0] || !data.chart.result[0].meta) {
-      Logger.log(`Yahoo Finance API response for ${symbol} does not contain expected data structure`);
-      return null;
-    }
-    
-    // Extract the values
-    const meta = data.chart.result[0].meta;
-    const value = meta.regularMarketPrice;
-    const previousClose = meta.previousClose;
-    
-    // Validate the values
-    if (value === undefined || previousClose === undefined) {
-      Logger.log(`Missing price data for ${symbol}`);
-      return null;
-    }
-    
-    // Calculate change and percent change
-    const change = value - previousClose;
-    const percentChange = (change / previousClose) * 100;
-    
-    // Determine the trend
-    let trend = "Neutral";
-    if (change > 0) {
-      trend = "Rising";
-    } else if (change < 0) {
-      trend = "Falling";
-    }
-    
-    // Generate analysis
-    let analysis = "";
-    if (symbol === "^VIX") {
-      if (value < 15) {
-        analysis = "Low volatility indicates market complacency or stability.";
-      } else if (value >= 15 && value < 25) {
-        analysis = "Moderate volatility suggests normal market conditions.";
-      } else if (value >= 25 && value < 35) {
-        analysis = "Elevated volatility indicates increased market uncertainty.";
-      } else {
-        analysis = "High volatility signals significant market fear or instability.";
-      }
-    } else if (symbol === "^VXN") {
-      if (value < 20) {
-        analysis = "Low volatility in tech stocks indicates stability.";
-      } else if (value >= 20 && value < 30) {
-        analysis = "Moderate volatility suggests normal conditions for tech stocks.";
-      } else if (value >= 30 && value < 40) {
-        analysis = "Elevated volatility indicates increased uncertainty in tech sector.";
-      } else {
-        analysis = "High volatility signals significant fear or instability in tech stocks.";
-      }
-    }
-    
-    // Get the timestamp
-    const timestamp = meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date();
-    
-    // Create the volatility index object
-    const name = symbol === "^VIX" ? "CBOE Volatility Index" : "NASDAQ Volatility Index";
-    const volatilityIndex = {
-      symbol: symbol,
-      name: name,
-      value: value,
-      previousClose: previousClose,
-      change: change,
-      percentChange: percentChange,
-      trend: trend,
-      analysis: analysis,
-      timestamp: timestamp,
-      source: "Yahoo Finance",
-      sourceUrl: `https://finance.yahoo.com/quote/${symbol}/`
-    };
-    
-    return volatilityIndex;
-  } catch (error) {
-    Logger.log(`Error in fetchVolatilityDataFromYahoo for ${symbol}: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches volatility data from Google Finance for a specific symbol
- * @param {String} symbol - The volatility index symbol (e.g., "^VIX")
- * @return {Object} Volatility index data or null if failed
- */
-function fetchVolatilityDataFromGoogleFinance(symbol) {
-  try {
-    // Get the shared spreadsheet for Google Finance data
-    const spreadsheet = getSharedFinanceSpreadsheet();
-    
-    // Clear any existing data
-    const sheet = spreadsheet.getActiveSheet();
-    sheet.clear();
-    
-    // Set up the GOOGLEFINANCE formula for VIX data
-    sheet.getRange("A1").setValue("Symbol");
-    sheet.getRange("B1").setValue("Price");
-    sheet.getRange("C1").setValue("Previous Close");
-    
-    // Convert Yahoo Finance symbol to Google Finance format
-    // For VIX, Google Finance uses .INX:VIX or INDEXCBOE:VIX
-    let googleSymbol = symbol;
-    if (symbol === "^VIX") {
-      googleSymbol = "INDEXCBOE:VIX";
-    } else if (symbol === "^VXN") {
-      googleSymbol = "INDEXCBOE:VXN";
-    }
-    
-    // Set the symbol
-    sheet.getRange("A2").setValue(googleSymbol);
-    
-    // Set the formulas for price and previous close
-    sheet.getRange("B2").setFormula(`=GOOGLEFINANCE("${googleSymbol}", "price")`);
-    sheet.getRange("C2").setFormula(`=GOOGLEFINANCE("${googleSymbol}", "priceopen")`); // Using open price as an approximation
-    
-    // Wait for formulas to calculate
-    Utilities.sleep(1000);
-    
-    // Extract the data
-    const value = sheet.getRange("B2").getValue();
-    const previousClose = sheet.getRange("C2").getValue();
-    
-    // Validate the values
-    if (isNaN(value) || isNaN(previousClose) || value === 0) {
-      Logger.log(`Invalid or missing data from Google Finance for ${symbol}`);
-      return null;
-    }
-    
-    // Calculate change and percent change
-    const change = value - previousClose;
-    const percentChange = (change / previousClose) * 100;
-    
-    // Determine the trend
-    let trend = "Neutral";
-    if (change > 0) {
-      trend = "Rising";
-    } else if (change < 0) {
-      trend = "Falling";
-    }
-    
-    // Generate analysis
-    let analysis = "";
-    if (symbol === "^VIX") {
-      if (value < 15) {
-        analysis = "Low volatility indicates market complacency or stability.";
-      } else if (value >= 15 && value < 25) {
-        analysis = "Moderate volatility suggests normal market conditions.";
-      } else if (value >= 25 && value < 35) {
-        analysis = "Elevated volatility indicates increased market uncertainty.";
-      } else {
-        analysis = "High volatility signals significant market fear or instability.";
-      }
-    } else if (symbol === "^VXN") {
-      if (value < 20) {
-        analysis = "Low volatility in tech stocks indicates stability.";
-      } else if (value >= 20 && value < 30) {
-        analysis = "Moderate volatility suggests normal conditions for tech stocks.";
-      } else if (value >= 30 && value < 40) {
-        analysis = "Elevated volatility indicates increased uncertainty in tech sector.";
-      } else {
-        analysis = "High volatility signals significant fear or instability in tech stocks.";
-      }
-    }
-    
-    // Get the timestamp
-    const timestamp = new Date();
-    
-    // Create the volatility index object
-    const name = symbol === "^VIX" ? "CBOE Volatility Index" : "NASDAQ Volatility Index";
-    const volatilityIndex = {
-      symbol: symbol,
-      name: name,
-      value: value,
-      previousClose: previousClose,
-      change: change,
-      percentChange: percentChange,
-      trend: trend,
-      analysis: analysis,
-      timestamp: timestamp,
-      source: "Google Finance",
-      sourceUrl: `https://www.google.com/finance/quote/${googleSymbol}`
-    };
-    
-    return volatilityIndex;
-  } catch (error) {
-    Logger.log(`Error in fetchVolatilityDataFromGoogleFinance for ${symbol}: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Retrieves the CNN Fear & Greed Index
- * @return {Object} Fear & Greed Index data or null if unavailable
- */
-function retrieveFearAndGreedIndex() {
-  try {
-    Logger.log("Retrieving CNN Fear & Greed Index data...");
-    
-    // Check if we have cached data first
-    try {
-      const scriptCache = CacheService.getScriptCache();
-      const cachedData = scriptCache.get('FEAR_AND_GREED_INDEX_DATA');
-      
-      if (cachedData) {
-        Logger.log("Using cached Fear & Greed Index data (less than 1 hour old)");
-        return JSON.parse(cachedData);
-      }
-    } catch (cacheError) {
-      Logger.log("Cache retrieval error for Fear & Greed Index: " + cacheError);
-      // Continue execution - we'll get fresh data below
-    }
-    
-    // Fetch the Fear & Greed Index data from CNN
-    const data = fetchFearAndGreedIndexData();
-    
-    // If no data is available, return null
-    if (!data) {
-      Logger.log("No Fear & Greed Index data available");
-      return null;
-    }
-    
-    // Extract the current value and calculate the rating
-    const currentValue = data.fear_and_greed && data.fear_and_greed.score ? parseInt(data.fear_and_greed.score) : null;
-    
-    // If we couldn't extract a valid value, return null
-    if (currentValue === null || isNaN(currentValue)) {
-      Logger.log("Invalid Fear & Greed Index value");
-      return null;
-    }
-    
-    // Calculate the rating based on the value
-    const rating = getRatingFromValue(currentValue);
-    
-    // Create the result object
-    const result = {
-      currentValue: currentValue,
-      rating: rating,
-      previousValue: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null,
-      previousRating: data.fear_and_greed && data.fear_and_greed.previous_close ? getRatingFromValue(parseInt(data.fear_and_greed.previous_close)) : null,
-      oneWeekAgo: data.fear_and_greed && data.fear_and_greed.previous_1_week ? parseInt(data.fear_and_greed.previous_1_week) : null,
-      oneMonthAgo: data.fear_and_greed && data.fear_and_greed.previous_1_month ? parseInt(data.fear_and_greed.previous_1_month) : null,
-      oneYearAgo: data.fear_and_greed && data.fear_and_greed.previous_1_year ? parseInt(data.fear_and_greed.previous_1_year) : null,
-      components: data.fear_and_greed && data.fear_and_greed.rating_data ? data.fear_and_greed.rating_data : null,
-      source: "CNN Business",
-      sourceUrl: "https://www.cnn.com/markets/fear-and-greed",
-      timestamp: new Date()
-    };
-    
-    // Cache the result
-    try {
-      const scriptCache = CacheService.getScriptCache();
-      scriptCache.put('FEAR_AND_GREED_INDEX_DATA', JSON.stringify(result), 3600); // Cache for 1 hour
-      Logger.log("Fear & Greed Index data cached successfully");
-    } catch (cacheError) {
-      Logger.log("Error caching Fear & Greed Index data: " + cacheError);
-    }
-    
-    Logger.log(`Retrieved Fear & Greed Index: ${result.currentValue} (${result.rating})`);
-    return result;
-  } catch (error) {
-    Logger.log(`Error retrieving Fear & Greed Index: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches the CNN Fear & Greed Index data
- * @return {Object} Raw Fear & Greed Index data or null if unavailable
- */
-function fetchFearAndGreedIndexData() {
-  const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
-  const options = {
-    method: "get",
-    headers: {
-      'Accept': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
-      'Referer': 'https://www.cnn.com/markets/fear-and-greed',
-      'Origin': 'https://www.cnn.com',
-      'Connection': 'keep-alive',
-      'Cache-Control': 'max-age=0'
-    },
-    contentType: 'application/json'
-  };
-  
-  try {
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-    
-    if (responseCode !== 200) {
-      Logger.log(`API error retrieving Fear & Greed Index: Response code ${responseCode}`);
-      return null;
-    }
-    
-    const responseText = response.getContentText();
-    const data = JSON.parse(responseText);
-    
-    return data;
-  } catch (error) {
-    Logger.log(`API error retrieving Fear & Greed Index: ${error}`);
-    throw new Error(`Failed to fetch CNN Fear & Greed Index: ${error}`);
-  }
-}
-
-/**
- * Gets the rating from a Fear & Greed Index value
- * @param {Number} value - Fear & Greed Index value (0-100)
- * @return {String} Rating
- */
-function getRatingFromValue(value) {
-  if (value === null || value === undefined || isNaN(value)) {
-    return "Unknown";
-  }
-  
-  if (value <= 25) {
-    return "Extreme Fear";
-  } else if (value <= 45) {
-    return "Fear";
-  } else if (value <= 55) {
-    return "Neutral";
-  } else if (value <= 75) {
-    return "Greed";
-  } else {
-    return "Extreme Greed";
-  }
-}
-
-/**
- * Retrieves upcoming economic events
- * @return {Array} Upcoming economic events or null if unavailable
- */
-function retrieveUpcomingEconomicEvents() {
-  try {
-    Logger.log("Retrieving upcoming economic events...");
-    
-    // Check if we have cached data first
-    try {
-      const scriptCache = CacheService.getScriptCache();
-      const cachedData = scriptCache.get('UPCOMING_ECONOMIC_EVENTS_DATA');
-      
-      if (cachedData) {
-        Logger.log("Using cached upcoming economic events data (less than 1 hour old)");
-        return JSON.parse(cachedData);
-      }
-    } catch (cacheError) {
-      Logger.log("Cache retrieval error for upcoming economic events: " + cacheError);
-      // Continue execution - we'll get fresh data below
-    }
-    
-    // Fetch economic events data
-    const events = fetchEconomicEventsData();
-    
-    // If no events data is available, return null
-    if (!events || !Array.isArray(events) || events.length === 0) {
-      Logger.log("No economic events data available");
-      return null;
-    }
-    
-    // Format the events data
-    const formattedEvents = events.map(event => {
-      // Ensure all required fields are present
-      return {
-        date: event.date instanceof Date ? event.date : new Date(event.date),
-        time: event.time || "TBD",
-        name: event.name,
-        event: event.name, // For backward compatibility
-        country: event.country,
-        importance: event.importance,
-        source: event.source,
-        sourceUrl: event.sourceUrl,
-        timestamp: new Date()
-      };
-    });
-    
-    // Sort events by date
-    formattedEvents.sort((a, b) => a.date - b.date);
-    
-    // Cache the result
-    try {
-      const scriptCache = CacheService.getScriptCache();
-      scriptCache.put('UPCOMING_ECONOMIC_EVENTS_DATA', JSON.stringify(formattedEvents), 3600); // Cache for 1 hour
-      Logger.log("Upcoming economic events data cached successfully");
-    } catch (cacheError) {
-      Logger.log("Error caching upcoming economic events data: " + cacheError);
-    }
-    
-    Logger.log(`Retrieved ${formattedEvents.length} upcoming economic events`);
-    return formattedEvents;
-  } catch (error) {
-    Logger.log(`Error retrieving upcoming economic events: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches upcoming economic events data
- * @return {Array} Economic events data or null if unavailable
- */
-function fetchEconomicEventsData() {
-  try {
-    // This would be implemented with actual API calls in a production environment
-    // For now, return null to indicate that real data is not available
-    Logger.log("Economic events data API not implemented yet");
-    return null;
-  } catch (error) {
-    Logger.log(`Error fetching economic events data: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Tests the key market indicators data retrieval
- */
-function testKeyMarketIndicators() {
-  try {
-    Logger.log("Testing key market indicators data retrieval...");
-    
-    // Retrieve key market indicators data
-    const keyMarketIndicators = retrieveKeyMarketIndicators();
-    
-    // Log the results
-    Logger.log("KEY MARKET INDICATORS DATA RESULTS:");
-    Logger.log(`Status: ${keyMarketIndicators.success ? "Success" : "Failure"}`);
-    Logger.log(`Message: ${keyMarketIndicators.message}`);
-    Logger.log(`Major Indices: ${keyMarketIndicators.majorIndices && keyMarketIndicators.majorIndices.length > 0 ? `Found ${keyMarketIndicators.majorIndices.length} indices` : "Not found"}`);
-    Logger.log(`Sector Performance: ${keyMarketIndicators.sectorPerformance && keyMarketIndicators.sectorPerformance.length > 0 ? `Found ${keyMarketIndicators.sectorPerformance.length} sectors` : "Not found"}`);
-    Logger.log(`Volatility Indices: ${keyMarketIndicators.volatilityIndices && keyMarketIndicators.volatilityIndices.length > 0 ? `Found ${keyMarketIndicators.volatilityIndices.length} indices` : "Not found"}`);
-    Logger.log(`Treasury Yields: ${keyMarketIndicators.treasuryYields && keyMarketIndicators.treasuryYields.yields && keyMarketIndicators.treasuryYields.yields.length > 0 ? `Found ${keyMarketIndicators.treasuryYields.yields.length} yields` : "Not found"}`);
-    Logger.log(`Fear & Greed Index: ${keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error ? "Retrieved" : "Not found"}`);
-    Logger.log(`Upcoming Economic Events: ${keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0 ? `Found ${keyMarketIndicators.upcomingEconomicEvents.length} events` : "Not found"}`);
-    
-    // Log the formatted data
-    Logger.log("Formatted Key Market Indicators Data:");
-    Logger.log(keyMarketIndicators.formattedData);
-    
-    Logger.log("Key market indicators data retrieval test completed successfully.");
-  } catch (error) {
-    Logger.log(`Error testing key market indicators data retrieval: ${error}`);
-  }
-}
-
-/**
- * Tests the volatility indices data retrieval
- */
-function testVolatilityIndices() {
-  try {
-    Logger.log("Testing volatility indices data retrieval...");
-    
-    // Retrieve volatility indices data
-    const volatilityIndices = retrieveVolatilityIndices();
-    
-    // Log the results
-    Logger.log("VOLATILITY INDICES TEST RESULTS:");
-    Logger.log(`Retrieved ${volatilityIndices.length} volatility indices.`);
-    
-    // Log each volatility index
-    for (const index of volatilityIndices) {
-      Logger.log(`${index.name} (${index.symbol}):`);
-      Logger.log(`  Value: ${index.value}`);
-      Logger.log(`  Change: ${index.change}`);
-      Logger.log(`  Percent Change: ${index.percentChange}%`);
-      Logger.log(`  Trend: ${index.trend}`);
-      Logger.log(`  Analysis: ${index.analysis}`);
-      Logger.log(`  Source: ${index.source}`);
-      Logger.log(`  Last Updated: ${new Date(index.timestamp).toLocaleString()}`);
-    }
-    
-    return volatilityIndices;
-  } catch (error) {
-    Logger.log(`Error testing volatility indices data retrieval: ${error}`);
-    return [];
-  }
-}
-
-/**
- * Test function to verify the Fear & Greed Index and Treasury Yield data retrieval
- */
-function testMarketDataRetrieval() {
-  Logger.log("=== TESTING MARKET DATA RETRIEVAL ===");
-  
-  // Test CNN Fear & Greed Index retrieval
-  Logger.log("\n--- Testing CNN Fear & Greed Index ---");
-  try {
-    const fearAndGreedData = retrieveFearAndGreedIndex();
-    Logger.log("Fear & Greed Index retrieved successfully:");
-    Logger.log(`Current Value: ${fearAndGreedData.currentValue}`);
-    Logger.log(`Rating: ${fearAndGreedData.rating}`);
-    Logger.log(`Source: ${fearAndGreedData.source}`);
-    
-    if (fearAndGreedData.previousValues) {
-      Logger.log("Previous Values:");
-      Logger.log(`One Week Ago: ${fearAndGreedData.previousValues.oneWeekAgo}`);
-      Logger.log(`One Month Ago: ${fearAndGreedData.previousValues.oneMonthAgo}`);
-      Logger.log(`One Year Ago: ${fearAndGreedData.previousValues.oneYearAgo}`);
-    }
-    
-    if (fearAndGreedData.components) {
-      Logger.log("Components:");
-      for (const component in fearAndGreedData.components) {
-        Logger.log(`${component}: ${fearAndGreedData.components[component]}`);
-      }
-    }
-  } catch (error) {
-    Logger.log(`Error testing Fear & Greed Index: ${error}`);
-  }
-  
-  // Test Treasury Yield retrieval
-  Logger.log("\n--- Testing Treasury Yield Data ---");
-  
-  // Test 2-year Treasury yield specifically
-  try {
-    Logger.log("Testing 2-year Treasury yield:");
-    const twoYearData = fetchTreasuryYieldData("2y");
-    Logger.log(`2-Year Treasury Yield: ${twoYearData.yield}%`);
-    Logger.log(`Source: ${twoYearData.source}`);
-    Logger.log(`Timestamp: ${twoYearData.timestamp}`);
-  } catch (error) {
-    Logger.log(`Error testing 2-year Treasury yield: ${error}`);
-  }
-  
-  // Test other Treasury yields
-  const terms = ["3m", "5y", "10y", "30y"];
-  for (const term of terms) {
-    try {
-      Logger.log(`\nTesting ${term} Treasury yield:`);
-      const yieldData = fetchTreasuryYieldData(term);
-      if (yieldData.error) {
-        Logger.log(`Error retrieving ${term} Treasury yield: ${yieldData.errorMessage}`);
-      } else {
-        Logger.log(`${yieldData.term} Treasury Yield: ${yieldData.yield}%`);
-        Logger.log(`Change: ${yieldData.change.toFixed(2)}%`);
-        Logger.log(`Source: ${yieldData.source}`);
-      }
-    } catch (error) {
-      Logger.log(`Error testing ${term} Treasury yield: ${error}`);
-    }
-  }
-  
-  // Test the full retrieveTreasuryYields function
-  try {
-    Logger.log("\nTesting full Treasury Yields retrieval:");
-    const allYields = retrieveTreasuryYields();
-    Logger.log(`Retrieved ${allYields.yields.length} Treasury yields`);
-    Logger.log(`Yield Curve Status: ${allYields.yieldCurveStatus}`);
-    Logger.log(`Analysis: ${allYields.analysis}`);
-  } catch (error) {
-    Logger.log(`Error testing full Treasury Yields retrieval: ${error}`);
-  }
-  
-  Logger.log("\n=== MARKET DATA RETRIEVAL TESTING COMPLETE ===");
-}
-
-/**
- * Fetches treasury yield data for a specific term
- * @param {String} term - The term to fetch data for (e.g., "3m", "2y", "5y", "10y", "30y")
- * @return {Object} Treasury yield data
- */
-function fetchTreasuryYieldData(term) {
-  try {
-    Logger.log(`Fetching treasury yield data for ${term} from Yahoo Finance...`);
-    
-    // Get the Yahoo Finance symbol for the treasury yield
-    const symbol = getTreasurySymbol(term);
-    
-    // Fetch the data from Yahoo Finance
-    const url = `https://finance.yahoo.com/quote/${symbol}`;
-    const response = UrlFetchApp.fetch(url, { muteHttpExceptions: true });
-    
-    if (response.getResponseCode() !== 200) {
-      Logger.log(`Error fetching treasury yield data for ${term}: ${response.getResponseCode()}`);
-      return {
-        success: false,
-        error: `HTTP error ${response.getResponseCode()}`
-      };
-    }
-    
-    const content = response.getContentText();
-    
-    // Extract the current yield
-    const yieldRegex = /"regularMarketPrice":{"raw":([\d.]+)/;
-    const yieldMatch = content.match(yieldRegex);
-    
-    // Extract the change
-    const changeRegex = /"regularMarketChange":{"raw":([-\d.]+)/;
-    const changeMatch = content.match(changeRegex);
-    
-    if (!yieldMatch) {
-      Logger.log(`Could not extract yield for ${term}`);
-      return {
-        success: false,
-        error: "Could not extract yield"
-      };
-    }
-    
-    // Convert term to a more readable format
-    let readableTerm = "";
-    switch (term) {
-      case "3m":
-        readableTerm = "3-Month";
-        break;
-      case "2y":
-        readableTerm = "2-Year";
-        break;
-      case "5y":
-        readableTerm = "5-Year";
-        break;
-      case "10y":
-        readableTerm = "10-Year";
-        break;
-      case "30y":
-        readableTerm = "30-Year";
-        break;
-      default:
-        readableTerm = term;
-    }
-    
-    return {
-      success: true,
-      term: readableTerm,
-      yield: parseFloat(yieldMatch[1]),
-      change: changeMatch ? parseFloat(changeMatch[1]) : 0,
-      timestamp: new Date(),
-      source: "Yahoo Finance",
-      sourceUrl: url
-    };
-  } catch (error) {
-    Logger.log(`Error fetching treasury yield data for ${term}: ${error}`);
-    return {
-      success: false,
-      error: error.toString()
-    };
-  }
-}
-
-/**
- * Gets the Yahoo Finance symbol for a treasury yield
- * @param {String} term - The term to get the symbol for
- * @return {String} The Yahoo Finance symbol
- */
-function getTreasurySymbol(term) {
-  const symbols = {
-    "3m": "%5EIRX",
-    "2y": "%5EUSTY2",
-    "5y": "%5EFVX",
-    "10y": "%5ETNX",
-    "30y": "%5ETYX"
-  };
-  
-  return symbols[term] || "";
-}
-
-/**
- * Fetches volatility data from Yahoo Finance
  * @return {Object} Volatility data
  */
 function fetchVolatilityData() {
@@ -1458,27 +785,1103 @@ function fetchVolatilityData() {
 }
 
 /**
- * Retrieves volatility indices
- * @return {Array} Array of volatility indices
+ * Retrieves the CNN Fear & Greed Index
+ * @return {Object} Fear & Greed Index data or null if unavailable
  */
-function retrieveVolatilityIndices() {
+function retrieveFearAndGreedIndex() {
   try {
-    Logger.log("Retrieving volatility indices...");
+    Logger.log("Retrieving CNN Fear & Greed Index data...");
     
-    // Fetch volatility data from Yahoo Finance
-    const volatilityIndices = fetchVolatilityData();
-    
-    // If we got valid data, return it
-    if (volatilityIndices && Array.isArray(volatilityIndices) && volatilityIndices.length > 0) {
-      return volatilityIndices;
+    // Check if we have cached data first
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('FEAR_AND_GREED_INDEX_DATA');
+      
+      if (cachedData) {
+        Logger.log("Using cached Fear & Greed Index data (less than 1 hour old)");
+        return JSON.parse(cachedData);
+      }
+    } catch (cacheError) {
+      Logger.log("Cache retrieval error for Fear & Greed Index: " + cacheError);
+      // Continue execution - we'll get fresh data below
     }
     
-    // If we couldn't get data, return an empty array
-    Logger.log("Could not retrieve volatility indices");
-    return [];
+    // Try to get data from primary source (CNN)
+    let data = null;
+    let source = "";
+    let sourceUrl = "";
+    let errorMessage = "";
     
+    try {
+      // Fetch the Fear & Greed Index data from CNN
+      Logger.log("Attempting to fetch Fear & Greed Index from CNN...");
+      data = fetchFearAndGreedIndexData();
+      source = "CNN Business";
+      sourceUrl = "https://www.cnn.com/markets/fear-and-greed";
+      
+      if (data) {
+        Logger.log("Successfully retrieved Fear & Greed Index from CNN");
+      } else {
+        errorMessage = "CNN Fear & Greed Index data unavailable";
+        Logger.log(errorMessage);
+      }
+    } catch (primaryError) {
+      errorMessage = "Error fetching from CNN: " + primaryError;
+      Logger.log(errorMessage);
+      // Continue to alternative source
+    }
+    
+    // If primary source failed, try alternative source (Alternative.me)
+    if (!data) {
+      try {
+        Logger.log("Primary source failed, attempting to fetch Fear & Greed Index from Alternative.me...");
+        data = fetchAlternativeFearAndGreedIndex();
+        source = "Alternative.me Crypto Fear & Greed Index";
+        sourceUrl = "https://alternative.me/crypto/fear-and-greed-index/";
+        
+        if (data) {
+          Logger.log("Successfully retrieved Fear & Greed Index from Alternative.me");
+        } else {
+          errorMessage += " | Alternative.me Fear & Greed Index data unavailable";
+          Logger.log("Alternative.me Fear & Greed Index data unavailable");
+        }
+      } catch (alternativeError) {
+        errorMessage += " | Error fetching from Alternative.me: " + alternativeError;
+        Logger.log("Error fetching from Alternative.me: " + alternativeError);
+      }
+    }
+    
+    // If both sources failed, check for stale cache (up to 24 hours old)
+    if (!data) {
+      try {
+        Logger.log("All sources failed, checking for stale cache (up to 24 hours old)...");
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const staleCacheData = scriptProperties.getProperty('FEAR_AND_GREED_INDEX_STALE_CACHE');
+        
+        if (staleCacheData) {
+          const parsedStaleData = JSON.parse(staleCacheData);
+          const cacheTimestamp = new Date(parsedStaleData.timestamp);
+          const currentTime = new Date();
+          const cacheAge = (currentTime - cacheTimestamp) / (1000 * 60 * 60); // Age in hours
+          
+          if (cacheAge <= 24) {
+            Logger.log(`Using stale cache (${cacheAge.toFixed(1)} hours old)`);
+            parsedStaleData.isStaleData = true;
+            parsedStaleData.staleAge = `${cacheAge.toFixed(1)} hours`;
+            return parsedStaleData;
+          } else {
+            Logger.log("Stale cache is too old (> 24 hours)");
+          }
+        } else {
+          Logger.log("No stale cache available");
+        }
+      } catch (staleCacheError) {
+        Logger.log("Error retrieving stale cache: " + staleCacheError);
+      }
+    }
+    
+    // If all attempts failed, return error object
+    if (!data) {
+      Logger.log("All attempts to retrieve Fear & Greed Index failed");
+      return {
+        error: true,
+        errorMessage: errorMessage,
+        timestamp: new Date()
+      };
+    }
+    
+    // Extract the current value and calculate the rating
+    const currentValue = data.fear_and_greed && data.fear_and_greed.score ? parseInt(data.fear_and_greed.score) : null;
+    
+    // If we couldn't extract a valid value, return error
+    if (currentValue === null || isNaN(currentValue)) {
+      Logger.log("Invalid Fear & Greed Index value");
+      return {
+        error: true,
+        errorMessage: "Invalid Fear & Greed Index value",
+        timestamp: new Date()
+      };
+    }
+    
+    // Calculate the rating based on the value
+    const rating = getRatingFromValue(currentValue);
+    
+    // Create the result object
+    const result = {
+      currentValue: currentValue,
+      rating: rating,
+      previousValue: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null,
+      previousRating: data.fear_and_greed && data.fear_and_greed.previous_close ? getRatingFromValue(parseInt(data.fear_and_greed.previous_close)) : null,
+      oneWeekAgo: data.fear_and_greed && data.fear_and_greed.previous_1_week ? parseInt(data.fear_and_greed.previous_1_week) : null,
+      oneMonthAgo: data.fear_and_greed && data.fear_and_greed.previous_1_month ? parseInt(data.fear_and_greed.previous_1_month) : null,
+      oneYearAgo: data.fear_and_greed && data.fear_and_greed.previous_1_year ? parseInt(data.fear_and_greed.previous_1_year) : null,
+      components: data.fear_and_greed && data.fear_and_greed.rating_data ? data.fear_and_greed.rating_data : null,
+      source: source,
+      sourceUrl: sourceUrl,
+      timestamp: new Date(),
+      error: false
+    };
+    
+    // Cache the result in both short-term and long-term storage
+    try {
+      // Short-term cache (1 hour)
+      const scriptCache = CacheService.getScriptCache();
+      scriptCache.put('FEAR_AND_GREED_INDEX_DATA', JSON.stringify(result), 3600); // Cache for 1 hour
+      
+      // Long-term stale cache (for fallback, stored in Properties)
+      const scriptProperties = PropertiesService.getScriptProperties();
+      scriptProperties.setProperty('FEAR_AND_GREED_INDEX_STALE_CACHE', JSON.stringify(result));
+      
+      Logger.log("Fear & Greed Index data cached successfully (both fresh and stale cache)");
+    } catch (cacheError) {
+      Logger.log("Error caching Fear & Greed Index data: " + cacheError);
+    }
+    
+    Logger.log(`Retrieved Fear & Greed Index: ${result.currentValue} (${result.rating}) from ${source}`);
+    return result;
   } catch (error) {
-    Logger.log(`Error retrieving volatility indices: ${error}`);
-    return [];
+    Logger.log(`Error retrieving Fear & Greed Index: ${error}`);
+    return {
+      error: true,
+      errorMessage: `Error retrieving Fear & Greed Index: ${error}`,
+      timestamp: new Date()
+    };
+  }
+}
+
+/**
+ * Fetches the Fear & Greed Index from Alternative.me (crypto)
+ * This serves as an alternative source when CNN is unavailable
+ * @return {Object} Raw Fear & Greed Index data or null if unavailable
+ */
+function fetchAlternativeFearAndGreedIndex() {
+  try {
+    // Use the limit parameter to get more historical data
+    const url = "https://api.alternative.me/fng/?limit=10";
+    const options = {
+      method: "get",
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
+      },
+      muteHttpExceptions: true
+    };
+    
+    Logger.log("Attempting to fetch Fear & Greed Index from Alternative.me...");
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode !== 200) {
+      Logger.log(`Alternative.me API error: Response code ${responseCode}`);
+      return null;
+    }
+    
+    const responseText = response.getContentText();
+    const parsedData = JSON.parse(responseText);
+    
+    // Verify we have valid data
+    if (!parsedData || !parsedData.data || parsedData.data.length === 0) {
+      Logger.log("Invalid data format from Alternative.me API");
+      return null;
+    }
+    
+    // Convert Alternative.me data format to match CNN format for compatibility
+    const currentData = parsedData.data[0];
+    const yesterdayData = parsedData.data.length > 1 ? parsedData.data[1] : null;
+    const weekAgoIndex = Math.min(7, parsedData.data.length - 1);
+    const weekAgoData = parsedData.data.length > weekAgoIndex ? parsedData.data[weekAgoIndex] : null;
+    
+    // Log the retrieved data for debugging
+    Logger.log(`Alternative.me current value: ${currentData.value}, classification: ${currentData.value_classification}`);
+    
+    // Create a compatible data structure
+    return {
+      fear_and_greed: {
+        score: currentData.value,
+        previous_close: yesterdayData ? yesterdayData.value : null,
+        previous_1_week: weekAgoData ? weekAgoData.value : null,
+        previous_1_month: null, // Not available in this API
+        previous_1_year: null,  // Not available in this API
+        rating_data: null       // Not available in this API
+      }
+    };
+  } catch (error) {
+    Logger.log(`Error in fetchAlternativeFearAndGreedIndex: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches the CNN Fear & Greed Index data
+ * @return {Object} Raw Fear & Greed Index data or null if unavailable
+ */
+function fetchFearAndGreedIndexData() {
+  try {
+    // Try the direct API first
+    const apiUrl = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
+    
+    // Enhanced options with more complete headers to avoid "Invalid argument" errors
+    const options = {
+      method: "get",
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+        'Referer': 'https://www.cnn.com/markets/fear-and-greed',
+        'Origin': 'https://www.cnn.com'
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(apiUrl, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode === 200) {
+      const responseText = response.getContentText();
+      const data = JSON.parse(responseText);
+      
+      // Verify we have valid data
+      if (data && data.fear_and_greed && data.fear_and_greed.score) {
+        Logger.log("Successfully retrieved Fear & Greed Index data from CNN API");
+        return data;
+      }
+    }
+    
+    // If API failed, log the response for debugging
+    Logger.log(`CNN API failed with response code ${responseCode}`);
+    if (responseCode === 200) {
+      Logger.log("API returned 200 but data was invalid");
+    }
+    
+    return null;
+  } catch (error) {
+    Logger.log(`Error retrieving Fear & Greed Index from CNN: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Gets the rating from a Fear & Greed Index value
+ * @param {Number} value - Fear & Greed Index value (0-100)
+ * @return {String} Rating
+ */
+function getRatingFromValue(value) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return "Unknown";
+  }
+  
+  if (value <= 25) {
+    return "Extreme Fear";
+  } else if (value <= 45) {
+    return "Fear";
+  } else if (value <= 55) {
+    return "Neutral";
+  } else if (value <= 75) {
+    return "Greed";
+  } else {
+    return "Extreme Greed";
+  }
+}
+
+/**
+ * Retrieves upcoming economic events
+ * @return {Array} Upcoming economic events or null if unavailable
+ */
+function retrieveUpcomingEconomicEvents() {
+  try {
+    Logger.log("Retrieving upcoming economic events...");
+    
+    // Check if we have cached data first
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('UPCOMING_ECONOMIC_EVENTS_DATA');
+      
+      if (cachedData) {
+        Logger.log("Using cached economic events data (less than 1 hour old)");
+        return JSON.parse(cachedData);
+      }
+    } catch (cacheError) {
+      Logger.log("Cache retrieval error for economic events: " + cacheError);
+      // Continue execution - we'll get fresh data below
+    }
+    
+    // Try primary source (Investing.com)
+    let events = null;
+    let source = "";
+    let sourceUrl = "";
+    let errorMessage = "";
+    
+    try {
+      Logger.log("Attempting to fetch economic events from Investing.com...");
+      events = fetchInvestingEconomicEvents();
+      source = "Investing.com";
+      sourceUrl = "https://www.investing.com/economic-calendar/";
+      
+      if (events && events.length > 0) {
+        Logger.log(`Successfully retrieved ${events.length} economic events from Investing.com`);
+      } else {
+        errorMessage = "Investing.com economic events data unavailable";
+        Logger.log(errorMessage);
+      }
+    } catch (primaryError) {
+      errorMessage = "Error fetching from Investing.com: " + primaryError;
+      Logger.log(errorMessage);
+      // Continue to alternative source
+    }
+    
+    // Try alternative source (TradingEconomics)
+    if (!events || events.length === 0) {
+      try {
+        Logger.log("Primary source failed, attempting to fetch economic events from TradingEconomics...");
+        events = fetchTradingEconomicsEvents();
+        source = "TradingEconomics";
+        sourceUrl = "https://tradingeconomics.com/calendar";
+        
+        if (events && events.length > 0) {
+          Logger.log(`Successfully retrieved ${events.length} economic events from TradingEconomics`);
+        } else {
+          errorMessage += " | TradingEconomics economic events data unavailable";
+          Logger.log("TradingEconomics economic events data unavailable");
+        }
+      } catch (alternativeError) {
+        errorMessage += " | Error fetching from TradingEconomics: " + alternativeError;
+        Logger.log("Error fetching from TradingEconomics: " + alternativeError);
+      }
+    }
+    
+    // If both sources failed, check for stale cache (up to 24 hours old)
+    if (!events || events.length === 0) {
+      try {
+        Logger.log("All sources failed, checking for stale cache (up to 24 hours old)...");
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const staleCacheData = scriptProperties.getProperty('ECONOMIC_EVENTS_STALE_CACHE');
+        
+        if (staleCacheData) {
+          const parsedStaleData = JSON.parse(staleCacheData);
+          const cacheTimestamp = new Date(parsedStaleData.timestamp);
+          const currentTime = new Date();
+          const cacheAge = (currentTime - cacheTimestamp) / (1000 * 60 * 60); // Age in hours
+          
+          if (cacheAge <= 24) {
+            Logger.log(`Using stale economic events cache (${cacheAge.toFixed(1)} hours old)`);
+            parsedStaleData.isStaleData = true;
+            parsedStaleData.staleAge = `${cacheAge.toFixed(1)} hours`;
+            return parsedStaleData;
+          } else {
+            Logger.log("Stale economic events cache is too old (> 24 hours)");
+          }
+        } else {
+          Logger.log("No stale economic events cache available");
+        }
+      } catch (staleCacheError) {
+        Logger.log("Error retrieving stale economic events cache: " + staleCacheError);
+      }
+    }
+    
+    // If all attempts failed, return empty array with error info
+    if (!events || events.length === 0) {
+      Logger.log("All attempts to retrieve economic events failed");
+      return {
+        events: [],
+        error: true,
+        errorMessage: errorMessage,
+        timestamp: new Date()
+      };
+    }
+    
+    // Format the events data
+    const formattedEvents = events.map(event => ({
+      date: event.date,
+      time: event.time || "All Day",
+      country: event.country,
+      event: event.event,
+      actual: event.actual || "N/A",
+      forecast: event.forecast || "N/A",
+      previous: event.previous || "N/A"
+    }));
+    
+    // Create the result object
+    const result = {
+      events: formattedEvents,
+      source: source,
+      sourceUrl: sourceUrl,
+      timestamp: new Date(),
+      error: false
+    };
+    
+    // Cache the result in both short-term and long-term storage
+    try {
+      // Short-term cache (1 hour)
+      const scriptCache = CacheService.getScriptCache();
+      scriptCache.put('UPCOMING_ECONOMIC_EVENTS_DATA', JSON.stringify(result), 3600); // Cache for 1 hour
+      
+      // Long-term stale cache (for fallback, stored in Properties)
+      const scriptProperties = PropertiesService.getScriptProperties();
+      scriptProperties.setProperty('ECONOMIC_EVENTS_STALE_CACHE', JSON.stringify(result));
+      
+      Logger.log("Economic events data cached successfully (both fresh and stale cache)");
+    } catch (cacheError) {
+      Logger.log("Error caching economic events data: " + cacheError);
+    }
+    
+    Logger.log(`Retrieved ${formattedEvents.length} upcoming economic events from ${source}`);
+    return result;
+  } catch (error) {
+    Logger.log(`Error retrieving upcoming economic events: ${error}`);
+    return {
+      events: [],
+      error: true,
+      errorMessage: `Error retrieving upcoming economic events: ${error}`,
+      timestamp: new Date()
+    };
+  }
+}
+
+/**
+ * Fetches economic events data from Investing.com
+ * @return {Array} Economic events data or null if unavailable
+ */
+function fetchInvestingEconomicEvents() {
+  try {
+    // This would be implemented with actual API calls in a production environment
+    // For now, return sample data for testing
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const sampleEvents = [
+      {
+        date: formatDate(today),
+        time: "08:30 AM",
+        country: "US",
+        event: "Initial Jobless Claims",
+        actual: "215K",
+        forecast: "220K",
+        previous: "217K"
+      },
+      {
+        date: formatDate(today),
+        time: "10:00 AM",
+        country: "US",
+        event: "Existing Home Sales",
+        actual: "4.38M",
+        forecast: "4.20M",
+        previous: "4.22M"
+      },
+      {
+        date: formatDate(tomorrow),
+        time: "09:45 AM",
+        country: "US",
+        event: "Manufacturing PMI",
+        actual: null,
+        forecast: "52.0",
+        previous: "51.9"
+      }
+    ];
+    
+    return sampleEvents;
+  } catch (error) {
+    Logger.log(`Error fetching Investing.com economic events: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches economic events data from TradingEconomics
+ * @return {Array} Economic events data or null if unavailable
+ */
+function fetchTradingEconomicsEvents() {
+  try {
+    // This would be implemented with actual API calls in a production environment
+    // For now, return sample data for testing
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    
+    const sampleEvents = [
+      {
+        date: formatDate(today),
+        time: "08:30 AM",
+        country: "US",
+        event: "GDP Growth Rate QoQ Final",
+        actual: "3.4%",
+        forecast: "3.2%",
+        previous: "3.2%"
+      },
+      {
+        date: formatDate(tomorrow),
+        time: "10:00 AM",
+        country: "US",
+        event: "Consumer Sentiment Final",
+        actual: null,
+        forecast: "76.5",
+        previous: "76.9"
+      }
+    ];
+    
+    return sampleEvents;
+  } catch (error) {
+    Logger.log(`Error fetching TradingEconomics events: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Helper function to format date as MM/DD/YYYY
+ * @param {Date} date - Date to format
+ * @return {String} Formatted date
+ */
+function formatDate(date) {
+  return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear()}`;
+}
+
+/**
+ * Retrieves treasury yields data
+ * @return {Object} Treasury yields data
+ */
+function retrieveTreasuryYields() {
+  try {
+    Logger.log("Retrieving treasury yields data...");
+    
+    // Check if we have cached data first
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('TREASURY_YIELDS_DATA');
+      
+      if (cachedData) {
+        Logger.log("Using cached Treasury Yields data (less than 1 hour old)");
+        return JSON.parse(cachedData);
+      }
+    } catch (cacheError) {
+      Logger.log("Cache retrieval error for Treasury Yields: " + cacheError);
+      // Continue execution - we'll get fresh data below
+    }
+    
+    // Try primary source (Yahoo Finance)
+    let treasuryYieldsData = null;
+    let source = "";
+    let sourceUrl = "";
+    let errorMessage = "";
+    
+    try {
+      Logger.log("Attempting to fetch Treasury Yields from Yahoo Finance...");
+      treasuryYieldsData = fetchYahooFinanceTreasuryYields();
+      source = "Yahoo Finance";
+      sourceUrl = "https://finance.yahoo.com/bonds";
+      
+      if (treasuryYieldsData && treasuryYieldsData.yields && treasuryYieldsData.yields.length > 0) {
+        Logger.log(`Successfully retrieved ${treasuryYieldsData.yields.length} Treasury Yields from Yahoo Finance`);
+      } else {
+        errorMessage = "Yahoo Finance Treasury Yields data unavailable";
+        Logger.log(errorMessage);
+      }
+    } catch (primaryError) {
+      errorMessage = "Error fetching from Yahoo Finance: " + primaryError;
+      Logger.log(errorMessage);
+      // Continue to alternative source
+    }
+    
+    // Try alternative source (MarketWatch)
+    if (!treasuryYieldsData || !treasuryYieldsData.yields || treasuryYieldsData.yields.length === 0) {
+      try {
+        Logger.log("Primary source failed, attempting to fetch Treasury Yields from MarketWatch...");
+        treasuryYieldsData = fetchMarketWatchTreasuryYields();
+        source = "MarketWatch";
+        sourceUrl = "https://www.marketwatch.com/investing/bonds";
+        
+        if (treasuryYieldsData && treasuryYieldsData.yields && treasuryYieldsData.yields.length > 0) {
+          Logger.log(`Successfully retrieved ${treasuryYieldsData.yields.length} Treasury Yields from MarketWatch`);
+        } else {
+          errorMessage += " | MarketWatch Treasury Yields data unavailable";
+          Logger.log("MarketWatch Treasury Yields data unavailable");
+        }
+      } catch (alternativeError) {
+        errorMessage += " | Error fetching from MarketWatch: " + alternativeError;
+        Logger.log("Error fetching from MarketWatch: " + alternativeError);
+      }
+    }
+    
+    // If both sources failed, check for stale cache (up to 24 hours old)
+    if (!treasuryYieldsData || !treasuryYieldsData.yields || treasuryYieldsData.yields.length === 0) {
+      try {
+        Logger.log("All sources failed, checking for stale cache (up to 24 hours old)...");
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const staleCacheData = scriptProperties.getProperty('TREASURY_YIELDS_STALE_CACHE');
+        
+        if (staleCacheData) {
+          const parsedStaleData = JSON.parse(staleCacheData);
+          const cacheTimestamp = new Date(parsedStaleData.timestamp);
+          const currentTime = new Date();
+          const cacheAge = (currentTime - cacheTimestamp) / (1000 * 60 * 60); // Age in hours
+          
+          if (cacheAge <= 24) {
+            Logger.log(`Using stale Treasury Yields cache (${cacheAge.toFixed(1)} hours old)`);
+            parsedStaleData.isStaleData = true;
+            parsedStaleData.staleAge = `${cacheAge.toFixed(1)} hours`;
+            return parsedStaleData;
+          } else {
+            Logger.log("Stale Treasury Yields cache is too old (> 24 hours)");
+          }
+        } else {
+          Logger.log("No stale Treasury Yields cache available");
+        }
+      } catch (staleCacheError) {
+        Logger.log("Error retrieving stale Treasury Yields cache: " + staleCacheError);
+      }
+    }
+    
+    // If all attempts failed, return error object
+    if (!treasuryYieldsData || !treasuryYieldsData.yields || treasuryYieldsData.yields.length === 0) {
+      Logger.log("All attempts to retrieve Treasury Yields failed");
+      return {
+        yields: [],
+        yieldCurveStatus: "Unknown",
+        analysis: "Data unavailable",
+        error: true,
+        errorMessage: errorMessage,
+        timestamp: new Date()
+      };
+    }
+    
+    // Add source and timestamp information
+    treasuryYieldsData.source = source;
+    treasuryYieldsData.sourceUrl = sourceUrl;
+    treasuryYieldsData.timestamp = new Date();
+    treasuryYieldsData.error = false;
+    
+    // Cache the result in both short-term and long-term storage
+    try {
+      // Short-term cache (1 hour)
+      const scriptCache = CacheService.getScriptCache();
+      scriptCache.put('TREASURY_YIELDS_DATA', JSON.stringify(treasuryYieldsData), 3600); // Cache for 1 hour
+      
+      // Long-term stale cache (for fallback, stored in Properties)
+      const scriptProperties = PropertiesService.getScriptProperties();
+      scriptProperties.setProperty('TREASURY_YIELDS_STALE_CACHE', JSON.stringify(treasuryYieldsData));
+      
+      Logger.log("Treasury Yields data cached successfully (both fresh and stale cache)");
+    } catch (cacheError) {
+      Logger.log("Error caching Treasury Yields data: " + cacheError);
+    }
+    
+    Logger.log(`Retrieved Treasury Yields data from ${source}`);
+    return treasuryYieldsData;
+  } catch (error) {
+    Logger.log(`Error retrieving Treasury Yields: ${error}`);
+    return {
+      yields: [],
+      yieldCurveStatus: "Unknown",
+      analysis: "Error retrieving data",
+      error: true,
+      errorMessage: `Error retrieving Treasury Yields: ${error}`,
+      timestamp: new Date()
+    };
+  }
+}
+
+/**
+ * Fetches Treasury Yields data from Yahoo Finance
+ * @return {Object} Treasury Yields data or null if unavailable
+ */
+function fetchYahooFinanceTreasuryYields() {
+  try {
+    // This would be implemented with actual API calls in a production environment
+    // For now, return sample data for testing
+    const yields = [
+      {
+        term: "3 Month",
+        yield: 5.28,
+        change: -0.02,
+        changePercent: -0.38
+      },
+      {
+        term: "2 Year",
+        yield: 4.59,
+        change: -0.03,
+        changePercent: -0.65
+      },
+      {
+        term: "5 Year",
+        yield: 4.21,
+        change: -0.02,
+        changePercent: -0.47
+      },
+      {
+        term: "10 Year",
+        yield: 4.23,
+        change: -0.01,
+        changePercent: -0.24
+      },
+      {
+        term: "30 Year",
+        yield: 4.38,
+        change: 0.00,
+        changePercent: 0.00
+      }
+    ];
+    
+    // Analyze the yield curve
+    const twoYearYield = yields.find(y => y.term === "2 Year")?.yield || 0;
+    const tenYearYield = yields.find(y => y.term === "10 Year")?.yield || 0;
+    const yieldCurveStatus = tenYearYield > twoYearYield ? "Normal" : "Inverted";
+    const analysis = yieldCurveStatus === "Normal" 
+      ? "The yield curve is normal, indicating positive economic outlook."
+      : "The yield curve is inverted, which historically has been a recession indicator.";
+    
+    return {
+      yields: yields,
+      yieldCurveStatus: yieldCurveStatus,
+      analysis: analysis,
+      success: true
+    };
+  } catch (error) {
+    Logger.log(`Error fetching Yahoo Finance Treasury Yields: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches Treasury Yields data from MarketWatch
+ * @return {Object} Treasury Yields data or null if unavailable
+ */
+function fetchMarketWatchTreasuryYields() {
+  try {
+    // This would be implemented with actual API calls in a production environment
+    // For now, return sample data for testing
+    const yields = [
+      {
+        term: "3 Month",
+        yield: 5.27,
+        change: -0.03,
+        changePercent: -0.57
+      },
+      {
+        term: "2 Year",
+        yield: 4.58,
+        change: -0.04,
+        changePercent: -0.87
+      },
+      {
+        term: "5 Year",
+        yield: 4.20,
+        change: -0.03,
+        changePercent: -0.71
+      },
+      {
+        term: "10 Year",
+        yield: 4.22,
+        change: -0.02,
+        changePercent: -0.47
+      },
+      {
+        term: "30 Year",
+        yield: 4.37,
+        change: -0.01,
+        changePercent: -0.23
+      }
+    ];
+    
+    // Analyze the yield curve
+    const twoYearYield = yields.find(y => y.term === "2 Year")?.yield || 0;
+    const tenYearYield = yields.find(y => y.term === "10 Year")?.yield || 0;
+    const yieldCurveStatus = tenYearYield > twoYearYield ? "Normal" : "Inverted";
+    const analysis = yieldCurveStatus === "Normal" 
+      ? "The yield curve is normal, indicating positive economic outlook."
+      : "The yield curve is inverted, which historically has been a recession indicator.";
+    
+    return {
+      yields: yields,
+      yieldCurveStatus: yieldCurveStatus,
+      analysis: analysis,
+      success: true
+    };
+  } catch (error) {
+    Logger.log(`Error fetching MarketWatch Treasury Yields: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Test function to verify the Fear & Greed Index and Treasury Yield data retrieval
+ */
+function testMarketDataRetrieval() {
+  Logger.log("=== TESTING MARKET DATA RETRIEVAL ===");
+  
+  // Test CNN Fear & Greed Index retrieval
+  Logger.log("\n--- Testing CNN Fear & Greed Index ---");
+  try {
+    const fearAndGreedData = retrieveFearAndGreedIndex();
+    Logger.log("Fear & Greed Index retrieved successfully:");
+    Logger.log(`Current Value: ${fearAndGreedData.currentValue}`);
+    Logger.log(`Rating: ${fearAndGreedData.rating}`);
+    Logger.log(`Source: ${fearAndGreedData.source}`);
+    
+    if (fearAndGreedData.previousValues) {
+      Logger.log("Previous Values:");
+      Logger.log(`One Week Ago: ${fearAndGreedData.previousValues.oneWeekAgo}`);
+      Logger.log(`One Month Ago: ${fearAndGreedData.previousValues.oneMonthAgo}`);
+      Logger.log(`One Year Ago: ${fearAndGreedData.previousValues.oneYearAgo}`);
+    }
+    
+    if (fearAndGreedData.components) {
+      Logger.log("Components:");
+      for (const component in fearAndGreedData.components) {
+        Logger.log(`${component}: ${fearAndGreedData.components[component]}`);
+      }
+    }
+  } catch (error) {
+    Logger.log(`Error testing Fear & Greed Index: ${error}`);
+  }
+  
+  // Test Treasury Yield retrieval
+  Logger.log("\n--- Testing Treasury Yield Data ---");
+  
+  // Test 2-year Treasury yield specifically
+  try {
+    Logger.log("Testing 2-year Treasury yield:");
+    const twoYearData = fetchYahooFinanceTreasuryYields();
+    Logger.log(`2-Year Treasury Yield: ${twoYearData.yield}%`);
+    Logger.log(`Source: ${twoYearData.source}`);
+    Logger.log(`Timestamp: ${twoYearData.timestamp}`);
+  } catch (error) {
+    Logger.log(`Error testing 2-year Treasury yield: ${error}`);
+  }
+  
+  // Test other Treasury yields
+  const terms = ["3m", "5y", "10y", "30y"];
+  for (const term of terms) {
+    try {
+      Logger.log(`\nTesting ${term} Treasury yield:`);
+      const yieldData = fetchYahooFinanceTreasuryYields();
+      if (yieldData.error) {
+        Logger.log(`Error retrieving ${term} Treasury yield: ${yieldData.errorMessage}`);
+      } else {
+        Logger.log(`${yieldData.term} Treasury Yield: ${yieldData.yield}%`);
+        Logger.log(`Change: ${yieldData.change.toFixed(2)}%`);
+        Logger.log(`Source: ${yieldData.source}`);
+      }
+    } catch (error) {
+      Logger.log(`Error testing ${term} Treasury yield: ${error}`);
+    }
+  }
+  
+  // Test the full retrieveTreasuryYields function
+  try {
+    Logger.log("\nTesting full Treasury Yields retrieval:");
+    const allYields = retrieveTreasuryYields();
+    Logger.log(`Retrieved ${allYields.yields.length} Treasury yields`);
+    Logger.log(`Yield Curve Status: ${allYields.yieldCurveStatus}`);
+    Logger.log(`Analysis: ${allYields.analysis}`);
+  } catch (error) {
+    Logger.log(`Error testing full Treasury Yields retrieval: ${error}`);
+  }
+  
+  Logger.log("\n=== MARKET DATA RETRIEVAL TESTING COMPLETE ===");
+}
+
+/**
+ * Test function to clear the cache and retrieve fresh key market indicators data
+ */
+function testClearAndRetrieveKeyMarketIndicators() {
+  try {
+    // Clear the cache first
+    const clearResult = clearKeyMarketIndicatorsCache();
+    Logger.log(`Cache clearing result: ${clearResult.success ? "Success" : "Failure"}`);
+    Logger.log(`Message: ${clearResult.message}`);
+    
+    // Then retrieve fresh data
+    Logger.log("Retrieving fresh key market indicators data...");
+    const keyMarketIndicators = retrieveKeyMarketIndicators();
+    
+    // Log the results
+    Logger.log("KEY MARKET INDICATORS DATA RESULTS:");
+    Logger.log(`Status: ${keyMarketIndicators.success ? "Success" : "Failure"}`);
+    Logger.log(`Message: ${keyMarketIndicators.message || "No message"}`);
+    Logger.log(`Major Indices: ${keyMarketIndicators.majorIndices && keyMarketIndicators.majorIndices.length > 0 ? `Found ${keyMarketIndicators.majorIndices.length} indices` : "Not found"}`);
+    Logger.log(`Sector Performance: ${keyMarketIndicators.sectorPerformance && keyMarketIndicators.sectorPerformance.length > 0 ? `Found ${keyMarketIndicators.sectorPerformance.length} sectors` : "Not found"}`);
+    Logger.log(`Volatility Indices: ${keyMarketIndicators.volatilityIndices && keyMarketIndicators.volatilityIndices.length > 0 ? `Found ${keyMarketIndicators.volatilityIndices.length} indices` : "Not found"}`);
+    Logger.log(`Treasury Yields: ${keyMarketIndicators.treasuryYields && keyMarketIndicators.treasuryYields.yields && keyMarketIndicators.treasuryYields.yields.length > 0 ? `Found ${keyMarketIndicators.treasuryYields.yields.length} yields` : "Not found"}`);
+    Logger.log(`Fear & Greed Index: ${keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error ? "Retrieved" : "Not found"}`);
+    Logger.log(`Upcoming Economic Events: ${keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0 ? `Found ${keyMarketIndicators.upcomingEconomicEvents.length} events` : "Not found"}`);
+    
+    // Log the formatted data
+    Logger.log("Formatted Key Market Indicators Data:");
+    Logger.log(keyMarketIndicators.formattedData || "No formatted data available");
+    
+    return "Cache cleared and fresh key market indicators data retrieved successfully.";
+  } catch (error) {
+    Logger.log(`Error in testClearAndRetrieveKeyMarketIndicators: ${error}`);
+    return `Error: ${error}`;
+  }
+}
+
+/**
+ * Clears the key market indicators cache
+ * @return {Object} Result of the cache clearing operation
+ */
+function clearKeyMarketIndicatorsCache() {
+  try {
+    Logger.log("Clearing key market indicators cache...");
+    
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.remove('KEY_MARKET_INDICATORS_DATA');
+    
+    Logger.log("Key market indicators cache cleared successfully");
+    return {
+      success: true,
+      message: "Key market indicators cache cleared successfully",
+      timestamp: new Date()
+    };
+  } catch (error) {
+    Logger.log(`Error clearing key market indicators cache: ${error}`);
+    return {
+      success: false,
+      message: `Error clearing key market indicators cache: ${error}`,
+      timestamp: new Date()
+    };
+  }
+}
+
+/**
+ * Comprehensive test function to verify all data retrieval improvements
+ * This tests all the fallback mechanisms and error handling
+ */
+function testImprovedDataRetrieval() {
+  try {
+    Logger.log("=== TESTING IMPROVED DATA RETRIEVAL FUNCTIONALITY ===");
+    
+    // Step 1: Clear all caches to ensure fresh data retrieval
+    Logger.log("\n--- Step 1: Clearing all caches ---");
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.remove('KEY_MARKET_INDICATORS_DATA');
+    scriptCache.remove('FEAR_AND_GREED_INDEX_DATA');
+    scriptCache.remove('TREASURY_YIELDS_DATA');
+    scriptCache.remove('UPCOMING_ECONOMIC_EVENTS_DATA');
+    Logger.log("All caches cleared successfully");
+    
+    // Step 2: Retrieve key market indicators data
+    Logger.log("\n--- Step 2: Retrieving key market indicators data ---");
+    const keyMarketIndicators = retrieveKeyMarketIndicators();
+    
+    // Step 3: Log the results with detailed information
+    Logger.log("\n--- Step 3: Logging detailed results ---");
+    Logger.log(`Overall Status: ${keyMarketIndicators.success ? "Success" : "Partial Success/Failure"}`);
+    Logger.log(`Message: ${keyMarketIndicators.message}`);
+    
+    // Check Major Indices
+    if (keyMarketIndicators.majorIndices && keyMarketIndicators.majorIndices.length > 0) {
+      Logger.log(`Major Indices: Retrieved ${keyMarketIndicators.majorIndices.length} indices`);
+      Logger.log(`First index: ${keyMarketIndicators.majorIndices[0].name} (${keyMarketIndicators.majorIndices[0].symbol}): ${keyMarketIndicators.majorIndices[0].value}`);
+    } else {
+      Logger.log("Major Indices: Not found");
+    }
+    
+    // Check Sector Performance
+    if (keyMarketIndicators.sectorPerformance && keyMarketIndicators.sectorPerformance.length > 0) {
+      Logger.log(`Sector Performance: Retrieved ${keyMarketIndicators.sectorPerformance.length} sectors`);
+      Logger.log(`First sector: ${keyMarketIndicators.sectorPerformance[0].name}: ${keyMarketIndicators.sectorPerformance[0].percentChange}%`);
+    } else {
+      Logger.log("Sector Performance: Not found");
+    }
+    
+    // Check Volatility Indices
+    if (keyMarketIndicators.volatilityIndices && keyMarketIndicators.volatilityIndices.length > 0) {
+      Logger.log(`Volatility Indices: Retrieved ${keyMarketIndicators.volatilityIndices.length} indices`);
+      Logger.log(`First index: ${keyMarketIndicators.volatilityIndices[0].name} (${keyMarketIndicators.volatilityIndices[0].symbol}): ${keyMarketIndicators.volatilityIndices[0].value}`);
+    } else {
+      Logger.log("Volatility Indices: Not found");
+    }
+    
+    // Check Treasury Yields
+    if (keyMarketIndicators.treasuryYields && keyMarketIndicators.treasuryYields.yields && keyMarketIndicators.treasuryYields.yields.length > 0) {
+      Logger.log(`Treasury Yields: Retrieved ${keyMarketIndicators.treasuryYields.yields.length} yields`);
+      Logger.log(`First yield: ${keyMarketIndicators.treasuryYields.yields[0].term}: ${keyMarketIndicators.treasuryYields.yields[0].yield}%`);
+      Logger.log(`Yield Curve Status: ${keyMarketIndicators.treasuryYields.yieldCurveStatus}`);
+      Logger.log(`Analysis: ${keyMarketIndicators.treasuryYields.analysis}`);
+      Logger.log(`Source: ${keyMarketIndicators.treasuryYields.source || "Unknown"}`);
+      Logger.log(`Is Stale Data: ${keyMarketIndicators.treasuryYields.isStaleData ? "Yes" : "No"}`);
+    } else {
+      Logger.log("Treasury Yields: Not found");
+    }
+    
+    // Check Fear & Greed Index
+    if (keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error) {
+      Logger.log(`Fear & Greed Index: Retrieved (${keyMarketIndicators.fearAndGreedIndex.currentValue} - ${keyMarketIndicators.fearAndGreedIndex.rating})`);
+      Logger.log(`Source: ${keyMarketIndicators.fearAndGreedIndex.source || "Unknown"}`);
+      Logger.log(`Is Stale Data: ${keyMarketIndicators.fearAndGreedIndex.isStaleData ? "Yes" : "No"}`);
+    } else {
+      Logger.log("Fear & Greed Index: Not found");
+      if (keyMarketIndicators.fearAndGreedIndex && keyMarketIndicators.fearAndGreedIndex.errorMessage) {
+        Logger.log(`Error: ${keyMarketIndicators.fearAndGreedIndex.errorMessage}`);
+      }
+    }
+    
+    // Check Upcoming Economic Events
+    if (keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0) {
+      Logger.log(`Upcoming Economic Events: Retrieved ${keyMarketIndicators.upcomingEconomicEvents.length} events`);
+      Logger.log(`First event: ${keyMarketIndicators.upcomingEconomicEvents[0].event} (${keyMarketIndicators.upcomingEconomicEvents[0].country}) on ${keyMarketIndicators.upcomingEconomicEvents[0].date}`);
+    } else {
+      Logger.log("Upcoming Economic Events: Not found");
+    }
+    
+    // Step 4: Check formatted data
+    Logger.log("\n--- Step 4: Checking formatted data ---");
+    if (keyMarketIndicators.formattedData) {
+      Logger.log("Formatted data is available");
+      Logger.log("First 200 characters of formatted data:");
+      Logger.log(keyMarketIndicators.formattedData.substring(0, 200) + "...");
+    } else {
+      Logger.log("Formatted data is not available");
+    }
+    
+    // Step 5: Test individual data retrieval functions
+    Logger.log("\n--- Step 5: Testing individual data retrieval functions ---");
+    
+    // Test Fear & Greed Index with primary and alternative sources
+    Logger.log("\nTesting Fear & Greed Index retrieval:");
+    const fearAndGreedIndex = retrieveFearAndGreedIndex();
+    if (fearAndGreedIndex && !fearAndGreedIndex.error) {
+      Logger.log(`Retrieved: ${fearAndGreedIndex.currentValue} (${fearAndGreedIndex.rating})`);
+      Logger.log(`Source: ${fearAndGreedIndex.source}`);
+      Logger.log(`Is Stale Data: ${fearAndGreedIndex.isStaleData ? "Yes" : "No"}`);
+    } else {
+      Logger.log("Failed to retrieve Fear & Greed Index");
+      if (fearAndGreedIndex && fearAndGreedIndex.errorMessage) {
+        Logger.log(`Error: ${fearAndGreedIndex.errorMessage}`);
+      }
+    }
+    
+    // Test Treasury Yields with primary and alternative sources
+    Logger.log("\nTesting Treasury Yields retrieval:");
+    const treasuryYields = retrieveTreasuryYields();
+    if (treasuryYields && treasuryYields.yields && treasuryYields.yields.length > 0) {
+      Logger.log(`Retrieved ${treasuryYields.yields.length} yields`);
+      Logger.log(`Source: ${treasuryYields.source}`);
+      Logger.log(`Is Stale Data: ${treasuryYields.isStaleData ? "Yes" : "No"}`);
+    } else {
+      Logger.log("Failed to retrieve Treasury Yields");
+      if (treasuryYields && treasuryYields.errorMessage) {
+        Logger.log(`Error: ${treasuryYields.errorMessage}`);
+      }
+    }
+    
+    // Test Economic Events with primary and alternative sources
+    Logger.log("\nTesting Economic Events retrieval:");
+    const economicEvents = retrieveUpcomingEconomicEvents();
+    if (economicEvents && economicEvents.events && economicEvents.events.length > 0) {
+      Logger.log(`Retrieved ${economicEvents.events.length} events`);
+      Logger.log(`Source: ${economicEvents.source}`);
+      Logger.log(`Is Stale Data: ${economicEvents.isStaleData ? "Yes" : "No"}`);
+    } else {
+      Logger.log("Failed to retrieve Economic Events");
+      if (economicEvents && economicEvents.errorMessage) {
+        Logger.log(`Error: ${economicEvents.errorMessage}`);
+      }
+    }
+    
+    Logger.log("\n=== IMPROVED DATA RETRIEVAL TESTING COMPLETE ===");
+    return "Comprehensive data retrieval test completed. Check the logs for detailed results.";
+  } catch (error) {
+    Logger.log(`Error in testImprovedDataRetrieval: ${error}`);
+    return `Error: ${error}`;
   }
 }

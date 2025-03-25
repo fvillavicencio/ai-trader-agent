@@ -225,11 +225,12 @@ function callOpenAIApi(prompt, apiKey) {
     Logger.log("Calling OpenAI API...");
     
     const payload = {
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4-turbo",
+      tools: [{"type": "retrieval"}],
       messages: [
         {
           role: "system",
-          content: "You are a financial analyst specializing in market sentiment analysis. You MUST ALWAYS provide accurate, up-to-date information about current market sentiment in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific details about analysts' comments and sentiment indicators."
+          content: "You are a financial analyst specializing in market sentiment analysis. You MUST ALWAYS provide accurate, up-to-date information about current market sentiment in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific details about analysts' comments and sentiment indicators. You have access to current information through web retrieval - USE THIS CAPABILITY to ensure your information is accurate and timely."
         },
         {
           role: "user",
@@ -258,7 +259,7 @@ function callOpenAIApi(prompt, apiKey) {
     }
     
     const responseData = JSON.parse(response.getContentText());
-    Logger.log("OpenAI API call successful with model: gpt-4-turbo-preview");
+    Logger.log("OpenAI API call successful with model: gpt-4-turbo");
     
     return responseData;
   } catch (error) {

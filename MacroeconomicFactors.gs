@@ -131,27 +131,33 @@ function formatMacroeconomicFactorsData(macroData) {
     const thirtyYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "30-Year") : null;
     
     if (threeMonthYield && threeMonthYield.yield !== undefined) {
-      formattedData += `  - 3-Month Treasury Yield: ${threeMonthYield.yield.toFixed(2)}% (${threeMonthYield.change >= 0 ? "+" : ""}${threeMonthYield.change.toFixed(2)})\n`;
+      const yieldValue = Math.floor(threeMonthYield.yield * 100) / 100;
+      formattedData += `  - 3-Month Treasury Yield: ${yieldValue.toFixed(2)}% (${threeMonthYield.change >= 0 ? "+" : ""}${threeMonthYield.change.toFixed(2)})\n`;
     }
     
     if (oneYearYield && oneYearYield.yield !== undefined) {
-      formattedData += `  - 1-Year Treasury Yield: ${oneYearYield.yield.toFixed(2)}% (${oneYearYield.change >= 0 ? "+" : ""}${oneYearYield.change.toFixed(2)})\n`;
+      const yieldValue = Math.floor(oneYearYield.yield * 100) / 100;
+      formattedData += `  - 1-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${oneYearYield.change >= 0 ? "+" : ""}${oneYearYield.change.toFixed(2)})\n`;
     }
     
     if (twoYearYield && twoYearYield.yield !== undefined) {
-      formattedData += `  - 2-Year Treasury Yield: ${twoYearYield.yield.toFixed(2)}% (${twoYearYield.change >= 0 ? "+" : ""}${twoYearYield.change.toFixed(2)})\n`;
+      const yieldValue = Math.floor(twoYearYield.yield * 100) / 100;
+      formattedData += `  - 2-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${twoYearYield.change >= 0 ? "+" : ""}${twoYearYield.change.toFixed(2)})\n`;
     }
     
     if (fiveYearYield && fiveYearYield.yield !== undefined) {
-      formattedData += `  - 5-Year Treasury Yield: ${fiveYearYield.yield.toFixed(2)}% (${fiveYearYield.change >= 0 ? "+" : ""}${fiveYearYield.change.toFixed(2)})\n`;
+      const yieldValue = Math.floor(fiveYearYield.yield * 100) / 100;
+      formattedData += `  - 5-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${fiveYearYield.change >= 0 ? "+" : ""}${fiveYearYield.change.toFixed(2)})\n`;
     }
     
     if (tenYearYield && tenYearYield.yield !== undefined) {
-      formattedData += `  - 10-Year Treasury Yield: ${tenYearYield.yield.toFixed(2)}% (${tenYearYield.change >= 0 ? "+" : ""}${tenYearYield.change.toFixed(2)})\n`;
+      const yieldValue = Math.floor(tenYearYield.yield * 100) / 100;
+      formattedData += `  - 10-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${tenYearYield.change >= 0 ? "+" : ""}${tenYearYield.change.toFixed(2)})\n`;
     }
     
     if (thirtyYearYield && thirtyYearYield.yield !== undefined) {
-      formattedData += `  - 30-Year Treasury Yield: ${thirtyYearYield.yield.toFixed(2)}% (${thirtyYearYield.change >= 0 ? "+" : ""}${thirtyYearYield.change.toFixed(2)})\n`;
+      const yieldValue = Math.floor(thirtyYearYield.yield * 100) / 100;
+      formattedData += `  - 30-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${thirtyYearYield.change >= 0 ? "+" : ""}${thirtyYearYield.change.toFixed(2)})\n`;
     }
     
     if (treasuryYields.yieldCurve) {
@@ -943,7 +949,7 @@ function fetchCPIDataFromFRED() {
     // Check if the responses contain the expected data
     if (!cpiData || !cpiData.observations || !Array.isArray(cpiData.observations) || cpiData.observations.length === 0 ||
         !coreCpiData || !coreCpiData.observations || !Array.isArray(coreCpiData.observations) || coreCpiData.observations.length === 0) {
-      Logger.log("FRED API response does not contain expected data structure");
+      Logger.log("FRED API response does not contain expected CPI data");
       return null;
     }
     
@@ -1119,7 +1125,7 @@ function fetchPCEDataFromBEA() {
     Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
     
     // Check if the response contains the expected data
-    if (!data || !data.BEAAPI || !data.BEAAPI.Results || !data.BEAAPI.Results.Data || !Array.isArray(data.BEAAPI.Results.Data)) {
+    if (!data || data.BEAAPI === undefined || data.BEAAPI.Results === undefined || data.BEAAPI.Results.Data === undefined || !Array.isArray(data.BEAAPI.Results.Data)) {
       Logger.log("BEA API response does not contain expected data structure");
       
       // Check if there's an error message
@@ -1522,7 +1528,7 @@ function retrieveGeopoliticalRisksData() {
           {
             type: 'Event',
             name: "Data Unavailable",
-            description: "Geopolitical risk data is currently unavailable.",
+            description: "Geopolitical risk data is currently unavailable due to the lack of an OpenAI API key. Please ensure the key is set in script properties.",
             region: "Global",
             impactLevel: "Unknown",
             marketImpact: "Unable to assess market impact at this time.",
@@ -1566,16 +1572,18 @@ function retrieveGeopoliticalRisksData() {
     }
     
     Provide EXACT URLs to specific articles, not just homepage URLs.
+    You have access to current information through web retrieval - USE THIS CAPABILITY to ensure your information is accurate and timely.
     `;
     
-    Logger.log("Trying OpenAI API with model: gpt-4-turbo-preview");
+    Logger.log("Trying OpenAI API with model: gpt-4-turbo");
     
     const payload = {
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4-turbo",
+      tools: [{"type": "retrieval"}],
       messages: [
         {
           role: "system",
-          content: "You are a financial analyst specializing in geopolitical risk assessment. You MUST ALWAYS provide accurate, up-to-date information about current geopolitical risks affecting financial markets in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific URLs to news sources."
+          content: "You are a financial analyst specializing in geopolitical risk assessment. You MUST ALWAYS provide accurate, up-to-date information about current geopolitical risks affecting financial markets in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific URLs to news sources. You have access to current information through web retrieval - USE THIS CAPABILITY to ensure your information is accurate and timely."
         },
         {
           role: "user",
@@ -1605,7 +1613,7 @@ function retrieveGeopoliticalRisksData() {
       }
       
       const responseData = JSON.parse(response.getContentText());
-      Logger.log("OpenAI API call successful with model: gpt-4-turbo-preview");
+      Logger.log("OpenAI API call successful with model: gpt-4-turbo");
       
       // Extract the content from the response
       const content = responseData.choices[0].message.content;
