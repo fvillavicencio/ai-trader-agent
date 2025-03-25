@@ -11,6 +11,30 @@ function retrieveMarketSentiment() {
   try {
     Logger.log("Retrieving market sentiment data...");
     
+    // Check if we have cached data first (cache for 2 hours)
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('MARKET_SENTIMENT_DATA');
+      
+      if (cachedData) {
+        const parsedData = JSON.parse(cachedData);
+        const cacheTime = new Date(parsedData.timestamp);
+        const currentTime = new Date();
+        const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
+        
+        if (cacheAgeHours < 2) {
+          Logger.log("Using cached market sentiment data (less than 2 hours old)");
+          parsedData.fromCache = true;
+          return parsedData;
+        } else {
+          Logger.log("Cached market sentiment data is more than 2 hours old");
+        }
+      }
+    } catch (cacheError) {
+      Logger.log("Cache retrieval error: " + cacheError);
+      // Continue execution - we'll get fresh data below
+    }
+    
     // Retrieve market sentiment data from OpenAI
     const marketSentimentData = retrieveOpenAIMarketSentiment();
     
@@ -20,20 +44,35 @@ function retrieveMarketSentiment() {
       const mentionedStocks = extractMentionedStocks(marketSentimentData);
       Logger.log(`Found ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.join(', ')}`);
       
-      // Return the results
-      return {
+      // Prepare the result
+      const result = {
         success: true,
         message: "Market sentiment data retrieved successfully.",
         data: marketSentimentData,
         mentionedStocks: mentionedStocks,
-        timestamp: new Date()
+        timestamp: new Date(),
+        fromCache: false
       };
+      
+      // Cache the result for 2 hours (7200 seconds)
+      try {
+        const scriptCache = CacheService.getScriptCache();
+        scriptCache.put('MARKET_SENTIMENT_DATA', JSON.stringify(result), 7200);
+        Logger.log("Market sentiment data cached successfully for 2 hours");
+      } catch (cacheError) {
+        Logger.log("Error caching market sentiment data: " + cacheError);
+        // Continue execution - caching is optional
+      }
+      
+      // Return the results
+      return result;
     } else {
       return {
         success: false,
         message: "Failed to retrieve market sentiment data.",
         error: marketSentimentData.error || "Unknown error",
-        timestamp: new Date()
+        timestamp: new Date(),
+        fromCache: false
       };
     }
   } catch (error) {
@@ -41,7 +80,8 @@ function retrieveMarketSentiment() {
     return {
       success: false,
       message: `Failed to retrieve market sentiment data: ${error}`,
-      timestamp: new Date()
+      timestamp: new Date(),
+      fromCache: false
     };
   }
 }
@@ -333,7 +373,8 @@ Format your response as a valid JSON object with the following structure:
       "sentiment": "Bullish/Neutral/Bearish",
       "mentionedStocks": ["AAPL", "MSFT"],
       "source": "Source Name",
-      "url": "https://source-url.com"
+      "url": "https://source-url.com",
+      "lastUpdated": "YYYY-MM-DD"
     }
   ],
   "sentimentIndicators": [
@@ -343,7 +384,9 @@ Format your response as a valid JSON object with the following structure:
       "interpretation": "What this value suggests",
       "trend": "Increasing/Decreasing/Stable",
       "mentionedStocks": ["AAPL", "MSFT"],
-      "source": "Source Name"
+      "source": "Source Name",
+      "url": "https://source-url.com",
+      "lastUpdated": "YYYY-MM-DD"
     }
   ],
   "overallSentiment": "Bullish/Neutral/Bearish",
@@ -353,10 +396,12 @@ Format your response as a valid JSON object with the following structure:
 Important guidelines:
 1. For each analyst, include their most recent commentary (within the last week if possible)
 2. For each analyst, identify any specific stocks they mentioned and include them in the mentionedStocks array
-3. For each sentiment indicator, include the most recent value and what it suggests
-4. Provide a brief summary of the overall market sentiment
-5. Ensure all data is accurate and from reputable sources
-6. Format the response as a valid JSON object
+3. For each analyst and sentiment indicator, include the lastUpdated field with the date the commentary or data was published
+4. For each sentiment indicator, include the most recent value and what it suggests
+5. Provide a brief summary of the overall market sentiment
+6. Ensure all data is accurate and from reputable sources
+7. Include complete URLs (not just domain names) for all sources
+8. Format the response as a valid JSON object
 
 Your response should ONLY include the JSON object, without any additional text.`;
 }
