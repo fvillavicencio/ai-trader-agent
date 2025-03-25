@@ -1,17 +1,16 @@
-/**
- * Email formatting and sending functions
- */
+// Import the TIME_ZONE constant from Code.gs
+// const TIME_ZONE = "America/New_York"; // Removing this line as TIME_ZONE is already defined in Code.gs
 
 /**
- * Formats the trading decision and justification as an HTML email
+ * Formats the trading decision and full analysis as an HTML email
  * 
  * @param {string} decision - The trading decision (Buy Now, Sell Now, Watch for Better Price Action)
- * @param {string} justification - The justification for the decision in JSON format
+ * @param {Object} analysis - The full analysis object
  * @param {Date} analysisTime - The time of the current analysis
  * @param {Date} nextAnalysisTime - The time of the next scheduled analysis
  * @return {string} - The formatted HTML email body
  */
-function formatHtmlEmailBody(decision, justification, analysisTime, nextAnalysisTime) {
+function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextAnalysisTime) {
   const formattedAnalysisDate = Utilities.formatDate(analysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
   const formattedNextDate = Utilities.formatDate(nextAnalysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
   
@@ -30,460 +29,884 @@ function formatHtmlEmailBody(decision, justification, analysisTime, nextAnalysis
     decisionBg = "#FFEBEE"; // Light red background
   }
   
-  // Parse the JSON data
-  let jsonData;
-  try {
-    jsonData = JSON.parse(justification);
-  } catch (e) {
-    Logger.log("Error parsing JSON: " + e);
-    // If parsing fails, create a basic structure
-    jsonData = {
-      decision: decision,
-      summary: "Unable to parse analysis data",
-      analysis: {},
-      justification: "The analysis data could not be properly parsed."
-    };
+  // Extract data from the analysis object
+  const summary = analysis.summary || "No summary available";
+  const justification = analysis.justification || "No justification available";
+  
+  // Format market sentiment section
+  let marketSentimentHtml = "<p>No market sentiment data available</p>";
+  if (analysis.analysis && analysis.analysis.marketSentiment) {
+    let sentimentClass = "neutral";
+    if (analysis.analysis.marketSentiment.overall) {
+      if (analysis.analysis.marketSentiment.overall.toLowerCase().includes("bullish")) {
+        sentimentClass = "bullish";
+      } else if (analysis.analysis.marketSentiment.overall.toLowerCase().includes("bearish")) {
+        sentimentClass = "bearish";
+      }
+    }
+    
+    marketSentimentHtml = `${analysis.analysis.marketSentiment.overall ? 
+        `<div class="overall-sentiment ${sentimentClass}" style="padding: 10px; margin-bottom: 15px; border-radius: 5px; background-color: ${sentimentClass === 'bullish' ? '#e8f5e9' : sentimentClass === 'bearish' ? '#ffebee' : '#f5f5f5'}; border-left: 4px solid ${sentimentClass === 'bullish' ? '#4caf50' : sentimentClass === 'bearish' ? '#f44336' : '#9e9e9e'};">
+          <h3 style="margin: 0 0 8px 0; font-size: 16px;">Overall Market Sentiment: <span style="color: ${sentimentClass === 'bullish' ? '#4caf50' : sentimentClass === 'bearish' ? '#f44336' : '#757575'};">${analysis.analysis.marketSentiment.overall}</span></h3>
+        </div>` : ''}
+        
+        ${analysis.analysis.marketSentiment.analysts && Array.isArray(analysis.analysis.marketSentiment.analysts) ? 
+          `<div class="analysts-container" style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+            ${analysis.analysis.marketSentiment.analysts.map(analyst => `
+              <div class="analyst" style="flex: 1 1 300px; padding: 12px; margin-bottom: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); border-top: 3px solid #2196f3;">
+                <div class="analyst-name" style="font-weight: bold; color: #2196f3; margin-bottom: 5px;">${analyst.analyst}</div>
+                <div class="comment" style="font-style: italic; margin-bottom: 8px; color: #424242;">"${analyst.comment}"</div>
+                ${analyst.mentionedSymbols && analyst.mentionedSymbols.length > 0 ? 
+                  `<div class="symbols" style="margin-top: 5px;">
+                    <span style="font-size: 12px; color: #757575;">Mentioned: </span>
+                    ${analyst.mentionedSymbols.map(symbol => 
+                      `<span style="display: inline-block; padding: 2px 6px; margin: 2px; background-color: #e3f2fd; border-radius: 3px; font-size: 12px; color: #1976d2;">${symbol}</span>`
+                    ).join('')}
+                  </div>` : ''}
+                ${analyst.source ? `<div class="source" style="font-size: 12px; margin-top: 3px;">Source: <a href="${analyst.sourceUrl || '#'}" target="_blank" style="color: #2196f3; text-decoration: none;">${analyst.source}</a></div>` : ''}
+              </div>
+            `).join('')}
+          </div>` : ''}`;
   }
   
-  // Create HTML email template with improved design
-  return `
+  // Format market indicators section
+  let marketIndicatorsHtml = "<p>No market indicator data available</p>";
+  if (analysis.analysis && analysis.analysis.marketIndicators) {
+    marketIndicatorsHtml = "<div style='margin-top: 10px;'>";
+    
+    // Fear & Greed Index
+    if (analysis.analysis.marketIndicators.fearGreedIndex) {
+      const fgi = analysis.analysis.marketIndicators.fearGreedIndex;
+      const fgiValue = parseInt(fgi.value) || 50;
+      const fgiColor = fgiValue <= 25 ? '#f44336' : 
+                       fgiValue <= 40 ? '#ff9800' : 
+                       fgiValue <= 60 ? '#ffeb3b' : 
+                       fgiValue <= 75 ? '#8bc34a' : '#4caf50';
+      
+      marketIndicatorsHtml += `
+        <div style="margin-bottom: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="display: flex; align-items: center; margin-bottom: 8px;">
+            <div style="font-weight: bold; font-size: 16px; margin-right: 10px;">Fear & Greed Index:</div>
+            <div style="font-size: 18px; font-weight: bold; color: ${fgiColor};">${fgi.value}</div>
+          </div>
+          <div style="height: 10px; background-color: #e0e0e0; border-radius: 5px; margin: 8px 0;">
+            <div style="height: 100%; width: ${Math.min(Math.max(fgiValue, 0), 100)}%; background-color: ${fgiColor}; border-radius: 5px;"></div>
+          </div>
+          <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 3px;">
+            <span>Extreme Fear</span>
+            <span>Fear</span>
+            <span>Neutral</span>
+            <span>Greed</span>
+            <span>Extreme Greed</span>
+          </div>
+          <div style="margin-top: 8px; font-style: italic; color: #616161;">${fgi.interpretation || ''}</div>
+          ${fgi.source || fgi.lastUpdated ? 
+            `<div style="margin-top: 8px; font-size: 11px; color: #9e9e9e; text-align: right;">
+              ${fgi.source ? 
+                `Source: <a href="${fgi.sourceUrl || '#'}" target="_blank" style="color: #607d8b; text-decoration: none;">${fgi.source}</a>` : ''}
+              ${fgi.source && fgi.lastUpdated ? ' | ' : ''}
+              ${fgi.lastUpdated ? `Last updated: ${fgi.lastUpdated}` : ''}
+            </div>` : ''}
+        </div>`;
+    }
+    
+    // VIX
+    if (analysis.analysis.marketIndicators.vix) {
+      const vix = analysis.analysis.marketIndicators.vix;
+      const vixTrendIcon = vix.trend && vix.trend.toLowerCase().includes('rising') ? '↗️' : 
+                           vix.trend && vix.trend.toLowerCase().includes('falling') ? '↘️' : '➡️';
+      const vixTrendColor = vix.trend && vix.trend.toLowerCase().includes('rising') ? '#f44336' : 
+                            vix.trend && vix.trend.toLowerCase().includes('falling') ? '#4caf50' : '#757575';
+      
+      marketIndicatorsHtml += `
+        <div style="margin-bottom: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="display: flex; align-items: center; margin-bottom: 5px;">
+            <div style="font-weight: bold; font-size: 16px; margin-right: 10px;">VIX:</div>
+            <div style="font-size: 18px; font-weight: bold;">${vix.value}</div>
+            <div style="margin-left: 10px; color: ${vixTrendColor}; font-weight: bold;">${vixTrendIcon} ${vix.trend || ''}</div>
+          </div>
+          <div style="margin-top: 5px; color: #616161;">${vix.analysis || ''}</div>
+          ${vix.source || vix.lastUpdated ? 
+            `<div style="margin-top: 8px; font-size: 11px; color: #9e9e9e; text-align: right;">
+              ${vix.source ? 
+                `Source: <a href="${vix.sourceUrl || '#'}" target="_blank" style="color: #607d8b; text-decoration: none;">${vix.source}</a>` : ''}
+              ${vix.source && vix.lastUpdated ? ' | ' : ''}
+              ${vix.lastUpdated ? `Last updated: ${vix.lastUpdated}` : ''}
+            </div>` : ''}
+        </div>`;
+    }
+    
+    // Upcoming Events
+    if (analysis.analysis.marketIndicators.upcomingEvents && analysis.analysis.marketIndicators.upcomingEvents.length > 0) {
+      marketIndicatorsHtml += `
+        <div style="margin-bottom: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Upcoming Events:</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            ${analysis.analysis.marketIndicators.upcomingEvents.map(event => `
+              <div style="display: flex; align-items: center; padding: 8px 12px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #2196f3;">
+                <div style="min-width: 100px; font-weight: bold; color: #2196f3;">${event.date} | </div>
+                <div>${event.event}</div>
+              </div>
+            `).join('')}
+          </div>
+          ${analysis.analysis.marketIndicators.source || analysis.analysis.marketIndicators.lastUpdated ? 
+            `<div style="margin-top: 8px; font-size: 11px; color: #9e9e9e; text-align: right;">
+              ${analysis.analysis.marketIndicators.source ? 
+                `Source: <a href="${analysis.analysis.marketIndicators.sourceUrl || '#'}" target="_blank" style="color: #607d8b; text-decoration: none;">${analysis.analysis.marketIndicators.source}</a>` : ''}
+              ${analysis.analysis.marketIndicators.source && analysis.analysis.marketIndicators.lastUpdated ? ' | ' : ''}
+              ${analysis.analysis.marketIndicators.lastUpdated ? `Last updated: ${analysis.analysis.marketIndicators.lastUpdated}` : ''}
+            </div>` : ''}
+        </div>`;
+    }
+    
+    marketIndicatorsHtml += "</div>";
+  }
+  
+  // Format fundamental metrics section
+  let fundamentalMetricsHtml = "<p>No fundamental metrics data available</p>";
+  
+  if (analysis.analysis && analysis.analysis.fundamentalMetrics && analysis.analysis.fundamentalMetrics.stocks && Array.isArray(analysis.analysis.fundamentalMetrics.stocks)) {
+    const stocks = analysis.analysis.fundamentalMetrics.stocks;
+    
+    fundamentalMetricsHtml = `
+    <div style="margin-bottom: 20px; padding: 15px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);">
+      <h2 style="margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 1px solid #eaeaea; color: #2c3e50; font-size: 18px;">Fundamental Metrics</h2>
+      
+      <div class="stock-grid">
+        ${stocks.map(stock => formatStockCard(stock)).join('')}
+      </div>
+    </div>`;
+  } else if (analysis.analysis && analysis.analysis.fundamentalMetrics && Array.isArray(analysis.analysis.fundamentalMetrics)) {
+    // Handle the old format (array of metrics)
+    const metrics = analysis.analysis.fundamentalMetrics;
+    
+    fundamentalMetricsHtml = `
+    <div style="margin-bottom: 20px; padding: 15px; background-color: #ffffff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.12);">
+      <h2 style="margin: 0 0 15px 0; padding-bottom: 10px; border-bottom: 1px solid #eaeaea; color: #2c3e50; font-size: 18px;">Fundamental Metrics</h2>
+      
+      <div class="stock-grid">
+        ${metrics.map(metric => formatMetricCard(metric)).join('')}
+      </div>
+    </div>`;
+  }
+  
+  // Format macroeconomic factors section
+  let macroHtml = "<p>No macroeconomic factors data available</p>";
+  if (analysis.analysis && analysis.analysis.macroeconomicFactors) {
+    macroHtml = "<div style='margin-top: 10px;'>";
+    const macro = analysis.analysis.macroeconomicFactors;
+    
+    // Treasury Yields
+    if (macro.treasuryYields) {
+      const yieldCurveColor = macro.treasuryYields.yieldCurve === 'inverted' ? '#f44336' : 
+                             macro.treasuryYields.yieldCurve === 'flat' ? '#ff9800' : '#4caf50';
+      
+      macroHtml += `
+        <div style="margin-bottom: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #333;">Treasury Yields</div>
+          
+          <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
+            ${macro.treasuryYields.threeMonth ? 
+              `<div style="padding: 8px 12px; background-color: #e8f5e9; border-radius: 4px; border-left: 3px solid #4caf50;">
+                <div style="font-size: 14px; color: #757575;">3-Month</div>
+                <div style="font-size: 18px; font-weight: bold; color: #4caf50;">${macro.treasuryYields.threeMonth}%</div>
+              </div>` : ''}
+              
+            ${macro.treasuryYields.oneYear ? 
+              `<div style="padding: 8px 12px; background-color: #e8f5e9; border-radius: 4px; border-left: 3px solid #4caf50;">
+                <div style="font-size: 14px; color: #757575;">1-Year</div>
+                <div style="font-size: 18px; font-weight: bold; color: #4caf50;">${macro.treasuryYields.oneYear}%</div>
+              </div>` : ''}
+              
+            ${macro.treasuryYields.twoYear ? 
+              `<div style="padding: 8px 12px; background-color: #e8f5e9; border-radius: 4px; border-left: 3px solid #4caf50;">
+                <div style="font-size: 14px; color: #757575;">2-Year</div>
+                <div style="font-size: 18px; font-weight: bold; color: #4caf50;">${macro.treasuryYields.twoYear}%</div>
+              </div>` : ''}
+              
+            ${macro.treasuryYields.tenYear ? 
+              `<div style="padding: 8px 12px; background-color: #e8f5e9; border-radius: 4px; border-left: 3px solid #4caf50;">
+                <div style="font-size: 14px; color: #757575;">10-Year</div>
+                <div style="font-size: 18px; font-weight: bold; color: #4caf50;">${macro.treasuryYields.tenYear}%</div>
+              </div>` : ''}
+              
+            ${macro.treasuryYields.thirtyYear ? 
+              `<div style="padding: 8px 12px; background-color: #e8f5e9; border-radius: 4px; border-left: 3px solid #4caf50;">
+                <div style="font-size: 14px; color: #757575;">30-Year</div>
+                <div style="font-size: 18px; font-weight: bold; color: #4caf50;">${macro.treasuryYields.thirtyYear}%</div>
+              </div>` : ''}
+          </div>
+          
+          ${macro.treasuryYields.yieldCurve ? 
+            `<div style="margin-top: 10px; padding: 8px 12px; background-color: #fafafa; border-radius: 4px; border-left: 3px solid ${yieldCurveColor};">
+              <div style="font-weight: bold; color: ${yieldCurveColor};">Yield Curve: ${macro.treasuryYields.yieldCurve}</div>
+              <div style="margin-top: 5px; font-style: italic; color: #616161;">${macro.treasuryYields.implications || ''}</div>
+            </div>` : ''}
+            
+          ${macro.treasuryYields.source || macro.treasuryYields.lastUpdated ? 
+            `<div style="margin-top: 8px; font-size: 11px; color: #9e9e9e; text-align: right;">
+              ${macro.treasuryYields.source ? 
+                `Source: <a href="${macro.treasuryYields.sourceUrl || '#'}" target="_blank" style="color: #607d8b; text-decoration: none;">${macro.treasuryYields.source}</a>` : ''}
+              ${macro.treasuryYields.source && macro.treasuryYields.lastUpdated ? ' | ' : ''}
+              ${macro.treasuryYields.lastUpdated ? `Last updated: ${macro.treasuryYields.lastUpdated}` : ''}
+            </div>` : ''}
+        </div>`;
+    }
+    
+    // Federal Reserve Policy
+    if (macro.federalReservePolicy) {
+      macroHtml += `
+        <div style="margin-bottom: 15px; padding: 15px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px; color: #333;">Federal Reserve Policy</div>
+          
+          ${macro.federalReservePolicy.currentRate ? 
+            `<div style="display: flex; align-items: center; margin-bottom: 10px;">
+              <div style="padding: 10px 15px; background-color: #e3f2fd; border-radius: 4px; border-left: 3px solid #2196f3;">
+                <div style="font-size: 14px; color: #757575;">Current Fed Funds Rate</div>
+                <div style="font-size: 18px; font-weight: bold; color: #2196f3;">${macro.federalReservePolicy.currentRate}%</div>
+              </div>
+            </div>` : ''}
+          
+          ${macro.federalReservePolicy.stance ? 
+            `<div style="margin-bottom: 10px; padding: 10px; background-color: #fafafa; border-radius: 4px;">
+              <div style="font-weight: bold; color: #424242;">Policy Stance</div>
+              <div style="color: #616161;">${macro.federalReservePolicy.stance}</div>
+            </div>` : ''}
+            
+          ${macro.federalReservePolicy.outlook ? 
+            `<div style="margin-bottom: 10px; padding: 10px; background-color: #fafafa; border-radius: 4px;">
+              <div style="font-weight: bold; color: #424242;">Outlook</div>
+              <div style="color: #616161;">${macro.federalReservePolicy.outlook}</div>
+            </div>` : ''}
+            
+          ${macro.federalReservePolicy.marketImpact ? 
+            `<div style="padding: 10px; background-color: #fafafa; border-radius: 4px;">
+              <div style="font-weight: bold; color: #424242;">Market Impact</div>
+              <div style="color: #616161;">${macro.federalReservePolicy.marketImpact}</div>
+            </div>` : ''}
+            
+          ${macro.federalReservePolicy.source || macro.federalReservePolicy.lastUpdated ? 
+            `<div style="margin-top: 8px; font-size: 11px; color: #9e9e9e; text-align: right;">
+              ${macro.federalReservePolicy.source ? 
+                `Source: <a href="${macro.federalReservePolicy.sourceUrl || '#'}" target="_blank" style="color: #607d8b; text-decoration: none;">${macro.federalReservePolicy.source}</a>` : ''}
+              ${macro.federalReservePolicy.source && macro.federalReservePolicy.lastUpdated ? ' | ' : ''}
+              ${macro.federalReservePolicy.lastUpdated ? `Last updated: ${macro.federalReservePolicy.lastUpdated}` : ''}
+            </div>` : ''}
+        </div>`;
+    }
+    
+    // Inflation
+    if (macro.inflation) {
+      macroHtml += `
+        <div style="margin-bottom: 15px;">
+          <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">Inflation Metrics</h3>
+          <div style="display: flex; gap: 15px;">
+            <!-- CPI Card -->
+            <div style="flex: 1; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); padding: 15px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #424242; text-align: center;">Consumer Price Index (CPI)</h4>
+              <div style="display: flex; justify-content: space-between;">
+                <!-- CPI Headline -->
+                <div style="flex: 1; text-align: center; padding: 10px; background-color: #f5f5f5; border-radius: 5px; margin-right: 8px;">
+                  <div style="color: #666; font-size: 14px; margin-bottom: 8px;">Headline</div>
+                  <div style="font-size: 22px; font-weight: bold; color: ${
+                    // Handle both nested and flat formats for Headline CPI
+                    macro.inflation.cpi && typeof macro.inflation.cpi === 'object' ? 
+                      (parseFloat(macro.inflation.cpi.headline) > 4 ? '#f44336' : parseFloat(macro.inflation.cpi.headline) > 2.5 ? '#ff9800' : '#4caf50') : 
+                      (parseFloat(macro.inflation.cpi) > 4 ? '#f44336' : parseFloat(macro.inflation.cpi) > 2.5 ? '#ff9800' : '#4caf50')
+                  };">${
+                    // Display the appropriate value based on format
+                    macro.inflation.cpi && typeof macro.inflation.cpi === 'object' ? 
+                      (macro.inflation.cpi.headline || 'N/A') : 
+                      (macro.inflation.cpi || 'N/A')
+                  }%</div>
+                </div>
+                
+                <!-- CPI Core -->
+                <div style="flex: 1; text-align: center; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
+                  <div style="color: #666; font-size: 14px; margin-bottom: 8px;">Core</div>
+                  <div style="font-size: 22px; font-weight: bold; color: ${
+                    // Handle both nested and flat formats for Core CPI
+                    macro.inflation.cpi && typeof macro.inflation.cpi === 'object' ? 
+                      (parseFloat(macro.inflation.cpi.core) > 4 ? '#f44336' : parseFloat(macro.inflation.cpi.core) > 2.5 ? '#ff9800' : '#4caf50') : 
+                      (parseFloat(macro.inflation.coreCpi) > 4 ? '#f44336' : parseFloat(macro.inflation.coreCpi) > 2.5 ? '#ff9800' : '#4caf50')
+                  };">${
+                    // Display the appropriate value based on format
+                    macro.inflation.cpi && typeof macro.inflation.cpi === 'object' ? 
+                      (macro.inflation.cpi.core || 'N/A') : 
+                      (macro.inflation.coreCpi || 'N/A')
+                  }%</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- PCE Card -->
+            <div style="flex: 1; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); padding: 15px;">
+              <h4 style="margin: 0 0 10px 0; font-size: 14px; color: #424242; text-align: center;">Personal Consumption Expenditures (PCE)</h4>
+              <div style="display: flex; justify-content: space-between;">
+                <!-- PCE Headline -->
+                <div style="flex: 1; text-align: center; padding: 10px; background-color: #f5f5f5; border-radius: 5px; margin-right: 8px;">
+                  <div style="color: #666; font-size: 14px; margin-bottom: 8px;">Headline</div>
+                  <div style="font-size: 22px; font-weight: bold; color: ${
+                    // Handle both nested and flat formats for Headline PCE
+                    macro.inflation.pce && typeof macro.inflation.pce === 'object' ? 
+                      (parseFloat(macro.inflation.pce.headline) > 3 ? '#f44336' : parseFloat(macro.inflation.pce.headline) > 2 ? '#ff9800' : '#4caf50') : 
+                      (parseFloat(macro.inflation.pce) > 3 ? '#f44336' : parseFloat(macro.inflation.pce) > 2 ? '#ff9800' : '#4caf50')
+                  };">${
+                    // Display the appropriate value based on format
+                    macro.inflation.pce && typeof macro.inflation.pce === 'object' ? 
+                      (macro.inflation.pce.headline || 'N/A') : 
+                      (macro.inflation.pce || 'N/A')
+                  }%</div>
+                </div>
+                
+                <!-- PCE Core -->
+                <div style="flex: 1; text-align: center; padding: 10px; background-color: #f5f5f5; border-radius: 5px;">
+                  <div style="color: #666; font-size: 14px; margin-bottom: 8px;">Core</div>
+                  <div style="font-size: 22px; font-weight: bold; color: ${
+                    // Handle both nested and flat formats for Core PCE
+                    macro.inflation.pce && typeof macro.inflation.pce === 'object' ? 
+                      (parseFloat(macro.inflation.pce.core) > 3 ? '#f44336' : parseFloat(macro.inflation.pce.core) > 2 ? '#ff9800' : '#4caf50') : 
+                      (parseFloat(macro.inflation.corePce) > 3 ? '#f44336' : parseFloat(macro.inflation.corePce) > 2 ? '#ff9800' : '#4caf50')
+                  };">${
+                    // Display the appropriate value based on format
+                    macro.inflation.pce && typeof macro.inflation.pce === 'object' ? 
+                      (macro.inflation.pce.core || 'N/A') : 
+                      (macro.inflation.corePce || 'N/A')
+                  }%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+    
+    // Add back the geopolitical risks section with new styling
+    if (macro.geopoliticalRisks && macro.geopoliticalRisks.regions && Array.isArray(macro.geopoliticalRisks.regions)) {
+      // Add section title
+      macroHtml += `<div style="margin-bottom: 15px;">
+        <h3 style="margin: 0 0 10px 0; font-size: 16px; color: #333;">Geopolitical Risks</h3>`;
+      
+      // Add global summary if available
+      if (macro.geopoliticalRisks.summary) {
+        macroHtml += `
+        <div style="margin-bottom: 15px; border-left: 4px solid #607d8b; padding: 10px 15px; background-color: #f5f5f5; border-radius: 0 4px 4px 0;">
+          <div style="font-weight: 500; margin-bottom: 5px; color: #455a64;">Global Summary</div>
+          <div style="color: #37474f; line-height: 1.5;">${macro.geopoliticalRisks.summary}</div>
+          ${macro.geopoliticalRisks.source || macro.geopoliticalRisks.lastUpdated ? 
+            `<div style="font-size: 11px; color: #78909c; margin-top: 5px;">
+              Source: ${macro.geopoliticalRisks.source || 'N/A'}${macro.geopoliticalRisks.lastUpdated ? ' | Last updated: ' + macro.geopoliticalRisks.lastUpdated : ''}
+            </div>` : ''}
+        </div>`;
+      }
+      
+      // Loop through each region
+      macro.geopoliticalRisks.regions.forEach(region => {
+        // Start region container
+        macroHtml += `<div style="margin-bottom: 12px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.12); padding: 15px;">
+          <div style="font-weight: 500; margin-bottom: 10px; color: #333; font-size: 15px;">${region.region}</div>`;
+        
+        // Check if region has risks
+        if (region.risks && Array.isArray(region.risks) && region.risks.length > 0) {
+          // Loop through each risk
+          region.risks.forEach(risk => {
+            // Determine impact color and icon
+            let impactColor = '#757575'; // Default gray
+            let impactIcon = '⚪'; // Default icon
+            
+            if (risk.impactLevel) {
+              const cleanImpactLevel = risk.impactLevel.replace(/\b[iI]mpact\b/g, '').trim().toLowerCase();
+              
+              if (cleanImpactLevel.includes('high')) {
+                impactColor = '#f44336'; // Red for high
+                impactIcon = '🔴';
+              } else if (cleanImpactLevel.includes('medium')) {
+                impactColor = '#ff9800'; // Orange for medium
+                impactIcon = '🟠';
+              } else if (cleanImpactLevel.includes('low')) {
+                impactColor = '#4caf50'; // Green for low
+                impactIcon = '🟢';
+              }
+            }
+            
+            // Risk item with new styling
+            macroHtml += `
+            <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
+              <div style="display: flex; align-items: flex-start; gap: 10px;">
+                <div style="color: ${impactColor}; font-size: 16px; line-height: 1;">${impactIcon}</div>
+                <div style="flex-grow: 1;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                    <div style="font-weight: 500; color: #333; margin-bottom: 3px;">${risk.impactLevel ? risk.impactLevel : 'Impact'}: ${risk.description}</div>
+                  </div>
+                  ${risk.source || risk.lastUpdated ? 
+                    `<div style="font-size: 11px; color: #78909c; margin-top: 5px;">
+                      Source: ${risk.source || 'N/A'}${risk.lastUpdated ? ' | Last updated: ' + risk.lastUpdated : ''}
+                    </div>` : ''}
+                </div>
+              </div>
+            </div>`;
+          });
+        } else {
+          // No risks message
+          macroHtml += `<div style="font-style: italic; color: #757575; padding: 10px 0;">No specific risks identified</div>`;
+        }
+        
+        // Close region container
+        macroHtml += `</div>`;
+      });
+      
+      // Close geopolitical risks section
+      macroHtml += `</div>`;
+    }
+    
+    macroHtml += "</div>";
+  }
+  
+  // Remove duplicate upcoming events section that's in the wrong place
+  if (analysis.analysis && analysis.analysis.marketIndicators && analysis.analysis.marketIndicators.upcomingEvents && analysis.analysis.marketIndicators.upcomingEvents.length > 0) {
+    // This section is already handled in the marketIndicatorsHtml variable, no need to duplicate it here
+  }
+  
+  // Store the HTML template in a variable first
+  const htmlTemplate = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Pulse Daily</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: #f9f9f9;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
     }
     .container {
+      max-width: 650px;
+      margin: 0 auto;
       padding: 25px;
-      border-radius: 8px;
       background-color: #ffffff;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .header {
       text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 20px;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f0f0f0;
     }
     .header h1 {
-      color: #444;
-      margin-bottom: 10px;
+      margin: 0;
+      color: #2c3e50;
       font-size: 28px;
     }
     .header p {
-      color: #666;
-      font-size: 16px;
-      margin-top: 5px;
+      color: #7f8c8d;
+      margin: 5px 0 0;
     }
-    .decision-container {
+    .decision-box {
+      padding: 20px;
+      margin: 25px 0;
+      border-radius: 8px;
       text-align: center;
-      margin: 30px 0;
+      background-color: ${decisionBg};
+      border-left: 5px solid ${decisionColor};
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
     }
     .decision {
-      font-size: 24px;
+      font-size: 28px;
       font-weight: bold;
-      color: white;
-      background-color: ${decisionColor};
-      padding: 12px 25px;
-      border-radius: 50px;
-      display: inline-block;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      color: ${decisionColor};
+      margin: 5px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     .decision-icon {
       font-size: 32px;
       margin-right: 10px;
     }
     .summary {
-      background-color: ${decisionBg};
-      border-left: 5px solid ${decisionColor};
-      padding: 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-      font-size: 18px;
-    }
-    h2 {
-      color: #2c3e50;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-      margin-top: 30px;
-    }
-    h3 {
-      color: #3498db;
-      margin-top: 20px;
-    }
-    .analyst {
-      margin-bottom: 20px;
-      padding: 15px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      border-left: 4px solid #3498db;
-    }
-    .analyst-name {
-      font-weight: bold;
-      color: #2c3e50;
-    }
-    .timestamp {
+      font-size: 16px;
+      margin: 15px 0 5px;
       font-style: italic;
-      color: #7f8c8d;
-      font-size: 0.9em;
+      color: #555;
+      line-height: 1.5;
     }
-    .source {
-      font-size: 0.9em;
-      color: #3498db;
-    }
-    .indicator {
-      margin-bottom: 15px;
-    }
-    .indicator-name {
-      font-weight: bold;
-    }
-    .event {
-      margin-bottom: 10px;
-    }
-    .stock {
-      margin-bottom: 20px;
-      padding: 15px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-    }
-    .stock-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .stock-name {
-      font-weight: bold;
-      color: #2c3e50;
-    }
-    .stock-metrics {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 10px;
-    }
-    .metric {
-      background-color: #e8f4f8;
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 0.9em;
-    }
-    .justification {
-      margin-top: 30px;
+    .section {
+      margin: 25px 0;
       padding: 20px;
-      background-color: #f5f5f5;
+      background-color: #fff;
       border-radius: 8px;
-      line-height: 1.8;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+      border-top: 3px solid #3498db;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      color: #2c3e50;
     }
     .footer {
-      margin-top: 40px;
-      font-size: 14px;
-      color: #777;
-      border-top: 1px solid #eee;
-      padding-top: 20px;
+      margin-top: 35px;
       text-align: center;
+      font-size: 13px;
+      color: #95a5a6;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    .next-analysis {
+      margin-top: 25px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 15px;
+      border-left: 4px solid #3498db;
+      color: #34495e;
+    }
+    .justification {
+      line-height: 1.7;
+      color: #444;
+      white-space: pre-line;
+    }
+    @media only screen and (max-width: 600px) {
+      .container {
+        padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .decision {
+        font-size: 24px;
+      }
+      .section {
+        padding: 15px;
+      }
+    }
+    .stock-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .stock-card {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .stock-price {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: #f1f8e9;
+      border-bottom: 1px solid #e8f5e9;
+    }
+    .price-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    .price-change {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .price-up {
+      color: #4caf50;
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+    .price-down {
+      color: #f44336;
+      background-color: rgba(244, 67, 54, 0.1);
+    }
+    .price-neutral {
+      color: #757575;
+      background-color: rgba(117, 117, 117, 0.1);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>AI Trading Analysis</h1>
+      <h1>Market Pulse Daily</h1>
       <p>Generated on ${formattedAnalysisDate}</p>
     </div>
     
-    <div class="decision-container">
-      <div class="decision">
-        <span class="decision-icon">${decisionIcon}</span> ${decision}
+    <div class="decision-box">
+      <p class="decision"><span class="decision-icon">${decisionIcon}</span> ${decision}</p>
+      <p class="summary">${summary}</p>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">Detailed Justification</h2>
+      <div style="padding: 15px; background-color: #f9f9f9; border-left: 4px solid #1a365d;">
+        <p style="margin: 0; line-height: 1.5; font-size: 14px;">${justification}</p>
+      </div>
+      <div style="margin-top: 15px; font-size: 12px; color: #777777; text-align: right;">
+        Source: <a href="${analysis.sourceUrl || "#"}" style="color: #3498db; text-decoration: none;">${analysis.source || "Analysis"}</a> | Last Updated: ${analysis.timestamp || 'N/A'}
       </div>
     </div>
     
-    ${jsonData.summary ? `<div class="summary">${jsonData.summary}</div>` : ''}
+    <div class="section">
+      <h2 class="section-title">Market Sentiment</h2>
+      ${marketSentimentHtml}
+    </div>
     
-    <h2>Market Sentiment</h2>
-    ${jsonData.analysis && jsonData.analysis.marketSentiment ? 
-      jsonData.analysis.marketSentiment.map(analyst => `
-        <div class="analyst">
-            <div class="analyst-name">${analyst.analyst}</div>
-            <div class="comment">${analyst.comment}</div>
-            ${analyst.timestamp ? `<div class="timestamp">Time: ${analyst.timestamp}</div>` : ''}
-            ${analyst.source ? `<div class="source">Source: <a href="${analyst.source}" target="_blank">${analyst.source}</a></div>` : ''}
-        </div>
-      `).join('') : '<p>No market sentiment data available</p>'}
+    <div class="section">
+      <h2 class="section-title">Market Indicators</h2>
+      ${marketIndicatorsHtml}
+    </div>
     
-    <h2>Key Market Indicators</h2>
-    ${jsonData.analysis && jsonData.analysis.marketIndicators ? `
-        <div class="indicators">
-            ${jsonData.analysis.marketIndicators.fearGreedIndex ? `
-                <div class="indicator">
-                    <div class="indicator-name">CNN Fear & Greed Index</div>
-                    <div>Value: ${jsonData.analysis.marketIndicators.fearGreedIndex.value}</div>
-                    <div>Interpretation: ${jsonData.analysis.marketIndicators.fearGreedIndex.interpretation}</div>
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.marketIndicators.vix ? `
-                <div class="indicator">
-                    <div class="indicator-name">CBOE Volatility Index (VIX)</div>
-                    <div>Value: ${jsonData.analysis.marketIndicators.vix.value}</div>
-                    <div>Trend: ${jsonData.analysis.marketIndicators.vix.trend}</div>
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.marketIndicators.upcomingEvents && jsonData.analysis.marketIndicators.upcomingEvents.length > 0 ? `
-                <div class="indicator">
-                    <div class="indicator-name">Upcoming Economic Events</div>
-                    ${jsonData.analysis.marketIndicators.upcomingEvents.map(event => `
-                        <div class="event">
-                            <div>${event.event} - ${event.date}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : ''}
-        </div>
-    ` : '<p>No market indicator data available</p>'}
+    <div class="section">
+      <h2 class="section-title">Fundamental Metrics</h2>
+      ${fundamentalMetricsHtml}
+    </div>
     
-    <h2>Fundamental Metrics</h2>
-    ${jsonData.analysis && jsonData.analysis.fundamentalMetrics && jsonData.analysis.fundamentalMetrics.length > 0 ? 
-      jsonData.analysis.fundamentalMetrics.map(stock => `
-        <div class="stock">
-            <div class="stock-header">
-                <div class="stock-name">${stock.symbol} - ${stock.name}</div>
-            </div>
-            <div class="stock-metrics">
-                <div class="metric">PEG Ratio: ${stock.pegRatio}</div>
-                <div class="metric">Forward P/E: ${stock.forwardPE}</div>
-            </div>
-            <div>${stock.comment}</div>
-        </div>
-      `).join('') : '<p>No fundamental metrics data available</p>'}
+    <div class="section">
+      <h2 class="section-title">Macroeconomic Factors</h2>
+      ${macroHtml}
+    </div>
     
-    <h2>Macroeconomic Factors</h2>
-    ${jsonData.analysis && jsonData.analysis.macroeconomicFactors ? `
-        <div class="macro">
-            ${jsonData.analysis.macroeconomicFactors.treasuryYields ? `
-                <h3>Treasury Yields</h3>
-                <div style="margin-left: 15px; display: flex; flex-wrap: wrap;">
-                    <div style="margin-right: 30px;">
-                        <p><strong>10-Year:</strong> ${formatYieldValue(jsonData.analysis.macroeconomicFactors.treasuryYields.tenYear)}%</p>
-                        <p><strong>2-Year:</strong> ${formatYieldValue(jsonData.analysis.macroeconomicFactors.treasuryYields.twoYear)}%</p>
-                    </div>
-                    <div>
-                        ${jsonData.analysis.macroeconomicFactors.treasuryYields.date ? 
-                          `<p><strong>Date:</strong> ${jsonData.analysis.macroeconomicFactors.treasuryYields.date}</p>` : ''}
-                        ${jsonData.analysis.macroeconomicFactors.treasuryYields.yieldCurve ? 
-                          `<p><strong>Yield Curve:</strong> ${jsonData.analysis.macroeconomicFactors.treasuryYields.yieldCurve}</p>` : ''}
-                    </div>
-                </div>
-                <div style="margin-left: 15px;">
-                    <p><strong>Sources:</strong> 
-                      <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value_month=${getCurrentYearMonth()}" target="_blank">U.S. Treasury Daily Yield Curve Rates</a>
-                      ${jsonData.analysis.macroeconomicFactors.treasuryYields.sources && jsonData.analysis.macroeconomicFactors.treasuryYields.sources.fallback ? 
-                        ` | <a href="https://www.marketwatch.com/investing/bond/tmubmusd10y?countrycode=bx" target="_blank">MarketWatch 10-Year</a> | 
-                           <a href="https://www.marketwatch.com/investing/bond/tmubmusd02y?countrycode=bx" target="_blank">MarketWatch 2-Year</a>` : ''}
-                    </p>
-                    ${jsonData.analysis.macroeconomicFactors.treasuryYields.implications ? 
-                      `<p><strong>Implications:</strong> ${jsonData.analysis.macroeconomicFactors.treasuryYields.implications}</p>` : ''}
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.macroeconomicFactors.fedPolicy ? `
-                <h3>Federal Reserve Policy</h3>
-                <div style="margin-left: 15px;">
-                    <p><strong>Federal Funds Rate:</strong> ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' ? 
-                      (jsonData.analysis.macroeconomicFactors.fedPolicy.federalFundsRate || 'N/A') : 'N/A'}</p>
-                    
-                    <div style="display: flex; flex-wrap: wrap;">
-                        <div style="margin-right: 30px;">
-                            ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' && jsonData.analysis.macroeconomicFactors.fedPolicy.fomcMeetingDate ? 
-                              `<p><strong>FOMC Meeting Date:</strong> ${jsonData.analysis.macroeconomicFactors.fedPolicy.fomcMeetingDate}</p>` : ''}
-                        </div>
-                        <div>
-                            ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' && jsonData.analysis.macroeconomicFactors.fedPolicy.source ? 
-                              `<p><strong>Source:</strong> ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy.source === 'string' && 
-                                jsonData.analysis.macroeconomicFactors.fedPolicy.source.startsWith('http') ? 
-                                `<a href="${jsonData.analysis.macroeconomicFactors.fedPolicy.source}" target="_blank">${jsonData.analysis.macroeconomicFactors.fedPolicy.source}</a>` : 
-                                jsonData.analysis.macroeconomicFactors.fedPolicy.source}</p>` : ''}
-                        </div>
-                    </div>
-                    
-                    ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' && jsonData.analysis.macroeconomicFactors.fedPolicy.forwardGuidance ? 
-                      `<p><strong>Forward Guidance:</strong> ${jsonData.analysis.macroeconomicFactors.fedPolicy.forwardGuidance}</p>` : ''}
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.macroeconomicFactors.inflation ? `
-                <h3>Inflation</h3>
-                <div style="margin-left: 15px;">
-                    ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.cpi ? `
-                        <h4>CPI:</h4>
-                        <div style="margin-left: 15px; display: flex; flex-wrap: wrap;">
-                            <div style="margin-right: 30px;">
-                                <p><strong>Headline:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.cpi.headline || 'N/A') : 'N/A'}</p>
-                                <p><strong>Core:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.cpi.core || 'N/A') : 'N/A'}</p>
-                            </div>
-                            <div>
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' && jsonData.analysis.macroeconomicFactors.inflation.cpi.releaseDate ? 
-                                  `<p><strong>Release Date:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.cpi.releaseDate}</p>` : ''}
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' && jsonData.analysis.macroeconomicFactors.inflation.cpi.source ? 
-                                  `<p><strong>Source:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi.source === 'string' && 
-                                    jsonData.analysis.macroeconomicFactors.inflation.cpi.source.startsWith('http') ? 
-                                    `<a href="${jsonData.analysis.macroeconomicFactors.inflation.cpi.source}" target="_blank">${jsonData.analysis.macroeconomicFactors.inflation.cpi.source}</a>` : 
-                                    jsonData.analysis.macroeconomicFactors.inflation.cpi.source}</p>` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.pce ? `
-                        <h4>PCE:</h4>
-                        <div style="margin-left: 15px; display: flex; flex-wrap: wrap;">
-                            <div style="margin-right: 30px;">
-                                <p><strong>Headline:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.pce.headline || 'N/A') : 'N/A'}</p>
-                                <p><strong>Core:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.pce.core || 'N/A') : 'N/A'}</p>
-                            </div>
-                            <div>
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' && jsonData.analysis.macroeconomicFactors.inflation.pce.releaseDate ? 
-                                  `<p><strong>Release Date:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.pce.releaseDate}</p>` : ''}
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' && jsonData.analysis.macroeconomicFactors.inflation.pce.source ? 
-                                  `<p><strong>Source:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce.source === 'string' && 
-                                    jsonData.analysis.macroeconomicFactors.inflation.pce.source.startsWith('http') ? 
-                                    `<a href="${jsonData.analysis.macroeconomicFactors.inflation.pce.source}" target="_blank">${jsonData.analysis.macroeconomicFactors.inflation.pce.source}</a>` : 
-                                    jsonData.analysis.macroeconomicFactors.inflation.pce.source}</p>` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <div style="margin-top: 10px;">
-                        ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.trend ? 
-                          `<p><strong>Trend:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.trend}</p>` : ''}
-                        ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.impactOnFedPolicy ? 
-                          `<p><strong>Impact on Fed Policy:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.impactOnFedPolicy}</p>` : ''}
-                    </div>
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.macroeconomicFactors.geopoliticalRisks && jsonData.analysis.macroeconomicFactors.geopoliticalRisks.length > 0 ? `
-                <h3>Geopolitical Risks</h3>
-                <div style="margin-left: 15px;">
-                    <ul style="margin-top: 5px; padding-left: 20px;">
-                        ${Array.isArray(jsonData.analysis.macroeconomicFactors.geopoliticalRisks) ? 
-                          jsonData.analysis.macroeconomicFactors.geopoliticalRisks.map(risk => {
-                            if (typeof risk === 'object' && risk.description) {
-                              return `<li>${risk.description}</li>`;
-                            } else if (typeof risk === 'string') {
-                              return `<li>${risk}</li>`;
-                            }
-                            return '';
-                          }).join('') : 
-                          (typeof jsonData.analysis.macroeconomicFactors.geopoliticalRisks === 'string' ? 
-                            `<li>${jsonData.analysis.macroeconomicFactors.geopoliticalRisks}</li>` : '')}
-                    </ul>
-                    ${typeof jsonData.analysis.macroeconomicFactors.geopoliticalRisksImpact === 'string' ? 
-                      `<p style="margin-top: 10px;"><strong>Market Impact:</strong> ${jsonData.analysis.macroeconomicFactors.geopoliticalRisksImpact}</p>` : ''}
-                </div>
-            ` : ''}
-        </div>
-    ` : '<p>No macroeconomic factors data available</p>'}
-    
-    ${jsonData.justification ? `
-      <h2>Detailed Justification</h2>
-      <div class="justification">
-          ${jsonData.justification}
-      </div>
-    ` : ''}
+    <div class="next-analysis">
+      Next analysis scheduled for: ${formattedNextDate}
+    </div>
     
     <div class="footer">
-      <p>Next analysis scheduled for ${formattedNextDate}</p>
-      <p>AI Trading Agent - Automated Analysis</p>
+      <p>Market Pulse Daily - Professional Trading Insights</p>
+      <p>&copy; ${new Date().getFullYear()} Market Pulse Daily</p>
     </div>
   </div>
 </body>
 </html>
-  `;
-}
+`;
 
-function formatYieldValue(value) {
-  if (typeof value === 'number') {
-    return value.toFixed(2);
-  } else if (typeof value === 'string') {
-    return value;
-  } else {
-    return 'N/A';
-  }
+  return htmlTemplate;
 }
 
 /**
- * Formats the trading decision and justification as a plain text email (fallback)
+ * Formats the trading decision and full analysis as a plain text email
  * 
  * @param {string} decision - The trading decision (Buy Now, Sell Now, Watch for Better Price Action)
- * @param {string} justification - The justification for the decision
+ * @param {Object} analysis - The full analysis object
  * @param {Date} analysisTime - The time of the current analysis
  * @param {Date} nextAnalysisTime - The time of the next scheduled analysis
  * @return {string} - The formatted plain text email body
  */
-function formatPlainTextEmailBody(decision, justification, analysisTime, nextAnalysisTime) {
-  const formattedAnalysisDate = Utilities.formatDate(analysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
-  const formattedNextDate = Utilities.formatDate(nextAnalysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+function formatPlainTextEmailBodyWithAnalysis(decision, analysis, analysisTime, nextAnalysisTime) {
+  // Extract the summary and justification from the analysis
+  const summary = analysis.summary || "No summary provided";
+  const justification = analysis.justification || "No justification provided";
   
-  return `AI TRADING DECISION
+  // Format the dates
+  const formattedAnalysisDate = Utilities.formatDate(analysisTime, TIME_ZONE, "MMMM d, yyyy 'at' h:mm a z");
+  const formattedNextAnalysisDate = Utilities.formatDate(nextAnalysisTime, TIME_ZONE, "MMMM d, yyyy 'at' h:mm a z");
   
-Analysis completed on ${formattedAnalysisDate}
-
-Decision: ${decision}
-
-Justification:
-${justification}
-
-Next Analysis Scheduled: ${formattedNextDate}
-
-This analysis was generated by AI Trading Agent using OpenAI API with native web browsing.`;
-}
-
-/**
- * Sends an email with the trading decision and justification
- * 
- * @param {string} decision - The trading decision (Buy Now, Sell Now, Watch for Better Price Action)
- * @param {string} justification - The justification for the decision
- * @param {Date} analysisTime - The time of the current analysis
- * @param {Date} nextAnalysisTime - The time of the next scheduled analysis
- */
-function sendTradingDecisionEmail(decision, justification, analysisTime, nextAnalysisTime) {
-  const formattedDate = Utilities.formatDate(analysisTime, TIME_ZONE, "yyyy-MM-dd");
-  const subject = `${EMAIL_SUBJECT_PREFIX}${decision} - ${formattedDate}`;
+  // Determine the decision icon
+  let decisionIcon = "";
+  if (decision.toUpperCase().includes("BUY")) {
+    decisionIcon = "↗️";
+  } else if (decision.toUpperCase().includes("SELL")) {
+    decisionIcon = "↘️";
+  } else {
+    decisionIcon = "↔️";
+  }
   
-  // Create both HTML and plain text versions of the email
-  const htmlBody = formatHtmlEmailBody(decision, justification, analysisTime, nextAnalysisTime);
-  const plainTextBody = formatPlainTextEmailBody(decision, justification, analysisTime, nextAnalysisTime);
+  // Build the plain text email
+  let plainTextBody = `MARKET PULSE DAILY\n`;
+  plainTextBody += `===================\n\n`;
+  plainTextBody += `TRADING DECISION: ${decisionIcon} ${decision}\n\n`;
+  plainTextBody += `Analysis Date: ${formattedAnalysisDate}\n`;
+  plainTextBody += `Next Analysis: ${formattedNextAnalysisDate}\n\n`;
   
-  // Get the recipients array from the Config.gs function
-  const recipients = getEmailRecipients();
+  plainTextBody += `SUMMARY\n`;
+  plainTextBody += `-------\n`;
+  plainTextBody += `${summary}\n\n`;
   
-  // Join multiple recipients with commas for a single email
-  const recipientString = recipients.join(',');
+  // Justification
+  plainTextBody += `JUSTIFICATION\n`;
+  plainTextBody += `-------------\n`;
+  plainTextBody += `${justification}\n\n`;
   
-  // Send a single email to all recipients
-  GmailApp.sendEmail(recipientString, subject, plainTextBody, {
-    htmlBody: htmlBody
-  });
+  // Market Sentiment
+  plainTextBody += `MARKET SENTIMENT\n`;
+  plainTextBody += `-----------------\n`;
+  if (analysis.analysis && analysis.analysis.marketSentiment && analysis.analysis.marketSentiment.overall) {
+    plainTextBody += `Overall: ${analysis.analysis.marketSentiment.overall}\n\n`;
+    
+    if (analysis.analysis.marketSentiment.analysts && analysis.analysis.marketSentiment.analysts.length > 0) {
+      plainTextBody += `ANALYST COMMENTARY:\n`;
+      analysis.analysis.marketSentiment.analysts.forEach(analyst => {
+        plainTextBody += `* ${analyst.analyst}: "${analyst.comment}"\n`;
+        if (analyst.mentionedSymbols && analyst.mentionedSymbols.length > 0) {
+          plainTextBody += `  Mentioned: ${analyst.mentionedSymbols.join(', ')}\n`;
+        }
+        plainTextBody += `\n`;
+      });
+    }
+  } else {
+    plainTextBody += `No market sentiment data available\n\n`;
+  }
   
-  Logger.log(`Email sent to ${recipientString} with decision: ${decision}`);
-}
-
-function getCurrentYearMonth() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${year}${month}`;
+  // Market Indicators
+  plainTextBody += `MARKET INDICATORS\n`;
+  plainTextBody += `-----------------\n`;
+  if (analysis.analysis && analysis.analysis.marketIndicators) {
+    const indicators = analysis.analysis.marketIndicators;
+    
+    if (indicators.fearGreedIndex) {
+      plainTextBody += `Fear & Greed Index: ${indicators.fearGreedIndex.value} (${indicators.fearGreedIndex.interpretation || ''})\n`;
+    }
+    
+    if (indicators.vix) {
+      plainTextBody += `VIX: ${indicators.vix.value} (${indicators.vix.trend || ''})\n`;
+    }
+    
+    if (indicators.upcomingEvents && indicators.upcomingEvents.length > 0) {
+      plainTextBody += `\nUPCOMING EVENTS:\n`;
+      indicators.upcomingEvents.forEach(event => {
+        plainTextBody += `* ${event.date}: ${event.event}\n`;
+      });
+    }
+    
+    plainTextBody += `\n`;
+  } else {
+    plainTextBody += `No market indicator data available\n\n`;
+  }
+  
+  // Fundamental Metrics
+  plainTextBody += `FUNDAMENTAL METRICS\n`;
+  plainTextBody += `-----------------\n`;
+  if (analysis.analysis && analysis.analysis.fundamentalMetrics && analysis.analysis.fundamentalMetrics.stocks && Array.isArray(analysis.analysis.fundamentalMetrics.stocks)) {
+    const stocks = analysis.analysis.fundamentalMetrics.stocks;
+    
+    stocks.forEach(stock => {
+      plainTextBody += `${stock.symbol} (${stock.name || ''}): $${stock.price || 'N/A'}\n`;
+      if (stock.priceChange) {
+        const changeSign = parseFloat(stock.priceChange) >= 0 ? '+' : '';
+        plainTextBody += `  Change: ${changeSign}${stock.priceChange} (${stock.priceChangePercent || ''})\n`;
+      }
+      
+      if (stock.marketCap) {
+        plainTextBody += `  Market Cap: ${stock.marketCap}\n`;
+      }
+      
+      if (stock.peRatio) {
+        plainTextBody += `  P/E Ratio: ${stock.peRatio}\n`;
+      }
+      
+      if (stock.dividend) {
+        plainTextBody += `  Dividend: ${stock.dividend}\n`;
+      }
+      
+      plainTextBody += `\n`;
+    });
+  } else if (analysis.analysis && analysis.analysis.fundamentalMetrics && Array.isArray(analysis.analysis.fundamentalMetrics)) {
+    const metrics = analysis.analysis.fundamentalMetrics;
+    
+    metrics.forEach(metric => {
+      plainTextBody += `${metric.symbol} (${metric.name || ''}): $${metric.price || 'N/A'}\n`;
+      if (metric.priceChange) {
+        const changeSign = parseFloat(metric.priceChange) >= 0 ? '+' : '';
+        plainTextBody += `  Change: ${changeSign}${metric.priceChange} (${metric.priceChangePercent || ''})\n`;
+      }
+      
+      if (metric.marketCap) {
+        plainTextBody += `  Market Cap: ${metric.marketCap}\n`;
+      }
+      
+      if (metric.pegRatio) {
+        plainTextBody += `  PEG Ratio: ${metric.pegRatio}\n`;
+      }
+      
+      if (metric.forwardPE) {
+        plainTextBody += `  Forward P/E: ${metric.forwardPE}\n`;
+      }
+      
+      plainTextBody += `\n`;
+    });
+  } else {
+    plainTextBody += `No fundamental metrics data available\n`;
+  }
+  
+  // Macroeconomic Factors
+  plainTextBody += `MACROECONOMIC FACTORS\n`;
+  plainTextBody += `--------------------\n`;
+  if (analysis.analysis && analysis.analysis.macroeconomicFactors) {
+    const macro = analysis.analysis.macroeconomicFactors;
+    
+    if (macro.treasuryYields) {
+      plainTextBody += `TREASURY YIELDS:\n`;
+      if (macro.treasuryYields.threeMonth) plainTextBody += `  3-Month: ${macro.treasuryYields.threeMonth}%\n`;
+      if (macro.treasuryYields.oneYear) plainTextBody += `  1-Year: ${macro.treasuryYields.oneYear}%\n`;
+      if (macro.treasuryYields.twoYear) plainTextBody += `  2-Year: ${macro.treasuryYields.twoYear}%\n`;
+      if (macro.treasuryYields.tenYear) plainTextBody += `  10-Year: ${macro.treasuryYields.tenYear}%\n`;
+      if (macro.treasuryYields.thirtyYear) plainTextBody += `  30-Year: ${macro.treasuryYields.thirtyYear}%\n`;
+      if (macro.treasuryYields.yieldCurve) plainTextBody += `  Yield Curve: ${macro.treasuryYields.yieldCurve}\n`;
+      plainTextBody += `\n`;
+    }
+    
+    if (macro.federalReservePolicy) {
+      plainTextBody += `FEDERAL RESERVE POLICY:\n`;
+      if (macro.federalReservePolicy.currentRate) plainTextBody += `  Current Rate: ${macro.federalReservePolicy.currentRate}%\n`;
+      if (macro.federalReservePolicy.nextMeeting) plainTextBody += `  Next Meeting: ${macro.federalReservePolicy.nextMeeting}\n`;
+      if (macro.federalReservePolicy.rateDecision) plainTextBody += `  Rate Decision: ${macro.federalReservePolicy.rateDecision}\n`;
+      plainTextBody += `\n`;
+    }
+    
+    if (macro.inflation) {
+      plainTextBody += `INFLATION METRICS:\n`;
+      // Handle both nested and flat formats for CPI
+      if (macro.inflation.cpi && typeof macro.inflation.cpi === 'object') {
+        plainTextBody += `  CPI: ${macro.inflation.cpi.headline || 'N/A'}%\n`;
+        plainTextBody += `  Core CPI: ${macro.inflation.cpi.core || 'N/A'}%\n`;
+      } else {
+        plainTextBody += `  CPI: ${macro.inflation.cpi || 'N/A'}%\n`;
+        plainTextBody += `  Core CPI: ${macro.inflation.coreCpi || 'N/A'}%\n`;
+      }
+      
+      // Handle both nested and flat formats for PCE
+      if (macro.inflation.pce && typeof macro.inflation.pce === 'object') {
+        plainTextBody += `  PCE: ${macro.inflation.pce.headline || 'N/A'}%\n`;
+        plainTextBody += `  Core PCE: ${macro.inflation.pce.core || 'N/A'}%\n`;
+      } else {
+        plainTextBody += `  PCE: ${macro.inflation.pce || 'N/A'}%\n`;
+        plainTextBody += `  Core PCE: ${macro.inflation.corePce || 'N/A'}%\n`;
+      }
+      plainTextBody += `\n`;
+    }
+    
+    // Geopolitical Risks
+    if (macro.geopoliticalRisks && macro.geopoliticalRisks.regions && Array.isArray(macro.geopoliticalRisks.regions)) {
+      plainTextBody += `GEO-POLITICAL RISKS:\n`;
+      macro.geopoliticalRisks.regions.forEach(region => {
+        plainTextBody += `* ${region.region}\n`;
+        if (region.risks && Array.isArray(region.risks) && region.risks.length > 0) {
+          region.risks.forEach(risk => {
+            plainTextBody += `  - ${risk.impactLevel ? risk.impactLevel : 'Impact'}: ${risk.description}\n`;
+          });
+        } else {
+          plainTextBody += `  No specific risks identified\n`;
+        }
+        plainTextBody += `\n`;
+      });
+    }
+    
+    plainTextBody += `\n`;
+  } else {
+    plainTextBody += `No macroeconomic factors data available\n`;
+  }
+  
+  plainTextBody += `\n© ${new Date().getFullYear()} Market Pulse Daily`;
+  
+  return plainTextBody;
 }
 
 /**
@@ -493,116 +916,1576 @@ function getCurrentYearMonth() {
  */
 function sendPromptEmail(prompt) {
   try {
-    // Get email recipients from Config.gs
-    const recipients = getEmailRecipients();
-    Logger.log("Email recipients retrieved: " + JSON.stringify(recipients));
-    
-    // Get the current date and time
     const currentDate = new Date();
     const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
-    // Create email subject
-    const subject = `OpenAI Trading Analysis Prompt - ${formattedDate}`;
-    
-    // Create email body
+    // Create HTML email template
     const htmlBody = `
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Market Pulse Daily</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      max-width: 800px;
-      margin: 0 auto;
+      margin: 0;
+      padding: 0;
       background-color: #f9f9f9;
     }
     .container {
+      max-width: 650px;
+      margin: 0 auto;
       padding: 25px;
-      border-radius: 8px;
       background-color: #ffffff;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .header {
       text-align: center;
       margin-bottom: 30px;
-      border-bottom: 2px solid #eee;
       padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
     }
     .header h1 {
-      color: #444;
-      margin-bottom: 10px;
+      margin: 0;
+      color: #2c3e50;
       font-size: 28px;
     }
     .header p {
-      color: #666;
-      font-size: 16px;
-      margin-top: 5px;
+      color: #7f8c8d;
+      margin: 5px 0 0;
     }
-    .prompt-container {
-      background-color: #f5f5f5;
+    .decision-box {
       padding: 20px;
+      margin: 25px 0;
       border-radius: 8px;
-      white-space: pre-wrap;
-      font-family: monospace;
-      font-size: 14px;
-      overflow-x: auto;
+      text-align: center;
+      background-color: #f8f9fa;
+      border-left: 5px solid #2196f3;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.1);
+    }
+    .decision {
+      font-size: 28px;
+      font-weight: bold;
+      color: #2196f3;
+      margin: 5px 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .decision-icon {
+      font-size: 32px;
+      margin-right: 10px;
+    }
+    .summary {
+      font-size: 16px;
+      margin: 15px 0 5px;
+      font-style: italic;
+      color: #555;
       line-height: 1.5;
     }
+    .section {
+      margin: 25px 0;
+      padding: 20px;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+      border-top: 3px solid #3498db;
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 15px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #eee;
+      color: #2c3e50;
+    }
     .footer {
-      margin-top: 40px;
-      font-size: 14px;
-      color: #777;
-      border-top: 1px solid #eee;
-      padding-top: 20px;
+      margin-top: 35px;
       text-align: center;
+      font-size: 13px;
+      color: #95a5a6;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    .next-analysis {
+      margin-top: 25px;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      text-align: center;
+      font-size: 15px;
+      border-left: 4px solid #3498db;
+      color: #34495e;
+    }
+    .justification {
+      line-height: 1.7;
+      color: #444;
+      white-space: pre-line;
+    }
+    @media only screen and (max-width: 600px) {
+      .container {
+        padding: 15px;
+        width: 100%;
+        box-sizing: border-box;
+      }
+      .decision {
+        font-size: 24px;
+      }
+      .section {
+        padding: 15px;
+      }
+    }
+    .stock-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      margin-bottom: 15px;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .stock-card {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .stock-price {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: #f1f8e9;
+      border-bottom: 1px solid #e8f5e9;
+    }
+    .price-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    .price-change {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .price-up {
+      color: #4caf50;
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+    .price-down {
+      color: #f44336;
+      background-color: rgba(244, 67, 54, 0.1);
+    }
+    .price-neutral {
+      color: #757575;
+      background-color: rgba(117, 117, 117, 0.1);
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>OpenAI Trading Analysis Prompt</h1>
+      <h1>Market Pulse Daily</h1>
       <p>Generated on ${formattedDate}</p>
     </div>
     
-    <div class="prompt-container">
-${prompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+    <div class="decision-box">
+      <p class="decision"><span class="decision-icon">🤖</span> OpenAI Prompt</p>
+      <p class="summary">Please review the prompt below for accuracy before sending to OpenAI.</p>
+    </div>
+    
+    <div class="section">
+      <h2 class="section-title">Prompt</h2>
+      <pre style="background-color: #f5f5f5; padding: 15px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-wrap: break-word;">${prompt}</pre>
     </div>
     
     <div class="footer">
-      <p>This email contains the prompt that will be sent to OpenAI for trading analysis.</p>
-      <p>AI Trading Agent</p>
+      <p>Market Pulse Daily - Professional Trading Insights</p>
+      <p>&copy; ${new Date().getFullYear()} Market Pulse Daily</p>
     </div>
   </div>
 </body>
 </html>
-    `;
-    
+`;
+
     // Create plain text version as fallback
-    const plainTextBody = `OpenAI Trading Analysis Prompt - ${formattedDate}\n\n${prompt}\n\nThis email contains the prompt that will be sent to OpenAI for trading analysis.`;
+    const plainTextBody = 
+      `Market Pulse Daily\n` +
+      `===================\n\n` +
+      `Generated on ${formattedDate}\n\n` +
+      `Please review the prompt below for accuracy before sending to OpenAI:\n\n` +
+      `${prompt}\n\n` +
+      `This is an automated message from the AI Trading Agent.`;
     
-    // Log the email details before sending
-    Logger.log("Preparing to send prompt email with subject: " + subject);
-    Logger.log("Email HTML body length: " + htmlBody.length + " characters");
+    // Send the email
+    const subject = `${EMAIL_SUBJECT_PREFIX} OpenAI Prompt - ${Utilities.formatDate(currentDate, TIME_ZONE, "yyyy-MM-dd HH:mm")}`;
     
-    // Send the email to all recipients
-    for (const recipient of recipients) {
-      Logger.log("Sending prompt email to: " + recipient);
-      MailApp.sendEmail({
-        to: recipient,
-        subject: subject,
+    GmailApp.sendEmail(
+      RECIPIENT_EMAILS.join(','),
+      subject,
+      plainTextBody,
+      {
         htmlBody: htmlBody,
-        body: plainTextBody
-      });
-      Logger.log("Successfully sent prompt email to " + recipient);
-    }
+        name: "AI Trading Agent"
+      }
+    );
     
-    return true;
+    Logger.log("Prompt email sent successfully");
   } catch (error) {
-    Logger.log("Error sending OpenAI prompt email: " + error);
-    return false;
+    Logger.log("Error sending prompt email: " + error);
   }
 }
+
+/**
+ * Sends an error notification email
+ * 
+ * @param {string} subject - The email subject
+ * @param {string} errorMessage - The error message to include in the email
+ * @return {Object} - The result of the email sending operation
+ */
+function sendErrorEmail(subject, errorMessage) {
+  try {
+    Logger.log(`Sending error email: ${subject}`);
+    
+    // Get the recipient email from script properties or use a default
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const recipientEmail = scriptProperties.getProperty('EMAIL_RECIPIENT') || Session.getActiveUser().getEmail();
+    
+    // Format the current time
+    const now = new Date();
+    const formattedDate = now.toLocaleDateString('en-US', {
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
+    
+    // Create HTML body
+    const htmlBody = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 5px;">
+        <div style="background-color: #f44336; color: white; padding: 10px 15px; border-radius: 4px 4px 0 0;">
+          <h2 style="margin: 0; font-size: 18px;">⚠️ AI Trading Agent Error</h2>
+        </div>
+        
+        <div style="padding: 15px; background-color: #fff;">
+          <p style="margin-top: 0; color: #555;">An error occurred in the AI Trading Agent on <strong>${formattedDate}</strong>:</p>
+          
+          <div style="background-color: #f8f8f8; border-left: 4px solid #f44336; padding: 12px; margin: 15px 0; font-family: monospace; white-space: pre-wrap; overflow-wrap: break-word;">
+            ${errorMessage}
+          </div>
+          
+          <p style="color: #555;">Please check the script logs for more details and take appropriate action.</p>
+        </div>
+        
+        <div style="background-color: #f5f5f5; padding: 10px 15px; border-top: 1px solid #eee; font-size: 12px; color: #777; border-radius: 0 0 4px 4px;">
+          <p style="margin: 0;">This is an automated message from the AI Trading Agent.</p>
+        </div>
+      </div>
+    `;
+    
+    // Create plain text body as fallback
+    const plainTextBody = 
+      `AI Trading Agent Error\n` +
+      `====================\n\n` +
+      `An error occurred in the AI Trading Agent on ${formattedDate}:\n\n` +
+      `${errorMessage}\n\n` +
+      `Please check the script logs for more details and take appropriate action.\n\n` +
+      `This is an automated message from the AI Trading Agent.`;
+    
+    // Send the email
+    GmailApp.sendEmail(
+      recipientEmail,
+      `🚨 ${subject}`,
+      plainTextBody,
+      {
+        htmlBody: htmlBody,
+        name: "AI Trading Agent"
+      }
+    );
+    
+    Logger.log(`Error email sent to ${recipientEmail}`);
+    
+    return {
+      success: true,
+      recipient: recipientEmail,
+      subject: subject
+    };
+  } catch (error) {
+    Logger.log(`Failed to send error email: ${error}`);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+// Helper function to format individual stock cards
+function formatStockCard(stock) {
+  if (!stock) return '';
+  
+  // Determine price change styling
+  let priceChangeClass = 'price-neutral';
+  let priceChangeSymbol = '';
+  
+  if (stock.priceChange) {
+    if (parseFloat(stock.priceChange) > 0) {
+      priceChangeClass = 'price-up';
+      priceChangeSymbol = '+';
+    } else if (parseFloat(stock.priceChange) < 0) {
+      priceChangeClass = 'price-down';
+      priceChangeSymbol = '';  // Negative sign is already in the number
+    }
+  }
+  
+  // Format price display
+  let priceDisplay = stock.price || 'N/A';
+  let changeDisplay = '';
+  
+  if (stock.priceChange && stock.percentChange) {
+    changeDisplay = `${priceChangeSymbol}${stock.priceChange} (${priceChangeSymbol}${stock.percentChange}%)`;
+  } else if (stock.priceChange) {
+    changeDisplay = `${priceChangeSymbol}${stock.priceChange}`;
+  } else if (stock.percentChange) {
+    changeDisplay = `${priceChangeSymbol}${stock.percentChange}%`;
+  }
+  
+  // Build metrics rows
+  let metricsHtml = '';
+  
+  // PE Ratio
+  if (stock.peRatio) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">P/E Ratio</div>
+      <div class="metric-value">${stock.peRatio}</div>
+    </div>`;
+  }
+  
+  // EPS
+  if (stock.eps) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">EPS</div>
+      <div class="metric-value">${stock.eps}</div>
+    </div>`;
+  }
+  
+  // Dividend Yield
+  if (stock.dividendYield) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Dividend Yield</div>
+      <div class="metric-value">${stock.dividendYield}%</div>
+    </div>`;
+  }
+  
+  // Market Cap
+  if (stock.marketCap) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Market Cap</div>
+      <div class="metric-value">${stock.marketCap}</div>
+    </div>`;
+  }
+  
+  // 52 Week Range
+  if (stock.fiftyTwoWeekRange) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">52 Week Range</div>
+      <div class="metric-value">${stock.fiftyTwoWeekRange}</div>
+    </div>`;
+  }
+  
+  // Volume
+  if (stock.volume) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Volume</div>
+      <div class="metric-value">${stock.volume}</div>
+    </div>`;
+  }
+  
+  // Beta
+  if (stock.beta) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Beta</div>
+      <div class="metric-value">${stock.beta}</div>
+    </div>`;
+  }
+  
+  // Add recommendation if available
+  let recommendationHtml = '';
+  if (stock.recommendation) {
+    let recColor = '#757575'; // Default gray
+    
+    // Set color based on recommendation
+    if (stock.recommendation.toLowerCase().includes('buy') || 
+        stock.recommendation.toLowerCase().includes('strong buy')) {
+      recColor = '#4caf50'; // Green for buy
+    } else if (stock.recommendation.toLowerCase().includes('sell') || 
+               stock.recommendation.toLowerCase().includes('strong sell')) {
+      recColor = '#f44336'; // Red for sell
+    } else if (stock.recommendation.toLowerCase().includes('hold') || 
+               stock.recommendation.toLowerCase().includes('neutral')) {
+      recColor = '#ff9800'; // Orange for hold
+    }
+    
+    recommendationHtml = `
+    <div style="margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; text-align: center;">
+      <span style="font-weight: 500; color: #616161;">Recommendation:</span>
+      <span style="font-weight: 600; color: ${recColor}; margin-left: 5px;">${stock.recommendation}</span>
+    </div>`;
+  }
+  
+  // Add analysis/comment if available
+  let analysisHtml = '';
+  if (stock.analysis || stock.comment) {
+    analysisHtml = `
+    <div style="margin-top: 10px; padding: 8px; background-color: #f5f5f5; border-radius: 4px; border-left: 3px solid #3498db;">
+      <p style="margin: 0; font-size: 13px; color: #555; font-style: italic;">${stock.analysis || stock.comment}</p>
+    </div>`;
+  }
+  
+  // Return the formatted card
+  return `
+  <div class="stock-card">
+    <div class="stock-header">
+      <h3 class="stock-name">${stock.name || stock.symbol}</h3>
+      <div class="stock-ticker">${stock.symbol}</div>
+    </div>
+    <div class="stock-price">
+      <div class="price-value">${priceDisplay}</div>
+      <div class="price-change ${priceChangeClass}">${changeDisplay}</div>
+    </div>
+    <div class="stock-metrics">
+      ${metricsHtml}
+      ${recommendationHtml}
+      ${analysisHtml}
+    </div>
+  </div>`;
+}
+
+/**
+ * Formats a metric card for the fundamental metrics section
+ * 
+ * @param {Object} metric - The metric object containing stock/ETF data
+ * @return {String} HTML for the formatted metric card
+ */
+function formatMetricCard(metric) {
+  // Use the formatStockCard function which already has the correct implementation
+  return formatStockCard(metric);
+}
+
+/**
+ * Sends an email with the trading analysis results
+ * 
+ * @param {string} subject - The email subject
+ * @param {string} htmlBody - The HTML body of the email
+ * @param {string} plainTextBody - The plain text body of the email
+ * @param {boolean} isTest - Whether this is a test email
+ * @return {Object} - The result of the email sending operation
+ */
+function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
+  try {
+    Logger.log(`Sending email: ${subject} (Test: ${isTest})`);
+    
+    // Get the recipient email from script properties or use a default
+    const scriptProperties = PropertiesService.getScriptProperties();
+    let recipientEmail;
+    
+    if (isTest) {
+      // For test emails, always send to the active user
+      recipientEmail = Session.getActiveUser().getEmail();
+      Logger.log(`Test email will be sent to active user: ${recipientEmail}`);
+    } else {
+      // For production emails, use the configured recipient
+      recipientEmail = scriptProperties.getProperty('EMAIL_RECIPIENT');
+      
+      // If no recipient is configured, fall back to the active user
+      if (!recipientEmail) {
+        recipientEmail = Session.getActiveUser().getEmail();
+        Logger.log(`No recipient configured, falling back to active user: ${recipientEmail}`);
+      }
+    }
+    
+    // Send the email
+    GmailApp.sendEmail(
+      recipientEmail,
+      subject,
+      plainTextBody,
+      {
+        htmlBody: htmlBody,
+        name: "AI Trading Agent"
+      }
+    );
+    
+    Logger.log(`Email sent to ${recipientEmail}`);
+    
+    return {
+      success: true,
+      recipient: recipientEmail,
+      subject: subject,
+      isTest: isTest
+    };
+  } catch (error) {
+    Logger.log(`Failed to send email: ${error}`);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Generates a complete HTML email from a trading analysis JSON object
+ * This function can be used for testing without making OpenAI API calls
+ * 
+ * @param {Object} analysisJson - The trading analysis JSON object
+ * @param {Date} nextScheduledTime - The next scheduled analysis time
+ * @param {Boolean} isTest - Whether this is a test email
+ * @return {String} Complete HTML email as a string
+ */
+function generateHtmlFromAnalysisJson(analysisJson, nextScheduledTime, isTest = false) {
+  // Simply pass the JSON to the existing template generator
+  return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
+}
+
+/**
+ * Generates the HTML template for the trading analysis email
+ * @param {Object} analysisResult - The analysis result from OpenAI
+ * @param {Date} nextScheduledTime - The next scheduled analysis time
+ * @param {Boolean} isTest - Whether this is a test email
+ * @return {String} HTML template as a string
+ */
+function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false) {
+  try {
+    // Format the current date and time
+    const now = new Date();
+    const options = { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric', 
+      hour: 'numeric', 
+      minute: '2-digit',
+      timeZoneName: 'short'
+    };
+    const formattedDate = now.toLocaleDateString('en-US', options);
+    
+    // Format the next scheduled time
+    const nextScheduledFormatted = nextScheduledTime.toLocaleDateString('en-US', options);
+    
+    // Get the decision icon based on the decision
+    let decisionIcon = "⚠️"; // Default (Watch)
+    let decisionColor = "#FFA500"; // Default (Orange for Watch)
+    let decisionBgColor = "#FFF8E1"; // Default (Light yellow for Watch)
+    
+    // Normalize the decision for comparison (uppercase and trim)
+    const normalizedDecision = analysisResult.decision.toUpperCase().trim();
+    
+    if (normalizedDecision.includes("BUY")) {
+      decisionIcon = "🟢"; // Green circle
+      decisionColor = "#4CAF50"; // Green
+      decisionBgColor = "#E8F5E9"; // Light green
+    } else if (normalizedDecision.includes("SELL")) {
+      decisionIcon = "🔴"; // Red circle
+      decisionColor = "#F44336"; // Red
+      decisionBgColor = "#FFEBEE"; // Light red
+    } else if (normalizedDecision.includes("WATCH") || normalizedDecision.includes("HOLD") || normalizedDecision.includes("WAIT")) {
+      decisionIcon = "⚠️"; // Warning
+      decisionColor = "#FFA500"; // Orange
+      decisionBgColor = "#FFF8E1"; // Light yellow
+    }
+    
+    // Get the CSS
+    const css = getEmailTemplateCSS();
+    
+    // Build the HTML template
+    let html = `<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Market Pulse Daily${isTest ? ' (TEST)' : ''}</title>
+    <link rel="icon" href="favicon.ico" type="image/x-icon">
+    <style>${css}</style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- Header -->
+      <div class="header">
+        <h1>Market Pulse Daily${isTest ? ' (TEST)' : ''}</h1>
+        <p>Generated on ${formattedDate}</p>
+      </div>
+      
+      <!-- Decision Box -->
+      <div class="decision-box" style="background-color: ${decisionBgColor}; border-left: 5px solid ${decisionColor};">
+        <div class="decision">
+          <span style="margin-right: 10px;">⚠️</span>${analysisResult.decision}
+        </div>
+        <p class="summary">${analysisResult.summary}</p>
+      </div>`;
+    
+    // Add Justification section
+    html += `
+      <div class="section">
+        <h2 class="section-title">Detailed Justification</h2>
+        <div style="padding: 15px; background-color: #f9f9f9; border-left: 4px solid #1a365d;">
+          <p style="margin: 0; line-height: 1.5; font-size: 14px;">${analysisResult.justification || 'No justification available'}</p>
+        </div>
+        <div style="margin-top: 15px; font-size: 12px; color: #777777; text-align: right;">
+          Source: <a href="${analysisResult.sourceUrl || "#"}" style="color: #3498db; text-decoration: none;">${analysisResult.source || "Analysis"}</a> | Last Updated: ${analysisResult.timestamp || 'N/A'}
+        </div>
+      </div>`;
+    
+    // Add Market Sentiment section if available
+    if (analysisResult.analysis && (analysisResult.analysis.sentiment || analysisResult.analysis.marketSentiment)) {
+      const marketSentiment = analysisResult.analysis.sentiment || analysisResult.analysis.marketSentiment || {};
+      
+      // Determine sentiment color
+      let sentimentColor = '#757575'; // Default gray
+      const sentimentLower = (marketSentiment.overall || '').toLowerCase();
+      if (sentimentLower.includes('bullish') || sentimentLower.includes('positive')) {
+        sentimentColor = '#4caf50'; // Green
+      } else if (sentimentLower.includes('bearish') || sentimentLower.includes('negative')) {
+        sentimentColor = '#f44336'; // Red
+      } else if (sentimentLower.includes('neutral')) {
+        sentimentColor = '#ff9800'; // Orange/Amber
+      }
+      
+      html += `
+      <div class="section">
+        <h2 class="section-title">Market Sentiment</h2>
+        
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+          <div style="width: 120px; height: 120px; border-radius: 50%; background-color: #f5f7fa; display: flex; align-items: center; justify-content: center; border: 3px solid ${sentimentColor};">
+            <div style="text-align: center;">
+              <div style="font-size: 18px; font-weight: bold; color: ${sentimentColor};">${marketSentiment.overall || 'N/A'}</div>
+            </div>
+          </div>
+        </div>`;
+    }
+    
+    // Add Key Market Indicators section if available
+    if (analysisResult.analysis && analysisResult.analysis.keyMarketIndicators) {
+      const keyMarketIndicators = analysisResult.analysis.keyMarketIndicators || {};
+      
+      html += `
+      <div class="section">
+        <h2 class="section-title">Key Market Indicators</h2>
+        
+        <!-- Fear & Greed Index -->
+        <div style="margin-bottom: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+          <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px; color: #333;">Fear & Greed Index: <span style="color: #e74c3c; font-weight: bold;">${keyMarketIndicators.fearAndGreedIndex ? keyMarketIndicators.fearAndGreedIndex.currentValue : 'Data unavailable'}</span></h3>
+          
+          <!-- Fear & Greed Meter -->
+          <div style="position: relative; height: 30px; background: linear-gradient(to right, #e74c3c, #f39c12, #3498db, #2ecc71); border-radius: 15px; margin-bottom: 15px;">
+            <!-- Indicator Dot - Position based on value (0-100) -->
+            ${keyMarketIndicators.fearAndGreedIndex && keyMarketIndicators.fearAndGreedIndex.currentValue ? 
+              `<div style="position: absolute; top: -5px; left: ${keyMarketIndicators.fearAndGreedIndex.currentValue}%; transform: translateX(-50%); width: 20px; height: 20px; background-color: #333; border-radius: 50%;"></div>` : ''}
+          </div>
+          
+          <!-- Fear & Greed Labels -->
+          <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            <div style="font-weight: 500; color: #555;">Extreme Fear</div>
+            <div style="font-weight: 500; color: #555;">Fear</div>
+            <div style="font-weight: 500; color: #555;">Neutral</div>
+            <div style="font-weight: 500; color: #555;">Greed</div>
+            <div style="font-weight: 500; color: #555;">Extreme Greed</div>
+          </div>
+          
+          <!-- Fear & Greed Analysis -->
+          <div style="padding: 15px; background-color: #f5f5f5; border-left: 4px solid #e74c3c; margin-bottom: 15px;">
+            <p style="margin: 0; font-size: 14px; color: #555;">
+              ${keyMarketIndicators.fearAndGreedIndex && keyMarketIndicators.fearAndGreedIndex.rating ? 
+                `${keyMarketIndicators.fearAndGreedIndex.rating}: Market sentiment is currently ${keyMarketIndicators.fearAndGreedIndex.rating.toLowerCase()}.` : 
+                'Data unavailable'}
+            </p>
+          </div>
+          
+          <!-- Source Attribution -->
+          <div style="font-size: 12px; color: #777; text-align: right;">
+            Source: CNN | Last updated: ${keyMarketIndicators.fearAndGreedIndex && keyMarketIndicators.fearAndGreedIndex.timestamp ? 
+              new Date(keyMarketIndicators.fearAndGreedIndex.timestamp).toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+              }) : 'N/A'}
+          </div>
+        </div>
+        
+        <!-- VIX -->
+        <div style="margin-bottom: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+          <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 18px; color: #333;">
+            VIX: ${keyMarketIndicators.vix ? keyMarketIndicators.vix.value : 'Data unavailable'}
+            ${keyMarketIndicators.vix && keyMarketIndicators.vix.trend ? 
+              `<span style="display: inline-block; padding: 4px 8px; background-color: ${keyMarketIndicators.vix.trend.toLowerCase() === 'falling' ? '#4caf50' : '#f44336'}; color: white; border-radius: 4px; font-size: 14px; margin-left: 10px;">
+                ${keyMarketIndicators.vix.trend}
+              </span>` : ''}
+          </h3>
+          
+          <!-- VIX Analysis -->
+          <div style="padding: 15px; background-color: #f5f5f5; border-left: 4px solid #4caf50; margin-bottom: 15px;">
+            <p style="margin: 0; font-size: 14px; color: #555;">
+              ${keyMarketIndicators.vix && keyMarketIndicators.vix.analysis ? keyMarketIndicators.vix.analysis : 'No analysis available.'}
+            </p>
+          </div>
+          
+          <!-- Source Attribution -->
+          <div style="font-size: 12px; color: #777; text-align: right;">
+            Source: CBOE | Last updated: ${keyMarketIndicators.vix && keyMarketIndicators.vix.timestamp ? 
+              new Date(keyMarketIndicators.vix.timestamp).toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+              }) : 'N/A'}
+          </div>
+        </div>
+        
+        <!-- Upcoming Economic Events -->
+        <div style="padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+          <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #333;">Upcoming Events</h3>
+          
+          ${keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0 ? 
+            keyMarketIndicators.upcomingEconomicEvents.map(event => `
+              <div style="margin-bottom: 15px;">
+                <span style="display: inline-block; color: #3498db; font-weight: bold; margin-right: 10px;">${event.date || 'N/A'}</span>
+                <span style="font-weight: 500;">${event.name || 'Economic Event'}</span>
+              </div>
+            `).join('') : 
+            '<p>No upcoming economic events found.</p>'}
+          
+          <!-- Source Attribution -->
+          <div style="font-size: 12px; color: #777; text-align: right; margin-top: 15px;">
+            Source: Federal Reserve | Last updated: ${keyMarketIndicators.timestamp ? 
+              new Date(keyMarketIndicators.timestamp).toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+              }) : 'N/A'}
+          </div>
+        </div>
+      </div>`;
+    }
+    
+    // Add Fundamental Metrics section if available
+    if (analysisResult.analysis && analysisResult.analysis.fundamentalMetrics) {
+      const fundamentalMetrics = analysisResult.analysis.fundamentalMetrics || {};
+      const metrics = fundamentalMetrics.metrics || [];
+      
+      html += `
+      <div class="section">
+        <h2 class="section-title">Fundamental Metrics</h2>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          ${metrics.map((metric, index) => `
+            <div style="background-color: #f9f9f9; border-radius: 8px; overflow: hidden;">
+              <div style="padding: 15px; background-color: #f5f7fa; border-bottom: 1px solid #eaecef;">
+                <span style="font-weight: bold; color: #333; font-size: 16px;">${metric.symbol}</span>
+                <span style="color: #7f8c8d; font-size: 14px; margin-left: 10px;">${metric.name || ''}</span>
+              </div>
+              
+              <div style="padding: 15px;">
+                <div style="font-size: 20px; font-weight: bold; color: #2c3e50; margin-bottom: 5px;">
+                  ${metric.price ? `$${metric.price}` : '$---'} 
+                  ${metric.priceChange && metric.percentChange ? 
+                    `<span style="color: ${parseFloat(metric.priceChange) > 0 ? '#4caf50' : parseFloat(metric.priceChange) < 0 ? '#f44336' : '#757575'}; font-size: 16px;">
+                      ${parseFloat(metric.priceChange) > 0 ? '↑' : parseFloat(metric.priceChange) < 0 ? '↓' : ''} 
+                      ${parseFloat(metric.priceChange) > 0 ? '+' : ''}${metric.priceChange} (${parseFloat(metric.percentChange) > 0 ? '+' : ''}${metric.percentChange}%)
+                    </span>` : 
+                    '<span style="color: #757575; font-size: 16px;">↔ +/-0.00 (0.00%)</span>'}
+                </div>
+                
+                <div style="margin-top: 15px;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #7f8c8d; font-size: 14px;">Market Cap</span>
+                    <span style="font-weight: 500;">${metric.marketCap || 'N/A'}</span>
+                  </div>
+                  
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                    <span style="color: #7f8c8d; font-size: 14px;">P/E Ratio</span>
+                    <span style="font-weight: 500;">${metric.peRatio || 'N/A'}</span>
+                  </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 10px; background-color: #f5f5f5; border-left: 3px solid #3498db; font-style: italic; font-size: 13px; color: #555;">
+                  ${metric.analysis || metric.comment || `${metric.symbol} metrics ${metric.marketCap === 'N/A' ? 'do not provide a clear direction' : 'indicate a neutral stance'}, suggesting a wait-and-see approach.`}
+                </div>
+                
+                <div style="font-size: 12px; color: #777; text-align: right; margin-top: 10px;">
+                  Last updated: ${metric.timestamp ? 
+                    new Date(metric.timestamp).toLocaleString('en-US', {
+                      year: 'numeric', month: '2-digit', day: '2-digit',
+                      hour: '2-digit', minute: '2-digit', second: '2-digit'
+                    }) : 'N/A'}
+                </div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+    }
+    
+    // Add Macroeconomic Factors section if available
+    if (analysisResult.analysis && analysisResult.analysis.macroeconomicFactors) {
+      const macroeconomicFactors = analysisResult.analysis.macroeconomicFactors || {};
+      
+      html += `
+      <div class="section">
+        <h2 class="section-title">Macroeconomic Factors</h2>
+        
+        <!-- Treasury Yields -->
+        <div style="margin-bottom: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+          <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #333;">Treasury Yields</h3>
+          
+          <div style="display: flex; justify-content: space-between; margin-bottom: 20px;">
+            ${macroeconomicFactors.treasuryYields ? `
+              <div style="text-align: center; border-left: 3px solid #4caf50; padding-left: 15px;">
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">3-Month</div>
+                <div style="font-size: 20px; font-weight: bold; color: #4caf50;">${macroeconomicFactors.treasuryYields.threeMonth || 'N/A'}</div>
+              </div>
+              
+              <div style="text-align: center; border-left: 3px solid #4caf50; padding-left: 15px;">
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">2-Year</div>
+                <div style="font-size: 20px; font-weight: bold; color: #4caf50;">${macroeconomicFactors.treasuryYields.twoYear || 'N/A'}</div>
+              </div>
+              
+              <div style="text-align: center; border-left: 3px solid #4caf50; padding-left: 15px;">
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">5-Year</div>
+                <div style="font-size: 20px; font-weight: bold; color: #4caf50;">${macroeconomicFactors.treasuryYields.fiveYear || 'N/A'}</div>
+              </div>
+              
+              <div style="text-align: center; border-left: 3px solid #4caf50; padding-left: 15px;">
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">10-Year</div>
+                <div style="font-size: 20px; font-weight: bold; color: #4caf50;">${macroeconomicFactors.treasuryYields.tenYear || 'N/A'}</div>
+              </div>
+              
+              <div style="text-align: center; border-left: 3px solid #4caf50; padding-left: 15px;">
+                <div style="font-size: 14px; color: #7f8c8d; margin-bottom: 5px;">30-Year</div>
+                <div style="font-size: 20px; font-weight: bold; color: #4caf50;">${macroeconomicFactors.treasuryYields.thirtyYear || 'N/A'}</div>
+              </div>
+            ` : '<p>Treasury yield data unavailable</p>'}
+          </div>
+          
+          <div style="margin-top: 15px; padding: 0 0 0 15px; border-left: 4px solid #f39c12;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; color: #f39c12; font-size: 16px;">Yield Curve: ${macroeconomicFactors.treasuryYields && macroeconomicFactors.treasuryYields.yieldCurveStatus ? macroeconomicFactors.treasuryYields.yieldCurveStatus : 'N/A'}</h4>
+            <p style="margin: 0; font-size: 14px; color: #555; line-height: 1.5;">
+              ${macroeconomicFactors.treasuryYields && macroeconomicFactors.treasuryYields.yieldCurveAnalysis ? macroeconomicFactors.treasuryYields.yieldCurveAnalysis : 'No yield curve analysis available.'}
+            </p>
+          </div>
+          
+          <div style="font-size: 12px; color: #777; text-align: right; margin-top: 15px;">
+            Source: Federal Reserve Economic Data (FRED) | Last updated: ${macroeconomicFactors.treasuryYields && macroeconomicFactors.treasuryYields.timestamp ? 
+              new Date(macroeconomicFactors.treasuryYields.timestamp).toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+              }) : 'N/A'}
+          </div>
+        </div>
+        
+        <!-- Inflation Metrics -->
+        <div style="margin-bottom: 30px; padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+          <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #333;">Inflation Metrics</h3>
+          
+          <div style="display: flex; justify-content: space-between; gap: 20px; margin-bottom: 20px;">
+            <!-- CPI Card -->
+            <div style="flex: 1; background-color: #e3f2fd; border-radius: 8px; padding: 15px; text-align: center;">
+              <h4 style="margin-top: 0; margin-bottom: 15px; color: #1976d2; font-size: 18px; text-align: center;">CPI</h4>
+              <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+                <div>
+                  <div style="font-size: 14px; color: #7f8c8d;">Headline</div>
+                  <div style="font-size: 20px; font-weight: bold; color: #333;">
+                    ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.cpi && macroeconomicFactors.inflation.cpi.headline ? 
+                      `${macroeconomicFactors.inflation.cpi.headline}%` : 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 14px; color: #7f8c8d;">Core</div>
+                  <div style="font-size: 20px; font-weight: bold; color: #333;">
+                    ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.cpi && macroeconomicFactors.inflation.cpi.core ? 
+                      `${macroeconomicFactors.inflation.cpi.core}%` : 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- PCE Card -->
+            <div style="flex: 1; background-color: #fff3e0; border-radius: 8px; padding: 15px; text-align: center;">
+              <h4 style="margin-top: 0; margin-bottom: 15px; color: #e65100; font-size: 18px; text-align: center;">PCE</h4>
+              <div style="display: flex; justify-content: space-around; margin-bottom: 10px;">
+                <div>
+                  <div style="font-size: 14px; color: #7f8c8d;">Headline</div>
+                  <div style="font-size: 20px; font-weight: bold; color: #333;">
+                    ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.pce && macroeconomicFactors.inflation.pce.headline ? 
+                      `${macroeconomicFactors.inflation.pce.headline}%` : 'N/A'}
+                  </div>
+                </div>
+                <div>
+                  <div style="font-size: 14px; color: #7f8c8d;">Core</div>
+                  <div style="font-size: 20px; font-weight: bold; color: #333;">
+                    ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.pce && macroeconomicFactors.inflation.pce.core ? 
+                      `${macroeconomicFactors.inflation.pce.core}%` : 'N/A'}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 20px; margin-top: 20px;">
+            <!-- Inflation Trend Analysis -->
+            <div style="flex: 1; background-color: #e8f5e9; border-radius: 8px; padding: 15px;">
+              <h4 style="margin-top: 0; margin-bottom: 10px; color: #4caf50; font-size: 16px;">Inflation Trend Analysis</h4>
+              <div style="font-weight: bold; font-size: 18px; margin-bottom: 10px;">
+                ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.trend ? macroeconomicFactors.inflation.trend : 'N/A'}
+              </div>
+            </div>
+            
+            <!-- Outlook -->
+            <div style="flex: 1; background-color: #f5f5f5; border-radius: 8px; padding: 15px;">
+              <h4 style="margin-top: 0; margin-bottom: 10px; color: #333; font-size: 16px;">Outlook</h4>
+              <p style="margin: 0; font-size: 14px; line-height: 1.5;">
+                ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.outlook ? macroeconomicFactors.inflation.outlook : 'No outlook available.'}
+              </p>
+            </div>
+            
+            <!-- Market Impact -->
+            <div style="flex: 1; background-color: #f5f5f5; border-radius: 8px; padding: 15px;">
+              <h4 style="margin-top: 0; margin-bottom: 10px; color: #333; font-size: 16px;">Market Impact</h4>
+              <p style="margin: 0; font-size: 14px; line-height: 1.5;">
+                ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.marketImpact ? macroeconomicFactors.inflation.marketImpact : 'No market impact analysis available.'}
+              </p>
+            </div>
+          </div>
+          
+          <div style="font-size: 12px; color: #777; text-align: right; margin-top: 15px;">
+            Source: Bureau of Labor Statistics, Federal Reserve | Last updated: ${macroeconomicFactors.inflation && macroeconomicFactors.inflation.timestamp ? 
+              new Date(macroeconomicFactors.inflation.timestamp).toLocaleString('en-US', {
+                year: 'numeric', month: '2-digit', day: '2-digit',
+                hour: '2-digit', minute: '2-digit', second: '2-digit'
+              }) : 'N/A'}
+          </div>
+        </div>
+        
+        <!-- Geopolitical Risks -->
+        <div style="padding: 20px; background-color: #f9f9f9; border-radius: 8px;">
+          <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 18px; color: #333;">Geopolitical Risks</h3>
+          
+          <!-- Global Overview -->
+          <div style="padding: 15px; background-color: #fff8e1; border-left: 4px solid #ffa000; margin-bottom: 20px;">
+            <h4 style="margin-top: 0; margin-bottom: 10px; color: #ffa000; font-size: 16px;">Global Overview</h4>
+            <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #555;">
+              ${macroeconomicFactors.geopoliticalRisks && macroeconomicFactors.geopoliticalRisks.globalOverview ? 
+                macroeconomicFactors.geopoliticalRisks.globalOverview : 'No global overview available.'}
+            </p>
+          </div>
+          
+          <!-- Regional Risks -->
+          <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 16px; color: #333;">Regional Risks</h4>
+          
+          ${macroeconomicFactors.geopoliticalRisks && macroeconomicFactors.geopoliticalRisks.regionalRisks ? 
+            macroeconomicFactors.geopoliticalRisks.regionalRisks.map(risk => `
+              <div style="margin-bottom: 15px; padding: 15px; background-color: #f5f5f5; border-radius: 8px;">
+                <div style="font-weight: 500; margin-bottom: 10px; color: #333; font-size: 15px;">${risk.region}</div>
+                
+                ${risk.risks && Array.isArray(risk.risks) && risk.risks.length > 0 ? 
+                  risk.risks.map(riskItem => `
+                    <div style="margin-bottom: 10px; padding-bottom: 10px; border-bottom: 1px solid #f0f0f0;">
+                      <div style="display: flex; align-items: flex-start; gap: 10px;">
+                        <div style="color: ${
+                          riskItem.impactLevel && riskItem.impactLevel.toLowerCase() === 'high' ? '#f44336' : 
+                          riskItem.impactLevel && riskItem.impactLevel.toLowerCase() === 'medium' ? '#ff9800' : 
+                          riskItem.impactLevel && riskItem.impactLevel.toLowerCase() === 'low' ? '#4caf50' : '#757575'
+                        }; font-size: 16px; line-height: 1;">${riskItem.impactLevel && riskItem.impactLevel.toLowerCase() === 'high' ? '🔴' : 
+                          riskItem.impactLevel && riskItem.impactLevel.toLowerCase() === 'medium' ? '🟠' : 
+                          riskItem.impactLevel && riskItem.impactLevel.toLowerCase() === 'low' ? '🟢' : '⚪'}</div>
+                        <div style="flex-grow: 1;">
+                          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                            <div style="font-weight: 500; color: #333; margin-bottom: 3px;">${riskItem.impactLevel ? riskItem.impactLevel : 'Impact'}: ${riskItem.description}</div>
+                          </div>
+                          ${riskItem.source || riskItem.lastUpdated ? 
+                            `<div style="font-size: 11px; color: #78909c; margin-top: 5px;">
+                              Source: ${riskItem.source || 'N/A'}${riskItem.lastUpdated ? ' | Last updated: ' + riskItem.lastUpdated : ''}
+                            </div>` : ''}
+                        </div>
+                      </div>
+                    </div>
+                  `).join('') : 
+                  '<p>No specific risks identified</p>'}
+              </div>
+            `).join('') : 
+            '<p>No regional risk data available.</p>'}
+        </div>
+      </div>`;
+    }
+    
+    // Add Footer section
+    html += `
+    <div class="footer">
+      <p>Market Pulse Daily - Professional Trading Insights</p>
+      <p>&copy; ${new Date().getFullYear()} Market Pulse Daily. All rights reserved.</p>
+      <p>Delivering data-driven market analysis to help you make informed trading decisions.</p>
+    </div>`;
+    
+    // Close container
+    html += `</div>
+  </body>
+</html>`;
+    
+    return html;
+  } catch (error) {
+    Logger.log(`Error generating email template: ${error}`);
+    return '';
+  }
+}
+
+/**
+ * Formats a stock card for the email template
+ */
+function formatStockCard(stock) {
+  // Determine price change styling
+  let priceChangeClass = 'price-neutral';
+  let priceChangeSymbol = '';
+  
+  if (stock.priceChange) {
+    if (parseFloat(stock.priceChange) > 0) {
+      priceChangeClass = 'price-up';
+      priceChangeSymbol = '+';
+    } else if (parseFloat(stock.priceChange) < 0) {
+      priceChangeClass = 'price-down';
+      priceChangeSymbol = '';  // Negative sign is already in the number
+    }
+  }
+  
+  // Format price display
+  let priceDisplay = stock.price || 'N/A';
+  let changeDisplay = '';
+  
+  if (stock.priceChange && stock.percentChange) {
+    changeDisplay = `${priceChangeSymbol}${stock.priceChange} (${priceChangeSymbol}${stock.percentChange}%)`;
+  } else if (stock.priceChange) {
+    changeDisplay = `${priceChangeSymbol}${stock.priceChange}`;
+  } else if (stock.percentChange) {
+    changeDisplay = `${priceChangeSymbol}${stock.percentChange}%`;
+  }
+  
+  // Build metrics rows
+  let metricsHtml = '';
+  
+  // PE Ratio
+  if (stock.peRatio) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">P/E Ratio</div>
+      <div class="metric-value">${stock.peRatio}</div>
+    </div>`;
+  }
+  
+  // EPS
+  if (stock.eps) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">EPS</div>
+      <div class="metric-value">${stock.eps}</div>
+    </div>`;
+  }
+  
+  // Dividend Yield
+  if (stock.dividendYield) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Dividend Yield</div>
+      <div class="metric-value">${stock.dividendYield}%</div>
+    </div>`;
+  }
+  
+  // Market Cap
+  if (stock.marketCap) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Market Cap</div>
+      <div class="metric-value">${stock.marketCap}</div>
+    </div>`;
+  }
+  
+  // 52 Week Range
+  if (stock.fiftyTwoWeekRange) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">52 Week Range</div>
+      <div class="metric-value">${stock.fiftyTwoWeekRange}</div>
+    </div>`;
+  }
+  
+  // Volume
+  if (stock.volume) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Volume</div>
+      <div class="metric-value">${stock.volume}</div>
+    </div>`;
+  }
+  
+  // Beta
+  if (stock.beta) {
+    metricsHtml += `
+    <div class="metric-row">
+      <div class="metric-label">Beta</div>
+      <div class="metric-value">${stock.beta}</div>
+    </div>`;
+  }
+  
+  // Add recommendation if available
+  let recommendationHtml = '';
+  if (stock.recommendation) {
+    let recColor = '#757575'; // Default gray
+    
+    // Set color based on recommendation
+    if (stock.recommendation.toLowerCase().includes('buy') || 
+        stock.recommendation.toLowerCase().includes('strong buy')) {
+      recColor = '#4caf50'; // Green for buy
+    } else if (stock.recommendation.toLowerCase().includes('sell') || 
+               stock.recommendation.toLowerCase().includes('strong sell')) {
+      recColor = '#f44336'; // Red for sell
+    } else if (stock.recommendation.toLowerCase().includes('hold') || 
+               stock.recommendation.toLowerCase().includes('neutral')) {
+      recColor = '#ff9800'; // Orange for hold
+    }
+    
+    recommendationHtml = `
+    <div style="margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; text-align: center;">
+      <span style="font-weight: 500; color: #616161;">Recommendation:</span>
+      <span style="font-weight: 600; color: ${recColor}; margin-left: 5px;">${stock.recommendation}</span>
+    </div>`;
+  }
+  
+  // Add analysis/comment if available
+  let analysisHtml = '';
+  if (stock.analysis || stock.comment) {
+    analysisHtml = `
+    <div style="margin-top: 10px; padding: 8px; background-color: #f5f5f5; border-radius: 4px; border-left: 3px solid #3498db;">
+      <p style="margin: 0; font-size: 13px; color: #555; font-style: italic;">${stock.analysis || stock.comment}</p>
+    </div>`;
+  }
+  
+  // Return the formatted card
+  return `
+  <div class="stock-card">
+    <div class="stock-header">
+      <h3 class="stock-name">${stock.name || stock.symbol}</h3>
+      <div class="stock-ticker">${stock.symbol}</div>
+    </div>
+    <div class="stock-price">
+      <div class="price-value">${priceDisplay}</div>
+      <div class="price-change ${priceChangeClass}">${changeDisplay}</div>
+    </div>
+    <div class="stock-metrics">
+      ${metricsHtml}
+      ${recommendationHtml}
+      ${analysisHtml}
+    </div>
+  </div>`;
+}
+
+/**
+ * Returns the CSS styles for the email template
+ * @return {String} CSS styles as a string
+ */
+function getEmailTemplateCSS() {
+  return `
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f5f5f5;
+    }
+    .container {
+      max-width: 700px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #eee;
+    }
+    .header-logo {
+      max-width: 150px;
+      margin-bottom: 15px;
+    }
+    .header-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+    .header-subtitle {
+      font-size: 16px;
+      color: #7f8c8d;
+      margin: 5px 0 0;
+    }
+    .header-date {
+      font-size: 14px;
+      color: #95a5a6;
+      margin-top: 10px;
+    }
+    .section {
+      margin-bottom: 30px;
+      padding: 20px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    .section-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: #34495e;
+      margin-top: 0;
+      margin-bottom: 20px;
+      padding-bottom: 10px;
+      border-bottom: 2px solid #3498db;
+    }
+    .summary-box {
+      padding: 15px;
+      background-color: #e3f2fd;
+      border-radius: 6px;
+      margin-bottom: 20px;
+    }
+    .summary-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1976d2;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .summary-content {
+      color: #37474f;
+      margin: 0;
+    }
+    .sentiment-indicator {
+      display: flex;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+    .sentiment-label {
+      min-width: 120px;
+      font-weight: 500;
+      color: #455a64;
+    }
+    .sentiment-bar-container {
+      flex-grow: 1;
+      height: 10px;
+      background-color: #eceff1;
+      border-radius: 5px;
+      overflow: hidden;
+    }
+    .sentiment-bar {
+      height: 100%;
+      border-radius: 5px;
+    }
+    .sentiment-value {
+      min-width: 50px;
+      text-align: right;
+      font-weight: 500;
+      margin-left: 10px;
+    }
+    .sentiment-bullish {
+      color: #4caf50;
+    }
+    .sentiment-bearish {
+      color: #f44336;
+    }
+    .sentiment-neutral {
+      color: #ff9800;
+    }
+    .stock-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      margin-top: 20px;
+    }
+    .stock-card {
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .stock-card:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+      transform: translateY(-2px);
+    }
+    .stock-header {
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-bottom: 1px solid #eaecef;
+    }
+    .stock-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0;
+    }
+    .stock-ticker {
+      font-size: 14px;
+      color: #7f8c8d;
+      margin-top: 3px;
+    }
+    .stock-price {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 15px;
+      background-color: #f1f8e9;
+      border-bottom: 1px solid #e8f5e9;
+    }
+    .price-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: #2c3e50;
+    }
+    .price-change {
+      font-size: 14px;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .price-up {
+      color: #4caf50;
+      background-color: rgba(76, 175, 80, 0.1);
+    }
+    .price-down {
+      color: #f44336;
+      background-color: rgba(244, 67, 54, 0.1);
+    }
+    .price-neutral {
+      color: #757575;
+      background-color: rgba(117, 117, 117, 0.1);
+    }
+    .stock-metrics {
+      padding: 15px;
+    }
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .metric-row:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+    .metric-label {
+      font-size: 14px;
+      color: #7f8c8d;
+    }
+    .metric-value {
+      font-size: 14px;
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    .next-analysis {
+      margin-top: 30px;
+      padding: 15px;
+      background-color: #e8f5e9;
+      border-radius: 6px;
+      text-align: center;
+      font-weight: 500;
+      color: #2e7d32;
+    }
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 13px;
+      color: #95a5a6;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    .footer p {
+      margin: 5px 0;
+    }
+    .footer a {
+      color: #3498db;
+      text-decoration: none;
+    }
+    .footer a:hover {
+      text-decoration: underline;
+    }
+    .disclaimer {
+      margin-top: 15px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 4px;
+      font-size: 12px;
+      color: #7f8c8d;
+      line-height: 1.4;
+    }
+    .highlight {
+      background-color: #fff9c4;
+      padding: 2px 4px;
+      border-radius: 2px;
+    }
+    .note {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #e1f5fe;
+      border-left: 4px solid #03a9f4;
+      color: #01579b;
+    }
+    .warning {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #fff8e1;
+      border-left: 4px solid #ffc107;
+      color: #ff6f00;
+    }
+    .important {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #fce4ec;
+      border-left: 4px solid #e91e63;
+      color: #880e4f;
+    }
+    .info {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #0d47a1;
+    }
+    .tip {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #ede7f6;
+      border-left: 4px solid #673ab7;
+      color: #311b92;
+    }
+    .quote {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #f5f5f5;
+      border-left: 4px solid #9e9e9e;
+      color: #424242;
+      font-style: italic;
+    }
+    .code {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #f1f8e9;
+      border-left: 4px solid #8bc34a;
+      color: #33691e;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .definition {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #e0f7fa;
+      border-left: 4px solid #00bcd4;
+      color: #006064;
+    }
+    .example {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #f3e5f5;
+      border-left: 4px solid #9c27b0;
+      color: #4a148c;
+    }
+    .reference {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #e8eaf6;
+      border-left: 4px solid #3f51b5;
+      color: #1a237e;
+    }
+    .summary {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #e1f5fe;
+      border-left: 4px solid #03a9f4;
+      color: #01579b;
+    }
+    .conclusion {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #e0f2f1;
+      border-left: 4px solid #009688;
+      color: #004d40;
+    }
+    .insight {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #efebe9;
+      border-left: 4px solid #795548;
+      color: #3e2723;
+    }
+    .analysis {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #eceff1;
+      border-left: 4px solid #607d8b;
+      color: #263238;
+    }
+    .recommendation {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #e3f2fd;
+      border-left: 4px solid #2196f3;
+      color: #0d47a1;
+    }
+    .strategy {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #ffebee;
+      border-left: 4px solid #f44336;
+      color: #b71c1c;
+    }
+    .action {
+      padding: 10px 15px;
+      margin: 15px 0;
+      background-color: #fce4ec;
+      border-left: 4px solid #e91e63;
+      color: #880e4f;
+    }
+    .justification {
+      line-height: 1.7;
+      color: #444;
+      white-space: pre-line;
+    }
+    @media only screen and (max-width: 600px) {
+      .container {
+        padding: 15px;
+      }
+      .section {
+        padding: 15px;
+      }
+      .stock-grid {
+        grid-template-columns: 1fr;
+      }
+      .header-title {
+        font-size: 20px;
+      }
+      .header-subtitle {
+        font-size: 14px;
+      }
+      .section-title {
+        font-size: 18px;
+      }
+    }
+  `;
+}
+
+```
+
+```

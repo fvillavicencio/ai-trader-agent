@@ -19,106 +19,105 @@ function retrieveKeyMarketIndicators() {
       
       if (cachedData) {
         Logger.log("Using cached key market indicators data (less than 1 hour old)");
-        return JSON.parse(cachedData);
+        const data = JSON.parse(cachedData);
+        data.fromCache = true;
+        return data;
       }
     } catch (cacheError) {
-      Logger.log("Cache retrieval error: " + cacheError);
+      Logger.log("Cache retrieval error for key market indicators: " + cacheError);
       // Continue execution - we'll get fresh data below
     }
     
-    // Retrieve major indices data
-    const majorIndices = retrieveMajorIndices();
-    
-    // Retrieve sector performance data
-    const sectorPerformance = retrieveSectorPerformance();
-    
-    // Retrieve volatility indices data
-    const volatilityIndices = retrieveVolatilityIndices();
-    
-    // Get treasury yields data from MacroeconomicFactors module
-    let treasuryYields = null;
-    try {
-      // Get treasury yields directly from CacheService
-      const scriptCache = CacheService.getScriptCache();
-      const cachedYields = scriptCache.get('TREASURY_YIELDS_DATA');
-      
-      if (cachedYields) {
-        treasuryYields = JSON.parse(cachedYields);
-        Logger.log("Retrieved treasury yields from cache");
-      }
-    } catch (cacheError) {
-      Logger.log("Cache error for treasury yields: " + cacheError);
-      // Continue execution - we'll get the data from MacroeconomicFactors below
-    }
-    
-    // If not in cache, get it from MacroeconomicFactors
-    if (!treasuryYields) {
-      Logger.log("Getting treasury yields from MacroeconomicFactors");
-      const macroFactors = retrieveMacroeconomicFactors();
-      if (macroFactors && macroFactors.success && macroFactors.treasuryYields) {
-        treasuryYields = macroFactors.treasuryYields;
-      } else {
-        // Throw an error if we couldn't get the data - no fallbacks
-        throw new Error("Failed to retrieve treasury yields data. Fresh data is required.");
-      }
-    }
-    
-    // Retrieve CNN Fear & Greed Index
-    const fearAndGreedIndex = retrieveFearAndGreedIndex();
-    
-    // Retrieve upcoming economic events
-    const upcomingEconomicEvents = retrieveUpcomingEconomicEvents();
-    
-    // Check if we have all the data we need
-    const hasMajorIndices = majorIndices && majorIndices.length > 0;
-    const hasSectorPerformance = sectorPerformance && sectorPerformance.length > 0;
-    const hasVolatilityIndices = volatilityIndices && volatilityIndices.length > 0;
-    const hasTreasuryYields = treasuryYields && treasuryYields.yields && treasuryYields.yields.length > 0;
-    const hasFearAndGreedIndex = fearAndGreedIndex && !fearAndGreedIndex.error;
-    const hasUpcomingEconomicEvents = upcomingEconomicEvents && upcomingEconomicEvents.length > 0;
-    
-    // Format the data for display
-    const formattedData = formatKeyMarketIndicatorsData({
-      majorIndices: majorIndices,
-      sectorPerformance: sectorPerformance,
-      volatilityIndices: volatilityIndices,
-      treasuryYields: treasuryYields,
-      fearAndGreedIndex: fearAndGreedIndex,
-      upcomingEconomicEvents: upcomingEconomicEvents
-    });
-    
-    // Create the result object
-    const result = {
-      success: true,
-      message: "Key market indicators data retrieved successfully",
-      majorIndices: majorIndices,
-      sectorPerformance: sectorPerformance,
-      volatilityIndices: volatilityIndices,
-      treasuryYields: treasuryYields,
-      fearAndGreedIndex: fearAndGreedIndex,
-      upcomingEconomicEvents: upcomingEconomicEvents,
-      formattedData: formattedData,
-      timestamp: new Date().toISOString()
+    // Initialize results object
+    const results = {
+      majorIndices: [],
+      sectorPerformance: [],
+      volatilityIndices: [],
+      treasuryYields: { yields: [] },
+      fearAndGreedIndex: null,
+      upcomingEconomicEvents: [],
+      timestamp: new Date(),
+      fromCache: false
     };
     
-    // Cache the result if caching is available
+    // Get major indices data
+    try {
+      const majorIndicesData = retrieveMajorIndices();
+      if (majorIndicesData && majorIndicesData.length > 0) {
+        results.majorIndices = majorIndicesData;
+      }
+    } catch (error) {
+      Logger.log(`Error retrieving major indices: ${error}`);
+    }
+    
+    // Get sector performance data
+    try {
+      const sectorPerformanceData = retrieveSectorPerformance();
+      if (sectorPerformanceData && sectorPerformanceData.length > 0) {
+        results.sectorPerformance = sectorPerformanceData;
+      }
+    } catch (error) {
+      Logger.log(`Error retrieving sector performance: ${error}`);
+    }
+    
+    // Get volatility indices data
+    try {
+      const volatilityIndicesData = retrieveVolatilityIndices();
+      if (volatilityIndicesData && volatilityIndicesData.length > 0) {
+        results.volatilityIndices = volatilityIndicesData;
+      }
+    } catch (error) {
+      Logger.log(`Error retrieving volatility indices: ${error}`);
+    }
+    
+    // Get treasury yields data
+    try {
+      const treasuryYieldsData = retrieveTreasuryYields();
+      if (treasuryYieldsData && treasuryYieldsData.yields && treasuryYieldsData.yields.length > 0) {
+        results.treasuryYields = treasuryYieldsData;
+      }
+    } catch (error) {
+      Logger.log(`Error retrieving treasury yields: ${error}`);
+    }
+    
+    // Get Fear & Greed Index data
+    try {
+      const fearAndGreedIndexData = retrieveFearAndGreedIndex();
+      if (fearAndGreedIndexData) {
+        results.fearAndGreedIndex = fearAndGreedIndexData;
+      } else {
+        Logger.log("Fear & Greed Index data not available");
+      }
+    } catch (error) {
+      Logger.log(`Error retrieving Fear & Greed Index: ${error}`);
+    }
+    
+    // Get upcoming economic events data
+    try {
+      const upcomingEconomicEventsData = retrieveUpcomingEconomicEvents();
+      if (upcomingEconomicEventsData && upcomingEconomicEventsData.length > 0) {
+        results.upcomingEconomicEvents = upcomingEconomicEventsData;
+      } else {
+        Logger.log("Upcoming economic events data not available");
+      }
+    } catch (error) {
+      Logger.log(`Error retrieving upcoming economic events: ${error}`);
+    }
+    
+    // Cache the results
     try {
       const scriptCache = CacheService.getScriptCache();
-      scriptCache.put('KEY_MARKET_INDICATORS_DATA', JSON.stringify(result), 3600); // Cache for 1 hour
+      scriptCache.put('KEY_MARKET_INDICATORS_DATA', JSON.stringify(results), 3600); // Cache for 1 hour
       Logger.log("Key market indicators data cached successfully");
     } catch (cacheError) {
       Logger.log("Error caching key market indicators data: " + cacheError);
-      // Continue execution - caching is optional
     }
     
-    return result;
+    Logger.log("Retrieved key market indicators data successfully");
+    return results;
   } catch (error) {
-    Logger.log(`Error in retrieveKeyMarketIndicators: ${error}`);
-    return {
-      success: false,
-      message: `Error retrieving key market indicators data: ${error}`,
-      timestamp: new Date().toISOString()
-    };
+    Logger.log(`Error retrieving key market indicators data: ${error}`);
+    throw new Error(`Failed to retrieve key market indicators data: ${error}`);
   }
 }
 
@@ -183,92 +182,110 @@ function formatKeyMarketIndicatorsData(data) {
     }
     
     // Format Fear & Greed Index
-    if (data.fearAndGreedIndex && !data.fearAndGreedIndex.error) {
-      formattedText += `- CNN Fear & Greed Index:\n`;
-      formattedText += `  * Current Reading: ${data.fearAndGreedIndex.currentValue || "N/A"} - ${data.fearAndGreedIndex.rating || "N/A"}\n`;
-      formattedText += `  * Analysis: ${data.fearAndGreedIndex.analysis || "N/A"}\n`;
+    if (data.fearAndGreedIndex) {
+      formattedText += `* CNN Fear & Greed Index:\n`;
       
-      // Add previous values if available
-      if (data.fearAndGreedIndex.previousValues) {
-        formattedText += `  * Previous Values:\n`;
-        formattedText += `    * Previous Close: ${data.fearAndGreedIndex.previousValues.previousClose || "N/A"}\n`;
-        formattedText += `    * Week Ago: ${data.fearAndGreedIndex.previousValues.oneWeekAgo || "N/A"}\n`;
-        formattedText += `    * Month Ago: ${data.fearAndGreedIndex.previousValues.oneMonthAgo || "N/A"}\n`;
+      if (data.fearAndGreedIndex.currentValue !== undefined && data.fearAndGreedIndex.rating) {
+        formattedText += `  * Current: ${data.fearAndGreedIndex.currentValue} (${data.fearAndGreedIndex.rating})\n`;
+      } else {
+        formattedText += `  * Current: Data unavailable\n`;
       }
       
       // Add timestamp
       formattedText += `  * Last Updated: ${new Date(data.fearAndGreedIndex.timestamp || data.timestamp || new Date()).toLocaleString()}\n\n`;
+    } else {
+      formattedText += `* CNN Fear & Greed Index: Data unavailable\n\n`;
     }
     
-    // Format Treasury Yields
-    if (data.treasuryYields && data.treasuryYields.yields && data.treasuryYields.yields.length > 0) {
-      formattedText += "- Treasury Yields:\n";
+    // Format volatility indices
+    if (data.volatilityIndices && data.volatilityIndices.length > 0) {
+      formattedText += "* Volatility Indices:\n";
       
-      // Sort yields by term
+      // Add each volatility index
+      for (const index of data.volatilityIndices) {
+        const priceStr = index.price !== undefined ? index.price.toLocaleString() : "N/A";
+        const changeStr = index.percentChange !== undefined ? 
+                         `${index.percentChange >= 0 ? "+" : ""}${index.percentChange.toFixed(1)}%` : 
+                         "N/A";
+        
+        formattedText += `  * ${index.name}: ${priceStr} (${changeStr})\n`;
+      }
+      
+      // Add timestamp
+      formattedText += `  * Last Updated: ${new Date(data.volatilityIndices[0].timestamp || data.timestamp || new Date()).toLocaleString()}\n\n`;
+    }
+    
+    // Format treasury yields
+    if (data.treasuryYields && data.treasuryYields.yields && data.treasuryYields.yields.length > 0) {
+      formattedText += "* Treasury Yields:\n";
+      
+      // Sort yields by term (ascending)
       const sortedYields = [...data.treasuryYields.yields].sort((a, b) => {
-        const aMonths = parseTermToMonths(a.term);
-        const bMonths = parseTermToMonths(b.term);
-        return aMonths - bMonths;
+        return parseTermToMonths(a.term) - parseTermToMonths(b.term);
       });
       
       // Add each yield
-      for (const yield_ of sortedYields) {
-        const yieldStr = yield_.value !== undefined ? `${yield_.value.toFixed(2)}%` : "N/A";
-        const changeStr = yield_.change !== undefined ? `${yield_.change >= 0 ? "+" : ""}${yield_.change.toFixed(2)}` : "N/A";
-        
-        formattedText += `  * ${yield_.term}: ${yieldStr} (${changeStr})\n`;
-      }
-      
-      formattedText += "\n";
-    }
-    
-    // Format Volatility Indices
-    if (data.volatilityIndices && data.volatilityIndices.length > 0) {
-      formattedText += "- Volatility Indices:\n";
-      
-      // Process each volatility index
-      for (const index of data.volatilityIndices) {
-        const valueStr = index.value !== undefined ? index.value.toFixed(2) : "N/A";
-        const changeStr = index.percentChange !== undefined ? 
-                         `${index.percentChange >= 0 ? "+" : ""}${index.percentChange.toFixed(2)}%` : 
+      for (const yield of sortedYields) {
+        const valueStr = yield.value !== undefined ? `${yield.value.toFixed(2)}%` : "N/A";
+        const changeStr = yield.change !== undefined ? 
+                         `${yield.change >= 0 ? "+" : ""}${yield.change.toFixed(2)}` : 
                          "N/A";
         
-        formattedText += `  * ${index.name}: ${valueStr} (${changeStr})\n`;
-        formattedText += `    * Trend: ${index.trend || "N/A"}\n`;
-        formattedText += `    * Analysis: ${index.analysis || "N/A"}\n`;
-        formattedText += `    * Source: ${index.source || "Yahoo Finance"}, Last Updated: ${new Date(index.timestamp || data.timestamp || new Date()).toLocaleString()}\n`;
+        formattedText += `  * ${yield.term}: ${valueStr} (${changeStr})\n`;
       }
       
-      formattedText += "\n";
+      // Add timestamp
+      formattedText += `  * Last Updated: ${new Date(data.treasuryYields.timestamp || data.timestamp || new Date()).toLocaleString()}\n\n`;
     }
     
-    // Format Upcoming Economic Events
+    // Format upcoming economic events
     if (data.upcomingEconomicEvents && data.upcomingEconomicEvents.length > 0) {
-      formattedText += "- Upcoming Economic Events:\n";
+      formattedText += "* Upcoming Economic Events:\n";
       
-      // Sort events by date
+      // Sort events by date (ascending)
       const sortedEvents = [...data.upcomingEconomicEvents].sort((a, b) => {
         return new Date(a.date) - new Date(b.date);
       });
       
-      // Add each event (limit to 5)
-      const eventsToShow = sortedEvents.slice(0, 5);
+      // Add each event (limit to 3 events)
+      const eventsToShow = sortedEvents.slice(0, 3);
       for (const event of eventsToShow) {
-        const date = new Date(event.date);
-        const formattedDate = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-        formattedText += `  * ${formattedDate}: ${event.event} (${event.importance} importance)\n`;
+        // Format the date as ISO string for consistency
+        const dateObj = new Date(event.date);
+        const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
+        
+        formattedText += `  * ${dateStr}: ${event.name || "Economic Event"} (${event.importance || "Medium"} importance)\n`;
       }
       
-      // If there are more events, add a note
-      if (sortedEvents.length > 5) {
-        formattedText += `  * ...and ${sortedEvents.length - 5} more events\n`;
-      }
+      // Add timestamp
+      formattedText += `  * Last Updated: ${new Date(data.timestamp || new Date()).toLocaleString()}\n`;
+    } else {
+      formattedText += "* Upcoming Economic Events: No data available\n";
     }
     
     return formattedText;
   } catch (error) {
     Logger.log(`Error formatting key market indicators data: ${error}`);
-    return "Error formatting key market indicators data: " + error;
+    return "KEY MARKET INDICATORS DATA: Error formatting data.";
+  }
+}
+
+/**
+ * Helper function to convert a numeric value to a Fear & Greed rating
+ * @param {Number} value - The value to convert (1-100)
+ * @return {String} The corresponding rating
+ */
+function getRatingFromValue(value) {
+  if (value <= 24) {
+    return "Extreme Fear";
+  } else if (value <= 44) {
+    return "Fear";
+  } else if (value <= 54) {
+    return "Neutral";
+  } else if (value <= 74) {
+    return "Greed";
+  } else {
+    return "Extreme Greed";
   }
 }
 
@@ -643,17 +660,13 @@ function fetchVolatilityDataFromYahoo(symbol) {
     };
     
     const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
     
-    // Check if the request was successful
-    if (responseCode !== 200) {
-      Logger.log(`Yahoo Finance API request failed for ${symbol} with response code: ${responseCode}`);
-      return null;
+    // Check response code
+    if (response.getResponseCode() !== 200) {
+      throw new Error(`HTTP error: ${response.getResponseCode()}`);
     }
     
-    // Parse the response
-    const responseText = response.getContentText();
-    const data = JSON.parse(responseText);
+    const data = JSON.parse(response.getContentText());
     
     // Check if the response contains the expected data structure
     if (!data || !data.chart || !data.chart.result || !data.chart.result[0] || !data.chart.result[0].meta) {
@@ -846,170 +859,134 @@ function fetchVolatilityDataFromGoogleFinance(symbol) {
 
 /**
  * Retrieves the CNN Fear & Greed Index
- * @return {Object} CNN Fear & Greed Index data
+ * @return {Object} Fear & Greed Index data or null if unavailable
  */
 function retrieveFearAndGreedIndex() {
   try {
     Logger.log("Retrieving CNN Fear & Greed Index data...");
     
-    // The CNN Fear & Greed Index is available via the CNN Business API
-    const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
-    
-    const options = {
-      muteHttpExceptions: true,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.5',
-        'Referer': 'https://www.cnn.com/markets/fear-and-greed',
-        'Origin': 'https://www.cnn.com',
-        'Connection': 'keep-alive',
-        'Cache-Control': 'max-age=0'
-      }
-    };
-    
-    const response = UrlFetchApp.fetch(url, options);
-    
-    // Check if we got a valid response
-    if (response.getResponseCode() !== 200) {
-      throw new Error(`Failed to fetch CNN Fear & Greed Index: Response code ${response.getResponseCode()}`);
-    }
-    
-    const data = JSON.parse(response.getContentText());
-    
-    // Extract the current Fear & Greed Index value
-    if (!data || !data.fear_and_greed || !data.fear_and_greed.score) {
-      throw new Error("Could not extract Fear & Greed Index value from CNN API response");
-    }
-    
-    // Extract the value and convert to number
-    const value = parseInt(data.fear_and_greed.score, 10);
-    
-    // Determine the rating based on the value
-    let rating;
-    if (value <= 24) {
-      rating = "Extreme Fear";
-    } else if (value <= 44) {
-      rating = "Fear";
-    } else if (value <= 54) {
-      rating = "Neutral";
-    } else if (value <= 74) {
-      rating = "Greed";
-    } else {
-      rating = "Extreme Greed";
-    }
-    
-    // Extract previous values if available
-    let oneWeekAgo, oneMonthAgo, oneYearAgo;
-    
-    if (data.fear_and_greed.previous_week) {
-      oneWeekAgo = parseInt(data.fear_and_greed.previous_week, 10);
-    } else {
-      oneWeekAgo = value + Math.floor(Math.random() * 10) - 5;
-    }
-    
-    if (data.fear_and_greed.previous_month) {
-      oneMonthAgo = parseInt(data.fear_and_greed.previous_month, 10);
-    } else {
-      oneMonthAgo = value + Math.floor(Math.random() * 20) - 10;
-    }
-    
-    if (data.fear_and_greed.previous_year) {
-      oneYearAgo = parseInt(data.fear_and_greed.previous_year, 10);
-    } else {
-      oneYearAgo = value + Math.floor(Math.random() * 40) - 20;
-    }
-    
-    // Ensure values are within valid range (1-100)
-    oneWeekAgo = Math.max(1, Math.min(100, oneWeekAgo));
-    oneMonthAgo = Math.max(1, Math.min(100, oneMonthAgo));
-    oneYearAgo = Math.max(1, Math.min(100, oneYearAgo));
-    
-    // Extract component ratings if available
-    let components = {};
-    
-    if (data.fear_and_greed.indicators) {
-      const indicators = data.fear_and_greed.indicators;
+    // Check if we have cached data first
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('FEAR_AND_GREED_INDEX_DATA');
       
-      components = {
-        stockPriceStrength: getRatingFromValue(indicators.stock_price_strength || 50),
-        stockPriceBreadth: getRatingFromValue(indicators.stock_price_breadth || 50),
-        putCallOptions: getRatingFromValue(indicators.put_call_options || 50),
-        marketVolatility: getRatingFromValue(indicators.market_volatility || 50),
-        junkBondDemand: getRatingFromValue(indicators.junk_bond_demand || 50),
-        marketMomentum: getRatingFromValue(indicators.market_momentum || 50),
-        safeHavenDemand: getRatingFromValue(indicators.safe_haven_demand || 50)
-      };
-    } else {
-      // If no component data, use the overall rating for all components
-      components = {
-        stockPriceStrength: rating,
-        stockPriceBreadth: rating,
-        putCallOptions: rating,
-        marketVolatility: rating,
-        junkBondDemand: rating,
-        marketMomentum: rating,
-        safeHavenDemand: rating
-      };
+      if (cachedData) {
+        Logger.log("Using cached Fear & Greed Index data (less than 1 hour old)");
+        return JSON.parse(cachedData);
+      }
+    } catch (cacheError) {
+      Logger.log("Cache retrieval error for Fear & Greed Index: " + cacheError);
+      // Continue execution - we'll get fresh data below
     }
     
-    // Create analysis based on current value
-    let analysis = "";
-    if (rating === "Extreme Fear") {
-      analysis = "The Fear & Greed Index is showing Extreme Fear, indicating investors are very pessimistic. Historically, this has often been a buying opportunity.";
-    } else if (rating === "Fear") {
-      analysis = "The Fear & Greed Index is showing Fear, suggesting caution in the market with pessimism outweighing optimism.";
-    } else if (rating === "Neutral") {
-      analysis = "The Fear & Greed Index is showing Neutral sentiment, indicating a balanced market outlook with neither excessive fear nor greed driving current market conditions.";
-    } else if (rating === "Greed") {
-      analysis = "The Fear & Greed Index is showing Greed, suggesting optimism in the market that may lead to higher valuations.";
-    } else {
-      analysis = "The Fear & Greed Index is showing Extreme Greed, indicating investors are very optimistic. Historically, this has often been a selling opportunity.";
+    // Fetch the Fear & Greed Index data from CNN
+    const data = fetchFearAndGreedIndexData();
+    
+    // If no data is available, return null
+    if (!data) {
+      Logger.log("No Fear & Greed Index data available");
+      return null;
     }
     
-    Logger.log("Retrieved Fear & Greed Index data from CNN API.");
+    // Extract the current value and calculate the rating
+    const currentValue = data.fear_and_greed && data.fear_and_greed.score ? parseInt(data.fear_and_greed.score) : null;
     
-    return {
-      currentValue: value,
+    // If we couldn't extract a valid value, return null
+    if (currentValue === null || isNaN(currentValue)) {
+      Logger.log("Invalid Fear & Greed Index value");
+      return null;
+    }
+    
+    // Calculate the rating based on the value
+    const rating = getRatingFromValue(currentValue);
+    
+    // Create the result object
+    const result = {
+      currentValue: currentValue,
       rating: rating,
-      previousValues: {
-        oneWeekAgo: oneWeekAgo,
-        oneMonthAgo: oneMonthAgo,
-        oneYearAgo: oneYearAgo
-      },
-      components: components,
-      analysis: analysis,
+      previousValue: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null,
+      previousRating: data.fear_and_greed && data.fear_and_greed.previous_close ? getRatingFromValue(parseInt(data.fear_and_greed.previous_close)) : null,
+      oneWeekAgo: data.fear_and_greed && data.fear_and_greed.previous_1_week ? parseInt(data.fear_and_greed.previous_1_week) : null,
+      oneMonthAgo: data.fear_and_greed && data.fear_and_greed.previous_1_month ? parseInt(data.fear_and_greed.previous_1_month) : null,
+      oneYearAgo: data.fear_and_greed && data.fear_and_greed.previous_1_year ? parseInt(data.fear_and_greed.previous_1_year) : null,
+      components: data.fear_and_greed && data.fear_and_greed.rating_data ? data.fear_and_greed.rating_data : null,
       source: "CNN Business",
       sourceUrl: "https://www.cnn.com/markets/fear-and-greed",
       timestamp: new Date()
     };
-  } catch (error) {
-    Logger.log(`Error retrieving CNN Fear & Greed Index: ${error}`);
     
-    // Return an error object instead of falling back to a proxy
-    return {
-      error: true,
-      errorMessage: `Failed to retrieve Fear & Greed Index: ${error}`,
-      source: "CNN Business",
-      sourceUrl: "https://www.cnn.com/markets/fear-and-greed",
-      timestamp: new Date()
-    };
+    // Cache the result
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      scriptCache.put('FEAR_AND_GREED_INDEX_DATA', JSON.stringify(result), 3600); // Cache for 1 hour
+      Logger.log("Fear & Greed Index data cached successfully");
+    } catch (cacheError) {
+      Logger.log("Error caching Fear & Greed Index data: " + cacheError);
+    }
+    
+    Logger.log(`Retrieved Fear & Greed Index: ${result.currentValue} (${result.rating})`);
+    return result;
+  } catch (error) {
+    Logger.log(`Error retrieving Fear & Greed Index: ${error}`);
+    return null;
   }
 }
 
 /**
- * Helper function to convert a numeric value to a Fear & Greed rating
- * @param {Number} value - The value to convert (1-100)
- * @return {String} The corresponding rating
+ * Fetches the CNN Fear & Greed Index data
+ * @return {Object} Raw Fear & Greed Index data or null if unavailable
+ */
+function fetchFearAndGreedIndexData() {
+  const url = "https://production.dataviz.cnn.io/index/fearandgreed/graphdata";
+  const options = {
+    method: "get",
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+      'Referer': 'https://www.cnn.com/markets/fear-and-greed',
+      'Origin': 'https://www.cnn.com',
+      'Connection': 'keep-alive',
+      'Cache-Control': 'max-age=0'
+    },
+    contentType: 'application/json'
+  };
+  
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode !== 200) {
+      Logger.log(`API error retrieving Fear & Greed Index: Response code ${responseCode}`);
+      return null;
+    }
+    
+    const responseText = response.getContentText();
+    const data = JSON.parse(responseText);
+    
+    return data;
+  } catch (error) {
+    Logger.log(`API error retrieving Fear & Greed Index: ${error}`);
+    throw new Error(`Failed to fetch CNN Fear & Greed Index: ${error}`);
+  }
+}
+
+/**
+ * Gets the rating from a Fear & Greed Index value
+ * @param {Number} value - Fear & Greed Index value (0-100)
+ * @return {String} Rating
  */
 function getRatingFromValue(value) {
-  if (value <= 24) {
+  if (value === null || value === undefined || isNaN(value)) {
+    return "Unknown";
+  }
+  
+  if (value <= 25) {
     return "Extreme Fear";
-  } else if (value <= 44) {
+  } else if (value <= 45) {
     return "Fear";
-  } else if (value <= 54) {
+  } else if (value <= 55) {
     return "Neutral";
-  } else if (value <= 74) {
+  } else if (value <= 75) {
     return "Greed";
   } else {
     return "Extreme Greed";
@@ -1018,82 +995,85 @@ function getRatingFromValue(value) {
 
 /**
  * Retrieves upcoming economic events
- * @return {Array} Upcoming economic events
+ * @return {Array} Upcoming economic events or null if unavailable
  */
 function retrieveUpcomingEconomicEvents() {
   try {
     Logger.log("Retrieving upcoming economic events...");
     
-    // This would be implemented with actual API calls in a production environment
-    // For example, using a financial calendar API or web scraping
+    // Check if we have cached data first
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('UPCOMING_ECONOMIC_EVENTS_DATA');
+      
+      if (cachedData) {
+        Logger.log("Using cached upcoming economic events data (less than 1 hour old)");
+        return JSON.parse(cachedData);
+      }
+    } catch (cacheError) {
+      Logger.log("Cache retrieval error for upcoming economic events: " + cacheError);
+      // Continue execution - we'll get fresh data below
+    }
     
-    // Initialize results array
-    const events = [];
+    // Fetch economic events data
+    const events = fetchEconomicEventsData();
     
-    // This would call an actual API in production
-    const economicEvents = fetchEconomicEventsData();
+    // If no events data is available, return null
+    if (!events || !Array.isArray(events) || events.length === 0) {
+      Logger.log("No economic events data available");
+      return null;
+    }
     
-    // Add each event to the results array
-    for (const event of economicEvents) {
-      events.push({
-        date: event.date,
-        time: event.time,
+    // Format the events data
+    const formattedEvents = events.map(event => {
+      // Ensure all required fields are present
+      return {
+        date: event.date instanceof Date ? event.date : new Date(event.date),
+        time: event.time || "TBD",
         name: event.name,
+        event: event.name, // For backward compatibility
         country: event.country,
         importance: event.importance,
         source: event.source,
-        sourceUrl: event.sourceUrl
-      });
+        sourceUrl: event.sourceUrl,
+        timestamp: new Date()
+      };
+    });
+    
+    // Sort events by date
+    formattedEvents.sort((a, b) => a.date - b.date);
+    
+    // Cache the result
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      scriptCache.put('UPCOMING_ECONOMIC_EVENTS_DATA', JSON.stringify(formattedEvents), 3600); // Cache for 1 hour
+      Logger.log("Upcoming economic events data cached successfully");
+    } catch (cacheError) {
+      Logger.log("Error caching upcoming economic events data: " + cacheError);
     }
     
-    Logger.log(`Retrieved ${events.length} upcoming economic events.`);
-    return events;
+    Logger.log(`Retrieved ${formattedEvents.length} upcoming economic events`);
+    return formattedEvents;
   } catch (error) {
     Logger.log(`Error retrieving upcoming economic events: ${error}`);
-    return [];
+    return null;
   }
 }
 
 /**
  * Fetches upcoming economic events data
- * @return {Array} Economic events data
+ * @return {Array} Economic events data or null if unavailable
  */
 function fetchEconomicEventsData() {
-  // This would be implemented with actual API calls in a production environment
-  // For now, we'll return placeholder data with the structure but indicate it needs implementation
-  
-  // Get the current date
-  const currentDate = new Date();
-  
-  // Create placeholder events for the next 15 days
-  const events = [];
-  
-  // Add some example events
-  events.push({
-    date: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 2),
-    time: "2:00 PM ET",
-    name: "FOMC Meeting Minutes",
-    country: "US",
-    importance: "High",
-    source: "Federal Reserve",
-    sourceUrl: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm"
-  });
-  
-  events.push({
-    date: new Date(currentDate.getFullYear(), currentDate.getMonth(), currentDate.getDate() + 3),
-    time: "8:30 AM ET",
-    name: "Initial Jobless Claims",
-    country: "US",
-    importance: "Medium",
-    source: "Department of Labor",
-    sourceUrl: "https://www.dol.gov/ui/data.pdf"
-  });
-  
-  // Add more placeholder events
-  // This would be replaced with actual API calls in production
-  
-  // Return the events
-  return events;
+  try {
+    // This would be implemented with actual API calls in a production environment
+    // For now, return null to indicate that real data is not available
+    Logger.log("Economic events data API not implemented yet");
+    return null;
+  } catch (error) {
+    Logger.log(`Error fetching economic events data: ${error}`);
+    return null;
+  }
 }
 
 /**

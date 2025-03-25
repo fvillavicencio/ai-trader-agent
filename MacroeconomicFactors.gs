@@ -12,6 +12,24 @@ function retrieveMacroeconomicFactors() {
   try {
     Logger.log("Retrieving macroeconomic factors data...");
     
+    // Check cache first (24-hour cache for complete macroeconomic factors data)
+    const scriptCache = CacheService.getScriptCache();
+    const cachedData = scriptCache.get('MACROECONOMIC_FACTORS_COMPLETE');
+    
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      const cacheTime = new Date(parsedData.timestamp);
+      const currentTime = new Date();
+      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
+      
+      if (cacheAgeHours < 24) {
+        Logger.log("Using cached complete macroeconomic factors data (less than 24 hours old)");
+        return parsedData;
+      } else {
+        Logger.log("Cached complete macroeconomic factors data is more than 24 hours old");
+      }
+    }
+    
     // Retrieve treasury yields data
     const treasuryYields = retrieveTreasuryYieldsData();
     
@@ -30,13 +48,16 @@ function retrieveMacroeconomicFactors() {
     const hasInflation = inflation && !inflation.error;
     const hasGeopoliticalRisks = geopoliticalRisks && Array.isArray(geopoliticalRisks.risks) && geopoliticalRisks.risks.length > 0;
     
-    // Format the data for display
-    const formattedData = formatMacroeconomicFactorsData({
+    // Create the data object that will be used by formatMacroeconomicFactorsData
+    const macroData = {
       treasuryYields: treasuryYields,
       fedPolicy: fedPolicy,
       inflation: inflation,
       geopoliticalRisks: geopoliticalRisks
-    });
+    };
+    
+    // Format the data for display
+    const formattedData = formatMacroeconomicFactorsData(macroData);
     
     // Log the results
     Logger.log("MACROECONOMIC FACTORS DATA RESULTS:");
@@ -49,10 +70,11 @@ function retrieveMacroeconomicFactors() {
     Logger.log("Formatted Macroeconomic Factors Data:");
     Logger.log(formattedData);
     
-    // Return the results
-    return {
+    // Create the result object
+    const result = {
       success: (hasTreasuryYields || hasFedPolicy || hasInflation || hasGeopoliticalRisks),
       message: (hasTreasuryYields || hasFedPolicy || hasInflation || hasGeopoliticalRisks) ? "Macroeconomic factors data retrieved successfully." : "Failed to retrieve macroeconomic factors data.",
+      data: macroData,  // Include the data object explicitly
       treasuryYields: treasuryYields,
       fedPolicy: fedPolicy,
       inflation: inflation,
@@ -60,6 +82,12 @@ function retrieveMacroeconomicFactors() {
       formattedData: formattedData,
       timestamp: new Date()
     };
+    
+    // Cache the complete result for 24 hours (in seconds)
+    scriptCache.put('MACROECONOMIC_FACTORS_COMPLETE', JSON.stringify(result), 24 * 60 * 60);
+    
+    // Return the results
+    return result;
   } catch (error) {
     Logger.log(`Error retrieving macroeconomic factors data: ${error}`);
     return {
@@ -78,6 +106,12 @@ function retrieveMacroeconomicFactors() {
 function formatMacroeconomicFactorsData(macroData) {
   let formattedData = "";
   
+  // Check if macroData is defined
+  if (!macroData) {
+    Logger.log("Warning: macroData is undefined in formatMacroeconomicFactorsData");
+    return "Macroeconomic data unavailable";
+  }
+  
   // Extract individual components from the macroData object
   const treasuryYields = macroData.treasuryYields;
   const fedPolicy = macroData.fedPolicy;
@@ -89,15 +123,35 @@ function formatMacroeconomicFactorsData(macroData) {
     formattedData += "Treasury Yields:\n";
     
     // Find specific yields safely with null checks
+    const threeMonthYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "3-Month") : null;
+    const oneYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "1-Year") : null;
     const twoYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "2-Year") : null;
+    const fiveYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "5-Year") : null;
     const tenYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "10-Year") : null;
+    const thirtyYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "30-Year") : null;
+    
+    if (threeMonthYield && threeMonthYield.yield !== undefined) {
+      formattedData += `  - 3-Month Treasury Yield: ${threeMonthYield.yield.toFixed(2)}% (${threeMonthYield.change >= 0 ? "+" : ""}${threeMonthYield.change.toFixed(2)})\n`;
+    }
+    
+    if (oneYearYield && oneYearYield.yield !== undefined) {
+      formattedData += `  - 1-Year Treasury Yield: ${oneYearYield.yield.toFixed(2)}% (${oneYearYield.change >= 0 ? "+" : ""}${oneYearYield.change.toFixed(2)})\n`;
+    }
     
     if (twoYearYield && twoYearYield.yield !== undefined) {
       formattedData += `  - 2-Year Treasury Yield: ${twoYearYield.yield.toFixed(2)}% (${twoYearYield.change >= 0 ? "+" : ""}${twoYearYield.change.toFixed(2)})\n`;
     }
     
+    if (fiveYearYield && fiveYearYield.yield !== undefined) {
+      formattedData += `  - 5-Year Treasury Yield: ${fiveYearYield.yield.toFixed(2)}% (${fiveYearYield.change >= 0 ? "+" : ""}${fiveYearYield.change.toFixed(2)})\n`;
+    }
+    
     if (tenYearYield && tenYearYield.yield !== undefined) {
       formattedData += `  - 10-Year Treasury Yield: ${tenYearYield.yield.toFixed(2)}% (${tenYearYield.change >= 0 ? "+" : ""}${tenYearYield.change.toFixed(2)})\n`;
+    }
+    
+    if (thirtyYearYield && thirtyYearYield.yield !== undefined) {
+      formattedData += `  - 30-Year Treasury Yield: ${thirtyYearYield.yield.toFixed(2)}% (${thirtyYearYield.change >= 0 ? "+" : ""}${thirtyYearYield.change.toFixed(2)})\n`;
     }
     
     if (treasuryYields.yieldCurve) {
@@ -237,7 +291,7 @@ function retrieveTreasuryYieldsData() {
     }
     
     // Define the treasury yield terms to fetch
-    const terms = ["3m", "2y", "5y", "10y", "30y"];
+    const terms = ["3m", "1y", "2y", "5y", "10y", "30y"];
     const yields = [];
     
     // Try FRED API first (primary source)
@@ -372,6 +426,7 @@ function retrieveTreasuryYieldsData() {
           // Map the term abbreviation to the full term name
           const termNames = {
             "3m": "3-Month",
+            "1y": "1-Year",
             "2y": "2-Year",
             "5y": "5-Year",
             "10y": "10-Year",
@@ -460,6 +515,7 @@ function retrieveTreasuryYieldsData() {
 function getTreasurySymbol(term) {
   const symbols = {
     "3m": "^IRX",  // 13-week Treasury Bill
+    "1y": "^FVX",  // 5-year Treasury Note
     "2y": "^UST2Y", // 2-year Treasury Note
     "5y": "^FVX",  // 5-year Treasury Note
     "10y": "^TNX", // 10-year Treasury Note
@@ -477,16 +533,36 @@ function retrieveFedPolicyData() {
   try {
     Logger.log("Retrieving Fed policy data...");
     
-    // Current Federal Funds Rate (as of March 2025)
-    const currentRate = {
-      rate: 5.375,
-      range: "5.25% - 5.50%",
-      lastChanged: new Date("2023-07-26"), // Last rate hike
-      direction: "Unchanged"
-    };
+    // Check cache first (24-hour cache for Fed policy)
+    const scriptCache = CacheService.getScriptCache();
+    const cachedData = scriptCache.get('FED_POLICY_DATA');
     
-    // FOMC Meetings
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      const cacheTime = new Date(parsedData.lastUpdated);
+      const currentTime = new Date();
+      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
+      
+      if (cacheAgeHours < 24) {
+        Logger.log("Using cached Fed policy data (less than 24 hours old)");
+        return parsedData;
+      } else {
+        Logger.log("Cached Fed policy data is more than 24 hours old");
+      }
+    }
+    
+    // Current date
     const today = new Date();
+    
+    // Current Fed Funds Rate
+    const currentRate = {
+      rate: 5.375, // Current Fed Funds Rate (upper bound)
+      lowerBound: 5.25, // Lower bound
+      upperBound: 5.5, // Upper bound
+      effectiveRate: 5.33, // Effective rate
+      lastChange: new Date("2025-03-19"), // Date of last rate change
+      changeAmount: 0.0 // Amount of last change (0 for no change)
+    };
     
     // Define upcoming FOMC meetings for 2025
     const fomcMeetings2025 = [
@@ -532,7 +608,7 @@ function retrieveFedPolicyData() {
     const forwardGuidance = "The Federal Reserve remains committed to its dual mandate of maximum employment and price stability.";
     const commentary = "Based on recent Fed communications, the Committee is focused on balancing inflation concerns with economic growth. The Fed remains data-dependent in its approach to future rate decisions.";
     
-    return {
+    const result = {
       currentRate: currentRate,
       lastMeeting: {
         date: lastMeeting,
@@ -550,6 +626,11 @@ function retrieveFedPolicyData() {
       sourceUrl: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
       lastUpdated: new Date()
     };
+    
+    // Store in cache for 24 hours (in seconds)
+    scriptCache.put('FED_POLICY_DATA', JSON.stringify(result), 24 * 60 * 60);
+    
+    return result;
   } catch (error) {
     Logger.log(`Error retrieving Fed policy data: ${error}`);
     return {
@@ -567,12 +648,23 @@ function retrieveInflationData() {
   try {
     Logger.log("Retrieving inflation data...");
     
-    // Enable caching to improve performance
+    // Check cache first (24-hour cache for inflation data)
     const scriptCache = CacheService.getScriptCache();
+    const cachedData = scriptCache.get('INFLATION_DATA');
     
-    // Clear the cache to ensure we get fresh data
-    scriptCache.remove('INFLATION_DATA');
-    Logger.log("Cleared inflation data cache to ensure fresh data");
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      const cacheTime = new Date(parsedData.lastUpdated);
+      const currentTime = new Date();
+      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
+      
+      if (cacheAgeHours < 24) {
+        Logger.log("Using cached inflation data (less than 24 hours old)");
+        return parsedData;
+      } else {
+        Logger.log("Cached inflation data is more than 24 hours old");
+      }
+    }
     
     // Retrieve CPI data
     const cpiData = retrieveCPIData();
@@ -605,8 +697,8 @@ function retrieveInflationData() {
       lastUpdated: new Date()
     };
     
-    // Cache the data for 1 hour
-    scriptCache.put('INFLATION_DATA', JSON.stringify(result), 3600);
+    // Cache the data for 24 hours (in seconds)
+    scriptCache.put('INFLATION_DATA', JSON.stringify(result), 24 * 60 * 60);
     
     return result;
   } catch (error) {
@@ -778,7 +870,7 @@ function fetchCPIDataFromBLS() {
     }
     
     if (yearOverYearCoreChange !== null && (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15)) {
-      Logger.log(`Suspicious Core CPI year-over-year change value: ${yearOverYearCoreChange}%. Using calculated value instead.`);
+      Logger.log(`Suspicious Core CPI year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
       // Use a calculated value based on month-over-month change
       yearOverYearCoreChange = ((latestCoreCpi - previousCoreCpi) / previousCoreCpi) * 12 * 100;
       
@@ -861,12 +953,32 @@ function fetchCPIDataFromFRED() {
     const latestCoreCpi = parseFloat(coreCpiData.observations[0].value);
     const previousCoreCpi = parseFloat(coreCpiData.observations[1].value);
     
-    // Calculate year-over-year change
-    const yearAgoCpi = parseFloat(cpiData.observations[12].value);
-    const yearAgoCoreCpi = parseFloat(coreCpiData.observations[12].value);
+    // Get the same month from last year
+    const oneYearAgoIndex = cpiData.observations.findIndex(obs => {
+      const obsDate = new Date(obs.date);
+      const latestDate = new Date(cpiData.observations[0].date);
+      return obsDate.getMonth() === latestDate.getMonth() && obsDate.getFullYear() === latestDate.getFullYear() - 1;
+    });
     
-    const yearOverYearChange = ((latestCpi - yearAgoCpi) / yearAgoCpi) * 100;
-    const yearOverYearCoreChange = ((latestCoreCpi - yearAgoCoreCpi) / yearAgoCoreCpi) * 100;
+    const oneYearAgoCoreCpiIndex = coreCpiData.observations.findIndex(obs => {
+      const obsDate = new Date(obs.date);
+      const latestDate = new Date(coreCpiData.observations[0].date);
+      return obsDate.getMonth() === latestDate.getMonth() && obsDate.getFullYear() === latestDate.getFullYear() - 1;
+    });
+    
+    // Calculate year-over-year changes
+    let yearOverYearChange = null;
+    let yearOverYearCoreChange = null;
+    
+    if (oneYearAgoIndex !== -1 && oneYearAgoIndex < cpiData.observations.length) {
+      const oneYearAgoCpi = parseFloat(cpiData.observations[oneYearAgoIndex].value);
+      yearOverYearChange = ((latestCpi - oneYearAgoCpi) / oneYearAgoCpi) * 100;
+    }
+    
+    if (oneYearAgoCoreCpiIndex !== -1 && oneYearAgoCoreCpiIndex < coreCpiData.observations.length) {
+      const oneYearAgoCoreCpi = parseFloat(coreCpiData.observations[oneYearAgoCoreCpiIndex].value);
+      yearOverYearCoreChange = ((latestCoreCpi - oneYearAgoCoreCpi) / oneYearAgoCoreCpi) * 100;
+    }
     
     // Calculate month-over-month percentage change
     const monthOverMonthChange = ((latestCpi - previousCpi) / previousCpi) * 100;
@@ -1212,23 +1324,11 @@ function fetchPCEDataFromFRED() {
     if (oneYearAgoIndex !== -1 && oneYearAgoIndex < pceData.observations.length) {
       const oneYearAgoPce = parseFloat(pceData.observations[oneYearAgoIndex].value);
       yearOverYearChange = ((latestPce - oneYearAgoPce) / oneYearAgoPce) * 100;
-    } else {
-      // If we can't find the exact month from last year, use the 12-month change
-      const twelveMonthsAgoPce = pceData.observations.length >= 12 ? parseFloat(pceData.observations[11].value) : null;
-      if (twelveMonthsAgoPce !== null) {
-        yearOverYearChange = ((latestPce - twelveMonthsAgoPce) / twelveMonthsAgoPce) * 100;
-      }
     }
     
     if (oneYearAgoCorePceIndex !== -1 && oneYearAgoCorePceIndex < corePceData.observations.length) {
       const oneYearAgoCorePce = parseFloat(corePceData.observations[oneYearAgoCorePceIndex].value);
       yearOverYearCoreChange = ((latestCorePce - oneYearAgoCorePce) / oneYearAgoCorePce) * 100;
-    } else {
-      // If we can't find the exact month from last year, use the 12-month change
-      const twelveMonthsAgoCorePce = corePceData.observations.length >= 12 ? parseFloat(corePceData.observations[11].value) : null;
-      if (twelveMonthsAgoCorePce !== null) {
-        yearOverYearCoreChange = ((latestCorePce - twelveMonthsAgoCorePce) / twelveMonthsAgoCorePce) * 100;
-      }
     }
     
     // Calculate month-over-month percentage change
@@ -1392,10 +1492,48 @@ function retrieveGeopoliticalRisksData() {
   try {
     Logger.log("Retrieving geopolitical risks data...");
     
+    // Check cache first (24-hour cache for geopolitical risks)
+    const scriptCache = CacheService.getScriptCache();
+    const cachedData = scriptCache.get('GEOPOLITICAL_RISKS_DATA');
+    
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      const cacheTime = new Date(parsedData.lastUpdated);
+      const currentTime = new Date();
+      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
+      
+      if (cacheAgeHours < 24) {
+        Logger.log("Using cached geopolitical risks data (less than 24 hours old)");
+        return parsedData;
+      } else {
+        Logger.log("Cached geopolitical risks data is more than 24 hours old");
+      }
+    }
+    
     // Get the OpenAI API key
     const apiKey = getOpenAIApiKey();
     if (!apiKey) {
-      throw new Error("OpenAI API key not found in script properties");
+      Logger.log("OpenAI API key not found in script properties");
+      // Return a fallback object instead of throwing an error
+      return {
+        geopoliticalRiskIndex: 50,
+        risks: [
+          {
+            type: 'Event',
+            name: "Data Unavailable",
+            description: "Geopolitical risk data is currently unavailable.",
+            region: "Global",
+            impactLevel: "Unknown",
+            marketImpact: "Unable to assess market impact at this time.",
+            source: "System",
+            url: "https://openai.com/"
+          }
+        ],
+        source: "System (Fallback Data)",
+        sourceUrl: "https://openai.com/",
+        lastUpdated: new Date(),
+        error: "OpenAI API key not found"
+      };
     }
     
     // Create a prompt for OpenAI to retrieve geopolitical risks
@@ -1429,10 +1567,10 @@ function retrieveGeopoliticalRisksData() {
     Provide EXACT URLs to specific articles, not just homepage URLs.
     `;
     
-    Logger.log("Trying OpenAI API with model: gpt-4-turbo");
+    Logger.log("Trying OpenAI API with model: gpt-4-turbo-preview");
     
     const payload = {
-      model: OPENAI_MODEL,
+      model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
@@ -1457,79 +1595,134 @@ function retrieveGeopoliticalRisksData() {
       muteHttpExceptions: true
     };
     
-    const response = UrlFetchApp.fetch(OPENAI_API_URL, options);
-    const responseCode = response.getResponseCode();
-    
-    if (responseCode !== 200) {
-      throw new Error(`OpenAI API returned status code ${responseCode}: ${response.getContentText()}`);
-    }
-    
-    const responseData = JSON.parse(response.getContentText());
-    Logger.log("OpenAI API call successful with model: gpt-4-turbo");
-    
-    // Extract the content from the response
-    const content = responseData.choices[0].message.content;
-    
-    // Try multiple approaches to extract JSON
-    let geopoliticalData;
-    
-    // First, try to extract JSON using regex for JSON object pattern
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      try {
-        geopoliticalData = JSON.parse(jsonMatch[0]);
-        Logger.log("Successfully extracted geopolitical risks JSON using regex pattern");
-      } catch (parseError) {
-        Logger.log("Error parsing extracted geopolitical risks JSON: " + parseError);
+    try {
+      const response = UrlFetchApp.fetch("https://api.openai.com/v1/chat/completions", options);
+      const responseCode = response.getResponseCode();
+      
+      if (responseCode !== 200) {
+        throw new Error(`OpenAI API returned status code ${responseCode}: ${response.getContentText()}`);
       }
-    }
-    
-    // If that fails, try to extract JSON from code blocks
-    if (!geopoliticalData) {
-      const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-      if (codeBlockMatch && codeBlockMatch[1]) {
+      
+      const responseData = JSON.parse(response.getContentText());
+      Logger.log("OpenAI API call successful with model: gpt-4-turbo-preview");
+      
+      // Extract the content from the response
+      const content = responseData.choices[0].message.content;
+      
+      // Try multiple approaches to extract JSON
+      let geopoliticalData;
+      
+      // First, try to extract JSON using regex for JSON object pattern
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
         try {
-          geopoliticalData = JSON.parse(codeBlockMatch[1].trim());
-          Logger.log("Successfully extracted geopolitical risks JSON from code block");
+          geopoliticalData = JSON.parse(jsonMatch[0]);
+          Logger.log("Successfully extracted geopolitical risks JSON using regex pattern");
         } catch (parseError) {
-          Logger.log("Error parsing geopolitical risks JSON from code block: " + parseError);
+          Logger.log("Error parsing extracted geopolitical risks JSON: " + parseError);
         }
       }
-    }
-    
-    // If both approaches fail, try to parse the entire content as JSON
-    if (!geopoliticalData) {
-      try {
-        geopoliticalData = JSON.parse(content);
-        Logger.log("Successfully parsed entire geopolitical risks content as JSON");
-      } catch (parseError) {
-        Logger.log("Error parsing entire geopolitical risks content as JSON: " + parseError);
-        throw new Error("Could not extract JSON from OpenAI response for geopolitical risks");
+      
+      // If that fails, try to extract JSON from code blocks
+      if (!geopoliticalData) {
+        const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+        if (codeBlockMatch && codeBlockMatch[1]) {
+          try {
+            geopoliticalData = JSON.parse(codeBlockMatch[1].trim());
+            Logger.log("Successfully extracted geopolitical risks JSON from code block");
+          } catch (parseError) {
+            Logger.log("Error parsing geopolitical risks JSON from code block: " + parseError);
+          }
+        }
       }
+      
+      // If both approaches fail, try to parse the entire content as JSON
+      if (!geopoliticalData) {
+        try {
+          geopoliticalData = JSON.parse(content);
+          Logger.log("Successfully parsed entire geopolitical risks content as JSON");
+        } catch (parseError) {
+          Logger.log("Error parsing entire geopolitical risks content as JSON: " + parseError);
+          throw new Error("Could not extract JSON from OpenAI response for geopolitical risks");
+        }
+      }
+      
+      // Format the result
+      const result = {
+        geopoliticalRiskIndex: geopoliticalData.geopoliticalRiskIndex,
+        risks: geopoliticalData.majorRisks.map(risk => ({
+          type: 'Event',
+          name: risk.name,
+          description: risk.description,
+          region: risk.region,
+          impactLevel: risk.impactLevel,
+          marketImpact: risk.marketImpact,
+          source: risk.source,
+          url: risk.url
+        })),
+        source: "OpenAI (aggregated from multiple news sources)",
+        sourceUrl: "https://openai.com/",
+        lastUpdated: new Date()
+      };
+      
+      // Cache the data for 24 hours (in seconds)
+      scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(result), 24 * 60 * 60);
+      
+      return result;
+    } catch (apiError) {
+      Logger.log(`Error calling OpenAI API: ${apiError}`);
+      
+      // If we have cached data, return it even if it's older than 24 hours
+      // This prevents repeated API calls when the API is failing
+      if (cachedData) {
+        Logger.log("Returning older cached geopolitical risks data due to API error");
+        return JSON.parse(cachedData);
+      }
+      
+      // Return a fallback object
+      return {
+        geopoliticalRiskIndex: 50,
+        risks: [
+          {
+            type: 'Event',
+            name: "API Error",
+            description: "Unable to retrieve current geopolitical risk data due to an API error.",
+            region: "Global",
+            impactLevel: "Unknown",
+            marketImpact: "Unable to assess market impact at this time.",
+            source: "System",
+            url: "https://openai.com/"
+          }
+        ],
+        source: "System (Error Fallback)",
+        sourceUrl: "https://openai.com/",
+        lastUpdated: new Date(),
+        error: apiError.toString()
+      };
     }
-    
-    // Format the result
-    const result = {
-      geopoliticalRiskIndex: geopoliticalData.geopoliticalRiskIndex,
-      risks: geopoliticalData.majorRisks.map(risk => ({
-        type: 'Event',
-        name: risk.name,
-        description: risk.description,
-        region: risk.region,
-        impactLevel: risk.impactLevel,
-        marketImpact: risk.marketImpact,
-        source: risk.source,
-        url: risk.url
-      })),
-      source: "OpenAI (aggregated from multiple news sources)",
-      sourceUrl: "https://openai.com/",
-      lastUpdated: new Date()
-    };
-    
-    return result;
   } catch (error) {
     Logger.log(`Error retrieving geopolitical risks data: ${error}`);
-    throw new Error(`Failed to retrieve geopolitical risks data: ${error}`);
+    
+    // Return a fallback object instead of throwing an error
+    return {
+      geopoliticalRiskIndex: 50,
+      risks: [
+        {
+          type: 'Event',
+          name: "System Error",
+          description: "Geopolitical risk data retrieval encountered a system error.",
+          region: "Global",
+          impactLevel: "Unknown",
+          marketImpact: "Unable to assess market impact at this time.",
+          source: "System",
+          url: "https://openai.com/"
+        }
+      ],
+      source: "System (Error Fallback)",
+      sourceUrl: "https://openai.com/",
+      lastUpdated: new Date(),
+      error: error.toString()
+    };
   }
 }
 
@@ -1553,6 +1746,7 @@ function retrieveTreasuryYieldsFromFRED() {
     // Define the treasury yield series IDs in FRED
     const seriesMap = {
       "DGS3MO": "3-Month",
+      "DGS1": "1-Year",
       "DGS2": "2-Year",
       "DGS5": "5-Year",
       "DGS10": "10-Year",
@@ -1636,6 +1830,7 @@ function retrieveTreasuryYieldsFromAlphaVantage() {
     // Define the treasury yield maturities to fetch
     const maturities = {
       "3month": "3-Month",
+      "1year": "1-Year",
       "2year": "2-Year",
       "5year": "5-Year",
       "10year": "10-Year",
@@ -1714,81 +1909,73 @@ function formatValue(value, decimals = 1) {
  * Tests the inflation data retrieval
  */
 function testInflationData() {
-  try {
-    Logger.log("Testing inflation data retrieval...");
-    
-    // Clear cache to ensure we get fresh data
-    const scriptCache = CacheService.getScriptCache();
-    scriptCache.remove('INFLATION_DATA');
-    Logger.log("Cleared inflation data cache for testing");
-    
-    // Retrieve inflation data
-    const inflation = retrieveInflationData();
-    
-    // Log the results
-    Logger.log("INFLATION DATA TEST RESULTS:");
-    Logger.log(`Success: ${!inflation.error}`);
-    
-    if (!inflation.error) {
-      // Log CPI data
-      if (inflation.cpi) {
-        Logger.log("CPI Data:");
-        Logger.log(`  Year-over-Year: ${inflation.cpi.yearOverYearChange}%`);
-        Logger.log(`  Core Rate: ${inflation.cpi.coreRate}%`);
-        Logger.log(`  Change: ${inflation.cpi.change}%`);
-        Logger.log(`  Source: ${inflation.cpi.source}`);
-        Logger.log(`  Last Updated: ${new Date(inflation.cpi.lastUpdated).toLocaleString()}`);
-      } else {
-        Logger.log("CPI Data: Not available");
-      }
-      
-      // Log PCE data
-      if (inflation.pce) {
-        Logger.log("PCE Data:");
-        Logger.log(`  Year-over-Year: ${inflation.pce.yearOverYearChange}%`);
-        Logger.log(`  Core Rate: ${inflation.pce.coreRate}%`);
-        Logger.log(`  Change: ${inflation.pce.change}%`);
-        Logger.log(`  Source: ${inflation.pce.source}`);
-        Logger.log(`  Last Updated: ${new Date(inflation.pce.lastUpdated).toLocaleString()}`);
-      } else {
-        Logger.log("PCE Data: Not available");
-      }
-      
-      // Log inflation expectations
-      if (inflation.expectations) {
-        Logger.log("Inflation Expectations:");
-        Logger.log(`  1-Year: ${inflation.expectations.oneYear}%`);
-        Logger.log(`  5-Year: ${inflation.expectations.fiveYear}%`);
-        Logger.log(`  10-Year: ${inflation.expectations.tenYear}%`);
-        Logger.log(`  Source: ${inflation.expectations.source}`);
-        Logger.log(`  Last Updated: ${new Date(inflation.expectations.lastUpdated).toLocaleString()}`);
-      } else {
-        Logger.log("Inflation Expectations: Not available");
-      }
-      
-      // Log analysis
-      if (inflation.analysis) {
-        Logger.log("Analysis:");
-        Logger.log(inflation.analysis);
-      } else {
-        Logger.log("Analysis: Not available");
-      }
-      
-      // Log source and timestamp
-      Logger.log(`Source: ${inflation.source}`);
-      Logger.log(`Last Updated: ${new Date(inflation.lastUpdated).toLocaleString()}`);
+  Logger.log("Testing inflation data retrieval...");
+  
+  // Clear cache to ensure we get fresh data
+  const scriptCache = CacheService.getScriptCache();
+  scriptCache.remove('INFLATION_DATA');
+  Logger.log("Cleared inflation data cache for testing");
+  
+  // Retrieve inflation data
+  const inflation = retrieveInflationData();
+  
+  // Log the results
+  Logger.log("INFLATION DATA TEST RESULTS:");
+  Logger.log(`Success: ${!inflation.error}`);
+  
+  if (!inflation.error) {
+    // Log CPI data
+    if (inflation.cpi) {
+      Logger.log("CPI Data:");
+      Logger.log(`  Year-over-Year: ${inflation.cpi.yearOverYearChange}%`);
+      Logger.log(`  Core Rate: ${inflation.cpi.coreRate}%`);
+      Logger.log(`  Change: ${inflation.cpi.change}%`);
+      Logger.log(`  Source: ${inflation.cpi.source}`);
+      Logger.log(`  Last Updated: ${new Date(inflation.cpi.lastUpdated).toLocaleString()}`);
     } else {
-      Logger.log(`Error: ${inflation.message}`);
+      Logger.log("CPI Data: Not available");
     }
     
-    return inflation;
-  } catch (error) {
-    Logger.log(`Error testing inflation data retrieval: ${error}`);
-    return {
-      error: true,
-      message: `Error testing inflation data retrieval: ${error}`
-    };
+    // Log PCE data
+    if (inflation.pce) {
+      Logger.log("PCE Data:");
+      Logger.log(`  Year-over-Year: ${inflation.pce.yearOverYearChange}%`);
+      Logger.log(`  Core Rate: ${inflation.pce.coreRate}%`);
+      Logger.log(`  Change: ${inflation.pce.change}%`);
+      Logger.log(`  Source: ${inflation.pce.source}`);
+      Logger.log(`  Last Updated: ${new Date(inflation.pce.lastUpdated).toLocaleString()}`);
+    } else {
+      Logger.log("PCE Data: Not available");
+    }
+    
+    // Log inflation expectations
+    if (inflation.expectations) {
+      Logger.log("Inflation Expectations:");
+      Logger.log(`  1-Year: ${inflation.expectations.oneYear}%`);
+      Logger.log(`  5-Year: ${inflation.expectations.fiveYear}%`);
+      Logger.log(`  10-Year: ${inflation.expectations.tenYear}%`);
+      Logger.log(`  Source: ${inflation.expectations.source}`);
+      Logger.log(`  Last Updated: ${new Date(inflation.expectations.lastUpdated).toLocaleString()}`);
+    } else {
+      Logger.log("Inflation Expectations: Not available");
+    }
+    
+    // Log analysis
+    if (inflation.analysis) {
+      Logger.log("Analysis:");
+      Logger.log(inflation.analysis);
+    } else {
+      Logger.log("Analysis: Not available");
+    }
+    
+    // Log source and timestamp
+    Logger.log(`Source: ${inflation.source}`);
+    Logger.log(`Last Updated: ${new Date(inflation.lastUpdated).toLocaleString()}`);
+  } else {
+    Logger.log(`Error: ${inflation.message}`);
   }
+  
+  return inflation;
 }
 
 /**
@@ -1796,95 +1983,91 @@ function testInflationData() {
  * Logs detailed information about the API response structure
  */
 function testPCEData() {
-  try {
-    Logger.log("Testing PCE data retrieval...");
+  Logger.log("Testing PCE data retrieval...");
+  
+  // Get BEA API key
+  const apiKey = getBEAApiKey();
+  if (!apiKey) {
+    Logger.log("BEA API key not found");
+    return;
+  }
+  
+  // Set up the request
+  const url = "https://apps.bea.gov/api/data";
+  
+  // Current date
+  const currentDate = new Date();
+  const currentYear = currentDate.getFullYear();
+  
+  // Request parameters - using quarterly data which is more reliable
+  const params = {
+    "UserID": apiKey,
+    "method": "GetData",
+    "datasetname": "NIPA",
+    "TableName": "T20804",
+    "Frequency": "Q",
+    "Year": `${currentYear-1},${currentYear}`,
+    "ResultFormat": "JSON"
+  };
+  
+  // Build the query string
+  const queryString = Object.keys(params)
+    .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+    .join("&");
+  
+  // Make the request
+  const response = UrlFetchApp.fetch(`${url}?${queryString}`, {
+    method: "get",
+    muteHttpExceptions: true
+  });
+  
+  // Check if the request was successful
+  if (response.getResponseCode() !== 200) {
+    Logger.log(`BEA API request failed with response code: ${response.getResponseCode()}`);
+    return;
+  }
+  
+  // Parse the response
+  const responseText = response.getContentText();
+  const data = JSON.parse(responseText);
+  
+  // Log the complete response structure for debugging
+  Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
+  
+  // Detailed logging of the response structure
+  if (data.BEAAPI) {
+    Logger.log("BEAAPI object keys: " + JSON.stringify(Object.keys(data.BEAAPI)));
     
-    // Get BEA API key
-    const apiKey = getBEAApiKey();
-    if (!apiKey) {
-      Logger.log("BEA API key not found");
-      return;
-    }
-    
-    // Set up the request
-    const url = "https://apps.bea.gov/api/data";
-    
-    // Current date
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    
-    // Request parameters - using quarterly data which is more reliable
-    const params = {
-      "UserID": apiKey,
-      "method": "GetData",
-      "datasetname": "NIPA",
-      "TableName": "T20804",
-      "Frequency": "Q",
-      "Year": `${currentYear-1},${currentYear}`,
-      "ResultFormat": "JSON"
-    };
-    
-    // Build the query string
-    const queryString = Object.keys(params)
-      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-      .join("&");
-    
-    // Make the request
-    const response = UrlFetchApp.fetch(`${url}?${queryString}`, {
-      method: "get",
-      muteHttpExceptions: true
-    });
-    
-    // Check if the request was successful
-    if (response.getResponseCode() !== 200) {
-      Logger.log(`BEA API request failed with response code: ${response.getResponseCode()}`);
-      return;
-    }
-    
-    // Parse the response
-    const responseText = response.getContentText();
-    const data = JSON.parse(responseText);
-    
-    // Log the complete response structure for debugging
-    Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
-    
-    // Detailed logging of the response structure
-    if (data.BEAAPI) {
-      Logger.log("BEAAPI object keys: " + JSON.stringify(Object.keys(data.BEAAPI)));
+    if (data.BEAAPI.Results) {
+      Logger.log("Results object keys: " + JSON.stringify(Object.keys(data.BEAAPI.Results)));
       
-      if (data.BEAAPI.Results) {
-        Logger.log("Results object keys: " + JSON.stringify(Object.keys(data.BEAAPI.Results)));
+      // Log the first few data items to understand the structure
+      if (data.BEAAPI.Results.Data && Array.isArray(data.BEAAPI.Results.Data) && data.BEAAPI.Results.Data.length > 0) {
+        Logger.log("Sample data item: " + JSON.stringify(data.BEAAPI.Results.Data[0]));
         
-        // Log the first few data items to understand the structure
-        if (data.BEAAPI.Results.Data && Array.isArray(data.BEAAPI.Results.Data) && data.BEAAPI.Results.Data.length > 0) {
-          Logger.log("Sample data item: " + JSON.stringify(data.BEAAPI.Results.Data[0]));
-          
-          // Log all available series codes for debugging
-          const seriesCodes = [...new Set(data.BEAAPI.Results.Data.map(item => item.SeriesCode))];
-          Logger.log("Available series codes: " + JSON.stringify(seriesCodes));
-        }
+        // Log all available series codes for debugging
+        const seriesCodes = [...new Set(data.BEAAPI.Results.Data.map(item => item.SeriesCode))];
+        Logger.log("Available series codes: " + JSON.stringify(seriesCodes));
       }
     }
-    
-    // Check if there's an error message
-    if (data && data.BEAAPI && data.BEAAPI.Error) {
-      Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
-    }
-    
-    // Also try the FRED API as a comparison
-    Logger.log("Testing FRED API for PCE data...");
-    const fredData = fetchPCEDataFromFRED();
-    if (fredData) {
-      Logger.log("FRED API returned valid PCE data");
-      Logger.log(JSON.stringify(fredData));
-    } else {
-      Logger.log("FRED API failed to return valid PCE data");
-    }
-    
-    Logger.log("PCE data test complete");
-  } catch (error) {
-    Logger.log(`Error in PCE data test: ${error}`);
   }
+  
+  // Check if there's an error message
+  if (data && data.BEAAPI && data.BEAAPI.Error) {
+    Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
+  }
+  
+  // Also try the FRED API as a comparison
+  Logger.log("Testing FRED API for PCE data...");
+  const fredData = fetchPCEDataFromFRED();
+  if (fredData) {
+    Logger.log("FRED API returned valid PCE data");
+    Logger.log(JSON.stringify(fredData));
+  } else {
+    Logger.log("FRED API failed to return valid PCE data");
+  }
+  
+  Logger.log("PCE data test complete");
 }
 
 /**
@@ -1903,237 +2086,123 @@ function testMacroeconomicData() {
 }
 
 /**
- * Fetches PCE data from BEA API
- * @return {Object} PCE data or null if failed
+ * Tests the caching implementation for macroeconomic factors data
+ * Run this function to verify that caching is working correctly
  */
-function fetchPCEDataFromBEA() {
+function testMacroeconomicFactorsCaching() {
+  // Clear all caches first to ensure a fresh start
+  const scriptCache = CacheService.getScriptCache();
+  scriptCache.remove('TREASURY_YIELDS_DATA');
+  scriptCache.remove('FED_POLICY_DATA');
+  scriptCache.remove('INFLATION_DATA');
+  scriptCache.remove('GEOPOLITICAL_RISKS_DATA');
+  scriptCache.remove('MACROECONOMIC_FACTORS_COMPLETE');
+  Logger.log("Cleared all macroeconomic factors caches");
+  
+  // First call - should retrieve fresh data from sources
+  Logger.log("FIRST CALL - SHOULD RETRIEVE FRESH DATA:");
+  const startTime1 = new Date().getTime();
+  const result1 = retrieveMacroeconomicFactors();
+  const endTime1 = new Date().getTime();
+  const executionTime1 = (endTime1 - startTime1) / 1000;
+  
+  Logger.log(`First call execution time: ${executionTime1} seconds`);
+  Logger.log(`Treasury Yields: ${result1.treasuryYields ? "Retrieved" : "Not found"}`);
+  Logger.log(`Fed Policy: ${result1.fedPolicy ? "Retrieved" : "Not found"}`);
+  Logger.log(`Inflation: ${result1.inflation ? "Retrieved" : "Not found"}`);
+  Logger.log(`Geopolitical Risks: ${result1.geopoliticalRisks ? "Retrieved" : "Not found"}`);
+  
+  // Second call - should use cached data
+  Logger.log("\nSECOND CALL - SHOULD USE CACHED DATA:");
+  const startTime2 = new Date().getTime();
+  const result2 = retrieveMacroeconomicFactors();
+  const endTime2 = new Date().getTime();
+  const executionTime2 = (endTime2 - startTime2) / 1000;
+  
+  Logger.log(`Second call execution time: ${executionTime2} seconds`);
+  Logger.log(`Treasury Yields: ${result2.treasuryYields ? "Retrieved from cache" : "Not found"}`);
+  Logger.log(`Fed Policy: ${result2.fedPolicy ? "Retrieved from cache" : "Not found"}`);
+  Logger.log(`Inflation: ${result2.inflation ? "Retrieved from cache" : "Not found"}`);
+  Logger.log(`Geopolitical Risks: ${result2.geopoliticalRisks ? "Retrieved from cache" : "Not found"}`);
+  
+  // Compare execution times
+  Logger.log("\nCACHING PERFORMANCE:");
+  Logger.log(`First call (fresh data): ${executionTime1} seconds`);
+  Logger.log(`Second call (cached data): ${executionTime2} seconds`);
+  Logger.log(`Performance improvement: ${Math.round((1 - executionTime2/executionTime1) * 100)}%`);
+  
+  // Verify data consistency
+  Logger.log("\nDATA CONSISTENCY CHECK:");
+  const dataMatch = JSON.stringify(result1) === JSON.stringify(result2);
+  Logger.log(`Data from both calls is identical: ${dataMatch ? "Yes" : "No"}`);
+  
+  return {
+    firstCallTime: executionTime1,
+    secondCallTime: executionTime2,
+    improvementPercentage: Math.round((1 - executionTime2/executionTime1) * 100),
+    dataConsistent: dataMatch
+  };
+}
+
+/**
+ * Gets the BLS API key from script properties
+ * @return {String} The BLS API key
+ */
+function getBLSApiKey() {
   try {
-    // Get BEA API key
-    const apiKey = getBEAApiKey();
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const apiKey = scriptProperties.getProperty('BLS_API_KEY');
+    
     if (!apiKey) {
-      Logger.log("BEA API key not found");
+      Logger.log("BLS API key not found in script properties");
       return null;
     }
     
-    // Set up the request
-    const url = "https://apps.bea.gov/api/data";
-    
-    // Current date
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    
-    // Request parameters - using quarterly data which is more reliable
-    const params = {
-      "UserID": apiKey,
-      "method": "GetData",
-      "datasetname": "NIPA",
-      "TableName": "T20804",
-      "Frequency": "Q",
-      "Year": `${currentYear-1},${currentYear}`,
-      "ResultFormat": "JSON"
-    };
-    
-    // Build the query string
-    const queryString = Object.keys(params)
-      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
-      .join("&");
-    
-    // Make the request
-    const response = UrlFetchApp.fetch(`${url}?${queryString}`, {
-      method: "get",
-      muteHttpExceptions: true
-    });
-    
-    // Check if the request was successful
-    if (response.getResponseCode() !== 200) {
-      Logger.log(`BEA API request failed with response code: ${response.getResponseCode()}`);
-      return null;
-    }
-    
-    // Parse the response
-    const responseText = response.getContentText();
-    const data = JSON.parse(responseText);
-    
-    // Log the response structure for debugging
-    Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
-    
-    // Check if the response contains the expected data
-    if (!data || !data.BEAAPI || !data.BEAAPI.Results || !data.BEAAPI.Results.Data || !Array.isArray(data.BEAAPI.Results.Data)) {
-      Logger.log("BEA API response does not contain expected data structure");
-      
-      // Check if there's an error message
-      if (data && data.BEAAPI && data.BEAAPI.Error) {
-        Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
-      }
-      
-      return null;
-    }
-    
-    // Try to find PCE data with flexible series code matching
-    // First, look for the exact codes we expect
-    let pceData = data.BEAAPI.Results.Data.filter(item => 
-      item.SeriesCode === "DPCERG" // PCE price index
-    );
-    
-    let corePceData = data.BEAAPI.Results.Data.filter(item => 
-      item.SeriesCode === "DPCCRG" // Core PCE price index
-    );
-    
-    // If we didn't find the exact codes, look for any PCE-related codes
-    if (pceData.length === 0) {
-      const seriesCodes = [...new Set(data.BEAAPI.Results.Data.map(item => item.SeriesCode))];
-      Logger.log("Looking for alternative PCE codes. Available codes: " + JSON.stringify(seriesCodes));
-      
-      // Look for any code containing "PCE" and not containing "CORE"
-      const pceCandidates = data.BEAAPI.Results.Data.filter(item => 
-        (item.SeriesCode && item.SeriesCode.includes("PCE") && !item.SeriesCode.includes("CORE")) ||
-        (item.LineDescription && item.LineDescription.includes("PCE") && !item.LineDescription.includes("Core"))
-      );
-      
-      if (pceCandidates.length > 0) {
-        Logger.log("Found alternative PCE data: " + JSON.stringify(pceCandidates[0]));
-        pceData = pceCandidates;
-      }
-    }
-    
-    // If we didn't find core PCE data, look for alternatives
-    if (corePceData.length === 0) {
-      // Look for any code containing both "PCE" and "CORE"
-      const corePceCandidates = data.BEAAPI.Results.Data.filter(item => 
-        (item.SeriesCode && item.SeriesCode.includes("PCE") && item.SeriesCode.includes("CORE")) ||
-        (item.LineDescription && item.LineDescription.includes("PCE") && item.LineDescription.includes("Core"))
-      );
-      
-      if (corePceCandidates.length > 0) {
-        Logger.log("Found alternative Core PCE data: " + JSON.stringify(corePceCandidates[0]));
-        corePceData = corePceCandidates;
-      }
-    }
-    
-    if (pceData.length === 0 || corePceData.length === 0) {
-      Logger.log("BEA API response does not contain expected PCE data after flexible matching");
-      return null;
-    }
-    
-    // Sort data by date (newest first)
-    // First, determine the date format used in the response
-    const dateField = pceData[0].hasOwnProperty('TimePeriod') ? 'TimePeriod' : 
-                     (pceData[0].hasOwnProperty('Quarter') ? 'Quarter' : 'Time Period');
-    
-    Logger.log(`Using date field: ${dateField}`);
-    
-    pceData.sort((a, b) => {
-      const aDate = new Date(a[dateField]);
-      const bDate = new Date(b[dateField]);
-      return bDate - aDate;
-    });
-    
-    corePceData.sort((a, b) => {
-      const aDate = new Date(a[dateField]);
-      const bDate = new Date(b[dateField]);
-      return bDate - aDate;
-    });
-    
-    // Determine the value field used in the response
-    const valueField = pceData[0].hasOwnProperty('DataValue') ? 'DataValue' : 
-                      (pceData[0].hasOwnProperty('Value') ? 'Value' : 'Data Value');
-    
-    Logger.log(`Using value field: ${valueField}`);
-    
-    // Get the latest and previous quarter values
-    const latestPce = parseFloat(pceData[0][valueField]);
-    const previousPce = parseFloat(pceData[1][valueField]);
-    const latestCorePce = parseFloat(corePceData[0][valueField]);
-    const previousCorePce = parseFloat(corePceData[1][valueField]);
-    
-    // Log the values we're using
-    Logger.log(`Latest PCE: ${latestPce}, Previous PCE: ${previousPce}`);
-    Logger.log(`Latest Core PCE: ${latestCorePce}, Previous Core PCE: ${previousCorePce}`);
-    
-    // Calculate year-over-year change
-    // Find the same quarter from last year
-    const latestDate = new Date(pceData[0][dateField]);
-    const latestQuarter = pceData[0][dateField].toString().match(/Q(\d+)/) ? 
-                         pceData[0][dateField].toString().match(/Q(\d+)/)[0] : 
-                         pceData[0][dateField].substring(pceData[0][dateField].length - 2);
-    const latestYear = latestDate.getFullYear();
-    
-    Logger.log(`Latest quarter: ${latestQuarter}, Latest year: ${latestYear}`);
-    
-    const lastYearSameQuarterPce = pceData.find(item => {
-      const itemDate = new Date(item[dateField]);
-      return itemDate.getFullYear() === latestYear - 1 && 
-             item[dateField].toString().includes(latestQuarter);
-    });
-    
-    const lastYearSameQuarterCorePce = corePceData.find(item => {
-      const itemDate = new Date(item[dateField]);
-      return itemDate.getFullYear() === latestYear - 1 && 
-             item[dateField].toString().includes(latestQuarter);
-    });
-    
-    let yearOverYearChange = null;
-    let yearOverYearCoreChange = null;
-    
-    if (lastYearSameQuarterPce) {
-      const lastYearPce = parseFloat(lastYearSameQuarterPce[valueField]);
-      yearOverYearChange = ((latestPce - lastYearPce) / lastYearPce) * 100;
-      Logger.log(`Year-over-year PCE change: ${yearOverYearChange}%`);
-    }
-    
-    if (lastYearSameQuarterCorePce) {
-      const lastYearCorePce = parseFloat(lastYearSameQuarterCorePce[valueField]);
-      yearOverYearCoreChange = ((latestCorePce - lastYearCorePce) / lastYearCorePce) * 100;
-      Logger.log(`Year-over-year Core PCE change: ${yearOverYearCoreChange}%`);
-    }
-    
-    // Calculate quarter-over-quarter percentage change
-    const quarterOverQuarterChange = ((latestPce - previousPce) / previousPce) * 100;
-    const coreQuarterOverQuarterChange = ((latestCorePce - previousCorePce) / previousCorePce) * 100;
-    
-    // Validate the data - ensure values are within reasonable ranges for inflation
-    // Typical inflation rates are between -2% and 15%
-    if (yearOverYearChange !== null && (yearOverYearChange < -2 || yearOverYearChange > 15)) {
-      Logger.log(`Suspicious PCE year-over-year change value: ${yearOverYearChange}%. This is outside normal ranges.`);
-      // Use a calculated value based on quarter-over-quarter change
-      yearOverYearChange = quarterOverQuarterChange * 4;
-      
-      // Still validate the calculated value
-      if (yearOverYearChange < -2 || yearOverYearChange > 15) {
-        Logger.log(`Calculated PCE value still suspicious: ${yearOverYearChange}%. Returning null.`);
-        return null;
-      }
-    }
-    
-    if (yearOverYearCoreChange !== null && (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15)) {
-      Logger.log(`Suspicious Core PCE year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
-      // Use a calculated value based on quarter-over-quarter change
-      yearOverYearCoreChange = coreQuarterOverQuarterChange * 4;
-      
-      // Still validate the calculated value
-      if (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15) {
-        Logger.log(`Calculated Core PCE value still suspicious: ${yearOverYearCoreChange}%. Returning null.`);
-        return null;
-      }
-    }
-    
-    // Create the PCE data object
-    return {
-      currentRate: latestPce,
-      previousRate: previousPce,
-      change: quarterOverQuarterChange,
-      yearOverYearChange: yearOverYearChange !== null ? yearOverYearChange : quarterOverQuarterChange * 4, // Annualize if YoY not available
-      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : coreQuarterOverQuarterChange * 4, // Annualize if YoY not available
-      corePreviousRate: previousCorePce,
-      coreChange: coreQuarterOverQuarterChange,
-      quarter: latestQuarter,
-      year: latestYear,
-      source: "Bureau of Economic Analysis",
-      sourceUrl: "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
-      lastUpdated: new Date()
-    };
+    return apiKey;
   } catch (error) {
-    Logger.log(`Error fetching PCE data from BEA: ${error}`);
+    Logger.log(`Error getting BLS API key: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Gets the FRED API key from script properties
+ * @return {String} The FRED API key
+ */
+function getFREDApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const apiKey = scriptProperties.getProperty('FRED_API_KEY');
+    
+    if (!apiKey) {
+      Logger.log("FRED API key not found in script properties");
+      return null;
+    }
+    
+    return apiKey;
+  } catch (error) {
+    Logger.log(`Error getting FRED API key: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Gets the BEA API key from script properties
+ * @return {String} The BEA API key
+ */
+function getBEAApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const apiKey = scriptProperties.getProperty('BEA_API_KEY');
+    
+    if (!apiKey) {
+      Logger.log("BEA API key not found in script properties");
+      return null;
+    }
+    
+    return apiKey;
+  } catch (error) {
+    Logger.log(`Error getting BEA API key: ${error}`);
     return null;
   }
 }
