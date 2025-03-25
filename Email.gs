@@ -2485,7 +2485,3 @@ function getEmailTemplateCSS() {
     }
   `;
 }
-
-```
-
-```
