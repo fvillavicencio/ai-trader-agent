@@ -1,10 +1,4 @@
 /**
- * Macroeconomic Factors Module
- * Handles retrieval of macroeconomic data including treasury yields, Fed policy,
- * inflation data, and geopolitical risks
- */
-
-/**
  * Retrieves macroeconomic factors data
  * @return {Object} Macroeconomic factors data
  */
@@ -1517,6 +1511,48 @@ function retrieveGeopoliticalRisksData() {
       }
     }
     
+    // Determine which AI provider to use
+    const aiProvider = getMacroeconomicAIProvider();
+    Logger.log(`Using ${aiProvider} for geopolitical risks data retrieval`);
+    
+    // Call the appropriate function based on the AI provider
+    if (aiProvider === "perplexity") {
+      return retrieveGeopoliticalRisksFromPerplexity();
+    } else {
+      return retrieveGeopoliticalRisksFromOpenAI();
+    }
+  } catch (error) {
+    Logger.log(`Error retrieving geopolitical risks data: ${error}`);
+    
+    // Return a fallback object instead of throwing an error
+    return {
+      geopoliticalRiskIndex: 50,
+      risks: [
+        {
+          type: 'Event',
+          name: "System Error",
+          description: "Geopolitical risk data retrieval encountered a system error.",
+          region: "Global",
+          impactLevel: "Unknown",
+          marketImpact: "Unable to assess market impact at this time.",
+          source: "System",
+          url: "https://openai.com/"
+        }
+      ],
+      source: "System (Error Fallback)",
+      sourceUrl: "https://openai.com/",
+      lastUpdated: new Date(),
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Retrieves geopolitical risks data from OpenAI
+ * @return {Object} Geopolitical risks data
+ */
+function retrieveGeopoliticalRisksFromOpenAI() {
+  try {
     // Get the OpenAI API key
     const apiKey = getOpenAIApiKey();
     if (!apiKey) {
@@ -1545,17 +1581,19 @@ function retrieveGeopoliticalRisksData() {
     
     // Create a prompt for OpenAI to retrieve geopolitical risks
     const prompt = `
-    Identify the top 3 current geopolitical risks that could impact financial markets. DO NOT include any explanatory text, apologies, or content outside the JSON format.
+    Using your web retrieval capability, identify the top 4 geopolitical risks published within the last 24 hours that could significantly impact financial markets. Provide NO explanatory text outside of the requested JSON format. Discard anything older than one month
+
+    For EACH risk, include:
+
+    1. Name (brief title)
+    2. Description (1-2 concise sentences)
+    3. Region(s) affected
+    4. Impact Level (Low, Moderate, High, Severe)
+    5. Potential Market Impact (1-2 concise sentences)
+    6. Specific URL to a reputable news source (CNN, New York Times, Reuters, Bloomberg, Financial Times, etc.)
     
-    For each risk, provide:
-    1. A brief title/name
-    2. A concise description (1-2 sentences)
-    3. The region(s) affected
-    4. Impact level (Low, Moderate, High, Severe)
-    5. Potential market impact (1-2 sentences)
-    6. A specific URL to a reputable news source reporting on this risk (Reuters, Bloomberg, Financial Times, etc.)
+    Format your response exactly as follows:
     
-    Format your response as a valid JSON object with this structure:
     {
       "geopoliticalRiskIndex": 65, // A number from 0-100 representing overall risk level
       "majorRisks": [
@@ -1579,7 +1617,6 @@ function retrieveGeopoliticalRisksData() {
     
     const payload = {
       model: "gpt-4-turbo",
-      tools: [{"type": "retrieval"}],
       messages: [
         {
           role: "system",
@@ -1675,6 +1712,7 @@ function retrieveGeopoliticalRisksData() {
       };
       
       // Cache the data for 24 hours (in seconds)
+      const scriptCache = CacheService.getScriptCache();
       scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(result), 24 * 60 * 60);
       
       return result;
@@ -1683,6 +1721,8 @@ function retrieveGeopoliticalRisksData() {
       
       // If we have cached data, return it even if it's older than 24 hours
       // This prevents repeated API calls when the API is failing
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('GEOPOLITICAL_RISKS_DATA');
       if (cachedData) {
         Logger.log("Returning older cached geopolitical risks data due to API error");
         return JSON.parse(cachedData);
@@ -1710,28 +1750,258 @@ function retrieveGeopoliticalRisksData() {
       };
     }
   } catch (error) {
-    Logger.log(`Error retrieving geopolitical risks data: ${error}`);
+    Logger.log(`Error in retrieveGeopoliticalRisksFromOpenAI: ${error}`);
+    throw error; // Let the parent function handle this error
+  }
+}
+
+/**
+ * Retrieves geopolitical risks data from Perplexity
+ * @return {Object} Geopolitical risks data
+ */
+function retrieveGeopoliticalRisksFromPerplexity() {
+  try {
+    // Get the Perplexity API key
+    const apiKey = getPerplexityApiKey();
+    if (!apiKey) {
+      Logger.log("Perplexity API key not found in script properties");
+      // Return a fallback object instead of throwing an error
+      return {
+        geopoliticalRiskIndex: 50,
+        risks: [
+          {
+            type: 'Event',
+            name: "Data Unavailable",
+            description: "Geopolitical risk data is currently unavailable due to the lack of a Perplexity API key. Please ensure the key is set in script properties.",
+            region: "Global",
+            impactLevel: "Unknown",
+            marketImpact: "Unable to assess market impact at this time.",
+            source: "System",
+            url: "https://perplexity.ai/"
+          }
+        ],
+        source: "System (Fallback Data)",
+        sourceUrl: "https://perplexity.ai/",
+        lastUpdated: new Date(),
+        error: "Perplexity API key not found"
+      };
+    }
     
-    // Return a fallback object instead of throwing an error
+    // Create a prompt for Perplexity to retrieve geopolitical risks
+    const prompt = `
+    Identify the top 3 current geopolitical risks that could impact financial markets. DO NOT include any explanatory text, apologies, or content outside the JSON format.
+    
+    For each risk, provide:
+    1. A brief title/name
+    2. A concise description (1-2 sentences)
+    3. The region(s) affected
+    4. Impact level (Low, Moderate, High, Severe)
+    5. Potential market impact (1-2 sentences)
+    6. A specific URL to a reputable news source reporting on this risk (Reuters, Bloomberg, Financial Times, etc.)
+    
+    Format your response as a valid JSON object with this structure:
+    {
+      "geopoliticalRiskIndex": 65, // A number from 0-100 representing overall risk level
+      "majorRisks": [
+        {
+          "name": "Risk Name",
+          "description": "Brief description",
+          "region": "Affected Region",
+          "impactLevel": "High",
+          "marketImpact": "Description of potential market impact",
+          "source": "News Source Name",
+          "url": "https://specific-article-url.com"
+        }
+      ]
+    }
+    
+    Provide EXACT URLs to specific articles, not just homepage URLs.
+    `;
+    
+    // System prompt contains permanent instructions
+    const systemPrompt = "You are a financial analyst specializing in geopolitical risk assessment. You MUST ALWAYS provide accurate, up-to-date information about current geopolitical risks affecting financial markets in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific URLs to news sources.";
+    
+    // Define models to try in order of preference
+    const models = ["sonar-pro", "sonar", "sonar-reasoning", "sonar-reasoning-pro", "r1-1776"];
+    
+    let response = null;
+    let error = null;
+    
+    // Try each model until one works
+    for (const model of models) {
+      try {
+        Logger.log(`Trying Perplexity API with model: ${model}`);
+        
+        const payload = {
+          model: model,
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          max_tokens: 4000,
+          temperature: 0.2,
+          top_p: 0.9
+        };
+        
+        const options = {
+          method: "post",
+          contentType: "application/json",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`
+          },
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        };
+        
+        // Add retry logic for rate limiting
+        let retries = 0;
+        const maxRetries = 3;
+        
+        while (retries < maxRetries) {
+          try {
+            response = UrlFetchApp.fetch("https://api.perplexity.ai/chat/completions", options);
+            const responseCode = response.getResponseCode();
+            
+            if (responseCode === 200) {
+              Logger.log(`Perplexity API call successful with model: ${model}`);
+              break; // Break out of the retry loop
+            } else if (responseCode === 429) {
+              // Rate limited, wait and retry
+              Logger.log(`Rate limited by Perplexity API. Retrying in ${(retries + 1) * 2} seconds...`);
+              Utilities.sleep((retries + 1) * 2000);
+              retries++;
+            } else if (responseCode === 400) {
+              // Bad request (likely invalid model), try the next model
+              Logger.log(`Model ${model} is invalid or unavailable. Error: ${response.getContentText()}`);
+              break;
+            } else {
+              // Other error, try the next model
+              Logger.log(`Error calling Perplexity API with model ${model}. Status code: ${responseCode}, Error: ${response.getContentText()}`);
+              break;
+            }
+          } catch (retryError) {
+            Logger.log(`Error during retry with model ${model}: ${retryError}`);
+            retries++;
+            if (retries >= maxRetries) {
+              break;
+            }
+            Utilities.sleep(retries * 2000);
+          }
+        }
+        
+        // If we got a successful response, process it
+        if (response && response.getResponseCode() === 200) {
+          const responseData = JSON.parse(response.getContentText());
+          
+          // Extract the content from the response
+          const content = responseData.choices[0].message.content;
+          
+          // Try multiple approaches to extract JSON
+          let geopoliticalData;
+          
+          // First, try to extract JSON using regex for JSON object pattern
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              geopoliticalData = JSON.parse(jsonMatch[0]);
+              Logger.log("Successfully extracted geopolitical risks JSON using regex pattern");
+            } catch (parseError) {
+              Logger.log("Error parsing extracted geopolitical risks JSON: " + parseError);
+            }
+          }
+          
+          // If that fails, try to extract JSON from code blocks
+          if (!geopoliticalData) {
+            const codeBlockMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+            if (codeBlockMatch && codeBlockMatch[1]) {
+              try {
+                geopoliticalData = JSON.parse(codeBlockMatch[1].trim());
+                Logger.log("Successfully extracted geopolitical risks JSON from code block");
+              } catch (parseError) {
+                Logger.log("Error parsing geopolitical risks JSON from code block: " + parseError);
+              }
+            }
+          }
+          
+          // If both approaches fail, try to parse the entire content as JSON
+          if (!geopoliticalData) {
+            try {
+              geopoliticalData = JSON.parse(content);
+              Logger.log("Successfully parsed entire geopolitical risks content as JSON");
+            } catch (parseError) {
+              Logger.log("Error parsing entire geopolitical risks content as JSON: " + parseError);
+              continue; // Try the next model
+            }
+          }
+          
+          // Format the result
+          const result = {
+            geopoliticalRiskIndex: geopoliticalData.geopoliticalRiskIndex,
+            risks: geopoliticalData.majorRisks.map(risk => ({
+              type: 'Event',
+              name: risk.name,
+              description: risk.description,
+              region: risk.region,
+              impactLevel: risk.impactLevel,
+              marketImpact: risk.marketImpact,
+              source: risk.source,
+              url: risk.url
+            })),
+            source: "Perplexity (aggregated from multiple news sources)",
+            sourceUrl: "https://perplexity.ai/",
+            lastUpdated: new Date()
+          };
+          
+          // Cache the data for 24 hours (in seconds)
+          const scriptCache = CacheService.getScriptCache();
+          scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(result), 24 * 60 * 60);
+          
+          return result;
+        }
+      } catch (modelError) {
+        error = modelError;
+        Logger.log(`Error with model ${model}: ${modelError}`);
+        // Continue to next model
+      }
+    }
+    
+    // If we've tried all models and none worked, check for cached data
+    const scriptCache = CacheService.getScriptCache();
+    const cachedData = scriptCache.get('GEOPOLITICAL_RISKS_DATA');
+    if (cachedData) {
+      Logger.log("Returning older cached geopolitical risks data due to API error");
+      return JSON.parse(cachedData);
+    }
+    
+    // If no cached data, return a fallback object
     return {
       geopoliticalRiskIndex: 50,
       risks: [
         {
           type: 'Event',
-          name: "System Error",
-          description: "Geopolitical risk data retrieval encountered a system error.",
+          name: "API Error",
+          description: "Unable to retrieve current geopolitical risk data due to a Perplexity API error.",
           region: "Global",
           impactLevel: "Unknown",
           marketImpact: "Unable to assess market impact at this time.",
           source: "System",
-          url: "https://openai.com/"
+          url: "https://perplexity.ai/"
         }
       ],
       source: "System (Error Fallback)",
-      sourceUrl: "https://openai.com/",
+      sourceUrl: "https://perplexity.ai/",
       lastUpdated: new Date(),
-      error: error.toString()
+      error: error ? error.toString() : "All Perplexity API models failed"
     };
+  } catch (error) {
+    Logger.log(`Error in retrieveGeopoliticalRisksFromPerplexity: ${error}`);
+    throw error; // Let the parent function handle this error
   }
 }
 
@@ -1747,8 +2017,17 @@ function resetMacroeconomicFactorsCache() {
     // Get the script cache
     const scriptCache = CacheService.getScriptCache();
     
-    // Remove the macroeconomic factors cache
-    scriptCache.remove('MACROECONOMIC_FACTORS_COMPLETE');
+    // Remove all macroeconomic factors related caches
+    const cacheKeys = [
+      'MACROECONOMIC_FACTORS_COMPLETE',  // Main complete data cache
+      'TREASURY_YIELDS_DATA',            // Treasury yields component cache
+      'FED_POLICY_DATA',                 // Fed policy component cache
+      'INFLATION_DATA',                  // Inflation data component cache
+      'GEOPOLITICAL_RISKS_DATA'          // Geopolitical risks component cache
+    ];
+    
+    // Remove all caches
+    scriptCache.removeAll(cacheKeys);
     
     Logger.log("Macroeconomic factors cache has been successfully reset");
     
@@ -2305,5 +2584,73 @@ function getBEAApiKey() {
   } catch (error) {
     Logger.log(`Error getting BEA API key: ${error}`);
     return null;
+  }
+}
+
+/**
+ * Gets the OpenAI API key from script properties
+ * @return {String} The OpenAI API key
+ */
+function getOpenAIApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const apiKey = scriptProperties.getProperty('OPENAI_API_KEY');
+    
+    if (!apiKey) {
+      Logger.log("OpenAI API key not found in script properties");
+      return null;
+    }
+    
+    return apiKey;
+  } catch (error) {
+    Logger.log(`Error getting OpenAI API key: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Gets the Perplexity API key from script properties
+ * @return {String} The Perplexity API key
+ */
+function getPerplexityApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const apiKey = scriptProperties.getProperty('PERPLEXITY_API_KEY');
+    
+    if (!apiKey) {
+      Logger.log("Perplexity API key not found in script properties");
+      return null;
+    }
+    
+    return apiKey;
+  } catch (error) {
+    Logger.log(`Error getting Perplexity API key: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Gets the macroeconomic AI provider from script properties
+ * @return {String} The macroeconomic AI provider (either "openai" or "perplexity")
+ */
+function getMacroeconomicAIProvider() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const provider = scriptProperties.getProperty('MACROECONOMIC_AI_PROVIDER');
+    
+    if (!provider) {
+      Logger.log("Macroeconomic AI provider not found in script properties. Defaulting to OpenAI.");
+      return "openai";
+    }
+    
+    if (provider.toLowerCase() !== "openai" && provider.toLowerCase() !== "perplexity") {
+      Logger.log("Invalid macroeconomic AI provider specified in script properties. Defaulting to OpenAI.");
+      return "openai";
+    }
+    
+    return provider.toLowerCase();
+  } catch (error) {
+    Logger.log(`Error getting macroeconomic AI provider: ${error}`);
+    return "openai"; // Default to OpenAI if there's an error
   }
 }
