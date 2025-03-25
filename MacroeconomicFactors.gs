@@ -1153,15 +1153,17 @@ function fetchPCEDataFromBEA() {
     
     // Sort data by date (newest first)
     pceData.sort((a, b) => {
-      const aDate = new Date(a.TimePeriod);
-      const bDate = new Date(b.TimePeriod);
-      return bDate - aDate;
+      if (a.year !== b.year) {
+        return parseInt(b.year) - parseInt(a.year);
+      }
+      return parseInt(b.period.substring(1)) - parseInt(a.period.substring(1));
     });
     
     corePceData.sort((a, b) => {
-      const aDate = new Date(a.TimePeriod);
-      const bDate = new Date(b.TimePeriod);
-      return bDate - aDate;
+      if (a.year !== b.year) {
+        return parseInt(b.year) - parseInt(a.year);
+      }
+      return parseInt(b.period.substring(1)) - parseInt(a.period.substring(1));
     });
     
     // Get the latest and previous quarter values
@@ -1201,7 +1203,6 @@ function fetchPCEDataFromBEA() {
     
     // Calculate quarter-over-quarter percentage change
     const quarterOverQuarterChange = ((latestPce - previousPce) / previousPce) * 100;
-    const coreQuarterOverQuarterChange = ((latestCorePce - previousCorePce) / previousCorePce) * 100;
     
     // Validate the data - ensure values are within reasonable ranges for inflation
     // Typical inflation rates are between -2% and 15%
@@ -1220,7 +1221,7 @@ function fetchPCEDataFromBEA() {
     if (yearOverYearCoreChange !== null && (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15)) {
       Logger.log(`Suspicious Core PCE year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
       // Use a calculated value based on quarter-over-quarter change
-      yearOverYearCoreChange = coreQuarterOverQuarterChange * 4;
+      yearOverYearCoreChange = ((latestCorePce - previousCorePce) / previousCorePce) * 4;
       
       // Still validate the calculated value
       if (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15) {
@@ -1235,9 +1236,9 @@ function fetchPCEDataFromBEA() {
       previousRate: previousPce,
       change: quarterOverQuarterChange,
       yearOverYearChange: yearOverYearChange !== null ? yearOverYearChange : quarterOverQuarterChange * 4, // Annualize if YoY not available
-      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : coreQuarterOverQuarterChange * 4, // Annualize if YoY not available
+      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : null, // Use the YoY change as the core rate
       corePreviousRate: previousCorePce,
-      coreChange: coreQuarterOverQuarterChange,
+      coreChange: ((latestCorePce - previousCorePce) / previousCorePce) * 100,
       quarter: latestQuarter,
       year: latestYear,
       source: "Bureau of Economic Analysis",
@@ -1727,6 +1728,38 @@ function retrieveGeopoliticalRisksData() {
 }
 
 /**
+ * Resets the macroeconomic factors cache
+ * Clears all cached macroeconomic data from the script cache
+ * @return {Object} Result object with success status and message
+ */
+function resetMacroeconomicFactorsCache() {
+  try {
+    Logger.log("Resetting macroeconomic factors cache...");
+    
+    // Get the script cache
+    const scriptCache = CacheService.getScriptCache();
+    
+    // Remove the macroeconomic factors cache
+    scriptCache.remove('MACROECONOMIC_FACTORS_COMPLETE');
+    
+    Logger.log("Macroeconomic factors cache has been successfully reset");
+    
+    return {
+      success: true,
+      message: "Macroeconomic factors cache has been successfully reset",
+      timestamp: new Date()
+    };
+  } catch (error) {
+    Logger.log(`Error resetting macroeconomic factors cache: ${error}`);
+    return {
+      success: false,
+      message: `Failed to reset macroeconomic factors cache: ${error}`,
+      timestamp: new Date()
+    };
+  }
+}
+
+/**
  * Retrieves treasury yields data from FRED API
  * @return {Array} Array of treasury yield objects
  */
@@ -2142,6 +2175,66 @@ function testMacroeconomicFactorsCaching() {
     improvementPercentage: Math.round((1 - executionTime2/executionTime1) * 100),
     dataConsistent: dataMatch
   };
+}
+
+/**
+ * Tests the resetMacroeconomicFactorsCache function
+ * This function verifies that the cache reset works correctly by:
+ * 1. Retrieving macroeconomic data (which will cache it)
+ * 2. Checking if the cache exists
+ * 3. Resetting the cache
+ * 4. Verifying the cache has been cleared
+ */
+function testResetMacroeconomicFactorsCache() {
+  try {
+    Logger.log("Testing macroeconomic factors cache reset...");
+    
+    // Step 1: Retrieve macroeconomic data (this will cache the data)
+    const initialData = retrieveMacroeconomicFactors();
+    Logger.log("Initial data retrieved and cached");
+    
+    // Step 2: Check if the cache exists
+    const scriptCache = CacheService.getScriptCache();
+    const cachedDataBeforeReset = scriptCache.get('MACROECONOMIC_FACTORS_COMPLETE');
+    
+    if (cachedDataBeforeReset) {
+      Logger.log("Cache exists before reset");
+    } else {
+      Logger.log("Warning: Cache does not exist before reset, test may not be accurate");
+    }
+    
+    // Step 3: Reset the cache
+    const resetResult = resetMacroeconomicFactorsCache();
+    Logger.log(`Reset result: ${JSON.stringify(resetResult)}`);
+    
+    // Step 4: Verify the cache has been cleared
+    const cachedDataAfterReset = scriptCache.get('MACROECONOMIC_FACTORS_COMPLETE');
+    
+    if (cachedDataAfterReset) {
+      Logger.log("ERROR: Cache still exists after reset!");
+      return {
+        success: false,
+        message: "Cache reset failed - cache still exists after reset"
+      };
+    } else {
+      Logger.log("SUCCESS: Cache has been successfully cleared");
+      
+      // Step 5: Retrieve data again to verify it's fetched fresh
+      const refreshedData = retrieveMacroeconomicFactors();
+      Logger.log("Data retrieved again after cache reset");
+      
+      return {
+        success: true,
+        message: "Cache reset test completed successfully"
+      };
+    }
+  } catch (error) {
+    Logger.log(`Error testing cache reset: ${error}`);
+    return {
+      success: false,
+      message: `Cache reset test failed with error: ${error}`
+    };
+  }
 }
 
 /**
