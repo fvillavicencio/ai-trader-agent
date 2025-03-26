@@ -983,32 +983,97 @@ function fetchFearAndGreedIndexData() {
     const options = {
       method: "get",
       headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
         'Referer': 'https://www.cnn.com/markets/fear-and-greed',
-        'Origin': 'https://www.cnn.com'
+        'Origin': 'https://www.cnn.com',
+        'sec-ch-ua': '"Google Chrome";v="121", "Not A(Brand";v="99"',
+        'sec-ch-ua-mobile': '?0',
+        'sec-ch-ua-platform': '"macOS"',
+        'sec-fetch-dest': 'empty',
+        'sec-fetch-mode': 'cors',
+        'sec-fetch-site': 'same-site'
       },
       muteHttpExceptions: true
     };
     
+    Logger.log("Sending request to CNN Fear & Greed API...");
     const response = UrlFetchApp.fetch(apiUrl, options);
     const responseCode = response.getResponseCode();
     
+    Logger.log(`CNN API response code: ${responseCode}`);
+    
     if (responseCode === 200) {
       const responseText = response.getContentText();
-      const data = JSON.parse(responseText);
+      Logger.log(`CNN API response text: ${responseText.substring(0, 200)}...`); // Log first 200 chars
       
-      // Verify we have valid data
-      if (data && data.fear_and_greed && data.fear_and_greed.score) {
-        Logger.log("Successfully retrieved Fear & Greed Index data from CNN API");
-        return data;
+      try {
+        const data = JSON.parse(responseText);
+        
+        // Verify we have valid data
+        if (data && data.fear_and_greed && data.fear_and_greed.score) {
+          Logger.log(`Successfully retrieved Fear & Greed Index data from CNN API: Score=${data.fear_and_greed.score}`);
+          return data;
+        } else {
+          Logger.log("CNN API returned 200 but data structure is invalid. Data received: " + JSON.stringify(data).substring(0, 200));
+        }
+      } catch (parseError) {
+        Logger.log(`Error parsing CNN API response: ${parseError}`);
+        Logger.log(`Raw response: ${responseText.substring(0, 200)}...`);
+      }
+    } else {
+      // If API failed, log the response for debugging
+      Logger.log(`CNN API failed with response code ${responseCode}`);
+      try {
+        const errorText = response.getContentText();
+        Logger.log(`Error response: ${errorText.substring(0, 200)}...`);
+      } catch (e) {
+        Logger.log("Could not get error response text");
       }
     }
     
-    // If API failed, log the response for debugging
-    Logger.log(`CNN API failed with response code ${responseCode}`);
-    if (responseCode === 200) {
-      Logger.log("API returned 200 but data was invalid");
+    // Try alternative CNN Fear & Greed endpoint as fallback
+    try {
+      Logger.log("Trying alternative CNN Fear & Greed endpoint...");
+      const alternativeUrl = "https://www.cnn.com/markets/fear-and-greed";
+      const altResponse = UrlFetchApp.fetch(alternativeUrl, {
+        muteHttpExceptions: true,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+        }
+      });
+      
+      if (altResponse.getResponseCode() === 200) {
+        const htmlContent = altResponse.getContentText();
+        // Look for the fear and greed data in the HTML
+        const dataMatch = htmlContent.match(/window\.__INITIAL_STATE__\s*=\s*({.*?});/);
+        if (dataMatch && dataMatch[1]) {
+          try {
+            const initialState = JSON.parse(dataMatch[1]);
+            // Navigate through the state object to find fear and greed data
+            if (initialState && initialState.marketData && initialState.marketData.fearAndGreed) {
+              const fearAndGreed = initialState.marketData.fearAndGreed;
+              Logger.log("Successfully extracted Fear & Greed data from CNN HTML");
+              
+              // Convert to the expected format
+              return {
+                fear_and_greed: {
+                  score: fearAndGreed.score,
+                  previous_close: fearAndGreed.previousClose,
+                  previous_1_week: fearAndGreed.oneWeekAgo,
+                  previous_1_month: fearAndGreed.oneMonthAgo,
+                  previous_1_year: fearAndGreed.oneYearAgo,
+                  rating_data: fearAndGreed.indicators
+                }
+              };
+            }
+          } catch (parseError) {
+            Logger.log(`Error parsing CNN HTML data: ${parseError}`);
+          }
+        }
+      }
+    } catch (altError) {
+      Logger.log(`Error with alternative CNN endpoint: ${altError}`);
     }
     
     return null;
