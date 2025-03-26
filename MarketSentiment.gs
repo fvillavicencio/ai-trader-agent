@@ -226,7 +226,6 @@ function callOpenAIApi(prompt, apiKey) {
     
     const payload = {
       model: "gpt-4-turbo",
-      tools: [{"type": "retrieval"}],
       messages: [
         {
           role: "system",
