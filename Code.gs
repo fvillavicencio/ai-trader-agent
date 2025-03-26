@@ -39,7 +39,7 @@ function getOpenAITradingAnalysis() {
     Logger.log("Generated data retrieval text for OpenAI");
     
     // Combine the prompt template with the data retrieval text
-    const fullPrompt = promptTemplate + "\n\n**Retrieved Data:**\n\n" + dataRetrievalText;
+    const fullPrompt = promptTemplate + dataRetrievalText;
     Logger.log("Combined prompt template with data retrieval text");
     
     // Always send the prompt email before checking cache or submitting to OpenAI

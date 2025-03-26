@@ -11,6 +11,9 @@ function retrieveMarketSentiment() {
   try {
     Logger.log("Retrieving market sentiment data...");
     
+    // Initialize configuration with default values if needed
+    initializeMarketSentimentConfig();
+    
     // Check if we have cached data first (cache for 2 hours)
     try {
       const scriptCache = CacheService.getScriptCache();
@@ -225,19 +228,19 @@ function callOpenAIApi(prompt, apiKey) {
     Logger.log("Calling OpenAI API...");
     
     const payload = {
-      model: "gpt-4-turbo",
+      model: getOpenAIModelName(),
       messages: [
         {
           role: "system",
-          content: "You are a financial analyst specializing in market sentiment analysis. You MUST ALWAYS provide accurate, up-to-date information about current market sentiment in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific details about analysts' comments and sentiment indicators. You have access to current information through web retrieval - USE THIS CAPABILITY to ensure your information is accurate and timely."
+          content: "You are a financial analyst specializing in market sentiment analysis. You MUST ALWAYS provide accurate, up-to-date information about current market sentiment in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific details about analysts' comments and sentiment indicators."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      temperature: 0.3,
-      max_tokens: 2000
+      temperature: getOpenAITemperature(),
+      max_tokens: getOpenAIMaxTokens()
     };
     
     const options = {
@@ -250,6 +253,10 @@ function callOpenAIApi(prompt, apiKey) {
       muteHttpExceptions: true
     };
     
+    // Log the payload for debugging (omit sensitive information)
+    Logger.log(`OpenAI API Request - Model: ${payload.model}, Temperature: ${payload.temperature}, Max Tokens: ${payload.max_tokens}`);
+    
+    // Call the OpenAI API
     const response = UrlFetchApp.fetch("https://api.openai.com/v1/chat/completions", options);
     const responseCode = response.getResponseCode();
     
@@ -258,7 +265,7 @@ function callOpenAIApi(prompt, apiKey) {
     }
     
     const responseData = JSON.parse(response.getContentText());
-    Logger.log("OpenAI API call successful with model: gpt-4-turbo");
+    Logger.log(`OpenAI API Response - Status: Success, Tokens: ${responseData.usage ? responseData.usage.total_tokens : 'unknown'}`);
     
     return responseData;
   } catch (error) {
@@ -352,14 +359,18 @@ function getOpenAIMarketSentimentPrompt() {
   const currentDate = new Date();
   const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
   
-  return `You are a financial analyst assistant. Analyze recent market sentiment from CNBC analysts and other financial experts.
+  // Get configurable analyst names
+  const analystNames = getAnalystNames();
+  const prominentFigures = getProminentFinancialFigures();
+  
+  return `You are a financial analyst assistant. Analyze recent market sentiment from financial analysts and other financial experts.
 
 Current Date: ${formattedDate}
 
-Task: Generate a comprehensive market sentiment analysis based on recent commentary from CNBC analysts and other financial experts. Include the following:
+Task: Generate a comprehensive market sentiment analysis based on recent commentary from financial analysts and other financial experts. Include the following:
 
-1. Recent commentary from CNBC analysts (Dan Nathan, Josh Brown, Steve Weiss, Joe Terranova)
-2. Recent insights from Dan Niles, Mohamed El-Erian, and other prominent financial figures if available
+1. Recent commentary from financial analysts (${analystNames.join(", ")})
+2. Recent insights from ${prominentFigures.join(", ")}, and other prominent financial figures if available
 3. Recent sentiment indicators from major financial institutions
 
 Format your response as a valid JSON object with the following structure:
@@ -417,6 +428,192 @@ function getOpenAIApiKey() {
 }
 
 /**
+ * Gets the OpenAI model name from script properties
+ * @return {String} The OpenAI model name
+ */
+function getOpenAIModelName() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const modelName = scriptProperties.getProperty('OPENAI_MODEL_NAME') || 'gpt-4-turbo';
+  return modelName;
+}
+
+/**
+ * Gets the OpenAI temperature from script properties
+ * @return {Number} The OpenAI temperature
+ */
+function getOpenAITemperature() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const temperature = scriptProperties.getProperty('OPENAI_TEMPERATURE') || 0.3;
+  return parseFloat(temperature);
+}
+
+/**
+ * Gets the OpenAI max tokens from script properties
+ * @return {Number} The OpenAI max tokens
+ */
+function getOpenAIMaxTokens() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const maxTokens = scriptProperties.getProperty('OPENAI_MAX_TOKENS') || 2000;
+  return parseInt(maxTokens);
+}
+
+/**
+ * Gets the analyst names from script properties
+ * @return {Array} The analyst names
+ */
+function getAnalystNames() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const analystNames = scriptProperties.getProperty('ANALYST_NAMES');
+  return analystNames ? analystNames.split(',').map(name => name.trim()) : 
+    ["Dan Nathan", "Josh Brown", "Steve Weiss", "Joe Terranova"]; // Default values
+}
+
+/**
+ * Gets the prominent financial figures from script properties
+ * @return {Array} The prominent financial figures
+ */
+function getProminentFinancialFigures() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const prominentFigures = scriptProperties.getProperty('PROMINENT_FINANCIAL_FIGURES');
+  return prominentFigures ? prominentFigures.split(',').map(name => name.trim()) : 
+    ["Dan Niles", "Mohamed El-Erian"]; // Default values
+}
+
+/**
+ * Initializes default configuration values if they don't exist
+ */
+function initializeMarketSentimentConfig() {
+  try {
+    Logger.log("Initializing market sentiment configuration...");
+    
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const configDefaults = {
+      'OPENAI_MODEL_NAME': 'gpt-4-turbo',
+      'OPENAI_TEMPERATURE': '0.3',
+      'OPENAI_MAX_TOKENS': '2000',
+      'ANALYST_NAMES': 'Dan Nathan,Josh Brown,Steve Weiss,Joe Terranova',
+      'PROMINENT_FINANCIAL_FIGURES': 'Dan Niles,Mohamed El-Erian'
+    };
+    
+    // For each default config, check if it exists and set it if it doesn't
+    Object.keys(configDefaults).forEach(key => {
+      const existingValue = scriptProperties.getProperty(key);
+      if (!existingValue) {
+        scriptProperties.setProperty(key, configDefaults[key]);
+        Logger.log(`Set default value for ${key}: ${configDefaults[key]}`);
+      }
+    });
+    
+    Logger.log("Market sentiment configuration initialized successfully");
+    return {
+      success: true,
+      message: "Market sentiment configuration initialized successfully"
+    };
+  } catch (error) {
+    Logger.log(`Error initializing market sentiment configuration: ${error}`);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Updates market sentiment configuration
+ * @param {Object} config - Configuration object with keys and values to update
+ * @return {Object} Result of the update operation
+ */
+function updateMarketSentimentConfig(config) {
+  try {
+    Logger.log("Updating market sentiment configuration...");
+    
+    if (!config || typeof config !== 'object') {
+      throw new Error("Invalid configuration object");
+    }
+    
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const updatedKeys = [];
+    
+    // Update each property in the config object
+    Object.keys(config).forEach(key => {
+      scriptProperties.setProperty(key, config[key]);
+      updatedKeys.push(key);
+      Logger.log(`Updated ${key} to ${config[key]}`);
+    });
+    
+    Logger.log(`Market sentiment configuration updated successfully: ${updatedKeys.join(', ')}`);
+    return {
+      success: true,
+      message: `Market sentiment configuration updated successfully: ${updatedKeys.join(', ')}`
+    };
+  } catch (error) {
+    Logger.log(`Error updating market sentiment configuration: ${error}`);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Clears the market sentiment cache
+ * @return {Object} Result of the operation
+ */
+function clearMarketSentimentCache() {
+  try {
+    Logger.log("Clearing market sentiment cache...");
+    
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.remove('MARKET_SENTIMENT_DATA');
+    
+    Logger.log("Market sentiment cache cleared successfully");
+    return {
+      success: true,
+      message: "Market sentiment cache cleared successfully",
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    Logger.log(`Error clearing market sentiment cache: ${error}`);
+    return {
+      success: false,
+      message: `Failed to clear market sentiment cache: ${error}`,
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+/**
+ * Forces a refresh of market sentiment data by clearing the cache and retrieving new data
+ * @return {Object} Fresh market sentiment data
+ */
+function refreshMarketSentiment() {
+  try {
+    Logger.log("Forcing refresh of market sentiment data...");
+    
+    // Clear the cache first
+    clearMarketSentimentCache();
+    
+    // Retrieve fresh data
+    const freshData = retrieveMarketSentiment();
+    
+    Logger.log("Market sentiment data refreshed successfully");
+    return {
+      success: true,
+      message: "Market sentiment data refreshed successfully",
+      data: freshData,
+      timestamp: new Date().toISOString()
+    };
+  } catch (error) {
+    Logger.log(`Error refreshing market sentiment data: ${error}`);
+    return {
+      success: false,
+      message: `Failed to refresh market sentiment data: ${error}`,
+      timestamp: new Date().toISOString()
+    };
+  }
+}
+
+/**
  * Tests the market sentiment module
  */
 function testMarketSentiment() {
@@ -440,26 +637,29 @@ function testMentionedStocksExtraction() {
   try {
     Logger.log("Testing extraction of mentioned stocks from market sentiment data...");
     
-    // Create a sample market sentiment data object
+    // Get analyst names from configuration
+    const analystNames = getAnalystNames();
+    
+    // Create a sample market sentiment data object with dynamic analyst names
     const sampleData = {
       analysts: [
         {
-          name: "Dan Nathan",
-          firm: "RiskReversal Advisors",
+          name: analystNames[0] || "Test Analyst 1",
+          firm: "Test Firm 1",
           commentary: "I'm cautious on tech stocks like AAPL and MSFT given current valuations.",
           sentiment: "Bearish",
           mentionedStocks: ["AAPL", "MSFT"]
         },
         {
-          name: "Josh Brown",
-          firm: "Ritholtz Wealth Management",
+          name: analystNames[1] || "Test Analyst 2",
+          firm: "Test Firm 2",
           commentary: "NVDA continues to show strength in the AI space.",
           sentiment: "Bullish",
           mentionedSymbols: ["NVDA"] // Using old format to test backward compatibility
         },
         {
-          name: "Steve Weiss",
-          firm: "Short Hills Capital Partners",
+          name: analystNames[2] || "Test Analyst 3",
+          firm: "Test Firm 3",
           commentary: "I think Amazon (AMZN) and Google (GOOGL) are well-positioned for the next quarter.",
           sentiment: "Bullish"
           // No mentioned stocks array, should extract from commentary

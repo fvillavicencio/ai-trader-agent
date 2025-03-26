@@ -19,7 +19,20 @@ function retrieveKeyMarketIndicators() {
       
       if (cachedData) {
         Logger.log("Using cached key market indicators data (less than 1 hour old)");
-        return JSON.parse(cachedData);
+        try {
+          const parsedData = JSON.parse(cachedData);
+          
+          // Validate the parsed data structure
+          if (parsedData && typeof parsedData === 'object' && 'success' in parsedData) {
+            return parsedData;
+          } else {
+            Logger.log("Cached data is invalid or incomplete, retrieving fresh data");
+            // Continue execution to get fresh data
+          }
+        } catch (parseError) {
+          Logger.log("Error parsing cached data: " + parseError);
+          // Continue execution to get fresh data
+        }
       }
     } catch (cacheError) {
       Logger.log("Cache retrieval error: " + cacheError);

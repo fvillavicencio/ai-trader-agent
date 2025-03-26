@@ -23,30 +23,27 @@ function getTradingAnalysisPrompt() {
 Today's Date and Time: ${formattedDate}
 
 **Instructions:**
-Using ONLY the provided retrieved data below, generate a concise trading recommendation in JSON format as outlined:
-
-- Decision options: "Buy Now", "Sell Now", "Watch for Better Price Action"
-- Summarize market sentiment, key indicators, fundamental metrics, and macroeconomic factors clearly.
-- Provide detailed reasoning for your recommendation.
-- CRITICAL: Include ALL available stock data in the fundamentalMetrics section - do not omit ANY stocks or metrics.
-- EXTREMELY IMPORTANT: You MUST include ALL stocks mentioned in the fundamental metrics data, especially the Magnificent Seven stocks (AAPL, MSFT, GOOGL, AMZN, META, TSLA, NVDA) and major indices (SPY, QQQ, IWM, DIA).
-- For each stock in the fundamentalMetrics section, include ALL available metrics (price, priceChange, volume, marketCap, dividendYield, pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta, etc.)
-- Provide regional geopolitical analysis for each major region plus, ideally 3 to 4, a global summary.
-- Include an overall market sentiment analysis summary.
-- For Treasury Yields, ensure that the metrics include two decimal points
-- Format inflation metrics to include CPI Headline, CPI Core, PCE Headline, and PCE Core with clear values.
-- Ensure all analyst comments are included in the marketSentiment section without timestamps in the display.
-
-**CRITICAL:**
-- Do NOT retrieve or reference additional external information.
-- Use ONLY the data provided below.
-- Ensure your recommendation is directly supported by the given data.
-- IMPORTANT: Do not omit ANY stocks from the data - include every stock mentioned in the fundamental metrics data.
-- For each stock, include ALL available metrics from the data (price, priceChange, volume, marketCap, dividendYield, pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta, etc.)
-- ALWAYS include source URLs and timestamps for ALL data points when available.
-- Ensure each section has information about the source and when the data was last updated.
-- Do NOT include timestamps next to analyst comments in the final output.
-
+Using only the retrieved data provided below, generate a concise trading recommendation in JSON format with the following requirements:
+	1.	Decision Options: "Buy Now", "Sell Now", or "Watch for Better Price Action".
+	2.	Summary: Include a brief overview of market sentiment, key indicators, fundamental metrics, and macroeconomic factors that support your decision.
+	3.	Fundamental Metrics:
+	•	Include all available stocks from the data (especially the Magnificent Seven: AAPL, MSFT, GOOGL, AMZN, META, TSLA, NVDA, plus major indices SPY, QQQ, IWM, DIA).
+	•	For each stock, incorporate every provided metric (e.g., price, priceChange, volume, marketCap, dividendYield, pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta, etc.).
+	•	Do not omit any stocks or metrics mentioned in the provided data.
+	4.	Market Sentiment Analysis:
+	•	Present an overall sentiment summary.
+	•	Include all analyst comments (without timestamps) in the marketSentiment section.
+	5.	Macroeconomic & Geopolitical Factors:
+	•	Summarize treasury yields to two decimal places.
+	•	For inflation, provide CPI Headline, CPI Core, PCE Headline, and PCE Core with clear values.
+	•	Include regional geopolitical analysis for each major region plus a brief global summary.
+	6.	Sources & Timestamps:
+	•	Always cite source URLs and include timestamps for each data point wherever available.
+	•	Do not include timestamps next to analyst comments in the final output.
+	7.	No External Data:
+	•	Use only the data provided below. Do not retrieve or reference any additional information.
+	8.	Support Your Recommendation:
+	•	Your final recommendation must be directly justified by the provided data.
 
 **Output JSON Structure:**
 {
@@ -93,7 +90,9 @@ Using ONLY the provided retrieved data below, generate a concise trading recomme
   "timestamp": "YYYY-MM-DD HH:MM"
 }
 
-**Retrieved Data:**`;
+**Retrieved Data:**
+
+`;
 }
 
 /**
@@ -107,56 +106,17 @@ function generateOpenAIPrompt(allData) {
     // Get the base prompt template
     const basePrompt = getTradingAnalysisPrompt();
     
-    // Create a data object for enhancing the prompt
-    const enhancementData = {};
+    // Generate the data retrieval text
+    const dataRetrievalText = generateDataRetrievalText();
     
-    // Add market sentiment data if available
-    if (allData.marketSentiment && allData.marketSentiment.success) {
-      const marketSentimentData = formatMarketSentimentData(allData.marketSentiment.data);
-      enhancementData.marketSentiment = marketSentimentData;
-      Logger.log("Added market sentiment data to prompt enhancement");
-    }
+    // Combine the base prompt with the data retrieval text
+    const fullPrompt = basePrompt + dataRetrievalText;
     
-    // Add key market indicators data if available
-    if (allData.keyMarketIndicators && allData.keyMarketIndicators.success) {
-      const keyMarketIndicatorsData = formatKeyMarketIndicatorsData(allData.keyMarketIndicators.data);
-      enhancementData.keyMarketIndicators = keyMarketIndicatorsData;
-      Logger.log("Added key market indicators data to prompt enhancement");
-    }
+    Logger.log("Generated full OpenAI prompt");
     
-    // Add fundamental metrics data if available
-    if (allData.fundamentalMetrics && allData.fundamentalMetrics.success) {
-      const fundamentalMetricsData = formatFundamentalMetricsData(allData.fundamentalMetrics.data);
-      enhancementData.fundamentalMetrics = fundamentalMetricsData;
-      Logger.log("Added fundamental metrics data to prompt enhancement");
-    }
-    
-    // Add macroeconomic factors data if available
-    if (allData.macroeconomicFactors && allData.macroeconomicFactors.success) {
-      // Ensure data property exists before passing to formatter
-      if (allData.macroeconomicFactors.data) {
-        const macroeconomicFactorsData = formatMacroeconomicFactorsData(allData.macroeconomicFactors.data);
-        enhancementData.macroeconomicFactors = macroeconomicFactorsData;
-        Logger.log("Added macroeconomic factors data to prompt enhancement");
-      } else {
-        Logger.log("Warning: macroeconomicFactors.data is undefined");
-        enhancementData.macroeconomicFactors = "Macroeconomic data unavailable";
-      }
-    }
-    
-    // Enhance the prompt with all the retrieved data
-    const enhancedPrompt = enhancePromptWithData(basePrompt, enhancementData);
-    
-    // Log what data was included in the prompt
-    Logger.log("Data included in prompt:");
-    Logger.log("- Market Sentiment: " + (enhancementData.marketSentiment ? "Yes" : "No"));
-    Logger.log("- Key Market Indicators: " + (enhancementData.keyMarketIndicators ? "Yes" : "No"));
-    Logger.log("- Fundamental Metrics: " + (enhancementData.fundamentalMetrics ? "Yes" : "No"));
-    Logger.log("- Macroeconomic Factors: " + (enhancementData.macroeconomicFactors ? "Yes" : "No"));
-    
-    return enhancedPrompt;
+    return fullPrompt;
   } catch (error) {
-    Logger.log("Error in generateOpenAIPrompt: " + error);
-    throw error;
+    Logger.log(`Error generating OpenAI prompt: ${error}`);
+    throw new Error(`Failed to generate OpenAI prompt: ${error}`);
   }
 }

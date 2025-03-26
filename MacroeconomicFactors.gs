@@ -34,26 +34,7 @@ function retrieveMacroeconomicFactors() {
     const inflation = retrieveInflationData();
     
     // Retrieve geopolitical risks
-    // Commenting out AI calls for now to focus on data retrieval reliability
-    // const geopoliticalRisks = retrieveGeopoliticalRisksData();
-    // Using placeholder data instead
-    const geopoliticalRisks = {
-      risks: [
-        {
-          name: "Geopolitical Risk Data Temporarily Disabled",
-          description: "AI-based geopolitical risk analysis is temporarily disabled to focus on improving data retrieval reliability.",
-          type: "Event",
-          region: "Global",
-          impactLevel: "N/A",
-          marketImpact: "N/A",
-          source: "System Message",
-          url: "#"
-        }
-      ],
-      timestamp: new Date(),
-      source: "System Message",
-      sourceUrl: "#"
-    };
+    const geopoliticalRisks = retrieveGeopoliticalRisksData();
     
     // Check if we have data for each section
     const hasTreasuryYields = treasuryYields && !treasuryYields.error;
@@ -144,27 +125,27 @@ function formatMacroeconomicFactorsData(macroData) {
     const thirtyYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "30-Year") : null;
     
     if (threeMonthYield && threeMonthYield.yield !== undefined) {
-      formattedData += `  - 3-Month Treasury Yield: ${threeMonthYield.yield.toFixed(2)}% (${threeMonthYield.change >= 0 ? "+" : ""}${threeMonthYield.change.toFixed(2)})\n`;
+      formattedData += `  - 3-Month Treasury Yield: ${formatValue(threeMonthYield.yield)}% (${threeMonthYield.change >= 0 ? "+" : ""}${formatValue(threeMonthYield.change)})\n`;
     }
     
     if (oneYearYield && oneYearYield.yield !== undefined) {
-      formattedData += `  - 1-Year Treasury Yield: ${oneYearYield.yield.toFixed(2)}% (${oneYearYield.change >= 0 ? "+" : ""}${oneYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 1-Year Treasury Yield: ${formatValue(oneYearYield.yield)}% (${oneYearYield.change >= 0 ? "+" : ""}${formatValue(oneYearYield.change)})\n`;
     }
     
     if (twoYearYield && twoYearYield.yield !== undefined) {
-      formattedData += `  - 2-Year Treasury Yield: ${twoYearYield.yield.toFixed(2)}% (${twoYearYield.change >= 0 ? "+" : ""}${twoYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 2-Year Treasury Yield: ${formatValue(twoYearYield.yield)}% (${twoYearYield.change >= 0 ? "+" : ""}${formatValue(twoYearYield.change)})\n`;
     }
     
     if (fiveYearYield && fiveYearYield.yield !== undefined) {
-      formattedData += `  - 5-Year Treasury Yield: ${fiveYearYield.yield.toFixed(2)}% (${fiveYearYield.change >= 0 ? "+" : ""}${fiveYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 5-Year Treasury Yield: ${formatValue(fiveYearYield.yield)}% (${fiveYearYield.change >= 0 ? "+" : ""}${formatValue(fiveYearYield.change)})\n`;
     }
     
     if (tenYearYield && tenYearYield.yield !== undefined) {
-      formattedData += `  - 10-Year Treasury Yield: ${tenYearYield.yield.toFixed(2)}% (${tenYearYield.change >= 0 ? "+" : ""}${tenYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 10-Year Treasury Yield: ${formatValue(tenYearYield.yield)}% (${tenYearYield.change >= 0 ? "+" : ""}${formatValue(tenYearYield.change)})\n`;
     }
     
     if (thirtyYearYield && thirtyYearYield.yield !== undefined) {
-      formattedData += `  - 30-Year Treasury Yield: ${thirtyYearYield.yield.toFixed(2)}% (${thirtyYearYield.change >= 0 ? "+" : ""}${thirtyYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 30-Year Treasury Yield: ${formatValue(thirtyYearYield.yield)}% (${thirtyYearYield.change >= 0 ? "+" : ""}${formatValue(thirtyYearYield.change)})\n`;
     }
     
     if (treasuryYields.yieldCurve) {
@@ -186,7 +167,7 @@ function formatMacroeconomicFactorsData(macroData) {
     formattedData += "Federal Reserve Policy:\n";
     
     if (fedPolicy.currentRate && fedPolicy.currentRate.rate !== undefined) {
-      formattedData += `  - Current Federal Funds Rate: ${fedPolicy.currentRate.rate.toFixed(2)}%\n`;
+      formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.rate)}%\n`;
     }
     
     if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.date) {
@@ -219,19 +200,19 @@ function formatMacroeconomicFactorsData(macroData) {
     formattedData += "Inflation Data:\n";
     
     if (inflation.cpi && inflation.cpi.yearOverYearChange !== undefined) {
-      formattedData += `  - CPI (Year-over-Year): ${inflation.cpi.yearOverYearChange.toFixed(1)}%\n`;
+      formattedData += `  - CPI (Year-over-Year): ${formatValue(inflation.cpi.yearOverYearChange)}%\n`;
     }
     
     if (inflation.cpi && inflation.cpi.coreRate !== undefined) {
-      formattedData += `  - Core CPI (Year-over-Year): ${inflation.cpi.coreRate.toFixed(1)}%\n`;
+      formattedData += `  - Core CPI (Year-over-Year): ${formatValue(inflation.cpi.coreRate)}%\n`;
     }
     
     if (inflation.pce && inflation.pce.yearOverYearChange !== undefined) {
-      formattedData += `  - PCE (Year-over-Year): ${inflation.pce.yearOverYearChange.toFixed(1)}%\n`;
+      formattedData += `  - PCE (Year-over-Year): ${formatValue(inflation.pce.yearOverYearChange)}%\n`;
     }
     
     if (inflation.pce && inflation.pce.coreRate !== undefined) {
-      formattedData += `  - Core PCE (Year-over-Year): ${inflation.pce.coreRate.toFixed(1)}%\n`;
+      formattedData += `  - Core PCE (Year-over-Year): ${formatValue(inflation.pce.coreRate)}%\n`;
     }
     
     if (inflation.analysis) {
@@ -258,8 +239,8 @@ function formatMacroeconomicFactorsData(macroData) {
       // Handle different types of risks differently
       if (risk.type === "Index") {
         // For index-type risks
-        formattedData += `    - Value: ${risk.value ? risk.value.toFixed(1) : 'N/A'}\n`;
-        formattedData += `    - Change: ${risk.change ? (risk.change > 0 ? '+' : '') + risk.change.toFixed(1) : 'N/A'}\n`;
+        formattedData += `    - Value: ${formatValue(risk.value)}\n`;
+        formattedData += `    - Change: ${formatValue(risk.change)}\n`;
         formattedData += `    - Interpretation: ${risk.interpretation || 'N/A'}\n`;
       } else {
         // For event-type risks
@@ -326,13 +307,13 @@ function retrieveTreasuryYieldsData() {
       
       if (isInverted) {
         yieldCurveStatus = "Inverted";
-        yieldCurveAnalysis = `The yield curve is inverted with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This is a potential recession signal that has historically preceded economic downturns.`;
+        yieldCurveAnalysis = `The yield curve is inverted with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This is a potential recession signal that has historically preceded economic downturns.`;
       } else if (yieldCurveSpread < 0.5) {
         yieldCurveStatus = "Flat";
-        yieldCurveAnalysis = `The yield curve is relatively flat with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This suggests market uncertainty about future economic conditions.`;
+        yieldCurveAnalysis = `The yield curve is relatively flat with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This suggests market uncertainty about future economic conditions.`;
       } else {
         yieldCurveStatus = "Normal";
-        yieldCurveAnalysis = `The yield curve has a normal positive slope with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This typically indicates expectations of economic growth.`;
+        yieldCurveAnalysis = `The yield curve has a normal positive slope with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This typically indicates expectations of economic growth.`;
       }
       
       // Format the result
@@ -374,13 +355,13 @@ function retrieveTreasuryYieldsData() {
       
       if (isInverted) {
         yieldCurveStatus = "Inverted";
-        yieldCurveAnalysis = `The yield curve is inverted with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This is a potential recession signal that has historically preceded economic downturns.`;
+        yieldCurveAnalysis = `The yield curve is inverted with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This is a potential recession signal that has historically preceded economic downturns.`;
       } else if (yieldCurveSpread < 0.5) {
         yieldCurveStatus = "Flat";
-        yieldCurveAnalysis = `The yield curve is relatively flat with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This suggests market uncertainty about future economic conditions.`;
+        yieldCurveAnalysis = `The yield curve is relatively flat with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This suggests market uncertainty about future economic conditions.`;
       } else {
         yieldCurveStatus = "Normal";
-        yieldCurveAnalysis = `The yield curve has a normal positive slope with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This typically indicates expectations of economic growth.`;
+        yieldCurveAnalysis = `The yield curve has a normal positive slope with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This typically indicates expectations of economic growth.`;
       }
       
       // Format the result
@@ -453,7 +434,7 @@ function retrieveTreasuryYieldsData() {
             timestamp: new Date(meta.regularMarketTime * 1000)
           });
           
-          Logger.log(`Successfully retrieved ${termNames[term]} yield: ${yieldValue.toFixed(2)}%`);
+          Logger.log(`Successfully retrieved ${termNames[term]} yield: ${formatValue(yieldValue)}%`);
         } else {
           Logger.log(`Failed to retrieve ${term} yield. Response code: ${response.getResponseCode()}`);
           throw new Error(`Failed to retrieve ${term} yield. Response code: ${response.getResponseCode()}`);
@@ -487,13 +468,13 @@ function retrieveTreasuryYieldsData() {
     
     if (isInverted) {
       yieldCurveStatus = "Inverted";
-      yieldCurveAnalysis = `The yield curve is inverted with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This is a potential recession signal that has historically preceded economic downturns.`;
+      yieldCurveAnalysis = `The yield curve is inverted with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This is a potential recession signal that has historically preceded economic downturns.`;
     } else if (yieldCurveSpread < 0.5) {
       yieldCurveStatus = "Flat";
-      yieldCurveAnalysis = `The yield curve is relatively flat with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This suggests market uncertainty about future economic conditions.`;
+      yieldCurveAnalysis = `The yield curve is relatively flat with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This suggests market uncertainty about future economic conditions.`;
     } else {
       yieldCurveStatus = "Normal";
-      yieldCurveAnalysis = `The yield curve has a normal positive slope with the 10Y-2Y spread at ${yieldCurveSpread.toFixed(2)}%. This typically indicates expectations of economic growth.`;
+      yieldCurveAnalysis = `The yield curve has a normal positive slope with the 10Y-2Y spread at ${formatValue(yieldCurveSpread)}%. This typically indicates expectations of economic growth.`;
     }
     
     // Format the result
@@ -995,30 +976,29 @@ function fetchCPIDataFromFRED() {
     
     // Calculate month-over-month percentage change
     const monthOverMonthChange = ((latestCpi - previousCpi) / previousCpi) * 100;
-    const coreMonthOverMonthChange = ((latestCoreCpi - previousCoreCpi) / previousCoreCpi) * 100;
     
     // Validate the data - ensure values are within reasonable ranges for inflation
     // Typical inflation rates are between -2% and 15%
     if (yearOverYearChange !== null && (yearOverYearChange < -2 || yearOverYearChange > 15)) {
-      Logger.log(`Suspicious PCE year-over-year change value: ${yearOverYearChange}%. This is outside normal ranges.`);
+      Logger.log(`Suspicious CPI year-over-year change value: ${yearOverYearChange}%. This is outside normal ranges.`);
       // Use a calculated value based on month-over-month change
       yearOverYearChange = monthOverMonthChange * 12;
       
       // Still validate the calculated value
       if (yearOverYearChange < -2 || yearOverYearChange > 15) {
-        Logger.log(`Calculated PCE value still suspicious: ${yearOverYearChange}%. Returning null.`);
+        Logger.log(`Calculated CPI value still suspicious: ${yearOverYearChange}%. Returning null.`);
         return null;
       }
     }
     
     if (yearOverYearCoreChange !== null && (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15)) {
-      Logger.log(`Suspicious Core PCE year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
+      Logger.log(`Suspicious Core CPI year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
       // Use a calculated value based on month-over-month change
-      yearOverYearCoreChange = coreMonthOverMonthChange * 12;
+      yearOverYearCoreChange = ((latestCoreCpi - previousCoreCpi) / previousCoreCpi) * 12;
       
       // Still validate the calculated value
       if (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15) {
-        Logger.log(`Calculated Core PCE value still suspicious: ${yearOverYearCoreChange}%. Returning null.`);
+        Logger.log(`Calculated Core CPI value still suspicious: ${yearOverYearCoreChange}%. Returning null.`);
         return null;
       }
     }
@@ -1029,9 +1009,9 @@ function fetchCPIDataFromFRED() {
       previousRate: previousCpi,
       change: monthOverMonthChange,
       yearOverYearChange: yearOverYearChange !== null ? yearOverYearChange : monthOverMonthChange * 12, // Annualize if YoY not available
-      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : coreMonthOverMonthChange * 12, // Annualize if YoY not available
+      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : null, // Use the YoY change as the core rate
       corePreviousRate: previousCoreCpi,
-      coreChange: coreMonthOverMonthChange,
+      coreChange: ((latestCoreCpi - previousCoreCpi) / previousCoreCpi) * 100,
       month: new Date(cpiData.observations[0].date).getMonth(),
       year: new Date(cpiData.observations[0].date).getFullYear(),
       source: "Federal Reserve Economic Data (FRED)",
@@ -1630,7 +1610,7 @@ function retrieveTreasuryYieldsFromFRED() {
             timestamp: new Date(latestObservation.date)
           });
           
-          Logger.log(`Successfully retrieved ${term} yield from FRED: ${yieldValue.toFixed(2)}%`);
+          Logger.log(`Successfully retrieved ${term} yield from FRED: ${formatValue(yieldValue)}%`);
         }
       } else {
         Logger.log(`Failed to retrieve ${term} yield from FRED. Response code: ${response.getResponseCode()}`);
@@ -1709,7 +1689,7 @@ function retrieveTreasuryYieldsFromAlphaVantage() {
             timestamp: new Date(latestData.date)
           });
           
-          Logger.log(`Successfully retrieved ${term} yield from Alpha Vantage: ${yieldValue.toFixed(2)}%`);
+          Logger.log(`Successfully retrieved ${term} yield from Alpha Vantage: ${formatValue(yieldValue)}%`);
         }
       } else {
         Logger.log(`Failed to retrieve ${term} yield from Alpha Vantage. Response code: ${response.getResponseCode()}`);
@@ -1729,10 +1709,10 @@ function retrieveTreasuryYieldsFromAlphaVantage() {
 /**
  * Helper function to format values safely
  * @param {Number} value - The value to format
- * @param {Number} decimals - Number of decimal places (default: 1)
+ * @param {Number} decimals - Number of decimal places (default: 2)
  * @return {String} Formatted value
  */
-function formatValue(value, decimals = 1) {
+function formatValue(value, decimals = 2) {
   if (value === undefined || value === null || isNaN(value)) {
     return "N/A";
   }
@@ -2147,5 +2127,326 @@ function getMacroeconomicAIProvider() {
   } catch (error) {
     Logger.log(`Error getting macroeconomic AI provider: ${error}`);
     return "openai"; // Default to OpenAI if there's an error
+  }
+}
+
+/**
+ * Retrieves geopolitical risks data from Perplexity API
+ * @return {Object} Geopolitical risks data
+ */
+function retrieveGeopoliticalRisksFromPerplexity() {
+  try {
+    Logger.log("Retrieving geopolitical risks data from Perplexity API...");
+    
+    // Get the Perplexity API key
+    const apiKey = getPerplexityApiKey();
+    if (!apiKey) {
+      throw new Error("Perplexity API key not found in script properties");
+    }
+    
+    // Create the prompt for Perplexity
+    const currentDate = new Date();
+    const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
+    
+    const prompt = `Analyze the current major geopolitical risks that could impact financial markets as of ${formattedDate}. 
+    
+    Format your response as a valid JSON object with the following structure:
+    {
+      "geopoliticalRiskIndex": 50, // A number from 0-100 representing overall risk level
+      "risks": [
+        {
+          "type": "Event/Conflict/Policy",
+          "name": "Brief name of the risk",
+          "description": "Detailed description of the risk",
+          "region": "Affected region",
+          "impactLevel": "High/Medium/Low",
+          "marketImpact": "Description of potential market impact",
+          "source": "Source of information",
+          "url": "URL to source"
+        }
+      ],
+      "source": "Data sources used",
+      "sourceUrl": "URL to primary source",
+      "lastUpdated": "${currentDate.toISOString()}"
+    }
+    
+    Include 3-5 of the most significant current geopolitical risks. Ensure all data is accurate and from reputable sources.`;
+    
+    // Set up the API request
+    const url = "https://api.perplexity.ai/chat/completions";
+    const payload = {
+      model: "sonar-pro",
+      messages: [
+        {
+          role: "system",
+          content: "You are a geopolitical analyst specializing in identifying risks that impact financial markets. Provide accurate, up-to-date information in JSON format only."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 4000
+    };
+    
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    
+    // Call the Perplexity API
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode !== 200) {
+      throw new Error(`Perplexity API returned status code ${responseCode}: ${response.getContentText()}`);
+    }
+    
+    const responseData = JSON.parse(response.getContentText());
+    const content = responseData.choices[0].message.content;
+    
+    // Extract JSON from the response
+    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) {
+      throw new Error("Could not extract JSON from Perplexity response");
+    }
+    
+    const geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+    
+    // Add timestamp
+    geopoliticalData.lastUpdated = new Date();
+    
+    // Cache the result for 24 hours
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(geopoliticalData), 86400);
+    
+    return geopoliticalData;
+  } catch (error) {
+    Logger.log(`Error retrieving geopolitical risks from Perplexity: ${error}`);
+    
+    // Fall back to OpenAI if Perplexity fails
+    try {
+      Logger.log("Falling back to OpenAI for geopolitical risks data");
+      return retrieveGeopoliticalRisksFromOpenAI();
+    } catch (fallbackError) {
+      Logger.log(`Fallback to OpenAI also failed: ${fallbackError}`);
+      
+      // Return a fallback object
+      return {
+        geopoliticalRiskIndex: 50,
+        risks: [
+          {
+            type: 'Event',
+            name: "API Error",
+            description: "Geopolitical risk data retrieval encountered an API error.",
+            region: "Global",
+            impactLevel: "Unknown",
+            marketImpact: "Unable to assess market impact at this time.",
+            source: "System",
+            url: "https://perplexity.ai/"
+          }
+        ],
+        source: "System (Error Fallback)",
+        sourceUrl: "https://perplexity.ai/",
+        lastUpdated: new Date(),
+        error: error.toString()
+      };
+    }
+  }
+}
+
+/**
+ * Retrieves geopolitical risks data from OpenAI API
+ * @return {Object} Geopolitical risks data
+ */
+function retrieveGeopoliticalRisksFromOpenAI() {
+  try {
+    Logger.log("Retrieving geopolitical risks data from OpenAI API...");
+    
+    // Get the OpenAI API key
+    const apiKey = getOpenAIApiKey();
+    if (!apiKey) {
+      throw new Error("OpenAI API key not found in script properties");
+    }
+    
+    // Create the prompt for OpenAI
+    const currentDate = new Date();
+    const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
+    
+    const prompt = `Analyze the current major geopolitical risks that could impact financial markets as of ${formattedDate}. 
+    
+    Format your response as a valid JSON object with the following structure:
+    {
+      "geopoliticalRiskIndex": 50, // A number from 0-100 representing overall risk level
+      "risks": [
+        {
+          "type": "Event/Conflict/Policy",
+          "name": "Brief name of the risk",
+          "description": "Detailed description of the risk",
+          "region": "Affected region",
+          "impactLevel": "High/Medium/Low",
+          "marketImpact": "Description of potential market impact",
+          "source": "Source of information",
+          "url": "URL to source"
+        }
+      ],
+      "source": "Data sources used",
+      "sourceUrl": "URL to primary source",
+      "lastUpdated": "${currentDate.toISOString()}"
+    }
+    
+    Include 3-5 of the most significant current geopolitical risks. Ensure all data is accurate and from reputable sources.`;
+    
+    // Set up the API request
+    const url = "https://api.openai.com/v1/chat/completions";
+    const payload = {
+      model: "gpt-4-turbo",
+      messages: [
+        {
+          role: "system",
+          content: "You are a geopolitical analyst specializing in identifying risks that impact financial markets. Provide accurate, up-to-date information in JSON format only."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.2,
+      max_tokens: 4000
+    };
+    
+    const options = {
+      method: 'post',
+      contentType: 'application/json',
+      headers: {
+        'Authorization': 'Bearer ' + apiKey
+      },
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    
+    // Call the OpenAI API
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode !== 200) {
+      throw new Error(`OpenAI API returned status code ${responseCode}: ${response.getContentText()}`);
+    }
+    
+    const responseData = JSON.parse(response.getContentText());
+    const content = responseData.choices[0].message.content;
+    
+    // Extract JSON from the response
+    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
+    
+    if (!jsonMatch) {
+      throw new Error("Could not extract JSON from OpenAI response");
+    }
+    
+    const geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+    
+    // Add timestamp
+    geopoliticalData.lastUpdated = new Date();
+    
+    // Cache the result for 24 hours
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(geopoliticalData), 86400);
+    
+    return geopoliticalData;
+  } catch (error) {
+    Logger.log(`Error retrieving geopolitical risks from OpenAI: ${error}`);
+    
+    // Return a fallback object
+    return {
+      geopoliticalRiskIndex: 50,
+      risks: [
+        {
+          type: 'Event',
+          name: "API Error",
+          description: "Geopolitical risk data retrieval encountered an API error.",
+          region: "Global",
+          impactLevel: "Unknown",
+          marketImpact: "Unable to assess market impact at this time.",
+          source: "System",
+          url: "https://openai.com/"
+        }
+      ],
+      source: "System (Error Fallback)",
+      sourceUrl: "https://openai.com/",
+      lastUpdated: new Date(),
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Clears all macroeconomic factors caches
+ * This function clears both the script cache and any stale caches in properties service
+ * @return {Object} Result object with success status and message
+ */
+function clearMacroeconomicFactorsCache() {
+  try {
+    Logger.log("Clearing all macroeconomic factors caches...");
+    
+    // Step 1: Clear script cache
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKeys = [
+      'MACROECONOMIC_FACTORS_COMPLETE',  // Main complete data cache
+      'TREASURY_YIELDS_DATA',            // Treasury yields component cache
+      'FED_POLICY_DATA',                 // Fed policy component cache
+      'INFLATION_DATA',                  // Inflation data component cache
+      'GEOPOLITICAL_RISKS_DATA'          // Geopolitical risks component cache
+    ];
+    
+    scriptCache.removeAll(cacheKeys);
+    Logger.log("Script cache cleared successfully");
+    
+    // Step 2: Clear stale caches from properties service
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const stalePropertyKeys = [
+      'TREASURY_YIELDS_STALE_CACHE',
+      'FED_POLICY_STALE_CACHE',
+      'INFLATION_DATA_STALE_CACHE',
+      'GEOPOLITICAL_RISKS_STALE_CACHE',
+      'MACROECONOMIC_FACTORS_STALE_CACHE'
+    ];
+    
+    stalePropertyKeys.forEach(key => {
+      try {
+        scriptProperties.deleteProperty(key);
+        Logger.log(`Deleted stale cache property: ${key}`);
+      } catch (propError) {
+        Logger.log(`Error deleting property ${key}: ${propError}`);
+      }
+    });
+    
+    const result = {
+      success: true,
+      message: "All macroeconomic factors caches have been successfully cleared",
+      clearedCaches: {
+        scriptCache: cacheKeys,
+        propertiesCache: stalePropertyKeys
+      },
+      timestamp: new Date()
+    };
+    
+    Logger.log(result.message);
+    return result;
+  } catch (error) {
+    const errorResult = {
+      success: false,
+      message: `Failed to clear macroeconomic factors caches: ${error}`,
+      timestamp: new Date()
+    };
+    
+    Logger.log(errorResult.message);
+    return errorResult;
   }
 }

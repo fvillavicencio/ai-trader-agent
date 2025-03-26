@@ -205,9 +205,9 @@ function testTradingAnalysis() {
   Logger.log("Running test trading analysis...");
   
   try {
-    // Get the trading analysis from Perplexity
-    const analysisResult = getPerplexityAnalysis();
-    Logger.log("Analysis received from Perplexity.");
+    // Get the trading analysis from OpenAI
+    const analysisResult = getOpenAITradingAnalysis();
+    Logger.log("Analysis received from OpenAI.");
     
     // Extract the decision and justification from the analysis
     const { decision, justification } = parseAnalysisResult(analysisResult);
@@ -260,4 +260,50 @@ function viewTriggerConfig() {
   
   Logger.log(triggerInfo);
   return triggerInfo;
+}
+
+/**
+ * Sets up the required script properties for the application
+ * This should be run once to initialize the necessary properties
+ */
+function setupScriptProperties() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  
+  // Set up the recipient email
+  const recipientEmail = Session.getActiveUser().getEmail();
+  scriptProperties.setProperty('RECIPIENT_EMAIL', recipientEmail);
+  
+  // Set up any other required properties
+  // scriptProperties.setProperty('OPENAI_API_KEY', 'your-api-key-here');
+  
+  Logger.log("Script properties have been set up successfully.");
+  Logger.log("Recipient email set to: " + recipientEmail);
+}
+
+/**
+ * View the current script properties (for debugging)
+ */
+function viewScriptProperties() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const properties = scriptProperties.getProperties();
+  
+  Logger.log("Current script properties:");
+  for (const key in properties) {
+    // Mask API keys for security
+    if (key.includes('API_KEY')) {
+      Logger.log(key + ": " + "*".repeat(10));
+    } else {
+      Logger.log(key + ": " + properties[key]);
+    }
+  }
+}
+
+/**
+ * Clears all script properties
+ * Use with caution as this will remove all stored properties
+ */
+function clearScriptProperties() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  scriptProperties.deleteAllProperties();
+  Logger.log("All script properties have been cleared.");
 }

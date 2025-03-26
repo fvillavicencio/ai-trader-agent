@@ -11,8 +11,8 @@ function generateDataRetrievalText() {
     // Retrieve all data
     const allData = retrieveAllData();
     
-    // Start building the formatted text with just the retrieved data
-    let formattedText = "";
+    // Initialize formatted text
+    let formattedText = "\n\n**Retrieved Data:**\n\n";
     
     // Add Market Sentiment section
     formattedText += "**Market Sentiment Data:**\n";
@@ -223,50 +223,84 @@ function generateDataRetrievalText() {
       // Format fundamental metrics data
       formattedText += "**Fundamental Metrics Data:**\n";
       
-      if (allData.fundamentalMetrics && allData.fundamentalMetrics.success) {
-        const fundamentalMetricsData = allData.fundamentalMetrics;
-        
-        if (fundamentalMetricsData.data && Array.isArray(fundamentalMetricsData.data)) {
-          formattedText += `- Metrics for ${fundamentalMetricsData.data.length} stocks/ETFs:\n`;
+      // Debug logging before checking success
+      Logger.log(`DEBUG - Fundamental metrics before check: ${JSON.stringify(allData.fundamentalMetrics).substring(0, 200)}...`);
+      
+      // Check if we have fundamental metrics data
+      if (allData.fundamentalMetrics) {
+        // Process the actual data if it exists and is an array
+        if (allData.fundamentalMetrics.data && Array.isArray(allData.fundamentalMetrics.data) && allData.fundamentalMetrics.data.length > 0) {
+          const fundamentalMetricsData = allData.fundamentalMetrics;
           
-          fundamentalMetricsData.data.forEach(stock => {
-            const symbol = stock.symbol || "Unknown";
-            const name = stock.name || "Unknown";
+          // Debug logging to see what's in the fundamental metrics data
+          Logger.log(`DEBUG - Formatting fundamental metrics: ${JSON.stringify(fundamentalMetricsData).substring(0, 200)}...`);
+          Logger.log(`DEBUG - Fundamental metrics structure: success=${fundamentalMetricsData.success}, data=${fundamentalMetricsData.data ? 'present' : 'missing'}, data length=${fundamentalMetricsData.data ? fundamentalMetricsData.data.length : 0}`);
+          Logger.log(`DEBUG - Fundamental metrics data keys: ${Object.keys(fundamentalMetricsData)}`);
+          
+          // Sort the stocks - major indices first, then alphabetically
+          const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
+          const sortedStocks = [...fundamentalMetricsData.data].sort((a, b) => {
+            const aSymbol = a.symbol || "";
+            const bSymbol = b.symbol || "";
             
-            formattedText += `  * ${symbol} (${name}):\n`;
+            // Put major indices first
+            const aIsMajor = majorIndices.includes(aSymbol);
+            const bIsMajor = majorIndices.includes(bSymbol);
             
-            // Format price and price change if available
-            if (stock.price) {
-              const priceChange = stock.priceChange ? stock.priceChange : "N/A";
-              const percentChange = stock.percentChange ? `${stock.percentChange}%` : "";
-              
-              formattedText += `    - Price: $${stock.price} (${priceChange >= 0 ? '+' : ''}${priceChange}, ${percentChange >= 0 ? '+' : ''}${percentChange})\n`;
+            if (aIsMajor && !bIsMajor) return -1;
+            if (!aIsMajor && bIsMajor) return 1;
+            if (aIsMajor && bIsMajor) {
+              return majorIndices.indexOf(aSymbol) - majorIndices.indexOf(bSymbol);
             }
             
-            // Format other metrics
-            const metrics = [
-              { name: "PEG Ratio", value: stock.pegRatio },
-              { name: "Forward P/E", value: stock.forwardPE },
-              { name: "Price/Book", value: stock.priceToBook },
-              { name: "Price/Sales", value: stock.priceToSales },
-              { name: "Debt/Equity", value: stock.debtToEquity },
-              { name: "Return on Equity", value: stock.returnOnEquity, suffix: "%" },
-              { name: "Beta", value: stock.beta }
-            ];
-            
-            metrics.forEach(metric => {
-              if (metric.value !== undefined) {
-                const formattedValue = formatValue(metric.value, true);
-                const suffix = metric.suffix || "";
-                formattedText += `    - ${metric.name}: ${formattedValue}${suffix}\n`;
-              }
-            });
+            // Then sort alphabetically
+            return aSymbol.localeCompare(bSymbol);
           });
+          
+          // Group stocks into categories
+          const indices = sortedStocks.filter(stock => majorIndices.includes(stock.symbol));
+          const magSeven = sortedStocks.filter(stock => ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol));
+          const otherStocks = sortedStocks.filter(stock => 
+            !majorIndices.includes(stock.symbol) && 
+            !["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol)
+          );
+          
+          // Format major indices
+          if (indices.length > 0) {
+            formattedText += "- Major Indices:\n";
+            for (const stock of indices) {
+              formattedText = formatStockMetrics(stock, formattedText);
+            }
+          }
+          
+          // Format Magnificent Seven
+          if (magSeven.length > 0) {
+            formattedText += "- Magnificent Seven:\n";
+            for (const stock of magSeven) {
+              formattedText = formatStockMetrics(stock, formattedText);
+            }
+          }
+          
+          // Format other stocks
+          if (otherStocks.length > 0) {
+            formattedText += "- Other Stocks:\n";
+            for (const stock of otherStocks) {
+              formattedText = formatStockMetrics(stock, formattedText);
+            }
+          }
+          
+          // Add timestamp
+          formattedText += `- Last Updated: ${new Date(fundamentalMetricsData.timestamp || new Date()).toLocaleString()}\n`;
+          
+          // Add cache information
+          if (fundamentalMetricsData.fromCache) {
+            formattedText += `- Data retrieved from cache\n`;
+          }
         } else {
-          formattedText += "- No stock metrics available\n";
+          formattedText += "- No stock metrics data available\n";
         }
       } else {
-        formattedText += "- Error retrieving fundamental metrics data\n";
+        formattedText += "- Error: Fundamental metrics data not available\n";
       }
       
       formattedText += "\n";
@@ -586,6 +620,63 @@ function generateDataRetrievalText() {
 }
 
 /**
+ * Helper function to format stock metrics
+ * @param {Object} stock - Stock data
+ * @param {String} formattedText - Formatted text to append to
+ * @return {String} - Updated formatted text
+ */
+function formatStockMetrics(stock, formattedText) {
+  const symbol = stock.symbol || "Unknown";
+  const name = stock.name || "Unknown";
+  
+  formattedText += `  * ${symbol} (${name}):\n`;
+  
+  // Format price and price change if available
+  if (stock.price !== undefined && stock.price !== null) {
+    const priceStr = formatValue(stock.price, true);
+    let changeStr = "";
+    
+    if (stock.priceChange !== undefined && stock.priceChange !== null) {
+      const priceChangeStr = formatValue(stock.priceChange, true);
+      changeStr += `${stock.priceChange >= 0 ? '+' : ''}${priceChangeStr}`;
+    }
+    
+    if (stock.percentChange !== undefined && stock.percentChange !== null) {
+      const percentChangeStr = formatValue(stock.percentChange, true);
+      changeStr += `${changeStr ? ', ' : ''}${stock.percentChange >= 0 ? '+' : ''}${percentChangeStr}%`;
+    }
+    
+    formattedText += `    - Price: $${priceStr}${changeStr ? ` (${changeStr})` : ''}\n`;
+  }
+  
+  // Format other metrics
+  const metrics = [
+    { name: "PEG Ratio", value: stock.pegRatio },
+    { name: "Forward P/E", value: stock.forwardPE },
+    { name: "Price/Book", value: stock.priceToBook },
+    { name: "Price/Sales", value: stock.priceToSales },
+    { name: "Debt/Equity", value: stock.debtToEquity },
+    { name: "Return on Equity", value: stock.returnOnEquity, suffix: "%" },
+    { name: "Return on Assets", value: stock.returnOnAssets, suffix: "%" },
+    { name: "Profit Margin", value: stock.profitMargin, suffix: "%" },
+    { name: "Dividend Yield", value: stock.dividendYield, suffix: "%" },
+    { name: "Beta", value: stock.beta }
+  ];
+  
+  metrics.forEach(metric => {
+    if (metric.value !== undefined && metric.value !== null) {
+      const formattedValue = formatValue(metric.value, true);
+      const suffix = metric.suffix || "";
+      formattedText += `    - ${metric.name}: ${formattedValue}${suffix}\n`;
+    }
+  });
+  
+  // Don't add data source information as requested by user
+  
+  return formattedText;
+}
+
+/**
  * Retrieves all data needed for the trading analysis
  * @return {Object} All data needed for the trading analysis
  */
@@ -711,11 +802,19 @@ function retrieveFundamentalMetrics(symbols) {
     // Call the function from FundamentalMetrics.gs with the same name
     const metrics = FundamentalMetrics.retrieveFundamentalMetrics(symbols);
     
+    // Debug logging to see what's being returned
+    Logger.log(`DEBUG - FundamentalMetrics returned: ${JSON.stringify(metrics).substring(0, 200)}...`);
+    Logger.log(`DEBUG - FundamentalMetrics data structure: status=${metrics.status}, data=${metrics.data ? 'present' : 'missing'}, metrics=${metrics.metrics ? 'present' : 'missing'}`);
+    
+    // Properly handle the response structure from FundamentalMetrics.gs
     return {
-      success: true,
-      data: metrics.metrics || [],
+      success: metrics.status === 'success',
+      message: metrics.message || '',
+      data: metrics.data || [],
       timestamp: new Date(),
-      fromCache: metrics.fromCache || false
+      fromCache: metrics.cachePerformance ? metrics.cachePerformance.hits > 0 : false,
+      executionTime: metrics.executionTime || 0,
+      cachePerformance: metrics.cachePerformance || { hits: 0, misses: 0, hitRate: '0%' }
     };
   } catch (error) {
     Logger.log(`Error retrieving fundamental metrics data: ${error}`);
@@ -723,7 +822,8 @@ function retrieveFundamentalMetrics(symbols) {
       success: false,
       error: true,
       message: `Failed to retrieve fundamental metrics data: ${error}`,
-      timestamp: new Date()
+      timestamp: new Date(),
+      data: []
     };
   }
 }

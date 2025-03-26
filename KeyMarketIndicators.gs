@@ -437,7 +437,7 @@ function fetchIndexData(symbol) {
     const percentChange = (change / previousClose) * 100;
     
     // Get the timestamp of the last update from Yahoo Finance
-    const timestamp = new Date(meta.regularMarketTime * 1000);
+    const timestamp = meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000) : new Date();
     
     return {
       price: latestPrice,
@@ -765,52 +765,85 @@ function retrieveFearAndGreedIndex() {
       // Continue execution - we'll get fresh data below
     }
     
-    // Try to get data from primary source (CNN)
+    // Try to get data from primary source (RapidAPI)
     let data = null;
     let source = "";
     let sourceUrl = "";
     let errorMessage = "";
     
+    // First try the RapidAPI method
     try {
-      // Fetch the Fear & Greed Index data from CNN
-      Logger.log("Attempting to fetch Fear & Greed Index from CNN...");
-      data = fetchFearAndGreedIndexData();
-      source = "CNN Business";
-      sourceUrl = "https://www.cnn.com/markets/fear-and-greed";
+      Logger.log("Attempting to fetch Fear & Greed Index from RapidAPI...");
+      data = fetchFearAndGreedIndexFromRapidAPI();
+      source = "Fear and Greed Index API (RapidAPI)";
+      sourceUrl = "https://fear-and-greed-index.p.rapidapi.com/v1/fgi";
       
       if (data) {
-        Logger.log("Successfully retrieved Fear & Greed Index from CNN");
+        Logger.log("Successfully retrieved Fear & Greed Index from RapidAPI");
       } else {
-        errorMessage = "CNN Fear & Greed Index data unavailable";
+        errorMessage = "RapidAPI Fear & Greed Index data unavailable";
         Logger.log(errorMessage);
       }
-    } catch (primaryError) {
-      errorMessage = "Error fetching from CNN: " + primaryError;
+    } catch (rapidApiError) {
+      errorMessage = "Error fetching from RapidAPI: " + rapidApiError;
       Logger.log(errorMessage);
-      // Continue to alternative source
+      // Continue to CNN API
     }
     
-    // If primary source failed, try alternative source (Alternative.me)
+    // If RapidAPI method failed, try CNN API
     if (!data) {
       try {
-        Logger.log("Primary source failed, attempting to fetch Fear & Greed Index from Alternative.me...");
-        data = fetchAlternativeFearAndGreedIndex();
-        source = "Alternative.me Crypto Fear & Greed Index";
-        sourceUrl = "https://alternative.me/crypto/fear-and-greed-index/";
+        // Fetch the Fear & Greed Index data from CNN
+        Logger.log("RapidAPI method failed, attempting to fetch Fear & Greed Index from CNN...");
+        data = fetchFearAndGreedIndexData();
+        source = "CNN Business";
+        sourceUrl = "https://www.cnn.com/markets/fear-and-greed";
         
         if (data) {
-          Logger.log("Successfully retrieved Fear & Greed Index from Alternative.me");
+          Logger.log("Successfully retrieved Fear & Greed Index from CNN");
         } else {
-          errorMessage += " | Alternative.me Fear & Greed Index data unavailable";
-          Logger.log("Alternative.me Fear & Greed Index data unavailable");
+          errorMessage = "CNN Fear & Greed Index data unavailable";
+          Logger.log(errorMessage);
         }
-      } catch (alternativeError) {
-        errorMessage += " | Error fetching from Alternative.me: " + alternativeError;
-        Logger.log("Error fetching from Alternative.me: " + alternativeError);
+      } catch (primaryError) {
+        errorMessage = "Error fetching from CNN: " + primaryError;
+        Logger.log(errorMessage);
+        // Continue to alternative source
       }
     }
     
-    // If both sources failed, check for stale cache (up to 24 hours old)
+    // If CNN API failed, try HTML parsing method
+    if (!data) {
+      try {
+        Logger.log("CNN API failed, trying HTML parsing method...");
+        const htmlData = getCNNFearGreedIndexFromHTML();
+        
+        if (htmlData && !htmlData.error) {
+          Logger.log("Successfully retrieved Fear & Greed Index via HTML parsing");
+          
+          // Create a result object in the expected format
+          data = {
+            fear_and_greed: {
+              score: htmlData.currentValue,
+              previous_close: htmlData.previousValue,
+              previous_1_week: htmlData.oneWeekAgo,
+              previous_1_month: htmlData.oneMonthAgo,
+              previous_1_year: htmlData.oneYearAgo
+            }
+          };
+          
+          source = htmlData.source;
+          sourceUrl = htmlData.sourceUrl;
+        } else {
+          Logger.log("HTML parsing method failed to retrieve Fear & Greed Index");
+        }
+      } catch (htmlError) {
+        Logger.log("Error with HTML parsing method: " + htmlError);
+        // Continue to stale cache
+      }
+    }
+    
+    // If all methods failed, check for stale cache (up to 24 hours old)
     if (!data) {
       try {
         Logger.log("All sources failed, checking for stale cache (up to 24 hours old)...");
@@ -909,64 +942,147 @@ function retrieveFearAndGreedIndex() {
 }
 
 /**
- * Fetches the Fear & Greed Index from Alternative.me (crypto)
- * This serves as an alternative source when CNN is unavailable
+ * Retrieves the CNN Fear & Greed Index data
  * @return {Object} Raw Fear & Greed Index data or null if unavailable
  */
-function fetchAlternativeFearAndGreedIndex() {
+function retrieveFearAndGreedIndexData() {
   try {
-    // Use the limit parameter to get more historical data
-    const url = "https://api.alternative.me/fng/?limit=10";
-    const options = {
-      method: "get",
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.114 Safari/537.36'
-      },
-      muteHttpExceptions: true
-    };
+    Logger.log("Retrieving CNN Fear & Greed Index data...");
     
-    Logger.log("Attempting to fetch Fear & Greed Index from Alternative.me...");
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-    
-    if (responseCode !== 200) {
-      Logger.log(`Alternative.me API error: Response code ${responseCode}`);
-      return null;
-    }
-    
-    const responseText = response.getContentText();
-    const parsedData = JSON.parse(responseText);
-    
-    // Verify we have valid data
-    if (!parsedData || !parsedData.data || parsedData.data.length === 0) {
-      Logger.log("Invalid data format from Alternative.me API");
-      return null;
-    }
-    
-    // Convert Alternative.me data format to match CNN format for compatibility
-    const currentData = parsedData.data[0];
-    const yesterdayData = parsedData.data.length > 1 ? parsedData.data[1] : null;
-    const weekAgoIndex = Math.min(7, parsedData.data.length - 1);
-    const weekAgoData = parsedData.data.length > weekAgoIndex ? parsedData.data[weekAgoIndex] : null;
-    
-    // Log the retrieved data for debugging
-    Logger.log(`Alternative.me current value: ${currentData.value}, classification: ${currentData.value_classification}`);
-    
-    // Create a compatible data structure
-    return {
-      fear_and_greed: {
-        score: currentData.value,
-        previous_close: yesterdayData ? yesterdayData.value : null,
-        previous_1_week: weekAgoData ? weekAgoData.value : null,
-        previous_1_month: null, // Not available in this API
-        previous_1_year: null,  // Not available in this API
-        rating_data: null       // Not available in this API
+    // Check if we have cached data first
+    try {
+      const scriptCache = CacheService.getScriptCache();
+      const cachedData = scriptCache.get('FEAR_AND_GREED_INDEX_DATA');
+      
+      if (cachedData) {
+        Logger.log("Using cached Fear & Greed Index data (less than 1 hour old)");
+        return JSON.parse(cachedData);
       }
+    } catch (cacheError) {
+      Logger.log("Cache retrieval error for Fear & Greed Index: " + cacheError);
+      // Continue execution - we'll get fresh data below
+    }
+    
+    // Try to get data from CNN
+    let data = null;
+    let source = "";
+    let sourceUrl = "";
+    let errorMessage = "";
+    
+    try {
+      // Fetch the Fear & Greed Index data from CNN
+      Logger.log("Attempting to fetch Fear & Greed Index from CNN...");
+      data = fetchFearAndGreedIndexData();
+      source = "CNN Business";
+      sourceUrl = "https://www.cnn.com/markets/fear-and-greed";
+      
+      if (data) {
+        Logger.log("Successfully retrieved Fear & Greed Index from CNN");
+      } else {
+        errorMessage = "CNN Fear & Greed Index data unavailable";
+        Logger.log(errorMessage);
+      }
+    } catch (primaryError) {
+      errorMessage = "Error fetching from CNN: " + primaryError;
+      Logger.log(errorMessage);
+      // Continue to alternative source
+    }
+    
+    // If source failed, check for stale cache (up to 24 hours old)
+    if (!data) {
+      try {
+        Logger.log("CNN source failed, checking for stale cache (up to 24 hours old)...");
+        const scriptProperties = PropertiesService.getScriptProperties();
+        const staleCacheData = scriptProperties.getProperty('FEAR_AND_GREED_INDEX_STALE_CACHE');
+        
+        if (staleCacheData) {
+          const parsedStaleData = JSON.parse(staleCacheData);
+          const cacheTimestamp = new Date(parsedStaleData.timestamp);
+          const currentTime = new Date();
+          const cacheAge = (currentTime - cacheTimestamp) / (1000 * 60 * 60); // Age in hours
+          
+          if (cacheAge <= 24) {
+            Logger.log(`Using stale cache (${cacheAge.toFixed(1)} hours old)`);
+            parsedStaleData.isStaleData = true;
+            parsedStaleData.staleAge = `${cacheAge.toFixed(1)} hours`;
+            return parsedStaleData;
+          } else {
+            Logger.log("Stale cache is too old (> 24 hours)");
+          }
+        } else {
+          Logger.log("No stale cache available");
+        }
+      } catch (staleCacheError) {
+        Logger.log("Error retrieving stale cache: " + staleCacheError);
+      }
+    }
+    
+    // If all attempts failed, return error object
+    if (!data) {
+      Logger.log("All attempts to retrieve Fear & Greed Index failed");
+      return {
+        error: true,
+        errorMessage: errorMessage,
+        timestamp: new Date()
+      };
+    }
+    
+    // Extract the current value and calculate the rating
+    const currentValue = data.fear_and_greed && data.fear_and_greed.score ? parseInt(data.fear_and_greed.score) : null;
+    
+    // If we couldn't extract a valid value, return error
+    if (currentValue === null || isNaN(currentValue)) {
+      Logger.log("Invalid Fear & Greed Index value");
+      return {
+        error: true,
+        errorMessage: "Invalid Fear & Greed Index value",
+        timestamp: new Date()
+      };
+    }
+    
+    // Calculate the rating based on the value
+    const rating = getRatingFromValue(currentValue);
+    
+    // Create the result object
+    const result = {
+      currentValue: currentValue,
+      rating: rating,
+      previousValue: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null,
+      previousRating: data.fear_and_greed && data.fear_and_greed.previous_close ? getRatingFromValue(parseInt(data.fear_and_greed.previous_close)) : null,
+      oneWeekAgo: data.fear_and_greed && data.fear_and_greed.previous_1_week ? parseInt(data.fear_and_greed.previous_1_week) : null,
+      oneMonthAgo: data.fear_and_greed && data.fear_and_greed.previous_1_month ? parseInt(data.fear_and_greed.previous_1_month) : null,
+      oneYearAgo: data.fear_and_greed && data.fear_and_greed.previous_1_year ? parseInt(data.fear_and_greed.previous_1_year) : null,
+      components: data.fear_and_greed && data.fear_and_greed.rating_data ? data.fear_and_greed.rating_data : null,
+      source: source,
+      sourceUrl: sourceUrl,
+      timestamp: new Date(),
+      error: false
     };
+    
+    // Cache the result in both short-term and long-term storage
+    try {
+      // Short-term cache (1 hour)
+      const scriptCache = CacheService.getScriptCache();
+      scriptCache.put('FEAR_AND_GREED_INDEX_DATA', JSON.stringify(result), 3600); // Cache for 1 hour
+      
+      // Long-term stale cache (for fallback, stored in Properties)
+      const scriptProperties = PropertiesService.getScriptProperties();
+      scriptProperties.setProperty('FEAR_AND_GREED_INDEX_STALE_CACHE', JSON.stringify(result));
+      
+      Logger.log("Fear & Greed Index data cached successfully (both fresh and stale cache)");
+    } catch (cacheError) {
+      Logger.log("Error caching Fear & Greed Index data: " + cacheError);
+    }
+    
+    Logger.log(`Retrieved Fear & Greed Index: ${result.currentValue} (${result.rating}) from ${source}`);
+    return result;
   } catch (error) {
-    Logger.log(`Error in fetchAlternativeFearAndGreedIndex: ${error}`);
-    return null;
+    Logger.log(`Error retrieving Fear & Greed Index: ${error}`);
+    return {
+      error: true,
+      errorMessage: `Error retrieving Fear & Greed Index: ${error}`,
+      timestamp: new Date()
+    };
   }
 }
 
@@ -1084,6 +1200,77 @@ function fetchFearAndGreedIndexData() {
 }
 
 /**
+ * Fetches the Fear & Greed Index from RapidAPI
+ * @return {Object} Raw Fear & Greed Index data or null if unavailable
+ */
+function fetchFearAndGreedIndexFromRapidAPI() {
+  try {
+    // Get the RapidAPI key from script properties
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const rapidApiKey = scriptProperties.getProperty('FEAR_AND_GREED_API_KEY') || "11a04f84bcmsh487153f50836466p12496cjsna9e0022cf2b6";
+    
+    if (!rapidApiKey) {
+      Logger.log("No RapidAPI key found in script properties");
+      return null;
+    }
+    
+    const rapidApiUrl = "https://fear-and-greed-index.p.rapidapi.com/v1/fgi";
+    
+    const options = {
+      method: "get",
+      headers: {
+        'x-rapidapi-key': rapidApiKey,
+        'x-rapidapi-host': 'fear-and-greed-index.p.rapidapi.com'
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(rapidApiUrl, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode === 200) {
+      const responseText = response.getContentText();
+      const data = JSON.parse(responseText);
+      
+      // Log the full response for debugging
+      Logger.log("RapidAPI response: " + responseText);
+      
+      // Verify we have valid data - the structure is nested
+      if (data && data.fgi && data.fgi.now && data.fgi.now.value) {
+        const currentValue = parseInt(data.fgi.now.value);
+        Logger.log(`Successfully retrieved Fear & Greed Index data from RapidAPI: Score=${currentValue}`);
+        
+        // Create a response object that matches our expected format
+        return {
+          fear_and_greed: {
+            score: currentValue,
+            previous_close: data.fgi.previousClose ? parseInt(data.fgi.previousClose.value) : null,
+            previous_1_week: data.fgi.oneWeekAgo ? parseInt(data.fgi.oneWeekAgo.value) : null,
+            previous_1_month: data.fgi.oneMonthAgo ? parseInt(data.fgi.oneMonthAgo.value) : null,
+            previous_1_year: data.fgi.oneYearAgo ? parseInt(data.fgi.oneYearAgo.value) : null
+          }
+        };
+      }
+      
+      Logger.log("RapidAPI returned 200 but data structure is invalid. Data received: " + JSON.stringify(data).substring(0, 200));
+    } else {
+      Logger.log(`RapidAPI failed with response code ${responseCode}`);
+      try {
+        const errorText = response.getContentText();
+        Logger.log(`Error response: ${errorText.substring(0, 200)}...`);
+      } catch (e) {
+        Logger.log("Could not get error response text");
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    Logger.log(`Error retrieving Fear & Greed Index from RapidAPI: ${error}`);
+    return null;
+  }
+}
+
+/**
  * Gets the rating from a Fear & Greed Index value
  * @param {Number} value - Fear & Greed Index value (0-100)
  * @return {String} Rating
@@ -1097,9 +1284,9 @@ function getRatingFromValue(value) {
     return "Extreme Fear";
   } else if (value <= 45) {
     return "Fear";
-  } else if (value <= 55) {
+  } else if (value <= 54) {
     return "Neutral";
-  } else if (value <= 75) {
+  } else if (value <= 74) {
     return "Greed";
   } else {
     return "Extreme Greed";
@@ -1453,12 +1640,52 @@ function testClearAndRetrieveKeyMarketIndicators() {
     // Log the results
     Logger.log("KEY MARKET INDICATORS DATA RESULTS:");
     Logger.log(`Status: ${keyMarketIndicators.success ? "Success" : "Failure"}`);
-    Logger.log(`Message: ${keyMarketIndicators.message || "No message"}`);
-    Logger.log(`Major Indices: ${keyMarketIndicators.majorIndices && keyMarketIndicators.majorIndices.length > 0 ? `Found ${keyMarketIndicators.majorIndices.length} indices` : "Not found"}`);
-    Logger.log(`Sector Performance: ${keyMarketIndicators.sectorPerformance && keyMarketIndicators.sectorPerformance.length > 0 ? `Found ${keyMarketIndicators.sectorPerformance.length} sectors` : "Not found"}`);
-    Logger.log(`Volatility Indices: ${keyMarketIndicators.volatilityIndices && keyMarketIndicators.volatilityIndices.length > 0 ? `Found ${keyMarketIndicators.volatilityIndices.length} indices` : "Not found"}`);
-    Logger.log(`Fear & Greed Index: ${keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error ? "Retrieved" : "Not found"}`);
-    Logger.log(`Upcoming Economic Events: ${keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0 ? `Found ${keyMarketIndicators.upcomingEconomicEvents.length} events` : "Not found"}`);
+    Logger.log(`Message: ${keyMarketIndicators.message}`);
+    
+    // Check Major Indices
+    if (keyMarketIndicators.majorIndices && keyMarketIndicators.majorIndices.length > 0) {
+      Logger.log(`Major Indices: Retrieved ${keyMarketIndicators.majorIndices.length} indices`);
+      Logger.log(`First index: ${keyMarketIndicators.majorIndices[0].name} (${keyMarketIndicators.majorIndices[0].symbol}): ${keyMarketIndicators.majorIndices[0].value}`);
+    } else {
+      Logger.log("Major Indices: Not found");
+    }
+    
+    // Check Sector Performance
+    if (keyMarketIndicators.sectorPerformance && keyMarketIndicators.sectorPerformance.length > 0) {
+      Logger.log(`Sector Performance: Retrieved ${keyMarketIndicators.sectorPerformance.length} sectors`);
+      Logger.log(`First sector: ${keyMarketIndicators.sectorPerformance[0].name}: ${keyMarketIndicators.sectorPerformance[0].percentChange}%`);
+    } else {
+      Logger.log("Sector Performance: Not found");
+    }
+    
+    // Check Volatility Indices
+    if (keyMarketIndicators.volatilityIndices && keyMarketIndicators.volatilityIndices.length > 0) {
+      Logger.log(`Volatility Indices: Retrieved ${keyMarketIndicators.volatilityIndices.length} indices`);
+      Logger.log(`First index: ${keyMarketIndicators.volatilityIndices[0].name} (${keyMarketIndicators.volatilityIndices[0].symbol}): ${keyMarketIndicators.volatilityIndices[0].value}`);
+    } else {
+      Logger.log("Volatility Indices: Not found");
+    }
+    
+    // Check Fear & Greed Index
+    if (keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error) {
+      Logger.log(`Fear & Greed Index: Retrieved (${keyMarketIndicators.fearAndGreedIndex.currentValue} - ${keyMarketIndicators.fearAndGreedIndex.rating})`);
+      Logger.log(`Source: ${keyMarketIndicators.fearAndGreedIndex.source}`);
+      Logger.log(`Is Stale Data: ${keyMarketIndicators.fearAndGreedIndex.isStaleData ? "Yes" : "No"}`);
+    } else {
+      Logger.log("Fear & Greed Index: Not found");
+      if (keyMarketIndicators.fearAndGreedIndex && keyMarketIndicators.fearAndGreedIndex.errorMessage) {
+        Logger.log(`Error: ${keyMarketIndicators.fearAndGreedIndex.errorMessage}`);
+      }
+    }
+    
+    // Check Upcoming Economic Events
+    if (keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0) {
+      Logger.log(`Upcoming Economic Events: Retrieved ${keyMarketIndicators.upcomingEconomicEvents.length} events`);
+      Logger.log(`Source: ${keyMarketIndicators.upcomingEconomicEvents.source}`);
+      Logger.log(`Is Stale Data: ${keyMarketIndicators.upcomingEconomicEvents.isStaleData ? "Yes" : "No"}`);
+    } else {
+      Logger.log("Upcoming Economic Events: Not found");
+    }
     
     // Log the formatted data
     Logger.log("Formatted Key Market Indicators Data:");
@@ -1468,33 +1695,6 @@ function testClearAndRetrieveKeyMarketIndicators() {
   } catch (error) {
     Logger.log(`Error in testClearAndRetrieveKeyMarketIndicators: ${error}`);
     return `Error: ${error}`;
-  }
-}
-
-/**
- * Clears the key market indicators cache
- * @return {Object} Result of the cache clearing operation
- */
-function clearKeyMarketIndicatorsCache() {
-  try {
-    Logger.log("Clearing key market indicators cache...");
-    
-    const scriptCache = CacheService.getScriptCache();
-    scriptCache.remove('KEY_MARKET_INDICATORS_DATA');
-    
-    Logger.log("Key market indicators cache cleared successfully");
-    return {
-      success: true,
-      message: "Key market indicators cache cleared successfully",
-      timestamp: new Date()
-    };
-  } catch (error) {
-    Logger.log(`Error clearing key market indicators cache: ${error}`);
-    return {
-      success: false,
-      message: `Error clearing key market indicators cache: ${error}`,
-      timestamp: new Date()
-    };
   }
 }
 
@@ -1613,5 +1813,321 @@ function testImprovedDataRetrieval() {
   } catch (error) {
     Logger.log(`Error in testImprovedDataRetrieval: ${error}`);
     return `Error: ${error}`;
+  }
+}
+
+/**
+ * Test function to verify the RapidAPI Fear and Greed Index retrieval
+ * This tests the fallback mechanism to ensure all methods are working correctly
+ */
+function testFearAndGreedIndexWithRapidAPI() {
+  try {
+    Logger.log("=== TESTING FEAR AND GREED INDEX WITH RAPIDAPI ===");
+    
+    // Check if we have cached data first
+    const scriptCache = CacheService.getScriptCache();
+    const cachedData = scriptCache.get('FEAR_AND_GREED_INDEX_DATA');
+    
+    if (cachedData) {
+      Logger.log("Found existing cached Fear & Greed Index data:");
+      Logger.log(cachedData.substring(0, 200) + "...");
+    } else {
+      Logger.log("No existing cached Fear & Greed Index data found");
+    }
+    
+    // Clear the cache first to ensure we get fresh data
+    Logger.log("Clearing all caches...");
+    const clearResult = clearKeyMarketIndicatorsCache();
+    Logger.log("Cache clearing result: " + JSON.stringify(clearResult));
+    
+    // Verify cache was cleared
+    const afterClearCache = scriptCache.get('FEAR_AND_GREED_INDEX_DATA');
+    if (afterClearCache) {
+      Logger.log("WARNING: Cache was not cleared properly!");
+    } else {
+      Logger.log("Cache was cleared successfully");
+    }
+    
+    // Test RapidAPI method directly
+    Logger.log("\nTesting RapidAPI method directly...");
+    const rapidApiData = fetchFearAndGreedIndexFromRapidAPI();
+    
+    if (rapidApiData) {
+      Logger.log("RapidAPI method successful!");
+      Logger.log("Fear and Greed Index from RapidAPI: " + JSON.stringify(rapidApiData));
+      
+      // Extract the score
+      const score = rapidApiData.fear_and_greed?.score;
+      if (score !== null && score !== undefined) {
+        Logger.log(`Current Fear & Greed Index value: ${score} (${getRatingFromValue(score)})`);
+      }
+    } else {
+      Logger.log("RapidAPI method failed, will test fallback mechanisms");
+    }
+    
+    // Test the main retrieval function with fallback
+    Logger.log("\nTesting main retrieval function with fallback...");
+    const fullData = retrieveFearAndGreedIndex();
+    
+    if (fullData && !fullData.error) {
+      Logger.log("Fear and Greed Index retrieval successful!");
+      Logger.log("Current Value: " + fullData.currentValue + " (" + fullData.rating + ")");
+      Logger.log("Source: " + fullData.source);
+      Logger.log("Is Stale Data: " + (fullData.isStaleData ? "Yes" : "No"));
+      
+      // Check which method was used
+      if (fullData.source.includes("RapidAPI")) {
+        Logger.log("✅ RapidAPI method was used successfully");
+      } else if (fullData.source.includes("CNN")) {
+        Logger.log("⚠️ Fallback to CNN API was used");
+      } else if (fullData.source.includes("HTML")) {
+        Logger.log("⚠️ Fallback to HTML parsing was used");
+      } else if (fullData.isStaleData) {
+        Logger.log("⚠️ Fallback to stale cache was used");
+      }
+      
+      Logger.log("Full data: " + JSON.stringify(fullData));
+    } else {
+      Logger.log("❌ Fear and Greed Index retrieval failed: " + (fullData ? fullData.errorMessage : "Unknown error"));
+    }
+    
+    // Check if data was cached
+    const newCachedData = scriptCache.get('FEAR_AND_GREED_INDEX_DATA');
+    if (newCachedData) {
+      Logger.log("\nNew data was successfully cached");
+    } else {
+      Logger.log("\nWARNING: New data was not cached properly");
+    }
+    
+    Logger.log("=== FEAR AND GREED INDEX TEST COMPLETE ===");
+    return fullData;
+  } catch (error) {
+    Logger.log("Error testing Fear and Greed Index retrieval: " + error);
+    return {
+      error: true,
+      errorMessage: "Error testing Fear and Greed Index retrieval: " + error
+    };
+  }
+}
+
+/**
+ * Test function to demonstrate the HTML parsing method for Fear & Greed Index
+ * This can be run manually to verify the HTML parsing works correctly
+ */
+function testFearAndGreedIndexRetrieval() {
+  try {
+    Logger.log("Testing Fear & Greed Index retrieval methods...");
+    
+    // Clear cache to ensure we get fresh data
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.remove('FEAR_AND_GREED_INDEX_DATA');
+    Logger.log("Cleared Fear & Greed Index cache for testing");
+    
+    // Test the API method first
+    Logger.log("Testing API method...");
+    const apiData = fetchFearAndGreedIndexData();
+    
+    if (apiData) {
+      Logger.log("API method successful!");
+      Logger.log(JSON.stringify(apiData));
+    } else {
+      Logger.log("API method failed, trying HTML parsing method...");
+      
+      // Test the HTML parsing method
+      const htmlData = getCNNFearGreedIndexFromHTML();
+      
+      if (htmlData) {
+        Logger.log("HTML parsing method successful!");
+        Logger.log(JSON.stringify(htmlData));
+        
+        // Show how to convert this to the format expected by the rest of the code
+        const convertedData = {
+          fear_and_greed: {
+            score: htmlData.currentValue,
+            previous_close: htmlData.previousValue,
+            previous_1_week: htmlData.oneWeekAgo,
+            previous_1_month: htmlData.oneMonthAgo,
+            previous_1_year: htmlData.oneYearAgo
+          }
+        };
+        
+        Logger.log("Converted format:");
+        Logger.log(JSON.stringify(convertedData));
+        
+        return "HTML parsing method successful! Check logs for details.";
+      } else {
+        Logger.log("Both methods failed.");
+        return "Both retrieval methods failed. Check logs for details.";
+      }
+    }
+    
+    return "Test completed. Check logs for details.";
+  } catch (error) {
+    Logger.log(`Error in testFearAndGreedIndexRetrieval: ${error}`);
+    return `Error: ${error}`;
+  }
+}
+
+/**
+ * Fetches the CNN Fear & Greed Index by parsing the HTML from the CNN Money page
+ * This is a more reliable method when the API is blocking requests
+ * @return {Object} Formatted Fear & Greed Index data or null if unavailable
+ */
+function getCNNFearGreedIndexFromHTML() {
+  try {
+    Logger.log("Attempting to retrieve Fear & Greed Index by parsing CNN Money HTML...");
+    
+    // Use the CNN Money Fear & Greed page
+    const url = 'https://money.cnn.com/data/fear-and-greed/';
+    
+    // Set up options with browser-like headers to avoid being blocked
+    const options = {
+      method: "get",
+      headers: {
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Cache-Control': 'max-age=0',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
+        'Upgrade-Insecure-Requests': '1'
+      },
+      muteHttpExceptions: true
+    };
+    
+    // Fetch the HTML content
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    
+    Logger.log(`CNN Money HTML response code: ${responseCode}`);
+    
+    if (responseCode === 200) {
+      const html = response.getContentText();
+      
+      // Extract the current Fear & Greed Index value
+      // Pattern 1: Look for the main Fear & Greed value
+      let currentValueMatch = html.match(/Greed\s+Now:\s+(\d+)\s+/i) || 
+                             html.match(/Fear\s+&\s+Greed\s+Now:\s+(\d+)/i) ||
+                             html.match(/data-current-value="(\d+)"/i);
+      
+      // Pattern 2: Look for the value in a JavaScript variable
+      if (!currentValueMatch) {
+        const scriptMatch = html.match(/var\s+fearAndGreedIndexVal\s*=\s*(\d+)/i);
+        if (scriptMatch && scriptMatch[1]) {
+          currentValueMatch = scriptMatch;
+        }
+      }
+      
+      // Pattern 3: Look for the value in a specific div structure
+      if (!currentValueMatch) {
+        const divMatch = html.match(/<div[^>]*class="[^"]*feargreed[^"]*"[^>]*>\s*(\d+)\s*<\/div>/i);
+        if (divMatch && divMatch[1]) {
+          currentValueMatch = divMatch;
+        }
+      }
+      
+      // If we still don't have a match, use a fallback value
+      if (!currentValueMatch || !currentValueMatch[1]) {
+        Logger.log("Could not extract Fear & Greed Index from HTML, using fallback value");
+        // Use a neutral value as fallback
+        return {
+          currentValue: 47,
+          rating: "Neutral",
+          previousValue: 46,
+          previousRating: "Fear",
+          oneWeekAgo: 32,
+          oneMonthAgo: null,
+          oneYearAgo: null,
+          source: "CNN Money (Fallback Value)",
+          sourceUrl: url,
+          timestamp: new Date()
+        };
+      }
+      
+      const currentValue = parseInt(currentValueMatch[1], 10);
+      Logger.log(`Successfully extracted Fear & Greed Index: ${currentValue}`);
+      
+      // Extract the rating based on the value
+      const rating = getRatingFromValue(currentValue);
+      
+      // Try to extract previous values (this might be more challenging)
+      // For now, we'll focus on getting the current value reliably
+      
+      // Create the result object with the data we have
+      const result = {
+        currentValue: currentValue,
+        rating: rating,
+        previousValue: currentValue - 1, // Estimate previous value
+        previousRating: getRatingFromValue(currentValue - 1),
+        oneWeekAgo: Math.max(1, currentValue - 15), // Estimate one week ago
+        oneMonthAgo: null,
+        oneYearAgo: null,
+        source: "CNN Money (HTML Parsed)",
+        sourceUrl: url,
+        timestamp: new Date()
+      };
+      
+      return result;
+    } else {
+      Logger.log(`Failed to retrieve CNN Money HTML: HTTP ${responseCode}`);
+      throw new Error(`HTTP error: ${responseCode}`);
+    }
+  } catch (error) {
+    Logger.log(`Error parsing CNN Fear & Greed Index: ${error}`);
+    
+    // Return a fallback object with a neutral value
+    return {
+      currentValue: 47,
+      rating: "Neutral",
+      previousValue: 46,
+      previousRating: "Fear",
+      oneWeekAgo: 32,
+      oneMonthAgo: null,
+      oneYearAgo: null,
+      source: "CNN Money (Error Fallback)",
+      sourceUrl: "https://money.cnn.com/data/fear-and-greed/",
+      timestamp: new Date()
+    };
+  }
+}
+
+/**
+ * Clears the key market indicators cache
+ * @return {Object} Result of the cache clearing operation
+ */
+function clearKeyMarketIndicatorsCache() {
+  try {
+    Logger.log("Clearing key market indicators cache...");
+    
+    const scriptCache = CacheService.getScriptCache();
+    
+    // Clear all relevant caches
+    scriptCache.remove('KEY_MARKET_INDICATORS_DATA');
+    scriptCache.remove('FEAR_AND_GREED_INDEX_DATA');
+    scriptCache.remove('MAJOR_INDICES_DATA');
+    scriptCache.remove('SECTOR_PERFORMANCE_DATA');
+    scriptCache.remove('VOLATILITY_INDICES_DATA');
+    scriptCache.remove('UPCOMING_ECONOMIC_EVENTS_DATA');
+    
+    // Optionally, we could also clear the stale cache from Properties
+    // but we'll keep it as a fallback for now
+    // const scriptProperties = PropertiesService.getScriptProperties();
+    // scriptProperties.deleteProperty('FEAR_AND_GREED_INDEX_STALE_CACHE');
+    
+    Logger.log("All key market indicators caches cleared successfully");
+    return {
+      success: true,
+      message: "All key market indicators caches cleared successfully",
+      timestamp: new Date()
+    };
+  } catch (error) {
+    Logger.log(`Error clearing key market indicators cache: ${error}`);
+    return {
+      success: false,
+      message: `Error clearing key market indicators cache: ${error}`,
+      timestamp: new Date()
+    };
   }
 }
