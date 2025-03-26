@@ -268,7 +268,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
             <div style="padding: 15px; background-color: #f9f9f9; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
               <div style="font-weight: 500; margin-bottom: 10px; color: #333;">VIX Volatility Index</div>
               
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div style="display: flex; align-items: center; margin-bottom: 10px;">
                 <div style="font-size: 24px; font-weight: bold; color: ${
                   analysis.marketIndicators.vix.value >= 30 ? '#f44336' : 
                   analysis.marketIndicators.vix.value >= 20 ? '#ff9800' : 
@@ -908,15 +908,15 @@ function generateMarketIndicatorsSection(analysis) {
  */
 function generateFundamentalMetricsSection(analysis) {
   try {
-    const fundamentals = analysis.fundamentalMetrics || {};
-    const stocks = fundamentals.stocks || [];
+    // Get fundamental metrics data
+    const fundamentalMetrics = analysis.fundamentalMetrics || [];
     
     // Generate stocks HTML
     let stocksHtml = '';
-    if (stocks.length > 0) {
+    if (fundamentalMetrics.length > 0) {
       stocksHtml = `<div class="stock-grid">`;
       
-      stocks.forEach(stock => {
+      fundamentalMetrics.forEach(stock => {
         // Determine if price change is positive or negative
         const priceChange = stock.priceChange || '';
         const isPositive = priceChange.includes('+');
@@ -931,38 +931,50 @@ function generateFundamentalMetricsSection(analysis) {
           
           <div style="padding: 10px; border-bottom: 1px solid #eee;">
             <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <div style="font-size: 18px; font-weight: bold;">${stock.price || 'N/A'}</div>
-              <div style="color: ${changeColor}; font-weight: 500;">${stock.priceChange || 'N/A'} (${stock.percentChange || 'N/A'})</div>
+              <div style="font-size: 18px; font-weight: bold;">$${stock.price || 'N/A'}</div>
+              <div style="color: ${changeColor}; font-weight: 500;">${stock.priceChange || 'N/A'}</div>
             </div>
           </div>
           
           <div style="padding: 10px;">
-            ${stock.peRatio ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">P/E Ratio</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.peRatio}</div>
+            ${stock.pegRatio ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="color: #666; font-size: 13px;">PEG Ratio</div>
+              <div style="font-weight: 500; font-size: 13px;">${stock.pegRatio}</div>
             </div>` : ''}
             
-            ${stock.eps ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">EPS</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.eps}</div>
+            ${stock.forwardPE ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="color: #666; font-size: 13px;">Forward P/E</div>
+              <div style="font-weight: 500; font-size: 13px;">${stock.forwardPE}</div>
+            </div>` : ''}
+            
+            ${stock.priceToBook ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="color: #666; font-size: 13px;">Price/Book</div>
+              <div style="font-weight: 500; font-size: 13px;">${stock.priceToBook}</div>
+            </div>` : ''}
+            
+            ${stock.priceToSales ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="color: #666; font-size: 13px;">Price/Sales</div>
+              <div style="font-weight: 500; font-size: 13px;">${stock.priceToSales}</div>
+            </div>` : ''}
+            
+            ${stock.debtToEquity ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="color: #666; font-size: 13px;">Debt/Equity</div>
+              <div style="font-weight: 500; font-size: 13px;">${stock.debtToEquity}</div>
+            </div>` : ''}
+            
+            ${stock.returnOnEquity ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="color: #666; font-size: 13px;">Return on Equity</div>
+              <div style="font-weight: 500; font-size: 13px;">${stock.returnOnEquity}</div>
+            </div>` : ''}
+            
+            ${stock.beta ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="color: #666; font-size: 13px;">Beta</div>
+              <div style="font-weight: 500; font-size: 13px;">${stock.beta}</div>
             </div>` : ''}
             
             ${stock.dividendYield ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
               <div style="color: #666; font-size: 13px;">Dividend Yield</div>
               <div style="font-weight: 500; font-size: 13px;">${stock.dividendYield}</div>
-            </div>` : ''}
-            
-            ${stock.marketCap ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Market Cap</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.marketCap}</div>
-            </div>` : ''}
-            
-            ${stock.recommendation ? `<div style="margin-top: 10px; padding: 5px; background-color: #f5f5f5; border-radius: 4px; text-align: center;">
-              <span style="font-weight: 500; color: ${
-                stock.recommendation.toLowerCase().includes('buy') ? '#4caf50' : 
-                stock.recommendation.toLowerCase().includes('sell') ? '#f44336' : 
-                '#ff9800'
-              };">${stock.recommendation}</span>
             </div>` : ''}
           </div>
         </div>
@@ -975,15 +987,11 @@ function generateFundamentalMetricsSection(analysis) {
     }
     
     // Generate source information
-    const sourceInfo = fundamentals.source 
-      ? `<div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-           Source: ${fundamentals.source} | Last Updated: ${fundamentals.lastUpdated || 'N/A'}
-         </div>`
-      : '';
+    const sourceInfo = '';  // Removed source info as requested
     
     return `
-    <div class="section">
-      <h2>Fundamental Metrics</h2>
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
       ${stocksHtml}
       ${sourceInfo}
     </div>
@@ -991,9 +999,9 @@ function generateFundamentalMetricsSection(analysis) {
   } catch (error) {
     Logger.log("Error generating fundamental metrics section: " + error);
     return `
-    <div class="section">
-      <h2>Fundamental Metrics</h2>
-      <p>Error generating fundamental metrics section: ${error}</p>
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
+      <p style="text-align: center; color: #757575;">Error generating fundamental metrics section: ${error}</p>
     </div>
     `;
   }
@@ -1011,26 +1019,49 @@ function generateMacroeconomicFactorsSection(analysis) {
     
     // Treasury Yields
     let yieldsHtml = '';
-    if (macro.treasuryYields && macro.treasuryYields.length > 0) {
+    if (macro.treasuryYields) {
+      const yields = macro.treasuryYields;
+      
       yieldsHtml = `
       <div style="margin-bottom: 20px;">
         <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-          ${macro.treasuryYields.map(yield => {
-            // Determine trend color
-            const trendColor = yield.trend && yield.trend.toLowerCase().includes('up') ? '#f44336' : 
-                              yield.trend && yield.trend.toLowerCase().includes('down') ? '#4caf50' : 
-                              '#757575';
-            
-            return `
-            <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
-              <div style="font-weight: 500; margin-bottom: 5px;">${yield.duration}</div>
-              <div style="font-size: 18px; font-weight: bold;">${yield.rate}%</div>
-              ${yield.trend ? `<div style="font-size: 12px; color: ${trendColor};">${yield.trend}</div>` : ''}
-            </div>
-            `;
-          }).join('')}
+          ${yields.threeMonth ? `
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-weight: 500; margin-bottom: 5px;">3-Month</div>
+            <div style="font-size: 18px; font-weight: bold;">${yields.threeMonth}%</div>
+          </div>` : ''}
+          
+          ${yields.oneYear ? `
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-weight: 500; margin-bottom: 5px;">1-Year</div>
+            <div style="font-size: 18px; font-weight: bold;">${yields.oneYear}%</div>
+          </div>` : ''}
+          
+          ${yields.twoYear ? `
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-weight: 500; margin-bottom: 5px;">2-Year</div>
+            <div style="font-size: 18px; font-weight: bold;">${yields.twoYear}%</div>
+          </div>` : ''}
+          
+          ${yields.tenYear ? `
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-weight: 500; margin-bottom: 5px;">10-Year</div>
+            <div style="font-size: 18px; font-weight: bold;">${yields.tenYear}%</div>
+          </div>` : ''}
+          
+          ${yields.thirtyYear ? `
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+            <div style="font-weight: 500; margin-bottom: 5px;">30-Year</div>
+            <div style="font-size: 18px; font-weight: bold;">${yields.thirtyYear}%</div>
+          </div>` : ''}
         </div>
+        
+        ${yields.yieldCurve ? `
+        <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 6px;">
+          <div style="font-weight: 500; margin-bottom: 5px;">Yield Curve: ${yields.yieldCurve}</div>
+          ${yields.implications ? `<div style="font-size: 13px; color: #555;">${yields.implications}</div>` : ''}
+        </div>` : ''}
       </div>
       `;
     }
@@ -1038,57 +1069,84 @@ function generateMacroeconomicFactorsSection(analysis) {
     // Inflation Metrics
     let inflationHtml = '';
     if (macro.inflation) {
-      const cpi = macro.inflation.cpi || {};
-      const ppi = macro.inflation.ppi || {};
+      const inflation = macro.inflation;
       
       inflationHtml = `
       <div style="margin-bottom: 20px;">
         <div style="font-weight: bold; margin-bottom: 10px;">Inflation Metrics</div>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-          ${cpi.rate ? `
+          ${inflation.cpi && inflation.cpi.headline !== undefined ? `
           <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
-                <div style="font-weight: bold;">CPI (YoY)</div>
+                <div style="font-weight: bold;">CPI Headline</div>
                 <div style="font-size: 12px; color: #757575;">Consumer Price Index</div>
               </div>
               <div style="text-align: right;">
-                <div style="font-size: 20px; font-weight: bold;">${cpi.rate}%</div>
-                ${cpi.trend ? `<div style="color: ${cpi.trend.toLowerCase().includes('up') ? '#f44336' : '#4caf50'};">${cpi.trend}</div>` : ''}
+                <div style="font-size: 20px; font-weight: bold;">${inflation.cpi.headline}%</div>
               </div>
             </div>
           </div>
           ` : ''}
           
-          ${ppi.rate ? `
+          ${inflation.cpi && inflation.cpi.core !== undefined ? `
           <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
-                <div style="font-weight: bold;">PPI (YoY)</div>
-                <div style="font-size: 12px; color: #757575;">Producer Price Index</div>
+                <div style="font-weight: bold;">CPI Core</div>
+                <div style="font-size: 12px; color: #757575;">Excluding Food & Energy</div>
               </div>
               <div style="text-align: right;">
-                <div style="font-size: 20px; font-weight: bold;">${ppi.rate}%</div>
-                ${ppi.trend ? `<div style="color: ${ppi.trend.toLowerCase().includes('up') ? '#f44336' : '#4caf50'};">${ppi.trend}</div>` : ''}
+                <div style="font-size: 20px; font-weight: bold;">${inflation.cpi.core}%</div>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+          
+          ${inflation.pce && inflation.pce.headline !== undefined ? `
+          <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: bold;">PCE Headline</div>
+                <div style="font-size: 12px; color: #757575;">Personal Consumption Expenditures</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 20px; font-weight: bold;">${inflation.pce.headline}%</div>
+              </div>
+            </div>
+          </div>
+          ` : ''}
+          
+          ${inflation.pce && inflation.pce.core !== undefined ? `
+          <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-weight: bold;">PCE Core</div>
+                <div style="font-size: 12px; color: #757575;">Fed's Preferred Measure</div>
+              </div>
+              <div style="text-align: right;">
+                <div style="font-size: 20px; font-weight: bold;">${inflation.pce.core}%</div>
               </div>
             </div>
           </div>
           ` : ''}
         </div>
+        
+        ${inflation.trend ? `
+        <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 6px;">
+          <div style="font-weight: 500; margin-bottom: 5px;">Trend: ${inflation.trend}</div>
+          ${inflation.outlook ? `<div style="font-size: 13px; color: #555;">${inflation.outlook}</div>` : ''}
+        </div>` : ''}
       </div>
       `;
     }
     
     // Generate source information
-    const sourceInfo = macro.source 
-      ? `<div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-           Source: ${macro.source} | Last Updated: ${macro.lastUpdated || 'N/A'}
-         </div>`
-      : '';
+    const sourceInfo = '';  // Removed source info as requested
     
     return `
-    <div class="section">
-      <h2>Macroeconomic Factors</h2>
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
       ${yieldsHtml}
       ${inflationHtml}
       ${sourceInfo}
@@ -1097,9 +1155,9 @@ function generateMacroeconomicFactorsSection(analysis) {
   } catch (error) {
     Logger.log("Error generating macroeconomic factors section: " + error);
     return `
-    <div class="section">
-      <h2>Macroeconomic Factors</h2>
-      <p>Error generating macroeconomic factors section: ${error}</p>
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      <p style="text-align: center; color: #757575;">Error generating macroeconomic factors section: ${error}</p>
     </div>
     `;
   }
