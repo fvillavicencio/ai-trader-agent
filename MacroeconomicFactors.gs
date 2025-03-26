@@ -125,33 +125,27 @@ function formatMacroeconomicFactorsData(macroData) {
     const thirtyYearYield = treasuryYields.yields ? treasuryYields.yields.find(y => y.term === "30-Year") : null;
     
     if (threeMonthYield && threeMonthYield.yield !== undefined) {
-      const yieldValue = Math.floor(threeMonthYield.yield * 100) / 100;
-      formattedData += `  - 3-Month Treasury Yield: ${yieldValue.toFixed(2)}% (${threeMonthYield.change >= 0 ? "+" : ""}${threeMonthYield.change.toFixed(2)})\n`;
+      formattedData += `  - 3-Month Treasury Yield: ${threeMonthYield.yield.toFixed(2)}% (${threeMonthYield.change >= 0 ? "+" : ""}${threeMonthYield.change.toFixed(2)})\n`;
     }
     
     if (oneYearYield && oneYearYield.yield !== undefined) {
-      const yieldValue = Math.floor(oneYearYield.yield * 100) / 100;
-      formattedData += `  - 1-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${oneYearYield.change >= 0 ? "+" : ""}${oneYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 1-Year Treasury Yield: ${oneYearYield.yield.toFixed(2)}% (${oneYearYield.change >= 0 ? "+" : ""}${oneYearYield.change.toFixed(2)})\n`;
     }
     
     if (twoYearYield && twoYearYield.yield !== undefined) {
-      const yieldValue = Math.floor(twoYearYield.yield * 100) / 100;
-      formattedData += `  - 2-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${twoYearYield.change >= 0 ? "+" : ""}${twoYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 2-Year Treasury Yield: ${twoYearYield.yield.toFixed(2)}% (${twoYearYield.change >= 0 ? "+" : ""}${twoYearYield.change.toFixed(2)})\n`;
     }
     
     if (fiveYearYield && fiveYearYield.yield !== undefined) {
-      const yieldValue = Math.floor(fiveYearYield.yield * 100) / 100;
-      formattedData += `  - 5-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${fiveYearYield.change >= 0 ? "+" : ""}${fiveYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 5-Year Treasury Yield: ${fiveYearYield.yield.toFixed(2)}% (${fiveYearYield.change >= 0 ? "+" : ""}${fiveYearYield.change.toFixed(2)})\n`;
     }
     
     if (tenYearYield && tenYearYield.yield !== undefined) {
-      const yieldValue = Math.floor(tenYearYield.yield * 100) / 100;
-      formattedData += `  - 10-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${tenYearYield.change >= 0 ? "+" : ""}${tenYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 10-Year Treasury Yield: ${tenYearYield.yield.toFixed(2)}% (${tenYearYield.change >= 0 ? "+" : ""}${tenYearYield.change.toFixed(2)})\n`;
     }
     
     if (thirtyYearYield && thirtyYearYield.yield !== undefined) {
-      const yieldValue = Math.floor(thirtyYearYield.yield * 100) / 100;
-      formattedData += `  - 30-Year Treasury Yield: ${yieldValue.toFixed(2)}% (${thirtyYearYield.change >= 0 ? "+" : ""}${thirtyYearYield.change.toFixed(2)})\n`;
+      formattedData += `  - 30-Year Treasury Yield: ${thirtyYearYield.yield.toFixed(2)}% (${thirtyYearYield.change >= 0 ? "+" : ""}${thirtyYearYield.change.toFixed(2)})\n`;
     }
     
     if (treasuryYields.yieldCurve) {

@@ -1,7 +1,7 @@
 /**
  * Key Market Indicators Module
  * Handles retrieval of key market indicators including major indices, sector performance, 
- * volatility indices, treasury yields, and upcoming economic events
+ * volatility indices, and upcoming economic events
  */
 
 /**
@@ -40,7 +40,6 @@ function retrieveKeyMarketIndicators() {
       majorIndices: [],
       sectorPerformance: [],
       volatilityIndices: [],
-      treasuryYields: { yields: [] },
       fearAndGreedIndex: null,
       upcomingEconomicEvents: [],
       timestamp: new Date(),
@@ -91,22 +90,6 @@ function retrieveKeyMarketIndicators() {
       }
     } catch (error) {
       Logger.log(`Error retrieving volatility indices: ${error}`);
-      results.success = false;
-      results.message = "Failed to retrieve some market data";
-    }
-    
-    // Get treasury yields data
-    try {
-      const treasuryYieldsData = retrieveTreasuryYields();
-      if (treasuryYieldsData && treasuryYieldsData.yields && treasuryYieldsData.yields.length > 0) {
-        results.treasuryYields = treasuryYieldsData;
-      } else {
-        Logger.log("Treasury yields data not available");
-        results.success = false;
-        results.message = "Failed to retrieve some market data";
-      }
-    } catch (error) {
-      Logger.log(`Error retrieving treasury yields: ${error}`);
       results.success = false;
       results.message = "Failed to retrieve some market data";
     }
@@ -177,7 +160,6 @@ function retrieveKeyMarketIndicators() {
       majorIndices: [],
       sectorPerformance: [],
       volatilityIndices: [],
-      treasuryYields: { yields: [] },
       fearAndGreedIndex: null,
       upcomingEconomicEvents: [],
       timestamp: new Date(),
@@ -279,29 +261,6 @@ function formatKeyMarketIndicatorsData(data) {
       
       // Add timestamp
       formattedText += `  * Last Updated: ${new Date(data.volatilityIndices[0].timestamp || data.timestamp || new Date()).toLocaleString()}\n\n`;
-    }
-    
-    // Format treasury yields
-    if (data.treasuryYields && data.treasuryYields.yields && data.treasuryYields.yields.length > 0) {
-      formattedText += "* Treasury Yields:\n";
-      
-      // Sort yields by term (ascending)
-      const sortedYields = [...data.treasuryYields.yields].sort((a, b) => {
-        return parseTermToMonths(a.term) - parseTermToMonths(b.term);
-      });
-      
-      // Add each yield
-      for (const yield of sortedYields) {
-        const valueStr = yield.value !== undefined ? `${yield.value.toFixed(2)}%` : "N/A";
-        const changeStr = yield.change !== undefined ? 
-                         `${yield.change >= 0 ? "+" : ""}${yield.change.toFixed(2)}` : 
-                         "N/A";
-        
-        formattedText += `  * ${yield.term}: ${valueStr} (${changeStr})\n`;
-      }
-      
-      // Add timestamp
-      formattedText += `  * Last Updated: ${new Date(data.treasuryYields.timestamp || data.timestamp || new Date()).toLocaleString()}\n\n`;
     }
     
     // Format upcoming economic events
@@ -1162,18 +1121,18 @@ function retrieveUpcomingEconomicEvents() {
           const cacheAge = (currentTime - cacheTimestamp) / (1000 * 60 * 60); // Age in hours
           
           if (cacheAge <= 24) {
-            Logger.log(`Using stale economic events cache (${cacheAge.toFixed(1)} hours old)`);
+            Logger.log(`Using stale cache (${cacheAge.toFixed(1)} hours old)`);
             parsedStaleData.isStaleData = true;
             parsedStaleData.staleAge = `${cacheAge.toFixed(1)} hours`;
             return parsedStaleData;
           } else {
-            Logger.log("Stale economic events cache is too old (> 24 hours)");
+            Logger.log("Stale cache is too old (> 24 hours)");
           }
         } else {
-          Logger.log("No stale economic events cache available");
+          Logger.log("No stale cache available");
         }
       } catch (staleCacheError) {
-        Logger.log("Error retrieving stale economic events cache: " + staleCacheError);
+        Logger.log("Error retrieving stale cache: " + staleCacheError);
       }
     }
     
@@ -1335,272 +1294,6 @@ function formatDate(date) {
 }
 
 /**
- * Retrieves treasury yields data
- * @return {Object} Treasury yields data
- */
-function retrieveTreasuryYields() {
-  try {
-    Logger.log("Retrieving treasury yields data...");
-    
-    // Check if we have cached data first
-    try {
-      const scriptCache = CacheService.getScriptCache();
-      const cachedData = scriptCache.get('TREASURY_YIELDS_DATA');
-      
-      if (cachedData) {
-        Logger.log("Using cached Treasury Yields data (less than 1 hour old)");
-        return JSON.parse(cachedData);
-      }
-    } catch (cacheError) {
-      Logger.log("Cache retrieval error for Treasury Yields: " + cacheError);
-      // Continue execution - we'll get fresh data below
-    }
-    
-    // Try primary source (Yahoo Finance)
-    let treasuryYieldsData = null;
-    let source = "";
-    let sourceUrl = "";
-    let errorMessage = "";
-    
-    try {
-      Logger.log("Attempting to fetch Treasury Yields from Yahoo Finance...");
-      treasuryYieldsData = fetchYahooFinanceTreasuryYields();
-      source = "Yahoo Finance";
-      sourceUrl = "https://finance.yahoo.com/bonds";
-      
-      if (treasuryYieldsData && treasuryYieldsData.yields && treasuryYieldsData.yields.length > 0) {
-        Logger.log(`Successfully retrieved ${treasuryYieldsData.yields.length} Treasury Yields from Yahoo Finance`);
-      } else {
-        errorMessage = "Yahoo Finance Treasury Yields data unavailable";
-        Logger.log(errorMessage);
-      }
-    } catch (primaryError) {
-      errorMessage = "Error fetching from Yahoo Finance: " + primaryError;
-      Logger.log(errorMessage);
-      // Continue to alternative source
-    }
-    
-    // Try alternative source (MarketWatch)
-    if (!treasuryYieldsData || !treasuryYieldsData.yields || treasuryYieldsData.yields.length === 0) {
-      try {
-        Logger.log("Primary source failed, attempting to fetch Treasury Yields from MarketWatch...");
-        treasuryYieldsData = fetchMarketWatchTreasuryYields();
-        source = "MarketWatch";
-        sourceUrl = "https://www.marketwatch.com/investing/bonds";
-        
-        if (treasuryYieldsData && treasuryYieldsData.yields && treasuryYieldsData.yields.length > 0) {
-          Logger.log(`Successfully retrieved ${treasuryYieldsData.yields.length} Treasury Yields from MarketWatch`);
-        } else {
-          errorMessage += " | MarketWatch Treasury Yields data unavailable";
-          Logger.log("MarketWatch Treasury Yields data unavailable");
-        }
-      } catch (alternativeError) {
-        errorMessage += " | Error fetching from MarketWatch: " + alternativeError;
-        Logger.log("Error fetching from MarketWatch: " + alternativeError);
-      }
-    }
-    
-    // If both sources failed, check for stale cache (up to 24 hours old)
-    if (!treasuryYieldsData || !treasuryYieldsData.yields || treasuryYieldsData.yields.length === 0) {
-      try {
-        Logger.log("All sources failed, checking for stale cache (up to 24 hours old)...");
-        const scriptProperties = PropertiesService.getScriptProperties();
-        const staleCacheData = scriptProperties.getProperty('TREASURY_YIELDS_STALE_CACHE');
-        
-        if (staleCacheData) {
-          const parsedStaleData = JSON.parse(staleCacheData);
-          const cacheTimestamp = new Date(parsedStaleData.timestamp);
-          const currentTime = new Date();
-          const cacheAge = (currentTime - cacheTimestamp) / (1000 * 60 * 60); // Age in hours
-          
-          if (cacheAge <= 24) {
-            Logger.log(`Using stale Treasury Yields cache (${cacheAge.toFixed(1)} hours old)`);
-            parsedStaleData.isStaleData = true;
-            parsedStaleData.staleAge = `${cacheAge.toFixed(1)} hours`;
-            return parsedStaleData;
-          } else {
-            Logger.log("Stale Treasury Yields cache is too old (> 24 hours)");
-          }
-        } else {
-          Logger.log("No stale Treasury Yields cache available");
-        }
-      } catch (staleCacheError) {
-        Logger.log("Error retrieving stale Treasury Yields cache: " + staleCacheError);
-      }
-    }
-    
-    // If all attempts failed, return error object
-    if (!treasuryYieldsData || !treasuryYieldsData.yields || treasuryYieldsData.yields.length === 0) {
-      Logger.log("All attempts to retrieve Treasury Yields failed");
-      return {
-        yields: [],
-        yieldCurveStatus: "Unknown",
-        analysis: "Data unavailable",
-        error: true,
-        errorMessage: errorMessage,
-        timestamp: new Date()
-      };
-    }
-    
-    // Add source and timestamp information
-    treasuryYieldsData.source = source;
-    treasuryYieldsData.sourceUrl = sourceUrl;
-    treasuryYieldsData.timestamp = new Date();
-    treasuryYieldsData.error = false;
-    
-    // Cache the result in both short-term and long-term storage
-    try {
-      // Short-term cache (1 hour)
-      const scriptCache = CacheService.getScriptCache();
-      scriptCache.put('TREASURY_YIELDS_DATA', JSON.stringify(treasuryYieldsData), 3600); // Cache for 1 hour
-      
-      // Long-term stale cache (for fallback, stored in Properties)
-      const scriptProperties = PropertiesService.getScriptProperties();
-      scriptProperties.setProperty('TREASURY_YIELDS_STALE_CACHE', JSON.stringify(treasuryYieldsData));
-      
-      Logger.log("Treasury Yields data cached successfully (both fresh and stale cache)");
-    } catch (cacheError) {
-      Logger.log("Error caching Treasury Yields data: " + cacheError);
-    }
-    
-    Logger.log(`Retrieved Treasury Yields data from ${source}`);
-    return treasuryYieldsData;
-  } catch (error) {
-    Logger.log(`Error retrieving Treasury Yields: ${error}`);
-    return {
-      yields: [],
-      yieldCurveStatus: "Unknown",
-      analysis: "Error retrieving data",
-      error: true,
-      errorMessage: `Error retrieving Treasury Yields: ${error}`,
-      timestamp: new Date()
-    };
-  }
-}
-
-/**
- * Fetches Treasury Yields data from Yahoo Finance
- * @return {Object} Treasury Yields data or null if unavailable
- */
-function fetchYahooFinanceTreasuryYields() {
-  try {
-    // This would be implemented with actual API calls in a production environment
-    // For now, return sample data for testing
-    const yields = [
-      {
-        term: "3 Month",
-        yield: 5.28,
-        change: -0.02,
-        changePercent: -0.38
-      },
-      {
-        term: "2 Year",
-        yield: 4.59,
-        change: -0.03,
-        changePercent: -0.65
-      },
-      {
-        term: "5 Year",
-        yield: 4.21,
-        change: -0.02,
-        changePercent: -0.47
-      },
-      {
-        term: "10 Year",
-        yield: 4.23,
-        change: -0.01,
-        changePercent: -0.24
-      },
-      {
-        term: "30 Year",
-        yield: 4.38,
-        change: 0.00,
-        changePercent: 0.00
-      }
-    ];
-    
-    // Analyze the yield curve
-    const twoYearYield = yields.find(y => y.term === "2 Year")?.yield || 0;
-    const tenYearYield = yields.find(y => y.term === "10 Year")?.yield || 0;
-    const yieldCurveStatus = tenYearYield > twoYearYield ? "Normal" : "Inverted";
-    const analysis = yieldCurveStatus === "Normal" 
-      ? "The yield curve is normal, indicating positive economic outlook."
-      : "The yield curve is inverted, which historically has been a recession indicator.";
-    
-    return {
-      yields: yields,
-      yieldCurveStatus: yieldCurveStatus,
-      analysis: analysis,
-      success: true
-    };
-  } catch (error) {
-    Logger.log(`Error fetching Yahoo Finance Treasury Yields: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches Treasury Yields data from MarketWatch
- * @return {Object} Treasury Yields data or null if unavailable
- */
-function fetchMarketWatchTreasuryYields() {
-  try {
-    // This would be implemented with actual API calls in a production environment
-    // For now, return sample data for testing
-    const yields = [
-      {
-        term: "3 Month",
-        yield: 5.27,
-        change: -0.03,
-        changePercent: -0.57
-      },
-      {
-        term: "2 Year",
-        yield: 4.58,
-        change: -0.04,
-        changePercent: -0.87
-      },
-      {
-        term: "5 Year",
-        yield: 4.20,
-        change: -0.03,
-        changePercent: -0.71
-      },
-      {
-        term: "10 Year",
-        yield: 4.22,
-        change: -0.02,
-        changePercent: -0.47
-      },
-      {
-        term: "30 Year",
-        yield: 4.37,
-        change: -0.01,
-        changePercent: -0.23
-      }
-    ];
-    
-    // Analyze the yield curve
-    const twoYearYield = yields.find(y => y.term === "2 Year")?.yield || 0;
-    const tenYearYield = yields.find(y => y.term === "10 Year")?.yield || 0;
-    const yieldCurveStatus = tenYearYield > twoYearYield ? "Normal" : "Inverted";
-    const analysis = yieldCurveStatus === "Normal" 
-      ? "The yield curve is normal, indicating positive economic outlook."
-      : "The yield curve is inverted, which historically has been a recession indicator.";
-    
-    return {
-      yields: yields,
-      yieldCurveStatus: yieldCurveStatus,
-      analysis: analysis,
-      success: true
-    };
-  } catch (error) {
-    Logger.log(`Error fetching MarketWatch Treasury Yields: ${error}`);
-    return null;
-  }
-}
-
-/**
  * Test function to verify the Fear & Greed Index and Treasury Yield data retrieval
  */
 function testMarketDataRetrieval() {
@@ -1699,7 +1392,6 @@ function testClearAndRetrieveKeyMarketIndicators() {
     Logger.log(`Major Indices: ${keyMarketIndicators.majorIndices && keyMarketIndicators.majorIndices.length > 0 ? `Found ${keyMarketIndicators.majorIndices.length} indices` : "Not found"}`);
     Logger.log(`Sector Performance: ${keyMarketIndicators.sectorPerformance && keyMarketIndicators.sectorPerformance.length > 0 ? `Found ${keyMarketIndicators.sectorPerformance.length} sectors` : "Not found"}`);
     Logger.log(`Volatility Indices: ${keyMarketIndicators.volatilityIndices && keyMarketIndicators.volatilityIndices.length > 0 ? `Found ${keyMarketIndicators.volatilityIndices.length} indices` : "Not found"}`);
-    Logger.log(`Treasury Yields: ${keyMarketIndicators.treasuryYields && keyMarketIndicators.treasuryYields.yields && keyMarketIndicators.treasuryYields.yields.length > 0 ? `Found ${keyMarketIndicators.treasuryYields.yields.length} yields` : "Not found"}`);
     Logger.log(`Fear & Greed Index: ${keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error ? "Retrieved" : "Not found"}`);
     Logger.log(`Upcoming Economic Events: ${keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0 ? `Found ${keyMarketIndicators.upcomingEconomicEvents.length} events` : "Not found"}`);
     
@@ -1754,7 +1446,6 @@ function testImprovedDataRetrieval() {
     const scriptCache = CacheService.getScriptCache();
     scriptCache.remove('KEY_MARKET_INDICATORS_DATA');
     scriptCache.remove('FEAR_AND_GREED_INDEX_DATA');
-    scriptCache.remove('TREASURY_YIELDS_DATA');
     scriptCache.remove('UPCOMING_ECONOMIC_EVENTS_DATA');
     Logger.log("All caches cleared successfully");
     
@@ -1791,22 +1482,10 @@ function testImprovedDataRetrieval() {
       Logger.log("Volatility Indices: Not found");
     }
     
-    // Check Treasury Yields
-    if (keyMarketIndicators.treasuryYields && keyMarketIndicators.treasuryYields.yields && keyMarketIndicators.treasuryYields.yields.length > 0) {
-      Logger.log(`Treasury Yields: Retrieved ${keyMarketIndicators.treasuryYields.yields.length} yields`);
-      Logger.log(`First yield: ${keyMarketIndicators.treasuryYields.yields[0].term}: ${keyMarketIndicators.treasuryYields.yields[0].yield}%`);
-      Logger.log(`Yield Curve Status: ${keyMarketIndicators.treasuryYields.yieldCurveStatus}`);
-      Logger.log(`Analysis: ${keyMarketIndicators.treasuryYields.analysis}`);
-      Logger.log(`Source: ${keyMarketIndicators.treasuryYields.source || "Unknown"}`);
-      Logger.log(`Is Stale Data: ${keyMarketIndicators.treasuryYields.isStaleData ? "Yes" : "No"}`);
-    } else {
-      Logger.log("Treasury Yields: Not found");
-    }
-    
     // Check Fear & Greed Index
     if (keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error) {
       Logger.log(`Fear & Greed Index: Retrieved (${keyMarketIndicators.fearAndGreedIndex.currentValue} - ${keyMarketIndicators.fearAndGreedIndex.rating})`);
-      Logger.log(`Source: ${keyMarketIndicators.fearAndGreedIndex.source || "Unknown"}`);
+      Logger.log(`Source: ${keyMarketIndicators.fearAndGreedIndex.source}`);
       Logger.log(`Is Stale Data: ${keyMarketIndicators.fearAndGreedIndex.isStaleData ? "Yes" : "No"}`);
     } else {
       Logger.log("Fear & Greed Index: Not found");
@@ -1847,20 +1526,6 @@ function testImprovedDataRetrieval() {
       Logger.log("Failed to retrieve Fear & Greed Index");
       if (fearAndGreedIndex && fearAndGreedIndex.errorMessage) {
         Logger.log(`Error: ${fearAndGreedIndex.errorMessage}`);
-      }
-    }
-    
-    // Test Treasury Yields with primary and alternative sources
-    Logger.log("\nTesting Treasury Yields retrieval:");
-    const treasuryYields = retrieveTreasuryYields();
-    if (treasuryYields && treasuryYields.yields && treasuryYields.yields.length > 0) {
-      Logger.log(`Retrieved ${treasuryYields.yields.length} yields`);
-      Logger.log(`Source: ${treasuryYields.source}`);
-      Logger.log(`Is Stale Data: ${treasuryYields.isStaleData ? "Yes" : "No"}`);
-    } else {
-      Logger.log("Failed to retrieve Treasury Yields");
-      if (treasuryYields && treasuryYields.errorMessage) {
-        Logger.log(`Error: ${treasuryYields.errorMessage}`);
       }
     }
     
