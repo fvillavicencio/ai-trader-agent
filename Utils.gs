@@ -585,6 +585,9 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
     // Generate the macroeconomic factors section HTML
     const macroeconomicFactorsHtml = generateMacroeconomicFactorsSection(analysis);
     
+    // Generate the geopolitical risks section HTML
+    const geopoliticalRisksHtml = generateGeopoliticalRisksSection(analysis);
+    
     // Start building the HTML email
     let html = `
     <!DOCTYPE html>
@@ -680,6 +683,9 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
         
         <!-- Macroeconomic Factors Section -->
         ${macroeconomicFactorsHtml}
+        
+        <!-- Geopolitical Risks Section -->
+        ${geopoliticalRisksHtml}
         
         <!-- Next Analysis Section -->
         <div style="background-color: #e8f5e9; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: center; color: #2e7d32;">
@@ -818,6 +824,7 @@ function generateMarketIndicatorsSection(analysis) {
         
         <div style="position: relative; height: 10px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
           <div style="position: absolute; top: -5px; left: ${fgValue}%; transform: translateX(-50%); width: 15px; height: 15px; background-color: #333; border-radius: 50%;"></div>
+          <div style="position: absolute; top: -6px; left: calc(${fgValue}% - 6px); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
         </div>
         
         <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
@@ -913,7 +920,7 @@ function generateFundamentalMetricsSection(analysis) {
     
     // Generate stocks HTML
     let stocksHtml = '';
-    if (fundamentalMetrics.length > 0) {
+    if (fundamentalMetrics && fundamentalMetrics.length > 0) {
       stocksHtml = `<div class="stock-grid">`;
       
       fundamentalMetrics.forEach(stock => {
@@ -921,64 +928,59 @@ function generateFundamentalMetricsSection(analysis) {
         const priceChange = stock.priceChange || '';
         const isPositive = priceChange.includes('+');
         const changeColor = isPositive ? '#4caf50' : '#f44336';
+        const changeIcon = isPositive ? '↑' : '↓';
         
         stocksHtml += `
-        <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); max-width: 100%;">
-          <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
-            <div style="font-weight: bold; font-size: 16px; color: #2c3e50;">${stock.symbol}</div>
-            <div style="font-size: 14px; color: #555; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.name || ''}</div>
-          </div>
-          
-          <div style="padding: 10px; border-bottom: 1px solid #eee;">
-            <div style="display: flex; justify-content: space-between; align-items: baseline;">
-              <div style="font-size: 18px; font-weight: bold;">$${stock.price || 'N/A'}</div>
-              <div style="color: ${changeColor}; font-weight: 500;">${stock.priceChange || 'N/A'}</div>
+        <div class="stock-card">
+          <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); max-width: 100%;">
+            <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+              <div style="font-weight: bold; font-size: 16px; color: #2c3e50;">${stock.symbol}</div>
+              <div style="font-size: 14px; color: #555; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.name || ''}</div>
+            </div>
+            
+            <div style="padding: 15px; background-color: white; overflow: hidden;">
+              <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                <div style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-right: 10px;">$${stock.price || '---'}</div>
+                <div style="color: ${changeColor}; font-weight: bold;">
+                  <span style="margin-right: 3px;">${changeIcon}</span>${stock.priceChange || '+/-0.00 (0.00%)'}
+                </div>
+              </div>
+              
+              <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Key Metrics</div>
+                
+                ${stock.marketCap ? `
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                  <div style="color: #555; min-width: 80px;">Market Cap</div>
+                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.marketCap}</div>
+                </div>` : ''}
+                
+                ${stock.peRatio ? `
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                  <div style="color: #555; min-width: 80px;">P/E Ratio</div>
+                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.peRatio}</div>
+                </div>` : ''}
+                
+                ${stock.pegRatio ? `
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                  <div style="color: #555; min-width: 80px;">PEG Ratio</div>
+                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.pegRatio}</div>
+                </div>` : ''}
+                
+                ${stock.beta ? `
+                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                  <div style="color: #555; min-width: 80px;">Beta</div>
+                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.beta}</div>
+                </div>` : ''}
+              </div>
+              
+              ${stock.summary ? `
+              <div style="margin-top: 10px; font-style: italic; font-size: 13px; color: #555; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
+              
+              <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${stock.lastUpdated || new Date().toLocaleString()}</div>
             </div>
           </div>
-          
-          <div style="padding: 10px;">
-            ${stock.pegRatio ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">PEG Ratio</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.pegRatio}</div>
-            </div>` : ''}
-            
-            ${stock.forwardPE ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Forward P/E</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.forwardPE}</div>
-            </div>` : ''}
-            
-            ${stock.priceToBook ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Price/Book</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.priceToBook}</div>
-            </div>` : ''}
-            
-            ${stock.priceToSales ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Price/Sales</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.priceToSales}</div>
-            </div>` : ''}
-            
-            ${stock.debtToEquity ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Debt/Equity</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.debtToEquity}</div>
-            </div>` : ''}
-            
-            ${stock.returnOnEquity ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Return on Equity</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.returnOnEquity}</div>
-            </div>` : ''}
-            
-            ${stock.beta ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Beta</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.beta}</div>
-            </div>` : ''}
-            
-            ${stock.dividendYield ? `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="color: #666; font-size: 13px;">Dividend Yield</div>
-              <div style="font-weight: 500; font-size: 13px;">${stock.dividendYield}</div>
-            </div>` : ''}
-          </div>
-        </div>
-        `;
+        </div>`;
       });
       
       stocksHtml += `</div>`;
@@ -986,14 +988,10 @@ function generateFundamentalMetricsSection(analysis) {
       stocksHtml = `<p style="text-align: center; color: #757575;">No stock data available</p>`;
     }
     
-    // Generate source information
-    const sourceInfo = '';  // Removed source info as requested
-    
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
       ${stocksHtml}
-      ${sourceInfo}
     </div>
     `;
   } catch (error) {
@@ -1001,7 +999,7 @@ function generateFundamentalMetricsSection(analysis) {
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
-      <p style="text-align: center; color: #757575;">Error generating fundamental metrics section: ${error}</p>
+      <p style="text-align: center; color: #757575;">Error generating fundamental metrics data</p>
     </div>
     `;
   }
@@ -1158,6 +1156,98 @@ function generateMacroeconomicFactorsSection(analysis) {
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
       <p style="text-align: center; color: #757575;">Error generating macroeconomic factors section: ${error}</p>
+    </div>
+    `;
+  }
+}
+
+/**
+ * Generates the geopolitical risks section HTML
+ * 
+ * @param {Object} analysis - The analysis data
+ * @return {String} HTML for the geopolitical risks section
+ */
+function generateGeopoliticalRisksSection(analysis) {
+  try {
+    // Get geopolitical risks data
+    const geopoliticalRisks = analysis.geopoliticalRisks || [];
+    
+    // If no data, return empty section
+    if (!geopoliticalRisks || geopoliticalRisks.length === 0) {
+      return `
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+        <p style="text-align: center; color: #757575;">No geopolitical risk data available</p>
+      </div>
+      `;
+    }
+    
+    // Generate global overview if available
+    let overviewHtml = '';
+    if (analysis.geopoliticalOverview) {
+      overviewHtml = `
+      <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
+        <div style="font-weight: bold; margin-bottom: 5px; color: #ff9800;">Global Overview</div>
+        <div style="color: #333;">${analysis.geopoliticalOverview}</div>
+      </div>
+      `;
+    }
+    
+    // Generate regional risks
+    let risksHtml = '';
+    if (geopoliticalRisks.length > 0) {
+      risksHtml = `
+      <div style="margin-top: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Regional Risks</div>
+      `;
+      
+      geopoliticalRisks.forEach(risk => {
+        // Determine risk level color
+        let riskColor = '#ff9800'; // Default moderate
+        if (risk.level && risk.level.toLowerCase() === 'high') {
+          riskColor = '#f44336';
+        } else if (risk.level && risk.level.toLowerCase() === 'severe') {
+          riskColor = '#d32f2f';
+        } else if (risk.level && risk.level.toLowerCase() === 'low') {
+          riskColor = '#4caf50';
+        }
+        
+        risksHtml += `
+        <div style="margin-bottom: 15px;">
+          <div style="margin-bottom: 10px; padding: 10px; background-color: white; border-radius: 4px; border: 1px solid #eee;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+              <div style="font-weight: bold; color: #333;">${risk.region || 'Global'}</div>
+              <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">
+                <span style="background-color: ${riskColor}; color: white; padding: 2px 6px; border-radius: 3px;">${risk.level || 'Moderate'}</span>
+              </div>
+            </div>
+            <div style="color: #555; margin-bottom: 5px;">${risk.description || 'No description available'}</div>
+            ${risk.source ? `
+            <div style="font-size: 11px; color: #888; text-align: right;">
+              Source: ${risk.source} ${risk.lastUpdated ? `| Last updated: ${risk.lastUpdated}` : ''}
+            </div>
+            ` : ''}
+          </div>
+        </div>
+        `;
+      });
+      
+      risksHtml += `</div>`;
+    }
+    
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+      ${overviewHtml}
+      ${risksHtml}
+    </div>
+    `;
+  } catch (error) {
+    Logger.log("Error generating geopolitical risks section: " + error);
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+      <p style="text-align: center; color: #757575;">Error generating geopolitical risks data</p>
     </div>
     `;
   }

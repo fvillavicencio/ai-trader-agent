@@ -97,6 +97,11 @@ function runTradingAnalysis() {
     // Get the analysis from OpenAI (will use cache if available)
     const analysisJson = getOpenAITradingAnalysis();
     
+    // Save the JSON response to Google Drive for debugging
+    const jsonFileName = "openai_response.json";
+    const jsonFileUrl = saveJsonToGoogleDrive(analysisJson, jsonFileName);
+    Logger.log(`OpenAI response saved to Google Drive: ${jsonFileUrl}`);
+    
     // Get the current time
     const currentTime = new Date();
     
@@ -286,12 +291,24 @@ function testGenerateAndEmailPrompt() {
     Logger.log("Generated data retrieval text for OpenAI");
     
     // Combine the prompt template with the data retrieval text
-    const fullPrompt = promptTemplate + "\n\n**Retrieved Data:**\n\n" + dataRetrievalText;
+    const fullPrompt = promptTemplate + dataRetrievalText;
     Logger.log("Combined prompt template with data retrieval text");
     
     // Send the prompt via email for review
     sendPromptEmail(fullPrompt);
     Logger.log("Sent prompt email for review");
+    
+    // Create a sample JSON response for testing the HTML template
+    const sampleResponse = createSampleJsonResponse();
+    
+    // Save the sample JSON response to Google Drive
+    const jsonFileName = "sample_openai_response.json";
+    const jsonFileUrl = saveJsonToGoogleDrive(sampleResponse, jsonFileName);
+    Logger.log(`Sample response saved to Google Drive: ${jsonFileUrl}`);
+    
+    // Generate and send a test email with the sample response
+    sendTradeDecisionEmail(sampleResponse);
+    Logger.log("Sent test email with sample response");
     
     // Display the first 500 characters of the prompt in the logs
     const previewLength = 500;
@@ -301,11 +318,197 @@ function testGenerateAndEmailPrompt() {
     
     Logger.log("Prompt preview: " + promptPreview);
     
-    return "Prompt generated and emailed successfully. Check your inbox for the complete prompt.";
+    return "Prompt generation test completed successfully.";
   } catch (error) {
     Logger.log("Error in testGenerateAndEmailPrompt: " + error);
     return "Error: " + error;
   }
+}
+
+/**
+ * Creates a sample JSON response for testing the HTML template
+ * @return {Object} Sample JSON response
+ */
+function createSampleJsonResponse() {
+  return {
+    "timestamp": new Date().toISOString(),
+    "decision": "Watch for Better Price Action",
+    "summary": "Given the current market volatility, particularly in the tech sector, and mixed macroeconomic signals, a cautious approach is recommended.",
+    "justification": "The decision to 'Watch for Better Price Action' is based on the current market volatility, particularly in the tech sector, and the mixed macroeconomic signals. The presence of geopolitical tensions and the cautious stance of analysts suggest waiting for clearer market direction before making significant moves.",
+    "analysis": {
+      "marketSentiment": {
+        "overall": "Mixed sentiment with a lean towards caution due to volatility in the tech sector and economic uncertainties.",
+        "analysts": [
+          {
+            "name": "Dan Nathan",
+            "quote": "The tech sector remains volatile, but I see potential in select AI-driven companies.",
+            "source": "CNBC",
+            "mentionedStocks": ["AAPL", "NVDA"]
+          },
+          {
+            "name": "Josh Brown",
+            "quote": "Markets are showing resilience despite economic uncertainties, leaning towards a more bullish stance.",
+            "source": "Financial Times",
+            "mentionedStocks": ["MSFT", "AMZN"]
+          },
+          {
+            "name": "Steve Weiss",
+            "quote": "I'm cautious about the current market, particularly with the overheated real estate sector.",
+            "source": "Bloomberg"
+          },
+          {
+            "name": "Joe Terranova",
+            "quote": "Energy stocks are undervalued and present a good buying opportunity.",
+            "source": "MarketWatch",
+            "mentionedStocks": ["XOM", "CVX"]
+          },
+          {
+            "name": "Dan Niles",
+            "quote": "The semiconductor sector could face challenges from regulatory pressures.",
+            "source": "Reuters",
+            "mentionedStocks": ["INTC", "AMD"]
+          },
+          {
+            "name": "Mohamed El-Erian",
+            "quote": "Inflation concerns are overstated; the economy is on a stable path.",
+            "source": "The Wall Street Journal"
+          }
+        ],
+        "lastUpdated": "2025-03-26 15:31"
+      },
+      "keyMarketIndicators": {
+        "fearAndGreedIndex": {
+          "value": 29,
+          "interpretation": "Market sentiment is leaning towards fear.",
+          "source": "CNN",
+          "lastUpdated": "2025-03-26 17:02"
+        },
+        "vix": {
+          "value": 18.33,
+          "trend": "Increasing",
+          "interpretation": "Volatility indicator showing market fear and uncertainty.",
+          "source": "CBOE",
+          "lastUpdated": "2025-03-26 16:15"
+        },
+        "lastUpdated": "2025-03-26 17:02"
+      },
+      "fundamentalMetrics": [
+        {
+          "symbol": "SPY",
+          "name": "SPDR S&P 500 ETF Trust",
+          "price": "486.25",
+          "priceChange": "+1.25 (+0.26%)",
+          "marketCap": "N/A",
+          "peRatio": "24.5",
+          "beta": "1.0",
+          "summary": "SPY shows slight positive movement with stable fundamentals.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "QQQ",
+          "name": "Invesco QQQ Trust",
+          "price": "480.80",
+          "priceChange": "+1.60 (+0.33%)",
+          "marketCap": "N/A",
+          "peRatio": "31.2",
+          "beta": "1.2",
+          "summary": "QQQ continues to show strength in the tech sector despite broader market concerns.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "AAPL",
+          "name": "Apple Inc",
+          "price": "175.45",
+          "priceChange": "-0.85 (-0.48%)",
+          "marketCap": "2.75T",
+          "peRatio": "28.9",
+          "pegRatio": "2.8",
+          "beta": "1.3",
+          "summary": "Apple faces slight pressure amid broader tech sector volatility.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "MSFT",
+          "name": "Microsoft Corporation",
+          "price": "425.22",
+          "priceChange": "+2.15 (+0.51%)",
+          "marketCap": "3.16T",
+          "peRatio": "36.5",
+          "pegRatio": "2.2",
+          "beta": "0.9",
+          "summary": "Microsoft shows resilience with strong cloud segment performance.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "NVDA",
+          "name": "NVIDIA Corporation",
+          "price": "925.15",
+          "priceChange": "+15.30 (+1.68%)",
+          "marketCap": "2.28T",
+          "peRatio": "78.4",
+          "pegRatio": "1.9",
+          "beta": "1.7",
+          "summary": "NVIDIA continues its strong performance driven by AI demand.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "GOOGL",
+          "name": "Alphabet Inc",
+          "price": "152.80",
+          "priceChange": "+0.65 (+0.43%)",
+          "marketCap": "1.92T",
+          "peRatio": "26.2",
+          "pegRatio": "1.5",
+          "beta": "1.1",
+          "summary": "Google parent Alphabet shows steady growth with strong ad revenue.",
+          "lastUpdated": "2025-03-26 16:30"
+        }
+      ],
+      "macroeconomicFactors": {
+        "treasuryYields": {
+          "threeMonth": "4.33",
+          "oneYear": "4.11",
+          "twoYear": "4.04",
+          "tenYear": "4.34",
+          "thirtyYear": "4.66",
+          "yieldCurve": "flat",
+          "interpretation": "The flat yield curve suggests market uncertainty about future economic conditions."
+        },
+        "inflation": {
+          "cpiHeadline": "2.82",
+          "cpiCore": "3.12",
+          "pceHeadline": "2.51",
+          "pceCore": "2.65",
+          "trend": "Moderating",
+          "outlook": "Inflation appears to be moderating toward the Fed's target."
+        }
+      },
+      "geopoliticalRisks": [
+        {
+          "region": "Asia-Pacific, Global",
+          "level": "High",
+          "description": "Escalating tensions between the US and China over trade policies and military activities in the South China Sea.",
+          "source": "Reuters",
+          "lastUpdated": "2025-03-26 14:15"
+        },
+        {
+          "region": "Europe, Global",
+          "level": "Severe",
+          "description": "Ongoing military conflict between Russia and Ukraine, causing global energy supply concerns and sanctions.",
+          "source": "Bloomberg",
+          "lastUpdated": "2025-03-26 15:30"
+        },
+        {
+          "region": "Middle East",
+          "level": "Moderate",
+          "description": "Rising tensions in the Middle East, particularly involving Iran's nuclear program and relations with Israel.",
+          "source": "Financial Times",
+          "lastUpdated": "2025-03-26 13:45"
+        }
+      ],
+      "geopoliticalOverview": "High geopolitical risks from US-China tensions, the Russia-Ukraine conflict, and Middle East tensions may impact market stability."
+    }
+  };
 }
 
 /**
@@ -446,6 +649,66 @@ function sendTradeDecisionEmailWrapper(analysisJson) {
   } catch (error) {
     Logger.log("Error in sendTradeDecisionEmailWrapper: " + error);
     sendErrorEmail("Trade Decision Email Error", error.toString());
+  }
+}
+
+/**
+ * Saves JSON data to a file in Google Drive
+ * 
+ * @param {Object} jsonData - The JSON data to save
+ * @param {String} fileName - The name of the file to save
+ * @return {String} The URL of the saved file
+ */
+function saveJsonToGoogleDrive(jsonData, fileName) {
+  try {
+    // Create or get the folder
+    const folderName = "Trading Analysis Emails";
+    const folder = getOrCreateFolder(folderName);
+    
+    // Check if file already exists and delete it
+    const existingFiles = folder.getFilesByName(fileName);
+    while (existingFiles.hasNext()) {
+      const file = existingFiles.next();
+      file.setTrashed(true);
+      Logger.log(`Deleted existing file: ${fileName}`);
+    }
+    
+    // Create the JSON file
+    const jsonContent = JSON.stringify(jsonData, null, 2);
+    const file = folder.createFile(fileName, jsonContent, MimeType.PLAIN_TEXT);
+    
+    Logger.log(`JSON saved to Google Drive: ${fileName}`);
+    return file.getUrl();
+  } catch (error) {
+    Logger.log(`Error saving JSON to Google Drive: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Gets or creates a folder in Google Drive
+ * @param {String} folderName - The name of the folder
+ * @return {Folder} The folder object
+ */
+function getOrCreateFolder(folderName) {
+  try {
+    // Get the root folder
+    const root = DriveApp.getRootFolder();
+    
+    // Check if folder already exists
+    const folderIterator = root.getFoldersByName(folderName);
+    if (folderIterator.hasNext()) {
+      Logger.log(`Found existing folder: ${folderName}`);
+      return folderIterator.next();
+    }
+    
+    // Create the folder if it doesn't exist
+    const folder = root.createFolder(folderName);
+    Logger.log(`Created new folder: ${folderName}`);
+    return folder;
+  } catch (error) {
+    Logger.log(`Error getting or creating folder: ${error}`);
+    throw error;
   }
 }
 
