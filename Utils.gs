@@ -181,22 +181,124 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trading Analysis</title>
+    <title>Market Pulse Daily</title>
     <style>
-      ${getEmailTemplateCSS()}
+      body {
+        font-family: 'Segoe UI', Arial, sans-serif;
+        background-color: #f5f7fa;
+        color: #333;
+        line-height: 1.5;
+        margin: 0;
+        padding: 0;
+      }
+      
+      .container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+      
+      .header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+      
+      .logo {
+        margin-bottom: 15px;
+      }
+      
+      .title {
+        font-size: 24px;
+        font-weight: bold;
+        color: #2c3e50;
+        margin: 0;
+      }
+      
+      .subtitle {
+        font-size: 14px;
+        color: #7f8c8d;
+        margin: 5px 0 0;
+      }
+      
+      .decision-banner {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        text-align: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+      }
+      
+      .decision-text {
+        font-size: 28px;
+        font-weight: bold;
+        margin: 0;
+      }
+      
+      .section {
+        background-color: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      }
+      
+      .section h2 {
+        color: #333;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 10px;
+        margin-top: 0;
+        margin-bottom: 15px;
+        text-align: center;
+        font-size: 18px;
+      }
+      
+      .stock-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+        gap: 15px;
+      }
+      
+      .stock-card {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .footer {
+        text-align: center;
+        font-size: 12px;
+        color: #95a5a6;
+        margin-top: 30px;
+      }
+      
+      .disclaimer {
+        font-size: 11px;
+        color: #95a5a6;
+        margin-top: 10px;
+        text-align: center;
+      }
+      
+      @media (max-width: 600px) {
+        .container {
+          padding: 15px;
+        }
+        
+        .stock-grid {
+          grid-template-columns: 1fr;
+        }
+      }
     </style>
   </head>
   <body>
     <div class="container">
       <div class="header">
-        <h1 class="header-title">Market Pulse Daily</h1>
-        <p class="header-subtitle">Professional Trading Insights</p>
-        <p class="header-date">Analysis Time: ${formattedAnalysisTime}</p>
+        <h1 class="title">Market Pulse Daily</h1>
+        <p class="subtitle">Professional Trading Insights</p>
+        <p class="subtitle">Analysis Time: ${formattedAnalysisTime}</p>
       </div>
       
-      <div class="section">
-        <h2 class="section-title">Trading Decision</h2>
-        <div style="padding: 20px; background-color: ${decisionBgColor}; border-radius: 8px; text-align: center;">
+      <div class="decision-banner">
+        <div class="decision-text">
           <div style="font-size: 36px; margin-bottom: 10px;">${decisionIcon}</div>
           <div style="font-size: 24px; font-weight: bold; color: ${decisionColor}; margin-bottom: 15px;">${decision}</div>
           <div style="font-style: italic; color: #555; white-space: pre-line; text-align: left; padding: 10px; background-color: rgba(255,255,255,0.5); border-radius: 4px;">
@@ -206,7 +308,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
       </div>
       
       <div class="section">
-        <h2 class="section-title">Market Summary</h2>
+        <h2>Market Summary</h2>
         <div class="summary-box">
           <h3 class="summary-title">Executive Summary</h3>
           <p class="summary-content">${analysis.summary || 'No summary available.'}</p>
@@ -234,7 +336,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
               
               <div style="display: flex; align-items: center; margin-bottom: 10px;">
                 <div style="flex-grow: 1; height: 10px; background-color: #f5f5f5; border-radius: 5px; overflow: hidden; position: relative;">
-                  <div style="position: absolute; top: 0; left: 0; height: 100%; width: ${analysis.marketIndicators.fearGreedIndex.value}%; background: linear-gradient(to right, #f44336, #ffeb3b, #4caf50);"></div>
+                  <div style="position: absolute; top: 0; left: ${analysis.marketIndicators.fearGreedIndex.value}%; transform: translateX(-50%); width: 15px; height: 15px; background-color: #333; border-radius: 50%;"></div>
                   <div style="position: absolute; top: -6px; left: calc(${analysis.marketIndicators.fearGreedIndex.value}% - 6px); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
                 </div>
                 <div style="min-width: 40px; text-align: right; font-weight: bold; margin-left: 10px;">
@@ -273,9 +375,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
                   analysis.marketIndicators.vix.value >= 30 ? '#f44336' : 
                   analysis.marketIndicators.vix.value >= 20 ? '#ff9800' : 
                   '#4caf50'
-                };">
-                  ${analysis.marketIndicators.vix.value}
-                </div>
+                }; margin-right: 10px;">${analysis.marketIndicators.vix.value}</div>
                 <div style="font-size: 14px; color: #555; text-align: right;">
                   ${analysis.marketIndicators.vix.trend || 'No trend data'}
                 </div>
@@ -300,9 +400,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
                   analysis.marketIndicators.putCallRatio.value >= 1.2 ? '#f44336' : 
                   analysis.marketIndicators.putCallRatio.value <= 0.7 ? '#4caf50' : 
                   '#ff9800'
-                };">
-                  ${analysis.marketIndicators.putCallRatio.value}
-                </div>
+                }; margin-right: 10px;">${analysis.marketIndicators.putCallRatio.value}</div>
                 <div style="font-size: 14px; color: #555; text-align: right;">
                   ${analysis.marketIndicators.putCallRatio.trend || 'No trend data'}
                 </div>
@@ -548,7 +646,7 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
     
     // Define colors based on decision
     let decisionColor = '#757575'; // Default gray
-    let decisionIcon = '⚖️'; // Default neutral icon
+    let decisionIcon = '⚠️'; // Default warning icon
     
     // Set colors and icon based on decision
     if (decision.toLowerCase().includes('buy')) {
@@ -562,7 +660,7 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
       decisionIcon = '⏸️';
     } else if (decision.toLowerCase().includes('watch')) {
       decisionColor = '#FFA500'; // Orange/Amber
-      decisionIcon = '👀';
+      decisionIcon = '⚠️';
     }
     
     // Format the analysis time
@@ -599,53 +697,107 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
       <style>
         body {
           font-family: 'Segoe UI', Arial, sans-serif;
-          line-height: 1.6;
+          background-color: #f5f7fa;
           color: #333;
+          line-height: 1.5;
           margin: 0;
           padding: 0;
-          background-color: #f5f5f5;
         }
+        
         .container {
-          width: 600px;
-          max-width: 600px;
-          margin: 20px auto;
-          padding: 25px;
-          background-color: #ffffff;
-          border: 1px solid #e0e0e0;
-          border-radius: 8px;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-          overflow: hidden;
-          box-sizing: border-box;
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
         }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+        }
+        
+        .logo {
+          margin-bottom: 15px;
+        }
+        
+        .title {
+          font-size: 24px;
+          font-weight: bold;
+          color: #2c3e50;
+          margin: 0;
+        }
+        
+        .subtitle {
+          font-size: 14px;
+          color: #7f8c8d;
+          margin: 5px 0 0;
+        }
+        
+        .decision-banner {
+          background-color: #f8f9fa;
+          border-radius: 8px;
+          padding: 20px;
+          margin-bottom: 20px;
+          text-align: center;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        
+        .decision-text {
+          font-size: 28px;
+          font-weight: bold;
+          margin: 0;
+        }
+        
         .section {
-          width: 100%;
-          max-width: 100%;
-          overflow: hidden;
-          margin: 0 auto 20px auto;
-          box-sizing: border-box;
           background-color: white;
           border-radius: 8px;
-          padding: 15px;
+          padding: 20px;
+          margin-bottom: 20px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
-        h2 {
+        
+        .section h2 {
           color: #333;
           border-bottom: 1px solid #eee;
           padding-bottom: 10px;
           margin-top: 0;
+          margin-bottom: 15px;
           text-align: center;
+          font-size: 18px;
         }
+        
         .stock-grid {
           display: grid;
-          grid-template-columns: repeat(2, 1fr);
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
           gap: 15px;
-          margin-bottom: 15px;
-          max-width: 100%;
-          overflow: hidden;
         }
+        
         .stock-card {
-          min-width: 0;
-          max-width: 100%;
+          display: flex;
+          flex-direction: column;
+        }
+        
+        .footer {
+          text-align: center;
+          font-size: 12px;
+          color: #95a5a6;
+          margin-top: 30px;
+        }
+        
+        .disclaimer {
+          font-size: 11px;
+          color: #95a5a6;
+          margin-top: 10px;
+          text-align: center;
+        }
+        
+        @media (max-width: 600px) {
+          .container {
+            padding: 15px;
+          }
+          
+          .stock-grid {
+            grid-template-columns: 1fr;
+          }
         }
       </style>
     </head>
@@ -668,7 +820,7 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
         
         <!-- Justification Section -->
         <div class="section">
-          <h2>Detailed Justification</h2>
+          <h2>Justification</h2>
           <div style="line-height: 1.6; color: #444; font-size: 13px;">${analysisResult.justification || 'No justification provided.'}</div>
         </div>
         
@@ -743,7 +895,7 @@ function generateMarketSentimentSection(analysis) {
         
         return `
           <div style="padding: 15px 0; border-top: 1px solid #e0e0e0;">
-            <div style="font-weight: bold; color: #2196f3; margin-bottom: 8px;">${analyst.analyst || 'Unknown Analyst'}</div>
+            <div style="font-weight: bold; margin-bottom: 8px;">${analyst.analyst || 'Unknown Analyst'}</div>
             <div style="font-style: italic; margin-bottom: 5px;">"${analyst.comment || 'No comment'}"</div>
             ${symbolsHtml}
             ${source}
@@ -823,7 +975,7 @@ function generateMarketIndicatorsSection(analysis) {
         </div>
         
         <div style="position: relative; height: 10px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
-          <div style="position: absolute; top: -5px; left: ${fgValue}%; transform: translateX(-50%); width: 15px; height: 15px; background-color: #333; border-radius: 50%;"></div>
+          <div style="position: absolute; top: 0; left: ${fgValue}%; transform: translateX(-50%); width: 15px; height: 15px; background-color: #333; border-radius: 50%;"></div>
           <div style="position: absolute; top: -6px; left: calc(${fgValue}% - 6px); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
         </div>
         
@@ -915,22 +1067,78 @@ function generateMarketIndicatorsSection(analysis) {
  */
 function generateFundamentalMetricsSection(analysis) {
   try {
-    // Get fundamental metrics data
-    const fundamentalMetrics = analysis.fundamentalMetrics || [];
+    // Get fundamental metrics data from the analysis
+    let fundamentalMetrics = analysis.fundamentalMetrics || [];
+    
+    // If no fundamental metrics in the OpenAI response, try to get them from the cached data
+    if (!fundamentalMetrics || fundamentalMetrics.length === 0) {
+      Logger.log("No fundamental metrics found in OpenAI response, using data from cached allData");
+      try {
+        // Get the cached data from the script cache
+        const cache = CacheService.getScriptCache();
+        const cachedDataJson = cache.get('allData');
+        
+        if (cachedDataJson) {
+          const cachedData = JSON.parse(cachedDataJson);
+          
+          // Debug logging
+          Logger.log("DEBUG - Found cached allData");
+          
+          // Check if the cached data contains fundamental metrics
+          if (cachedData && cachedData.fundamentalMetrics && cachedData.fundamentalMetrics.data) {
+            fundamentalMetrics = cachedData.fundamentalMetrics.data;
+            Logger.log(`Using ${fundamentalMetrics.length} stocks from cached data instead of OpenAI response`);
+          }
+        } else {
+          Logger.log("No cached allData found");
+        }
+      } catch (retrievalError) {
+        Logger.log("Error retrieving fundamental metrics from cached data: " + retrievalError);
+      }
+    }
+    
+    // Organize stocks into categories
+    const majorIndices = [];
+    const magSeven = [];
+    const otherStocks = [];
+    
+    // Define Magnificent Seven symbols
+    const magSevenSymbols = ['AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA', 'TSLA'];
+    
+    // Define Major Indices symbols
+    const indicesSymbols = ['SPY', 'QQQ', 'DIA', 'IWM', '^GSPC', '^DJI', '^IXIC', '^RUT'];
+    
+    // Sort stocks into categories
+    if (fundamentalMetrics && fundamentalMetrics.length > 0) {
+      fundamentalMetrics.forEach(stock => {
+        if (indicesSymbols.includes(stock.symbol)) {
+          majorIndices.push(stock);
+        } else if (magSevenSymbols.includes(stock.symbol)) {
+          magSeven.push(stock);
+        } else {
+          otherStocks.push(stock);
+        }
+      });
+    }
     
     // Generate stocks HTML
     let stocksHtml = '';
     if (fundamentalMetrics && fundamentalMetrics.length > 0) {
       stocksHtml = `<div class="stock-grid">`;
       
-      fundamentalMetrics.forEach(stock => {
+      // Function to generate stock card HTML
+      const generateStockCard = (stock) => {
         // Determine if price change is positive or negative
-        const priceChange = stock.priceChange || '';
-        const isPositive = priceChange.includes('+');
-        const changeColor = isPositive ? '#4caf50' : '#f44336';
-        const changeIcon = isPositive ? '↑' : '↓';
+        let priceChange = stock.priceChange || '';
+        if (typeof priceChange === 'number') {
+          priceChange = priceChange > 0 ? `+${priceChange.toFixed(2)}` : priceChange.toFixed(2);
+        }
         
-        stocksHtml += `
+        const isPositive = String(priceChange).includes('+');
+        const changeColor = isPositive ? '#4caf50' : (priceChange === '0.00' || priceChange === '+0.00' || priceChange === '-0.00') ? '#757575' : '#f44336';
+        const changeIcon = isPositive ? '↑' : (priceChange === '0.00' || priceChange === '+0.00' || priceChange === '-0.00') ? '→' : '↓';
+        
+        return `
         <div class="stock-card">
           <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); max-width: 100%;">
             <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
@@ -981,7 +1189,41 @@ function generateFundamentalMetricsSection(analysis) {
             </div>
           </div>
         </div>`;
-      });
+      };
+      
+      // Add category headers and stock cards
+      if (majorIndices.length > 0) {
+        stocksHtml += `
+        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px;">
+          <h3 style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0;">Major Indices</h3>
+        </div>`;
+        
+        majorIndices.forEach(stock => {
+          stocksHtml += generateStockCard(stock);
+        });
+      }
+      
+      if (magSeven.length > 0) {
+        stocksHtml += `
+        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px;">
+          <h3 style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0;">Magnificent Seven</h3>
+        </div>`;
+        
+        magSeven.forEach(stock => {
+          stocksHtml += generateStockCard(stock);
+        });
+      }
+      
+      if (otherStocks.length > 0) {
+        stocksHtml += `
+        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px;">
+          <h3 style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0;">Other Stocks</h3>
+        </div>`;
+        
+        otherStocks.forEach(stock => {
+          stocksHtml += generateStockCard(stock);
+        });
+      }
       
       stocksHtml += `</div>`;
     } else {
@@ -999,7 +1241,7 @@ function generateFundamentalMetricsSection(analysis) {
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
-      <p style="text-align: center; color: #757575;">Error generating fundamental metrics data</p>
+      <p style="text-align: center; color: #757575;">Error generating stock data: ${error}</p>
     </div>
     `;
   }
@@ -1025,31 +1267,31 @@ function generateMacroeconomicFactorsSection(analysis) {
         <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
         <div style="display: flex; flex-wrap: wrap; gap: 10px;">
           ${yields.threeMonth ? `
-          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: 500; margin-bottom: 5px;">3-Month</div>
             <div style="font-size: 18px; font-weight: bold;">${yields.threeMonth}%</div>
           </div>` : ''}
           
           ${yields.oneYear ? `
-          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: 500; margin-bottom: 5px;">1-Year</div>
             <div style="font-size: 18px; font-weight: bold;">${yields.oneYear}%</div>
           </div>` : ''}
           
           ${yields.twoYear ? `
-          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: 500; margin-bottom: 5px;">2-Year</div>
             <div style="font-size: 18px; font-weight: bold;">${yields.twoYear}%</div>
           </div>` : ''}
           
           ${yields.tenYear ? `
-          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: 500; margin-bottom: 5px;">10-Year</div>
             <div style="font-size: 18px; font-weight: bold;">${yields.tenYear}%</div>
           </div>` : ''}
           
           ${yields.thirtyYear ? `
-          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); text-align: center;">
+          <div style="flex: 1 1 calc(33% - 10px); min-width: 100px; padding: 10px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-weight: 500; margin-bottom: 5px;">30-Year</div>
             <div style="font-size: 18px; font-weight: bold;">${yields.thirtyYear}%</div>
           </div>` : ''}
@@ -1057,7 +1299,7 @@ function generateMacroeconomicFactorsSection(analysis) {
         
         ${yields.yieldCurve ? `
         <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 6px;">
-          <div style="font-weight: 500; margin-bottom: 5px;">Yield Curve: ${yields.yieldCurve}</div>
+          <div style="font-weight: 500; margin-bottom: 5px;">Yield Curve: <span style="font-weight: bold;">${yields.yieldCurve}</span></div>
           ${yields.implications ? `<div style="font-size: 13px; color: #555;">${yields.implications}</div>` : ''}
         </div>` : ''}
       </div>
@@ -1069,85 +1311,84 @@ function generateMacroeconomicFactorsSection(analysis) {
     if (macro.inflation) {
       const inflation = macro.inflation;
       
+      // Determine trend color and icon
+      let trendColor = '#757575'; // Default gray
+      let trendIcon = '→'; // Default stable
+      let trendText = inflation.trend || 'Stable';
+      
+      if (trendText.toLowerCase().includes('rising') || trendText.toLowerCase().includes('increasing')) {
+        trendColor = '#f44336'; // Red for rising inflation
+        trendIcon = '↑';
+      } else if (trendText.toLowerCase().includes('falling') || trendText.toLowerCase().includes('decreasing')) {
+        trendColor = '#4caf50'; // Green for falling inflation
+        trendIcon = '↓';
+      }
+      
       inflationHtml = `
       <div style="margin-bottom: 20px;">
         <div style="font-weight: bold; margin-bottom: 10px;">Inflation Metrics</div>
-        <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-          ${inflation.cpi && inflation.cpi.headline !== undefined ? `
-          <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-weight: bold;">CPI Headline</div>
-                <div style="font-size: 12px; color: #757575;">Consumer Price Index</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 20px; font-weight: bold;">${inflation.cpi.headline}%</div>
-              </div>
+        <div style="display: flex; margin-bottom: 15px;">
+          <!-- CPI Card -->
+          ${inflation.cpi && (inflation.cpi.headline !== undefined || inflation.cpi.core !== undefined) ? `
+          <div style="flex: 1; margin-right: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="background-color: #f8f9fa; padding: 10px; border-bottom: 1px solid #eee;">
+              <div style="font-weight: bold;">Consumer Price Index (CPI)</div>
             </div>
-          </div>
-          ` : ''}
+            <div style="padding: 15px;">
+              ${inflation.cpi.headline !== undefined ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div>Headline:</div>
+                <div style="font-weight: bold;">${inflation.cpi.headline}%</div>
+              </div>` : ''}
+              
+              ${inflation.cpi.core !== undefined ? `
+              <div style="display: flex; justify-content: space-between;">
+                <div>Core (ex. Food & Energy):</div>
+                <div style="font-weight: bold;">${inflation.cpi.core}%</div>
+              </div>` : ''}
+            </div>
+          </div>` : ''}
           
-          ${inflation.cpi && inflation.cpi.core !== undefined ? `
-          <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-weight: bold;">CPI Core</div>
-                <div style="font-size: 12px; color: #757575;">Excluding Food & Energy</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 20px; font-weight: bold;">${inflation.cpi.core}%</div>
-              </div>
+          <!-- PCE Card -->
+          ${inflation.pce && (inflation.pce.headline !== undefined || inflation.pce.core !== undefined) ? `
+          <div style="flex: 1; margin-left: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="background-color: #f8f9fa; padding: 10px; border-bottom: 1px solid #eee;">
+              <div style="font-weight: bold;">Personal Consumption Expenditures (PCE)</div>
             </div>
-          </div>
-          ` : ''}
-          
-          ${inflation.pce && inflation.pce.headline !== undefined ? `
-          <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-weight: bold;">PCE Headline</div>
-                <div style="font-size: 12px; color: #757575;">Personal Consumption Expenditures</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 20px; font-weight: bold;">${inflation.pce.headline}%</div>
-              </div>
+            <div style="padding: 15px;">
+              ${inflation.pce.headline !== undefined ? `
+              <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                <div>Headline:</div>
+                <div style="font-weight: bold;">${inflation.pce.headline}%</div>
+              </div>` : ''}
+              
+              ${inflation.pce.core !== undefined ? `
+              <div style="display: flex; justify-content: space-between;">
+                <div>Core (Fed's Preferred):</div>
+                <div style="font-weight: bold;">${inflation.pce.core}%</div>
+              </div>` : ''}
             </div>
-          </div>
-          ` : ''}
-          
-          ${inflation.pce && inflation.pce.core !== undefined ? `
-          <div style="flex: 1; min-width: 150px; padding: 15px; background-color: #ffffff; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div>
-                <div style="font-weight: bold;">PCE Core</div>
-                <div style="font-size: 12px; color: #757575;">Fed's Preferred Measure</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="font-size: 20px; font-weight: bold;">${inflation.pce.core}%</div>
-              </div>
-            </div>
-          </div>
-          ` : ''}
+          </div>` : ''}
         </div>
         
         ${inflation.trend ? `
-        <div style="margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 6px;">
-          <div style="font-weight: 500; margin-bottom: 5px;">Trend: ${inflation.trend}</div>
-          ${inflation.outlook ? `<div style="font-size: 13px; color: #555;">${inflation.outlook}</div>` : ''}
+        <div style="padding: 10px; background-color: #f8f9fa; border-radius: 6px; display: flex; align-items: center;">
+          <div style="font-weight: 500; margin-right: 10px;">Trend:</div>
+          <div style="color: ${trendColor}; font-weight: bold;">
+            <span style="margin-right: 5px;">${trendIcon}</span>${inflation.trend}
+          </div>
+          ${inflation.outlook ? `
+          <div style="margin-left: auto; font-size: 13px; color: #555; max-width: 60%;">${inflation.outlook}</div>` : ''}
         </div>` : ''}
       </div>
       `;
     }
-    
-    // Generate source information
-    const sourceInfo = '';  // Removed source info as requested
     
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
       ${yieldsHtml}
       ${inflationHtml}
-      ${sourceInfo}
     </div>
     `;
   } catch (error) {
@@ -1172,8 +1413,8 @@ function generateGeopoliticalRisksSection(analysis) {
     // Get geopolitical risks data
     const geopoliticalRisks = analysis.geopoliticalRisks || [];
     
-    // If no data, return empty section
-    if (!geopoliticalRisks || geopoliticalRisks.length === 0) {
+    // If no data and no overview, return empty section
+    if ((!geopoliticalRisks || geopoliticalRisks.length === 0) && !analysis.geopoliticalOverview) {
       return `
       <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
@@ -1214,7 +1455,7 @@ function generateGeopoliticalRisksSection(analysis) {
         
         risksHtml += `
         <div style="margin-bottom: 15px;">
-          <div style="margin-bottom: 10px; padding: 10px; background-color: white; border-radius: 4px; border: 1px solid #eee;">
+          <div style="margin-bottom: 10px; padding: 10px; background-color: white; border-radius: 4px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
               <div style="font-weight: bold; color: #333;">${risk.region || 'Global'}</div>
               <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">

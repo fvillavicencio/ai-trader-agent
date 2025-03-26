@@ -30,6 +30,34 @@ function getOpenAITradingAnalysis() {
     
     Logger.log("Retrieved trading data with warnings or success");
     
+    // Cache the allData object for later use in email generation
+    try {
+      const cache = CacheService.getScriptCache();
+      // Convert allData to JSON string and cache it
+      // Note: Script cache has a 100KB limit per cached value
+      const allDataJson = JSON.stringify(allData);
+      
+      // Check if the JSON string is too large for the cache (100KB limit)
+      if (allDataJson.length > 100000) {
+        Logger.log("Warning: allData is too large to cache completely. Caching essential parts only.");
+        
+        // Create a smaller version with just the essential data
+        const essentialData = {
+          fundamentalMetrics: allData.fundamentalMetrics,
+          timestamp: allData.timestamp
+        };
+        
+        cache.put('allData', JSON.stringify(essentialData), 600); // Cache for 10 minutes
+      } else {
+        cache.put('allData', allDataJson, 600); // Cache for 10 minutes
+      }
+      
+      Logger.log("Successfully cached allData for later use");
+    } catch (cacheError) {
+      Logger.log("Warning: Failed to cache allData: " + cacheError);
+      // Continue even if caching fails
+    }
+    
     // Get the prompt template from Prompt.gs
     const promptTemplate = getTradingAnalysisPrompt();
     Logger.log("Retrieved prompt template from Prompt.gs");
