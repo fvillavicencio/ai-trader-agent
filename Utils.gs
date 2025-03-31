@@ -452,7 +452,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
       </div>
       
       <div class="next-analysis">
-        Next analysis scheduled for: ${formattedNextAnalysisTime}
+        Next analysis scheduled for ${formattedNextAnalysisTime}
       </div>
     </div>
   </body>
@@ -546,7 +546,7 @@ ${breadthText}
     
     analysis.fundamentalMetrics.metrics.forEach(metric => {
       text += `
-${metric.symbol} (${metric.name || 'N/A'}): $${metric.price || 'N/A'} ${metric.priceChange || ''} (${metric.percentChange || '0.00%'})
+${metric.symbol} (${metric.name || 'N/A'}): $${metric.price || '---'} ${metric.priceChange || '+/-0.00 (0.00%)'}
 P/E Ratio: ${metric.peRatio || 'N/A'}
 Market Cap: ${metric.marketCap || 'N/A'}
 ${metric.analysis || metric.comment || ''}
@@ -1068,7 +1068,8 @@ function generateMarketIndicatorsSection(analysis) {
 function generateFundamentalMetricsSection(analysis) {
   try {
     // Get fundamental metrics data from the analysis
-    let fundamentalMetrics = analysis.fundamentalMetrics || [];
+    //let fundamentalMetrics = analysis.fundamentalMetrics || [];
+    let fundamentalMetrics = [];
     
     // If no fundamental metrics in the OpenAI response, try to get them from the cached data
     if (!fundamentalMetrics || fundamentalMetrics.length === 0) {
@@ -1097,6 +1098,46 @@ function generateFundamentalMetricsSection(analysis) {
       }
     }
     
+    // If we have fundamental metrics from OpenAI, try to merge with cached data
+    if (fundamentalMetrics && fundamentalMetrics.length > 0) {
+      try {
+        // Get the cached data from the script cache
+        const cache = CacheService.getScriptCache();
+        const cachedDataJson = cache.get('allData');
+        
+        if (cachedDataJson) {
+          const cachedData = JSON.parse(cachedDataJson);
+          
+          if (cachedData && cachedData.fundamentalMetrics && cachedData.fundamentalMetrics.data) {
+            // Create a map of cached stocks by symbol
+            const cachedStocks = new Map();
+            cachedData.fundamentalMetrics.data.forEach(stock => {
+              cachedStocks.set(stock.symbol, stock);
+            });
+            
+            // Merge the OpenAI data with cached data
+            fundamentalMetrics = fundamentalMetrics.map(openAiStock => {
+              const cachedStock = cachedStocks.get(openAiStock.symbol);
+              if (cachedStock) {
+                // Merge cached data with OpenAI data, prioritizing OpenAI data for specific fields
+                return {
+                  ...cachedStock, // Start with all cached data
+                  ...openAiStock, // Override with OpenAI data
+                  summary: openAiStock.comment, // Use OpenAI comment as summary
+                  lastUpdated: analysis.timestamp // Use the analysis timestamp
+                };
+              }
+              return openAiStock; // If no cached data, use OpenAI data
+            });
+            
+            Logger.log(`Merged ${fundamentalMetrics.length} stocks with cached data`);
+          }
+        }
+      } catch (mergeError) {
+        Logger.log("Error merging fundamental metrics with cached data: " + mergeError);
+      }
+    }
+    
     // Organize stocks into categories
     const majorIndices = [];
     const magSeven = [];
@@ -1121,119 +1162,114 @@ function generateFundamentalMetricsSection(analysis) {
       });
     }
     
-    // Generate stocks HTML
-    let stocksHtml = '';
-    if (fundamentalMetrics && fundamentalMetrics.length > 0) {
-      stocksHtml = `<div class="stock-grid">`;
-      
-      // Function to generate stock card HTML
-      const generateStockCard = (stock) => {
-        // Determine if price change is positive or negative
-        let priceChange = stock.priceChange || '';
-        if (typeof priceChange === 'number') {
-          priceChange = priceChange > 0 ? `+${priceChange.toFixed(2)}` : priceChange.toFixed(2);
-        }
-        
-        const isPositive = String(priceChange).includes('+');
-        const changeColor = isPositive ? '#4caf50' : (priceChange === '0.00' || priceChange === '+0.00' || priceChange === '-0.00') ? '#757575' : '#f44336';
-        const changeIcon = isPositive ? '↑' : (priceChange === '0.00' || priceChange === '+0.00' || priceChange === '-0.00') ? '→' : '↓';
-        
-        return `
+    // Function to format numbers to 2 decimal places
+    function formatNumber(num) {
+      if (num === undefined || num === null || num === '#N/A' || num === 'N/A') {
+        return '';
+      }
+      return Number(num).toFixed(2);
+    }
+
+    // Function to calculate and format percentage change
+    function formatPercentageChange(price, change) {
+      if (price === 0 || price === undefined || price === null || 
+          change === undefined || change === null || 
+          change === '#N/A' || change === 'N/A') {
+        return '';
+      }
+      const percentage = (change / price) * 100;
+      return ` (${formatNumber(percentage)}%)`;
+    }
+
+    // Generate stock cards
+    function generateStockCard(stock) {
+      const metrics = [
+        { label: 'PEG Ratio', value: stock.pegRatio },
+        { label: 'Forward P/E', value: stock.forwardPE },
+        { label: 'Price/Book', value: stock.priceToBook },
+        { label: 'Price/Sales', value: stock.priceToSales },
+        { label: 'Debt/Equity', value: stock.debtToEquity },
+        { label: 'ROE', value: stock.returnOnEquity },
+        { label: 'ROA', value: stock.returnOnAssets },
+        { label: 'Profit Margin', value: stock.profitMargin },
+        { label: 'Dividend Yield', value: stock.dividendYield },
+        { label: 'Beta', value: stock.beta }
+      ];
+
+      // Filter out N/A values and format numbers
+      const filteredMetrics = metrics.filter(m => {
+        return m.value !== '#N/A' && m.value !== 'N/A' && m.value !== undefined && m.value !== null;
+      }).map(m => ({
+        label: m.label,
+        value: formatNumber(m.value)
+      }));
+
+      // Format price and change
+      const price = formatNumber(stock.price);
+      const change = formatNumber(stock.priceChange);
+      const percentageChange = formatPercentageChange(stock.price, stock.priceChange);
+
+      // Use the company name from the metrics data
+      const companyName = stock.name || stock.symbol;
+
+      return `
         <div class="stock-card">
-          <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); max-width: 100%;">
-            <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
-              <div style="font-weight: bold; font-size: 16px; color: #2c3e50;">${stock.symbol}</div>
-              <div style="font-size: 14px; color: #555; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.name || ''}</div>
+          <div style="flex: 1; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="background-color: #f8f9fa; padding: 10px; border-bottom: 1px solid #eee;">
+              <div style="font-weight: bold; margin-bottom: 5px;">${stock.symbol}</div>
+              <div style="color: #666; font-size: 12px;">${companyName}</div>
             </div>
             
-            <div style="padding: 15px; background-color: white; overflow: hidden;">
-              <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
-                <div style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-right: 10px;">$${stock.price || '---'}</div>
-                <div style="color: ${changeColor}; font-weight: bold;">
-                  <span style="margin-right: 3px;">${changeIcon}</span>${stock.priceChange || '+/-0.00 (0.00%)'}
+            <div style="padding: 15px;">
+              <div style="display: flex; align-items: baseline; margin-bottom: 5px;">
+                <div style="font-size: 18px; font-weight: bold;">$${price}</div>
+                <div style="color: ${change >= 0 ? '#4caf50' : '#f44336'}; font-weight: bold;">
+                  <span style="margin-right: 3px;">${change >= 0 ? '↑' : '↓'}</span>${change}${percentageChange}
                 </div>
               </div>
               
               <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
-                <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Key Metrics</div>
-                
-                ${stock.marketCap ? `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
-                  <div style="color: #555; min-width: 80px;">Market Cap</div>
-                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.marketCap}</div>
-                </div>` : ''}
-                
-                ${stock.peRatio ? `
-                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                  <div style="color: #555; min-width: 80px;">P/E Ratio</div>
-                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.peRatio}</div>
-                </div>` : ''}
-                
-                ${stock.pegRatio ? `
-                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                  <div style="color: #555; min-width: 80px;">PEG Ratio</div>
-                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.pegRatio}</div>
-                </div>` : ''}
-                
-                ${stock.beta ? `
-                <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                  <div style="color: #555; min-width: 80px;">Beta</div>
-                  <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.beta}</div>
-                </div>` : ''}
+                <div style="font-weight: bold; margin-bottom: 5px;">Key Metrics</div>
+                ${filteredMetrics.length > 0 ? filteredMetrics.map(m => `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #555; min-width: 80px;">${m.label}</div>
+                    <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${m.value}</div>
+                  </div>
+                `).join('') : ''}
               </div>
               
-              ${stock.summary ? `
-              <div style="margin-top: 10px; font-style: italic; font-size: 13px; color: #555; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
-              
-              <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${stock.lastUpdated || new Date().toLocaleString()}</div>
+              <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${stock.lastUpdated}</div>
             </div>
           </div>
-        </div>`;
-      };
-      
-      // Add category headers and stock cards
-      if (majorIndices.length > 0) {
-        stocksHtml += `
-        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px;">
-          <h3 style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0;">Major Indices</h3>
-        </div>`;
-        
-        majorIndices.forEach(stock => {
-          stocksHtml += generateStockCard(stock);
-        });
-      }
-      
-      if (magSeven.length > 0) {
-        stocksHtml += `
-        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px;">
-          <h3 style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0;">Magnificent Seven</h3>
-        </div>`;
-        
-        magSeven.forEach(stock => {
-          stocksHtml += generateStockCard(stock);
-        });
-      }
-      
-      if (otherStocks.length > 0) {
-        stocksHtml += `
-        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px;">
-          <h3 style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0;">Other Stocks</h3>
-        </div>`;
-        
-        otherStocks.forEach(stock => {
-          stocksHtml += generateStockCard(stock);
-        });
-      }
-      
-      stocksHtml += `</div>`;
-    } else {
-      stocksHtml = `<p style="text-align: center; color: #757575;">No stock data available</p>`;
+        </div>
+      `;
     }
-    
+
+    // Generate the grid of stock cards
+    function generateStockGrid(stocks, category) {
+      if (stocks.length === 0) return '';
+      
+      return `
+        <div style="grid-column: 1 / -1; margin-top: 15px; margin-bottom: 10px;">
+          <h3 style="color: #2c3e50; border-bottom: 1px solid #eee; padding-bottom: 5px; margin: 0;">${category}</h3>
+        </div>
+        ${stocks.map(stock => generateStockCard(stock)).join('')}
+      `;
+    }
+
+    // Generate the HTML for each category
+    const html = `
+      <div class="stock-grid">
+        ${generateStockGrid(majorIndices, 'Major Indices')}
+        ${generateStockGrid(magSeven, 'Magnificent Seven')}
+        ${generateStockGrid(otherStocks, 'Other Stocks')}
+      </div>
+    `;
+
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
-      ${stocksHtml}
+      ${html}
     </div>
     `;
   } catch (error) {
@@ -1408,6 +1444,8 @@ function generateMacroeconomicFactorsSection(analysis) {
  * @param {Object} analysis - The analysis data
  * @return {String} HTML for the geopolitical risks section
  */
+
+ /**
 function generateGeopoliticalRisksSection(analysis) {
   try {
     // Get geopolitical risks data
@@ -1476,6 +1514,7 @@ function generateGeopoliticalRisksSection(analysis) {
       risksHtml += `</div>`;
     }
     
+    // Return the complete HTML for the geopolitical risks section
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
@@ -1491,5 +1530,132 @@ function generateGeopoliticalRisksSection(analysis) {
       <p style="text-align: center; color: #757575;">Error generating geopolitical risks data</p>
     </div>
     `;
+  }
+}
+*/
+
+/**
+ * Generates the geopolitical risks section HTML using the correct JSON structure.
+ * 
+ * @param {Object} analysis - The analysis data
+ * @return {String} HTML for the geopolitical risks section
+ */
+function generateGeopoliticalRisksSection(analysis) {
+  try {
+    // Retrieve geopolitical risks from macroeconomicFactors
+    const geoRisks = analysis.macroeconomicFactors && analysis.macroeconomicFactors.geopoliticalRisks;
+    
+    // If no geopolitical risks data is available, return a message indicating so.
+    if (!geoRisks) {
+      return `
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
+        <p style="text-align: center; color: #757575;">No geopolitical risk data available</p>
+      </div>
+      `;
+    }
+    
+    // Global overview from geoRisks.global (if available)
+    let overviewHtml = '';
+    if (geoRisks.global) {
+      overviewHtml = `
+      <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
+        <div style="font-weight: bold; margin-bottom: 5px; color: #ff9800;">Global Overview</div>
+        <div style="color: #333;">${geoRisks.global}</div>
+      </div>
+      `;
+    }
+    
+    // Generate regional risks using the regions array from geoRisks
+    let risksHtml = '';
+    if (geoRisks.regions && geoRisks.regions.length > 0) {
+      risksHtml = `
+      <div style="margin-top: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Regional Risks</div>
+      `;
+      
+      geoRisks.regions.forEach(regionData => {
+        risksHtml += `
+        <div style="margin-bottom: 15px;">
+          <div style="font-weight: bold; color: #333;">${regionData.region || 'Global'}</div>
+        `;
+        if (regionData.risks && regionData.risks.length > 0) {
+          regionData.risks.forEach(risk => {
+            // Use risk.impactLevel instead of risk.level
+            let riskColor = '#ff9800'; // default moderate
+            if (risk.impactLevel && risk.impactLevel.toLowerCase() === 'high') {
+              riskColor = '#f44336';
+            } else if (risk.impactLevel && risk.impactLevel.toLowerCase() === 'severe') {
+              riskColor = '#d32f2f';
+            } else if (risk.impactLevel && risk.impactLevel.toLowerCase() === 'low') {
+              riskColor = '#4caf50';
+            }
+            
+            risksHtml += `
+            <div style="padding: 10px; background-color: white; border-radius: 4px; margin-top: 5px;">
+              <div style="display: flex; justify-content: space-between;">
+                <div style="color: #555;">${risk.description || 'No description available'}</div>
+                <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">
+                  <span style="background-color: ${riskColor}; color: white; padding: 2px 6px; border-radius: 3px;">${risk.impactLevel || 'Moderate'}</span>
+                </div>
+              </div>
+              ${risk.source ? `<div style="font-size: 11px; text-align: right; color: #888;">Source: ${risk.source}${risk.lastUpdated ? ` | Last updated: ${risk.lastUpdated}` : ''}</div>` : ''}
+            </div>
+            `;
+          });
+        } else {
+          risksHtml += `<div style="color: #757575;">No specific risks identified</div>`;
+        }
+        risksHtml += `</div>`;
+      });
+      
+      risksHtml += `</div>`;
+    }
+    
+    // Return the complete HTML for the geopolitical risks section
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
+      ${overviewHtml}
+      ${risksHtml}
+    </div>
+    `;
+  } catch (error) {
+    Logger.log("Error generating geopolitical risks section: " + error);
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
+      <p style="text-align: center; color: #757575;">Error generating geopolitical risks data</p>
+    </div>
+    `;
+  }
+}
+
+function saveToGoogleDrive(filename, content) {
+  try {
+    const folderName = 'Trading Analysis Emails';
+    const folders = DriveApp.getFoldersByName(folderName);
+    
+    if (!folders.hasNext()) {
+      throw new Error(`Folder '${folderName}' not found in Google Drive`);
+    }
+    
+    const folder = folders.next();
+    
+    // Check if file already exists
+    const files = folder.getFilesByName(filename);
+    let file;
+    
+    if (files.hasNext()) {
+      file = files.next();
+      file.setContent(content);
+    } else {
+      file = folder.createFile(filename, content);
+    }
+    
+    return file.getUrl();
+  } catch (error) {
+    Logger.log('Error saving to Google Drive: ' + error);
+    throw new Error('Failed to save file to Google Drive: ' + error);
   }
 }

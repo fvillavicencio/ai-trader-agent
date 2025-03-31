@@ -2148,7 +2148,7 @@ function retrieveGeopoliticalRisksFromPerplexity() {
     const currentDate = new Date();
     const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
     
-    const prompt = `Analyze the current major geopolitical risks that could impact financial markets as of ${formattedDate}. 
+    const prompt = `Analyze the current major geopolitical risks that could impact financial markets as of ${formattedDate}. Ensure you only retrive recent data (i.e. within the last week)
     
     Format your response as a valid JSON object with the following structure:
     {

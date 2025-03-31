@@ -121,7 +121,7 @@ function sendPromptEmail(prompt) {
       htmlBody: htmlBody
     });
     
-    Logger.log("Prompt email sent successfully");
+    Logger.log(`Prompt email sent successfully to: ${emailAddress}`);
     return true;
   } catch (error) {
     Logger.log(`Error sending prompt email: ${error}`);
@@ -461,9 +461,7 @@ function sendTradeDecisionEmail(analysisJson) {
     }
     
     // Get the final recipients from script properties
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const recipientsString = scriptProperties.getProperty('FINAL_EMAIL_RECIPIENTS') || Session.getEffectiveUser().getEmail();
-    const recipients = recipientsString.split(',').map(email => email.trim());
+    const recipients = RECIPIENT_EMAILS || [Session.getEffectiveUser().getEmail()];
     
     // Send the email to each recipient
     let allSuccessful = true;

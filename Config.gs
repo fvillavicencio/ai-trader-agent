@@ -17,8 +17,8 @@ const ALPHA_VANTAGE_API_KEY = ""; // Don't hardcode the key here, use Script Pro
 
 // Email configuration
 const EMAIL_SUBJECT_PREFIX = "[Market Pulse Daily] "; // Prefix for email subject
-//const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com", "zitro123@yahoo.com"]; // Array of recipient email addresses
-const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com"]; // Array of recipient email addresses
+const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com", "zitro123@yahoo.com"]; // Array of recipient email addresses
+//const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com"]; // Array of recipient email addresses
 
 // Schedule configuration
 const MORNING_SCHEDULE_HOUR = 8;

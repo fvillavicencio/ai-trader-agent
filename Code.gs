@@ -102,9 +102,11 @@ function getOpenAITradingAnalysis() {
     Logger.log("Received response from OpenAI");
     
     // Parse the analysis result
+    Logger.log("Parsing analysis result");
     const analysisJson = cleanAnalysisResult(content);
     
     // Cache the result for 10 minutes (600 seconds)
+    Logger.log("Caching OpenAI analysis");
     cache.put('OPENAI_ANALYSIS_CACHE', JSON.stringify(analysisJson), 600);
     Logger.log("Cached OpenAI analysis for 10 minutes");
     
@@ -266,21 +268,45 @@ function extractContentFromResponse(response) {
  * @return {Object} - The cleaned and parsed analysis result
  */
 function cleanAnalysisResult(content) {
+  // Save the raw response for debugging
+  saveToGoogleDrive('raw_openai_response.json', content);
+
+  // Remove markdown code fences if present
+  let cleanedContent = content;
+  if (cleanedContent.trim().startsWith("```")) {
+    // Remove the opening fence (which may include "json") and the closing fence
+    cleanedContent = cleanedContent.trim()
+      .replace(/^```(?:json)?\s*/, '')
+      .replace(/\s*```$/, '');
+  }
+
+  // First, try to parse the cleaned content
   try {
-    // Find the JSON object in the content
-    const jsonMatch = content.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) {
-      throw new Error("No JSON object found in the response");
+    const parsed = JSON.parse(cleanedContent);
+    // Validate required structure
+    if (!parsed.decision || !parsed.summary || !parsed.analysis) {
+      throw new Error('Parsed JSON structure is missing required keys.');
     }
-    
-    const jsonString = jsonMatch[0];
-    const analysisJson = JSON.parse(jsonString);
-    
-    return analysisJson;
-  } catch (error) {
-    Logger.log(`Error cleaning analysis result: ${error}`);
-    throw new Error(`Failed to parse OpenAI response: ${error}`);
+    return parsed;
+  } catch (e) {
+    Logger.log("Parsing failed on cleaned content: " + e);
+
+    // Minimal cleanup: remove trailing commas from objects and arrays
+    let minimalCleaned = cleanedContent
+      .replace(/,\s*\}/g, '}')
+      .replace(/,\s*\]/g, ']');
+    saveToGoogleDrive('minimally_cleaned_openai_response.json', minimalCleaned);
+
+    try {
+      const parsed2 = JSON.parse(minimalCleaned);
+      if (!parsed2.decision || !parsed2.summary || !parsed2.analysis) {
+        throw new Error('Cleaned JSON structure is missing required keys.');
+      }
+      return parsed2;
+    } catch (e2) {
+      Logger.log("Parsing failed after minimal cleanup: " + e2);
+      throw e2;
+    }
   }
 }
 
@@ -740,7 +766,3 @@ function getOrCreateFolder(folderName) {
   }
 }
 
-/**
- * NOTE: Trigger management has been moved to Setup.gs
- * Please use the setupTriggers() function in Setup.gs to create or modify triggers
- */
