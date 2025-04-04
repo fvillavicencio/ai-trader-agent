@@ -1410,3 +1410,78 @@ function clearStockMetricsCacheForSymbol(symbol) {
     };
   }
 }
+
+/**
+ * Gets the company name for a given symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Object containing company name, sector, and industry
+ */
+function getCompanyName(symbol) {
+  try {
+    // Default return if we can't find the company name
+    const defaultReturn = {
+      company: symbol,
+      sector: null,
+      industry: null
+    };
+    
+    // First try to get from cache
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKey = `COMPANY_DATA_${symbol}`;
+    const cachedData = scriptCache.get(cacheKey);
+    
+    if (cachedData) {
+      try {
+        return JSON.parse(cachedData);
+      } catch (e) {
+        Logger.log(`Error parsing cached company data for ${symbol}: ${e}`);
+      }
+    }
+    
+    // Try to get company name from Yahoo Finance search
+    try {
+      const searchData = fetchYahooSearchData(symbol);
+      if (searchData && searchData.company) {
+        const companyData = {
+          company: searchData.company,
+          sector: searchData.sector || null,
+          industry: searchData.industry || null
+        };
+        
+        // Cache the data
+        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
+        return companyData;
+      }
+    } catch (e) {
+      Logger.log(`Error getting company name from Yahoo for ${symbol}: ${e}`);
+    }
+    
+    // If Yahoo fails, try FMP
+    try {
+      const fmpData = fetchFMPData(symbol);
+      if (fmpData && fmpData.company) {
+        const companyData = {
+          company: fmpData.company,
+          sector: fmpData.sector || null,
+          industry: fmpData.industry || null
+        };
+        
+        // Cache the data
+        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
+        return companyData;
+      }
+    } catch (e) {
+      Logger.log(`Error getting company name from FMP for ${symbol}: ${e}`);
+    }
+    
+    // If all else fails, return the symbol as the company name
+    return defaultReturn;
+  } catch (error) {
+    Logger.log(`Error in getCompanyName for ${symbol}: ${error}`);
+    return {
+      company: symbol,
+      sector: null,
+      industry: null
+    };
+  }
+}

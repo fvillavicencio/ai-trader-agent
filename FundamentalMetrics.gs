@@ -582,20 +582,21 @@ function generateAnalysis(symbol, metrics, historicalAverages = {}, sectorAverag
 }
 
 /**
- * Helper function to check if a symbol is an ETF
- * @param {String} symbol - Stock/ETF symbol
- * @return {Boolean} True if the symbol is an ETF, false otherwise
+ * Determines if a symbol is an ETF based on common ETF symbols
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Boolean} True if the symbol is likely an ETF
  */
 function isETF(symbol) {
   // Common ETF symbols
-  const commonETFs = ["SPY", "QQQ", "IWM", "DIA", "VTI", "VOO", "VEA", "VWO", "BND", "AGG", "VIG", "VYM"];
+  const commonETFs = ['SPY', 'QQQ', 'IWM', 'DIA', 'VTI', 'VOO', 'VEA', 'VWO', 'BND', 'AGG', 'GLD', 'SLV', 'XLF', 'XLE', 'XLK', 'XLV', 'XLY', 'XLP', 'XLI', 'XLB', 'XLU', 'XLRE', 'XLC', 'VIG', 'VYM', 'SCHD'];
   
+  // Check if the symbol is in the list of common ETFs
   if (commonETFs.includes(symbol)) {
     return true;
   }
   
-  // ETFs often have these prefixes
-  const etfPrefixes = ["SPY", "IVV", "VOO", "VTI", "QQQ", "IWM", "GLD", "VEA", "VWO", "EFA", "EEM", "AGG", "BND", "LQD", "VIG", "VYM", "SCHD"];
+  // Check if the symbol has common ETF prefixes
+  const etfPrefixes = ['SPY', 'DIA', 'QQQ', 'IWM', 'VT', 'VO', 'VI', 'VA', 'VB', 'VC', 'VV', 'VG', 'VD', 'VF', 'VE', 'VY', 'VU', 'VS', 'SH', 'SDS', 'PSQ', 'QID', 'DOG', 'DXD', 'SQQQ', 'SPXU', 'TQQQ', 'UPRO', 'UDOW', 'SDOW', 'TECL', 'TECS', 'XL'];
   
   for (const prefix of etfPrefixes) {
     if (symbol.startsWith(prefix)) {
@@ -603,13 +604,6 @@ function isETF(symbol) {
     }
   }
   
-  // Check if the symbol contains common ETF indicators
-  if (symbol.includes("-ETF") || symbol.includes(".ETF")) {
-    return true;
-  }
-  
-  // For more accurate detection, you would need to query a database or API
-  // This is just a basic heuristic
   return false;
 }
 
@@ -954,4 +948,30 @@ function testFundamentalMetricsCaching() {
       message: `Test failed: ${error}`
     };
   }
+}
+
+/**
+ * Fetches the expense ratio for an ETF
+ * @param {String} symbol - The ETF symbol
+ * @return {Number|null} The expense ratio or null if not found
+ */
+function fetchExpenseRatio(symbol) {
+  // Simple implementation that returns null
+  // In a real implementation, this would fetch the expense ratio from an API
+  // For now, we'll just return a default value for common ETFs
+  const etfExpenseRatios = {
+    'SPY': 0.0945,
+    'QQQ': 0.20,
+    'IWM': 0.19,
+    'DIA': 0.16,
+    'VTI': 0.03,
+    'VOO': 0.03,
+    'VEA': 0.05,
+    'VWO': 0.08,
+    'BND': 0.03,
+    'AGG': 0.03,
+    'GLD': 0.40
+  };
+  
+  return etfExpenseRatios[symbol] || null;
 }
