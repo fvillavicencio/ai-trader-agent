@@ -1,0 +1,19 @@
+{
+  "name": "vertex-search-test",
+  "version": "1.0.0",
+  "description": "Test Google Vertex AI Search API",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@google-cloud/aiplatform": "^4.1.0",
+    "@google-cloud/vertexai": "^1.9.3",
+    "axios": "^1.8.4",
+    "dotenv": "^16.3.1",
+    "google-auth-library": "^9.15.1",
+    "googleapis": "^120.0.0",
+    "node-fetch": "^2.7.0"
+  }
+}

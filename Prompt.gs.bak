@@ -60,7 +60,7 @@ Format your response as a valid JSON object following this structure:
       ]
     },
     "fundamentalMetrics": [
-      {"symbol": "Ticker", "name": "Company Name", "pegRatio": 0, "forwardPE": 0, "comment": "Analysis"}
+      {"symbol": "Ticker", "name": "Company Name", "price": 0.00, "priceChange": "+/-0.00 (0.00%)", "volume": "0M", "marketCap": "$0B", "dividendYield": "0.00%", "pegRatio": 0, "forwardPE": 0, "comment": "Analysis"}
     ],
     "macroeconomicFactors": {
       "treasuryYields": {

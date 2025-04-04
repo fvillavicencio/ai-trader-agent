@@ -97,6 +97,19 @@ function getOpenAITradingAnalysis() {
     
     // Send the prompt to OpenAI
     Logger.log("Sending prompt to OpenAI...");
+    //// temporary code start
+      // Check if DEBUG_MODE is enabled
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+    
+    if (debugMode) {
+      Logger.log("Debug mode enabled - skipping OpenAI call");
+      return {
+        success: true,
+        analysis: "This is a debug response"
+      };
+    }
+    //// temporary code end
     const response = sendPromptToOpenAI(fullPrompt, apiKey);
     const content = extractContentFromResponse(response);
     Logger.log("Received response from OpenAI");
@@ -199,52 +212,63 @@ function getOpenAIApiKey() {
  * @return {Object} - The response from OpenAI
  */
 function sendPromptToOpenAI(prompt, apiKey) {
-  // OpenAI API endpoint
-  const apiUrl = "https://api.openai.com/v1/chat/completions";
-  
-  // Request payload
-  const payload = {
-    model: "gpt-4-turbo-preview",
-    messages: [
-      {
-        role: "system",
-        content: "You are a professional financial analyst specializing in market analysis and trading recommendations."
+  try {
+    // OpenAI API endpoint
+    const apiUrl = "https://api.openai.com/v1/chat/completions";
+    
+    // Request payload
+    const payload = {
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: "You are a professional financial analyst specializing in market analysis and trading recommendations. Please provide your analysis in valid JSON format."
+        },
+        {
+          role: "user",
+          content: prompt
+        }
+      ],
+      temperature: 0.3,
+      max_tokens: 4000
+    };
+    
+    // Request options
+    const options = {
+      method: "post",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey
       },
-      {
-        role: "user",
-        content: prompt
-      }
-    ],
-    temperature: 0.3,
-    max_tokens: 4000
-  };
-  
-  // Request options
-  const options = {
-    method: "post",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": "Bearer " + apiKey
-    },
-    payload: JSON.stringify(payload),
-    muteHttpExceptions: true
-  };
-  
-  // Send the request
-  const response = UrlFetchApp.fetch(apiUrl, options);
-  const responseCode = response.getResponseCode();
-  
-  // Check if the request was successful
-  if (responseCode !== 200) {
-    const errorText = response.getContentText();
-    Logger.log(`OpenAI API error (${responseCode}): ${errorText}`);
-    throw new Error(`OpenAI API returned error ${responseCode}: ${errorText}`);
+      payload: JSON.stringify(payload),
+      muteHttpExceptions: true
+    };
+    
+    // Send the request
+    const response = UrlFetchApp.fetch(apiUrl, options);
+    const responseCode = response.getResponseCode();
+    
+    // Check if the request was successful
+    if (responseCode !== 200) {
+      const errorText = response.getContentText();
+      Logger.log(`OpenAI API error (${responseCode}): ${errorText}`);
+      throw new Error(`OpenAI API returned error ${responseCode}: ${errorText}`);
+    }
+    
+    // Parse the response
+    const jsonResponse = JSON.parse(response.getContentText());
+    
+    // Validate the response structure
+    if (!jsonResponse.choices || !Array.isArray(jsonResponse.choices) || 
+        jsonResponse.choices.length === 0 || !jsonResponse.choices[0].message.content) {
+      throw new Error('Invalid response structure from OpenAI');
+    }
+    
+    return jsonResponse;
+  } catch (error) {
+    Logger.log('Error in sendPromptToOpenAI: ' + error);
+    throw new Error('Failed to get response from OpenAI: ' + error);
   }
-  
-  // Parse the response
-  const jsonResponse = JSON.parse(response.getContentText());
-  
-  return jsonResponse;
 }
 
 /**
@@ -254,11 +278,25 @@ function sendPromptToOpenAI(prompt, apiKey) {
  * @return {string} - The content of the response
  */
 function extractContentFromResponse(response) {
-  if (response && response.choices && response.choices.length > 0) {
-    return response.choices[0].message.content;
+  try {
+    if (!response || typeof response !== 'object') {
+      throw new Error('Invalid response format: expected an object');
+    }
+
+    if (!response.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
+      throw new Error('Invalid response format: missing choices array');
+    }
+
+    const content = response.choices[0].message.content;
+    if (!content || typeof content !== 'string') {
+      throw new Error('Invalid response format: content is not a string');
+    }
+
+    return content;
+  } catch (error) {
+    Logger.log('Error extracting content from response: ' + error);
+    throw new Error('Failed to extract content from OpenAI response: ' + error);
   }
-  
-  throw new Error("Invalid response format from OpenAI");
 }
 
 /**
@@ -268,44 +306,140 @@ function extractContentFromResponse(response) {
  * @return {Object} - The cleaned and parsed analysis result
  */
 function cleanAnalysisResult(content) {
-  // Save the raw response for debugging
-  saveToGoogleDrive('raw_openai_response.json', content);
+  try {
+    // Save the raw response for debugging
+    saveToGoogleDrive('raw_openai_response.json', content);
 
-  // Remove markdown code fences if present
-  let cleanedContent = content;
-  if (cleanedContent.trim().startsWith("```")) {
-    // Remove the opening fence (which may include "json") and the closing fence
-    cleanedContent = cleanedContent.trim()
-      .replace(/^```(?:json)?\s*/, '')
-      .replace(/\s*```$/, '');
+    // Remove markdown code fences if present
+    let cleanedContent = content;
+    if (cleanedContent.trim().startsWith("```")) {
+      cleanedContent = cleanedContent.trim()
+        .replace(/^```(?:json)?\s*/, '')
+        .replace(/\s*```$/, '');
+    }
+
+    // First, try to parse the cleaned content
+    try {
+      const parsed = JSON.parse(cleanedContent);
+      validateAnalysisStructure(parsed);
+      return parsed;
+    } catch (e) {
+      Logger.log("Parsing failed on cleaned content: " + e);
+
+      // Try minimal cleanup: remove trailing commas and comments
+      let minimalCleaned = cleanedContent
+        .replace(/,\s*\}\s*/g, '}')
+        .replace(/,\s*\]\s*/g, ']')
+        .replace(/\}\s*,\s*\}\s*/g, '}')
+        .replace(/\]\s*,\s*\]\s*/g, ']')
+        // Remove comments and trailing content
+        .replace(/\/\/.*?\n/g, '\n')
+        .replace(/\/\*.*?\*\//g, '')
+        .replace(/\s*\}\s*\]\s*/g, ']')
+        .replace(/\s*\]\s*\}\s*/g, '}');
+      saveToGoogleDrive('minimally_cleaned_openai_response.json', minimalCleaned);
+
+      try {
+        const parsed2 = JSON.parse(minimalCleaned);
+        validateAnalysisStructure(parsed2);
+        return parsed2;
+      } catch (e2) {
+        Logger.log("Parsing failed after minimal cleanup: " + e2);
+
+        // Try more aggressive cleanup: fix common JSON issues
+        let aggressiveCleaned = minimalCleaned
+          // Fix missing commas between properties
+          .replace(/(["']\s*:\s*[^,\}\[]+)(["']\s*:\s*[^,\}\[]+)/g, '$1,$2')
+          // Fix missing commas in arrays
+          .replace(/(["']\s*\]\s*[^,\}\[]+)/g, '$1,')
+          // Fix missing commas between array elements
+          .replace(/(["']\s*\]\s*[^,\}\[]+)/g, '$1,')
+          // Fix missing quotes around keys
+          .replace(/([{,]\s*)([^"'\{\}\[\]\s,]+)(\s*:\s*)/g, '$1"$2"$3')
+          // Fix missing quotes around string values
+          .replace(/([{,]\s*)([^"'\{\}\[\]\s,]+)(\s*[\},\]])/g, '$1"$2"$3');
+        saveToGoogleDrive('aggressively_cleaned_openai_response.json', aggressiveCleaned);
+
+        try {
+          const parsed3 = JSON.parse(aggressiveCleaned);
+          validateAnalysisStructure(parsed3);
+          return parsed3;
+        } catch (e3) {
+          Logger.log("Parsing failed after aggressive cleanup: " + e3);
+          
+          // Try to extract JSON from within text
+          const jsonMatch = aggressiveCleaned.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              const extractedJson = JSON.parse(jsonMatch[0]);
+              validateAnalysisStructure(extractedJson);
+              return extractedJson;
+            } catch (e4) {
+              Logger.log("Failed to parse extracted JSON: " + e4);
+            }
+          }
+
+          throw new Error("Failed to parse OpenAI response after multiple attempts. " + 
+            "Please check the saved JSON files in Google Drive for debugging.");
+        }
+      }
+    }
+  } catch (error) {
+    Logger.log('Error in cleanAnalysisResult: ' + error);
+    throw new Error('Failed to clean and parse OpenAI response: ' + error);
+  }
+}
+
+/**
+ * Validates the structure of the analysis object
+ * @param {Object} analysis - The parsed analysis object
+ * @throws {Error} If the analysis structure is invalid
+ */
+function validateAnalysisStructure(analysis) {
+  if (!analysis || typeof analysis !== 'object') {
+    throw new Error('Invalid analysis object');
   }
 
-  // First, try to parse the cleaned content
-  try {
-    const parsed = JSON.parse(cleanedContent);
-    // Validate required structure
-    if (!parsed.decision || !parsed.summary || !parsed.analysis) {
-      throw new Error('Parsed JSON structure is missing required keys.');
+  const requiredKeys = ['decision', 'summary', 'analysis'];
+  for (const key of requiredKeys) {
+    if (!analysis[key]) {
+      throw new Error(`Missing required key: ${key}`);
     }
-    return parsed;
-  } catch (e) {
-    Logger.log("Parsing failed on cleaned content: " + e);
+  }
 
-    // Minimal cleanup: remove trailing commas from objects and arrays
-    let minimalCleaned = cleanedContent
-      .replace(/,\s*\}/g, '}')
-      .replace(/,\s*\]/g, ']');
-    saveToGoogleDrive('minimally_cleaned_openai_response.json', minimalCleaned);
+  // Validate analysis substructure
+  if (!analysis.analysis) {
+    throw new Error('Missing required analysis section');
+  }
 
-    try {
-      const parsed2 = JSON.parse(minimalCleaned);
-      if (!parsed2.decision || !parsed2.summary || !parsed2.analysis) {
-        throw new Error('Cleaned JSON structure is missing required keys.');
+  const analysisKeys = ['marketSentiment', 'marketIndicators', 'fundamentalMetrics', 'macroeconomicFactors'];
+  for (const key of analysisKeys) {
+    if (!analysis.analysis[key]) {
+      Logger.log(`Warning: Missing optional analysis section: ${key}`);
+      continue;
+    }
+
+    // Validate arrays have proper structure
+    const arrayKeys = {
+      marketSentiment: 'analysts',
+      marketIndicators: 'upcomingEvents',
+      fundamentalMetrics: undefined, // fundamentalMetrics is an array itself
+      macroeconomicFactors: 'geopoliticalRisks.regions'
+    };
+
+    if (arrayKeys[key]) {
+      const path = arrayKeys[key].split('.');
+      let obj = analysis.analysis[key];
+      for (const p of path) {
+        if (!obj[p]) {
+          Logger.log(`Warning: Missing optional array: ${key}.${p}`);
+          break;
+        }
+        obj = obj[p];
       }
-      return parsed2;
-    } catch (e2) {
-      Logger.log("Parsing failed after minimal cleanup: " + e2);
-      throw e2;
+      if (obj && !Array.isArray(obj)) {
+        Logger.log(`Warning: ${key}.${path.join('.')} is not an array`);
+      }
     }
   }
 }
@@ -765,4 +899,3 @@ function getOrCreateFolder(folderName) {
     throw error;
   }
 }
-

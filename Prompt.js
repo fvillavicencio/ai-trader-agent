@@ -37,7 +37,7 @@ function getTradingAnalysisPrompt() {
    - Treasury Yields: Provide the EXACT current 2-Year and 10-Year US Treasury yields from the U.S. Department of the Treasury (https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve). Include the precise date of the data and the specific source URL you used. Also analyze the current yield curve (normal, flat, or inverted) and explain its economic implications.
    - Fed Policy: Provide the current Federal Funds Rate, the date of the most recent FOMC meeting, and any forward guidance from Fed officials. Include the source of this information (preferably from federalreserve.gov or official Fed statements).
    - Inflation: Provide the most recent CPI and PCE inflation data, including core and headline figures. Include the exact release date and source (preferably from bls.gov for CPI and bea.gov for PCE). Analyze the trend and how it might impact Fed policy.
-   - Geopolitical Risks: Identify the top 2-3 current geopolitical risks that could impact markets. For each risk, provide a brief description, the regions affected, potential market impact, and a reputable news source reporting on the issue.
+   - Geopolitical Risks: Identify the top 3 to 4 current geopolitical risks that could impact markets. For each risk, provide a brief description, the regions affected, potential market impact, and a reputable news source reporting on the issue.
 
 Based on this analysis, provide ONE of these three possible recommendations:
 - Buy Now

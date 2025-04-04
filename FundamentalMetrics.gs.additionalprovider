@@ -15,6 +15,9 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
   try {
     Logger.log(`Retrieving fundamental metrics for ${symbols.length} stocks...`);
     
+    // Clear cache and ensure it's cleared
+    clearFundamentalMetricsCache();
+    
     // Track execution time
     const startTime = new Date().getTime();
     
@@ -56,89 +59,52 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
         }
         
         // Verify we got valid data
-        if (metrics && metrics.symbol) {
+        if (metrics && metrics.symbol && (metrics.price !== null || metrics.volume !== null)) {
           results.push(metrics);
           Logger.log(`Successfully retrieved metrics for ${symbol}`);
         } else {
           Logger.log(`No valid metrics data returned for ${symbol}`);
           failedSymbols.push(symbol);
-          
-          // Create a minimal entry for the symbol to ensure it's included in the results
-          results.push({
-            symbol: symbol,
-            name: getCompanyName(symbol),
-            pegRatio: null,
-            forwardPE: null,
-            priceToBook: null,
-            priceToSales: null,
-            debtToEquity: null,
-            returnOnEquity: null,
-            beta: null,
-            dataSource: "Not available"
-          });
         }
       } catch (error) {
         Logger.log(`Error retrieving metrics for ${symbol}: ${error}`);
         failedSymbols.push(symbol);
-        
-        // Create a minimal entry for the symbol to ensure it's included in the results
-        results.push({
-          symbol: symbol,
-          name: getCompanyName(symbol),
-          pegRatio: null,
-          forwardPE: null,
-          priceToBook: null,
-          priceToSales: null,
-          debtToEquity: null,
-          returnOnEquity: null,
-          beta: null,
-          dataSource: "Error"
-        });
       }
     }
     
     // Calculate execution time
     const executionTime = (new Date().getTime() - startTime) / 1000;
-    
-    // Log performance metrics
-    Logger.log(`Fundamental metrics retrieval completed in ${executionTime} seconds`);
-    Logger.log(`Cache performance: ${cacheHits} hits, ${cacheMisses} misses (${Math.round(cacheHits / allSymbols.length * 100)}% hit rate)`);
-    
-    // Sort results by symbol
-    results.sort((a, b) => {
-      // Put major indices first (SPY, QQQ, IWM, DIA)
-      const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
-      const aIsMajor = majorIndices.includes(a.symbol);
-      const bIsMajor = majorIndices.includes(b.symbol);
-      
-      if (aIsMajor && !bIsMajor) return -1;
-      if (!aIsMajor && bIsMajor) return 1;
-      if (aIsMajor && bIsMajor) {
-        return majorIndices.indexOf(a.symbol) - majorIndices.indexOf(b.symbol);
-      }
-      
-      // Then sort alphabetically
-      return a.symbol.localeCompare(b.symbol);
-    });
-    
+    Logger.log(`Retrieved fundamental metrics for ${results.length} valid symbols in ${executionTime} seconds`);
+    Logger.log(`Cache hits: ${cacheHits}, Cache misses: ${cacheMisses}`);
+    Logger.log(`Failed symbols: ${failedSymbols.length > 0 ? failedSymbols.join(', ') : 'None'}`);
+
+    // Return empty results if no valid data was found
+    if (results.length === 0) {
+      Logger.log('No valid results found for any symbols');
+      return {
+        metrics: [],
+        failedSymbols: failedSymbols,
+        executionTime: executionTime,
+        cacheHits: cacheHits,
+        cacheMisses: cacheMisses
+      };
+    }
+
     return {
-      status: "success",
-      message: "Fundamental metrics data retrieved successfully.",
+      metrics: results,
+      failedSymbols: failedSymbols,
       executionTime: executionTime,
-      cachePerformance: {
-        hits: cacheHits,
-        misses: cacheMisses,
-        hitRate: `${Math.round(cacheHits / allSymbols.length * 100)}%`
-      },
-      data: results,
-      failedSymbols: failedSymbols.length > 0 ? failedSymbols : []
+      cacheHits: cacheHits,
+      cacheMisses: cacheMisses
     };
   } catch (error) {
     Logger.log(`Error in retrieveFundamentalMetrics: ${error}`);
     return {
-      status: "error",
-      message: `Failed to retrieve fundamental metrics data: ${error}`,
-      data: []
+      metrics: [],
+      failedSymbols: [],
+      executionTime: 0,
+      cacheHits: 0,
+      cacheMisses: 0
     };
   }
 }
@@ -190,7 +156,7 @@ function fetchFundamentalMetricsData(symbol) {
       marketCap: null,
       industry: null,
       sector: null,
-      name: null,
+      company: null,
       pegRatio: null,
       forwardPE: null,
       priceToBook: null,
@@ -213,9 +179,8 @@ function fetchFundamentalMetricsData(symbol) {
     const dataSources = [
       { name: "Yahoo Finance API", func: fetchYahooFinanceData },
       { name: "Google Finance", func: fetchGoogleFinanceData },
-      { name: "FMP API", func: fetchFMPData },
       { name: "Tradier API", func: fetchTradierData },
-      { name: "Yahoo Finance Web Scraper", func: fetchYahooFinanceWebData }
+      { name: "FMP API", func: fetchFMPData }
     ];
 
     for (const source of dataSources) {
@@ -231,33 +196,19 @@ function fetchFundamentalMetricsData(symbol) {
             metrics.changesPercentage = data.changesPercentage || null;
             metrics.volume = data.volume || null;
             metrics.marketCap = data.marketCap || null;
-            metrics.name = data.name || getCompanyName(symbol);
-            metrics.industry = data.industry || null;
-            metrics.sector = data.sector || null;
+            metrics.company = data.company || null;
             
             // Then proceed with other metrics
-            metrics.pegRatio = data.pegRatio || null;
-            metrics.forwardPE = data.forwardPE || null;
-            metrics.priceToBook = data.priceToBook || null;
-            metrics.priceToSales = data.priceToSales || null;
-            metrics.debtToEquity = data.debtToEquity || null;
-            metrics.returnOnEquity = data.returnOnEquity || null;
-            metrics.returnOnAssets = data.returnOnAssets || null;
-            metrics.profitMargin = data.profitMargin || null;
-            metrics.dividendYield = data.dividendYield || null;
-            metrics.beta = data.beta || null;
-            metrics.expenseRatio = data.expenseRatio || null;
-            
-            // Count valid metrics
-            validMetricsCount = Object.values(metrics).filter(v => v !== null).length;
-            
-            // Add source to sources used
-            sourcesUsed.push(source.name);
-            
-            // Break if we have enough valid metrics
-            if (validMetricsCount >= 5) {
-              break;
+            for (const key in data) {
+              if (!metrics[key]) {
+                metrics[key] = data[key];
+                if (key !== 'price' && key !== 'volume') {
+                  validMetricsCount++;
+                }
+              }
             }
+            
+            sourcesUsed.push(source.name);
           }
         } catch (error) {
           Logger.log(`Error fetching data from ${source.name} for ${symbol}: ${error}`);
@@ -265,16 +216,50 @@ function fetchFundamentalMetricsData(symbol) {
       }
     }
     
-    // Add sources used to metrics
-    metrics.dataSource = sourcesUsed;
+    // Finalize metrics object
+    metrics.dataSource = sourcesUsed.join(", ");
+    metrics.lastUpdated = new Date().toISOString();
     
-    // Cache the data for 30 minutes
-    const cacheData = {
-      ...metrics,
-      lastUpdated: new Date().toISOString()
-    };
-    scriptCache.put(cacheKey, JSON.stringify(cacheData), 1800); // 30 minutes in seconds
-    
+    // Cache the data if we have valid metrics
+    if (metrics.price !== null || metrics.volume !== null) {
+      const cacheData = {
+        ...metrics,
+        fromCache: false,
+        lastUpdated: metrics.lastUpdated
+      };
+      scriptCache.put(cacheKey, JSON.stringify(cacheData), 30 * 60); // 30-minute cache
+      Logger.log(`Cached fundamental metrics for ${symbol}`);
+    } else {
+      Logger.log(`No valid metrics to cache for ${symbol}`);
+    }
+
+    // Get company name from the spreadsheet
+    try {
+      const spreadsheet = getSharedFinanceSpreadsheet();
+      const sheet = spreadsheet.getSheetByName('Companies') || spreadsheet.insertSheet('Companies');
+      
+      // Find or create the company entry
+      const data = sheet.getDataRange().getValues();
+      let found = false;
+      
+      for (let i = 0; i < data.length; i++) {
+        if (data[i][0] === symbol) {
+          metrics.company = data[i][1];
+          found = true;
+          break;
+        }
+      }
+      
+      if (!found && metrics.company) {
+        // Add new entry
+        const nextRow = data.length + 1;
+        sheet.getRange(nextRow, 1).setValue(symbol);
+        sheet.getRange(nextRow, 2).setValue(metrics.company);
+      }
+    } catch (error) {
+      Logger.log(`Error getting company name from spreadsheet: ${error}`);
+    }
+
     const executionTime = (new Date().getTime() - startTime) / 1000;
     Logger.log(`Retrieved fundamental metrics for ${symbol} in ${executionTime} seconds`);
     Logger.log(`Sources used: ${metrics.dataSource}`);
@@ -288,144 +273,9 @@ function fetchFundamentalMetricsData(symbol) {
       priceChange: null,
       changesPercentage: null,
       volume: null,
-      marketCap: null,
-      industry: null,
-      sector: null,
-      name: null,
-      pegRatio: null,
-      forwardPE: null,
-      priceToBook: null,
-      priceToSales: null,
-      debtToEquity: null,
-      returnOnEquity: null,
-      returnOnAssets: null,
-      profitMargin: null,
-      dividendYield: null,
-      beta: null,
-      expenseRatio: null,
-      dataSource: [],
-      fromCache: false
+      dataSource: "Error",
+      error: error.message
     };
-  }
-}
-
-/**
- * Fetches data from Google Finance
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Google Finance data
- */
-function fetchGoogleFinanceData(symbol) {
-  try {
-    Logger.log(`Fetching Google Finance data for ${symbol}`);
-    
-    // Get the shared spreadsheet
-    const spreadsheet = getSharedFinanceSpreadsheet();
-    const sheet = spreadsheet.getSheets()[0];
-    
-    // Clear any existing data
-    sheet.clear();
-    
-    // Set up the GOOGLEFINANCE formulas
-    sheet.getRange("A1").setValue(symbol);
-    sheet.getRange("B1").setFormula(`=GOOGLEFINANCE(A1,"price")`);
-    sheet.getRange("C1").setFormula(`=GOOGLEFINANCE(A1,"priceopen")`);
-    sheet.getRange("D1").setFormula(`=GOOGLEFINANCE(A1,"volume")`);
-    sheet.getRange("E1").setFormula(`=GOOGLEFINANCE(A1,"marketcap")`);
-    sheet.getRange("F1").setFormula(`=GOOGLEFINANCE(A1,"beta")`);
-    
-    // Wait for formulas to calculate
-    Utilities.sleep(2000);
-    
-    // Get the values
-    const price = sheet.getRange("B1").getValue();
-    const openPrice = sheet.getRange("C1").getValue();
-    const volume = sheet.getRange("D1").getValue();
-    const marketCap = sheet.getRange("E1").getValue();
-    const beta = sheet.getRange("F1").getValue();
-    
-    // Calculate price change and percentage change
-    const priceChange = price - openPrice;
-    const changesPercentage = (priceChange / openPrice) * 100;
-    
-    // Get company name from the shared spreadsheet
-    const companyData = getCompanyName(symbol);
-    
-    return {
-      price: price,
-      priceChange: priceChange,
-      changesPercentage: changesPercentage,
-      volume: volume,
-      marketCap: marketCap,
-      beta: beta,
-      name: companyData?.name || null,
-      industry: companyData?.industry || null,
-      sector: companyData?.sector || null
-    };
-  } catch (error) {
-    Logger.log(`Error fetching Google Finance data for ${symbol}: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches data from Yahoo Finance for a specific symbol
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Yahoo Finance data
- */
-function fetchYahooFinanceData(symbol) {
-  try {
-    Logger.log(`Fetching Yahoo Finance data for ${symbol}`);
-    
-    // First try to get data from Yahoo Finance API
-    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price,summaryDetail,assetProfile,financialData`;
-    const options = {
-      'method': 'GET',
-      'headers': {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/json'
-      },
-      'muteHttpExceptions': true
-    };
-    
-    const response = UrlFetchApp.fetch(url, options);
-    const data = JSON.parse(response.getContentText());
-    
-    if (data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
-      const result = data.quoteSummary.result[0];
-      const priceData = result.price;
-      const summaryData = result.summaryDetail;
-      const assetData = result.assetProfile;
-      const financialData = result.financialData;
-      
-      return {
-        price: priceData?.regularMarketPrice?.raw || null,
-        priceChange: priceData?.regularMarketChange?.raw || null,
-        changesPercentage: priceData?.regularMarketChangePercent?.raw || null,
-        volume: summaryData?.volume?.raw || null,
-        marketCap: summaryData?.marketCap?.raw || null,
-        name: assetData?.companyName || getCompanyName(symbol),
-        industry: assetData?.industry || null,
-        sector: assetData?.sector || null,
-        beta: summaryData?.beta?.raw || null,
-        pegRatio: financialData?.pegRatio?.raw || null,
-        forwardPE: financialData?.forwardPE?.raw || null,
-        priceToBook: financialData?.priceToBook?.raw || null,
-        priceToSales: financialData?.priceToSales?.raw || null,
-        debtToEquity: financialData?.debtToEquity?.raw || null,
-        returnOnEquity: financialData?.returnOnEquity?.raw || null,
-        returnOnAssets: financialData?.returnOnAssets?.raw || null,
-        profitMargin: financialData?.profitMargins?.raw || null,
-        dividendYield: summaryData?.dividendYield?.raw || null,
-        afterHoursPrice: priceData?.afterHours?.raw || null,
-        afterHoursChange: priceData?.afterHoursChange?.raw || null,
-        afterHoursChangePercent: priceData?.afterHoursChangePercent?.raw || null
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    Logger.log(`Error fetching Yahoo Finance data for ${symbol}: ${error}`);
-    return null;
   }
 }
 
@@ -436,49 +286,26 @@ function fetchYahooFinanceData(symbol) {
  */
 function fetchFMPData(symbol) {
   try {
-    Logger.log(`Fetching FMP data for ${symbol}`);
-    
-    // Get the FMP API key from script properties
-    const fmpApiKey = PropertiesService.getScriptProperties().getProperty('FMP_API_KEY');
-    if (!fmpApiKey) {
-      throw new Error('FMP API key not configured');
+    const FMP_API_KEY = PropertiesService.getScriptProperties().getProperty('FMP_API_KEY');
+    if (!FMP_API_KEY) {
+      throw new Error('FMP API key not found');
     }
+
+    const url = `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${FMP_API_KEY}`;
+    const response = UrlFetchApp.fetch(url);
+    const data = JSON.parse(response.getContentText());
     
-    // Construct the FMP API URLs
-    const profileUrl = `https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${fmpApiKey}`;
-    const ratiosUrl = `https://financialmodelingprep.com/api/v3/ratios/${symbol}?apikey=${fmpApiKey}`;
-    
-    // Fetch company profile
-    const profileResponse = UrlFetchApp.fetch(profileUrl, {'muteHttpExceptions': true});
-    const profileData = JSON.parse(profileResponse.getContentText());
-    
-    // Fetch ratios
-    const ratiosResponse = UrlFetchApp.fetch(ratiosUrl, {'muteHttpExceptions': true});
-    const ratiosData = JSON.parse(ratiosResponse.getContentText());
-    
-    if (profileData.length > 0 && ratiosData.length > 0) {
-      const profile = profileData[0];
-      const latestRatios = ratiosData[0];
-      
+    if (data && data.length > 0) {
+      const quote = data[0];
       return {
-        price: parseFloat(profile.price) || null,
-        priceChange: parseFloat(profile.changes) || null,
-        changesPercentage: parseFloat(profile.changesPercentage) || null,
-        volume: parseFloat(profile.volume) || null,
-        marketCap: parseFloat(profile.mktCap) || null,
-        name: profile.companyName || null,
-        industry: profile.industry || null,
-        sector: profile.sector || null,
-        pegRatio: parseFloat(latestRatios.pegRatio) || null,
-        forwardPE: parseFloat(latestRatios.forwardPERatio) || null,
-        priceToBook: parseFloat(latestRatios.priceToBookRatio) || null,
-        priceToSales: parseFloat(latestRatios.priceToSalesRatio) || null,
-        debtToEquity: parseFloat(latestRatios.debtToEquityRatio) || null,
-        returnOnEquity: parseFloat(latestRatios.returnOnEquity) || null,
-        returnOnAssets: parseFloat(latestRatios.returnOnAssets) || null,
-        profitMargin: parseFloat(latestRatios.profitMargin) || null,
-        dividendYield: parseFloat(profile.dividendYield) || null,
-        beta: parseFloat(profile.beta) || null
+        price: quote.price,
+        priceChange: quote.change,
+        changesPercentage: quote.changesPercentage,
+        volume: quote.volume,
+        marketCap: quote.marketCap,
+        company: quote.name,
+        industry: quote.industry,
+        sector: quote.sector
       };
     }
     
@@ -490,78 +317,24 @@ function fetchFMPData(symbol) {
 }
 
 /**
- * Fetches current price data for a symbol
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Price data including current price, change, and percent change
+ * Initializes script properties with necessary API keys
  */
-function fetchPriceData(symbol) {
-  try {
-    // Try to get price data from Google Finance
-    const ss = getSharedFinanceSpreadsheet();
-    const sheet = ss.getSheets()[0];
-    
-    // Clear any existing data
-    sheet.clear();
-    
-    // Set up the GOOGLEFINANCE formula for price data
-    sheet.getRange("A1").setValue(symbol);
-    sheet.getRange("B1").setFormula(`=GOOGLEFINANCE(A1,"price")`);
-    sheet.getRange("C1").setFormula(`=GOOGLEFINANCE(A1,"priceopen")`);
-    sheet.getRange("D1").setFormula(`=GOOGLEFINANCE(A1,"changepct")`);
-    
-    // Wait for formulas to calculate
-    Utilities.sleep(1000);
-    
-    // Get the price data
-    const price = sheet.getRange("B1").getValue();
-    const openPrice = sheet.getRange("C1").getValue();
-    const percentChange = sheet.getRange("D1").getValue();
-    
-    // Calculate price change
-    const priceChange = price - openPrice;
-    
-    return {
-      price: price,
-      priceChange: priceChange,
-      percentChange: percentChange
-    };
-  } catch (error) {
-    Logger.log(`Error fetching price data for ${symbol}: ${error}`);
-    return null;
+function initializeScriptProperties() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  
+  // Add FMP API key if not already present
+  if (!scriptProperties.getProperty('FMP_API_KEY')) {
+    scriptProperties.setProperty('FMP_API_KEY', 'YOUR_FMP_API_KEY');
+  }
+  
+  // Add Yahoo Finance API key if not already present
+  if (!scriptProperties.getProperty('YAHOO_FINANCE_API_KEY')) {
+    scriptProperties.setProperty('YAHOO_FINANCE_API_KEY', 'YOUR_YAHOO_API_KEY');
   }
 }
 
-/**
- * Helper function to check if a symbol is an ETF
- * @param {String} symbol - The stock/ETF symbol
- * @return {Boolean} True if the symbol is an ETF, false otherwise
- */
-function isETF(symbol) {
-  // Common ETF symbols
-  const commonETFs = ["SPY", "QQQ", "IWM", "DIA", "VTI", "VOO", "VEA", "VWO", "BND", "AGG", "VIG", "VYM"];
-  
-  if (commonETFs.includes(symbol)) {
-    return true;
-  }
-  
-  // ETFs often have these prefixes
-  const etfPrefixes = ["SPY", "IVV", "VOO", "VTI", "QQQ", "IWM", "GLD", "VEA", "VWO", "EFA", "EEM", "AGG", "BND", "LQD", "VIG", "VYM", "SCHD"];
-  
-  for (const prefix of etfPrefixes) {
-    if (symbol.startsWith(prefix)) {
-      return true;
-    }
-  }
-  
-  // Check if the symbol contains common ETF indicators
-  if (symbol.includes("-ETF") || symbol.includes(".ETF")) {
-    return true;
-  }
-  
-  // For more accurate detection, you would need to query a database or API
-  // This is just a basic heuristic
-  return false;
-}
+// Initialize script properties when the script is first run
+initializeScriptProperties();
 
 /**
  * Gets or creates a shared spreadsheet for Google Finance data
@@ -599,107 +372,34 @@ function getSharedFinanceSpreadsheet() {
 }
 
 /**
- * Fetches data from Google Finance
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Google Finance data
+ * Initializes script properties with necessary API keys
  */
-function fetchGoogleFinanceData(symbol) {
+function initializeScriptProperties() {
   try {
-    // Get the shared spreadsheet
-    const spreadsheet = getSharedFinanceSpreadsheet();
+    const scriptProperties = PropertiesService.getScriptProperties();
     
-    // Clear any existing data
-    const sheet = spreadsheet.getActiveSheet();
-    sheet.clear();
-    
-    // Set up the GOOGLEFINANCE formula for various metrics
-    sheet.getRange("A1").setValue("Symbol");
-    sheet.getRange("B1").setValue("Price");
-    sheet.getRange("C1").setValue("Change");
-    sheet.getRange("D1").setValue("Change Pct");
-    sheet.getRange("E1").setValue("PEG Ratio");
-    sheet.getRange("F1").setValue("Forward P/E");
-    sheet.getRange("G1").setValue("P/B");
-    sheet.getRange("H1").setValue("P/S");
-    sheet.getRange("I1").setValue("D/E");
-    sheet.getRange("J1").setValue("ROE");
-    sheet.getRange("K1").setValue("Beta");
-    sheet.getRange("L1").setValue("Expense Ratio");
-    
-    // Set the symbol
-    sheet.getRange("A2").setValue(symbol);
-    
-    // Set the formulas for each metric
-    sheet.getRange("B2").setFormula(`=GOOGLEFINANCE("${symbol}", "price")`);
-    sheet.getRange("C2").setFormula(`=GOOGLEFINANCE("${symbol}", "change")`);
-    sheet.getRange("D2").setFormula(`=GOOGLEFINANCE("${symbol}", "changepct")`);
-    sheet.getRange("E2").setFormula(`=GOOGLEFINANCE("${symbol}", "pegratio")`);
-    sheet.getRange("F2").setFormula(`=GOOGLEFINANCE("${symbol}", "forwardpe")`);
-    sheet.getRange("G2").setFormula(`=GOOGLEFINANCE("${symbol}", "pb")`);
-    sheet.getRange("H2").setFormula(`=GOOGLEFINANCE("${symbol}", "ps")`);
-    sheet.getRange("I2").setFormula(`=GOOGLEFINANCE("${symbol}", "de")`);
-    sheet.getRange("J2").setFormula(`=GOOGLEFINANCE("${symbol}", "roe")`);
-    sheet.getRange("K2").setFormula(`=GOOGLEFINANCE("${symbol}", "beta")`);
-    sheet.getRange("L2").setFormula(`=IF(REGEXMATCH("${symbol}", "^(SPY|QQQ|IWM|DIA|VOO|VTI|VXUS|BND|AGG)$"), GOOGLEFINANCE("${symbol}", "expenseratio"), "")`);
-    
-    // Wait for formulas to calculate
-    Utilities.sleep(1000);
-    
-    // Extract the data
-    const price = sheet.getRange("B2").getValue();
-    const change = sheet.getRange("C2").getValue();
-    const changePct = sheet.getRange("D2").getValue();
-    const pegRatio = sheet.getRange("E2").getValue();
-    const forwardPE = sheet.getRange("F2").getValue();
-    const priceToBook = sheet.getRange("G2").getValue();
-    const priceToSales = sheet.getRange("H2").getValue();
-    const debtToEquity = sheet.getRange("I2").getValue();
-    const returnOnEquity = sheet.getRange("J2").getValue();
-    const beta = sheet.getRange("K2").getValue();
-    const expenseRatio = sheet.getRange("L2").getValue();
-    
-    // Determine if this is an ETF based on common ETF symbols
-    const isETF = /^(SPY|QQQ|IWM|DIA|VOO|VTI|VXUS|BND|AGG)$/i.test(symbol);
-    
-    // Count how many fundamental metrics we actually have
-    let validMetricsCount = 0;
-    if (typeof pegRatio === 'number' && !isNaN(pegRatio)) validMetricsCount++;
-    if (typeof forwardPE === 'number' && !isNaN(forwardPE)) validMetricsCount++;
-    if (typeof priceToBook === 'number' && !isNaN(priceToBook)) validMetricsCount++;
-    if (typeof priceToSales === 'number' && !isNaN(priceToSales)) validMetricsCount++;
-    if (typeof debtToEquity === 'number' && !isNaN(debtToEquity)) validMetricsCount++;
-    if (typeof returnOnEquity === 'number' && !isNaN(returnOnEquity)) validMetricsCount++;
-    if (typeof beta === 'number' && !isNaN(beta)) validMetricsCount++;
-    
-    // For ETFs, we need fewer metrics to consider the data valid
-    const minRequiredMetrics = isETF ? 1 : 3;
-    
-    // If we don't have enough valid metrics, throw an error to try the next data source
-    if (validMetricsCount < minRequiredMetrics) {
-      Logger.log(`Google Finance returned insufficient metrics for ${symbol}: ${validMetricsCount}/${minRequiredMetrics} valid metrics`);
-      throw new Error("Insufficient fundamental metrics from Google Finance");
+    // Initialize finance spreadsheet if not already set
+    if (!scriptProperties.getProperty('FINANCE_SPREADSHEET_ID')) {
+      const spreadsheet = getSharedFinanceSpreadsheet();
+      scriptProperties.setProperty('FINANCE_SPREADSHEET_ID', spreadsheet.getId());
+      Logger.log(`Initialized finance spreadsheet ID in script properties`);
     }
     
-    // Return the data
-    return {
-      symbol: symbol,
-      price: price,
-      change: change,
-      changePct: changePct,
-      pegRatio: pegRatio,
-      forwardPE: forwardPE,
-      priceToBook: priceToBook,
-      priceToSales: priceToSales,
-      debtToEquity: debtToEquity,
-      returnOnEquity: returnOnEquity,
-      returnOnAssets: 0,
-      profitMargin: 0,
-      dividendYield: 0,
-      beta: beta,
-      expenseRatio: expenseRatio
-    };
+    // Initialize other necessary properties
+    const requiredProperties = [
+      'YAHOO_FINANCE_API_KEY',
+      'TRADIER_API_KEY',
+      'FMP_API_KEY'
+    ];
+    
+    for (const prop of requiredProperties) {
+      if (!scriptProperties.getProperty(prop)) {
+        scriptProperties.setProperty(prop, '');
+        Logger.log(`Initialized ${prop} in script properties`);
+      }
+    }
   } catch (error) {
-    Logger.log(`Error fetching Google Finance data for ${symbol}: ${error}`);
+    Logger.log(`Error initializing script properties: ${error}`);
     throw error;
   }
 }
@@ -711,57 +411,139 @@ function fetchGoogleFinanceData(symbol) {
  */
 function fetchYahooFinanceData(symbol) {
   try {
-    Logger.log(`Fetching Yahoo Finance data for ${symbol}`);
+    // Construct the Yahoo Finance URL for key statistics
+    const url = `https://finance.yahoo.com/quote/${symbol}/key-statistics`;
     
-    // First try to get data from Yahoo Finance API
-    const url = `https://query2.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price,summaryDetail,assetProfile,financialData`;
     const options = {
       'method': 'GET',
       'headers': {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'application/json'
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'DNT': '1',
+        'Connection': 'keep-alive',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1'
       },
       'muteHttpExceptions': true
     };
     
+    // Fetch the page content
     const response = UrlFetchApp.fetch(url, options);
-    const data = JSON.parse(response.getContentText());
+    const htmlContent = response.getContentText();
     
-    if (data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
-      const result = data.quoteSummary.result[0];
-      const priceData = result.price;
-      const summaryData = result.summaryDetail;
-      const assetData = result.assetProfile;
-      const financialData = result.financialData;
+    // Extract metrics using regex
+    const pegRatioMatch = htmlContent.match(/PEG Ratio[^<]*</td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const forwardPERatioMatch = htmlContent.match(/Forward P\/E[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const priceToBookMatch = htmlContent.match(/Price\/Book[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const priceToSalesMatch = htmlContent.match(/Price\/Sales[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const debtToEquityMatch = htmlContent.match(/Total\s+Debt\/Equity[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    const returnOnEquityMatch = htmlContent.match(/Return\s+on\s+Equity[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    const returnOnAssetsMatch = htmlContent.match(/Return\s+on\s+Assets[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    const profitMarginMatch = htmlContent.match(/Profit\s+Margin[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    const betaMatch = htmlContent.match(/Beta\s*\([^)]*\)[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    
+    // Extract company information
+    const companyMatch = htmlContent.match(/<h1[^>]*>([^<]+)<\/h1>/);
+    const industryMatch = htmlContent.match(/Industry[^<]*<\/span>\s*<span[^>]*>([^<]+)<\/span>/);
+    const sectorMatch = htmlContent.match(/Sector[^<]*<\/span>\s*<span[^>]*>([^<]+)<\/span>/);
+    
+    // Extract price and market cap
+    const priceMatch = htmlContent.match(/<fin-streamer[^>]*data-field=\"regularMarketPrice\"[^>]*>([\d.,]+)<\/fin-streamer>/);
+    const marketCapMatch = htmlContent.match(/Market\s+Cap[^<]*<\/td>\s*<td[^>]*>([\d.,]+\s*[A-Z]+|N\/A)<\/td>/is);
+    
+    // Extract volume
+    const volumeMatch = htmlContent.match(/Volume[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
+    
+    // Extract dividend yield
+    const dividendYieldMatch = htmlContent.match(/Dividend\s+Yield[^<]*<\/td>\s*<td[^>]*>([\d.,]+%|N\/A)<\/td>/is);
+    
+    // Create metrics object
+    const metrics = {
+      pegRatio: extractMetric(htmlContent, pegRatioMatch),
+      forwardPE: extractMetric(htmlContent, forwardPERatioMatch),
+      priceToBook: extractMetric(htmlContent, priceToBookMatch),
+      priceToSales: extractMetric(htmlContent, priceToSalesMatch),
+      debtToEquity: extractMetric(htmlContent, debtToEquityMatch),
+      returnOnEquity: extractMetric(htmlContent, returnOnEquityMatch),
+      returnOnAssets: extractMetric(htmlContent, returnOnAssetsMatch),
+      profitMargin: extractMetric(htmlContent, profitMarginMatch),
+      beta: extractMetric(htmlContent, betaMatch),
+      dividendYield: extractMetric(htmlContent, dividendYieldMatch),
       
-      return {
-        price: priceData?.regularMarketPrice?.raw || null,
-        priceChange: priceData?.regularMarketChange?.raw || null,
-        changesPercentage: priceData?.regularMarketChangePercent?.raw || null,
-        volume: summaryData?.volume?.raw || null,
-        marketCap: summaryData?.marketCap?.raw || null,
-        name: assetData?.companyName || getCompanyName(symbol),
-        industry: assetData?.industry || null,
-        sector: assetData?.sector || null,
-        beta: summaryData?.beta?.raw || null,
-        pegRatio: financialData?.pegRatio?.raw || null,
-        forwardPE: financialData?.forwardPE?.raw || null,
-        priceToBook: financialData?.priceToBook?.raw || null,
-        priceToSales: financialData?.priceToSales?.raw || null,
-        debtToEquity: financialData?.debtToEquity?.raw || null,
-        returnOnEquity: financialData?.returnOnEquity?.raw || null,
-        returnOnAssets: financialData?.returnOnAssets?.raw || null,
-        profitMargin: financialData?.profitMargins?.raw || null,
-        dividendYield: summaryData?.dividendYield?.raw || null,
-        afterHoursPrice: priceData?.afterHours?.raw || null,
-        afterHoursChange: priceData?.afterHoursChange?.raw || null,
-        afterHoursChangePercent: priceData?.afterHoursChangePercent?.raw || null
-      };
-    }
+      // Add basic stock data
+      company: companyMatch ? companyMatch[1].trim() : null,
+      industry: industryMatch ? industryMatch[1].trim() : null,
+      sector: sectorMatch ? sectorMatch[1].trim() : null,
+      price: extractMetric(htmlContent, priceMatch),
+      marketCap: marketCapMatch ? marketCapMatch[1].trim() : null,
+      volume: extractMetric(htmlContent, volumeMatch)
+    };
     
-    return null;
+    return metrics;
   } catch (error) {
     Logger.log(`Error fetching Yahoo Finance data for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches fundamental metrics from Google Finance
+ * @param {string} symbol - The stock symbol
+ * @return {Object} Metrics object
+ */
+function fetchGoogleFinanceData(symbol) {
+  try {
+    // Get the shared spreadsheet
+    const spreadsheet = getSharedFinanceSpreadsheet();
+    
+    // Get the company data sheet
+    const sheet = spreadsheet.getSheetByName('Company Data');
+    if (!sheet) {
+      Logger.log('Company Data sheet not found');
+      return null;
+    }
+    
+    // Find the row for this symbol
+    const data = sheet.getDataRange().getValues();
+    const headerRow = data[0];
+    const symbolIndex = headerRow.indexOf('Symbol');
+    const companyIndex = headerRow.indexOf('Company');
+    const industryIndex = headerRow.indexOf('Industry');
+    const sectorIndex = headerRow.indexOf('Sector');
+    const priceIndex = headerRow.indexOf('Price');
+    const marketCapIndex = headerRow.indexOf('Market Cap');
+    const volumeIndex = headerRow.indexOf('Volume');
+    
+    if (symbolIndex === -1 || companyIndex === -1 || industryIndex === -1 || sectorIndex === -1) {
+      Logger.log('Missing required columns in Company Data sheet');
+      return null;
+    }
+    
+    // Find the row for this symbol
+    const symbolRow = data.find(row => row[symbolIndex] === symbol);
+    if (!symbolRow) {
+      Logger.log(`No data found for symbol ${symbol}`);
+      return null;
+    }
+    
+    // Create metrics object
+    const metrics = {
+      company: symbolRow[companyIndex],
+      industry: symbolRow[industryIndex],
+      sector: symbolRow[sectorIndex],
+      price: parseFloat(symbolRow[priceIndex]),
+      marketCap: symbolRow[marketCapIndex],
+      volume: parseFloat(symbolRow[volumeIndex])
+    };
+    
+    return metrics;
+  } catch (error) {
+    Logger.log(`Error fetching Google Finance data for ${symbol}: ${error}`);
     return null;
   }
 }
@@ -993,26 +775,27 @@ function formatStockGroup(stocks) {
       
       // Add price information if available
       if (stock.price !== null) {
-        const priceFormatted = typeof stock.price === 'number' ? `$${stock.price.toFixed(2)}` : '$N/A';
+        const priceFormatted = `$${stock.price.toFixed(2)}`;
         let priceChangeFormatted = "";
         
-        if (stock.priceChange !== null && stock.changesPercentage !== null) {
+        if (stock.priceChange !== null && stock.percentChange !== null) {
           const changePrefix = stock.priceChange >= 0 ? '+' : '';
-          const percentPrefix = stock.changesPercentage >= 0 ? '+' : '';
-          const changeValue = typeof stock.priceChange === 'number' ? stock.priceChange.toFixed(2) : 'N/A';
-          const percentValue = typeof stock.changesPercentage === 'number' ? stock.changesPercentage.toFixed(1) : 'N/A';
-          priceChangeFormatted = ` (${changePrefix}${changeValue}, ${percentPrefix}${percentValue}%)`;
+          const percentPrefix = stock.percentChange >= 0 ? '+' : '';
+          priceChangeFormatted = ` (${changePrefix}${stock.priceChange.toFixed(2)}, ${percentPrefix}${stock.percentChange.toFixed(1)}%)`;
         }
         
         formattedData += `  - Price: ${priceFormatted}${priceChangeFormatted}\n`;
+      } else if (stock.formattedPrice && stock.formattedPriceChange) {
+        // Use pre-formatted price if available
+        formattedData += `  - Price: ${stock.formattedPrice} ${stock.formattedPriceChange}\n`;
       }
       
       // Add volume and market cap if available
       if (stock.volume !== null) {
-        formattedData += `  - Volume: ${typeof stock.volume === 'number' ? stock.volume.toLocaleString() : 'N/A'}\n`;
+        formattedData += `  - Volume: ${stock.volume.toLocaleString()}\n`;
       }
       if (stock.marketCap !== null) {
-        formattedData += `  - Market Cap: $${typeof stock.marketCap === 'number' ? (stock.marketCap / 1e9).toFixed(1) : 'N/A'}B\n`;
+        formattedData += `  - Market Cap: $${(stock.marketCap / 1e9).toFixed(1)}B\n`;
       }
       
       // Add fundamental metrics
@@ -1082,13 +865,6 @@ function evaluateMetric(current, historical, sector, metricType, higherIsBetter 
   let histFavorable = higherIsBetter ? (histDiff > 0) : (histDiff < 0);
   let sectorFavorable = higherIsBetter ? (sectorDiff > 0) : (sectorDiff < 0);
   
-  // Special case for PEG ratio
-  if (metricType === "PEG") {
-    if (current < 1.0) return "Potentially undervalued";
-    if (current > 2.0) return "Potentially overvalued";
-    return "Fairly valued";
-  }
-  
   // Evaluation based on differences
   if (Math.abs(histDiff) < 10 && Math.abs(sectorDiff) < 10) {
     return "Fairly valued";
@@ -1111,49 +887,42 @@ function evaluateMetric(current, historical, sector, metricType, higherIsBetter 
  */
 function generateAnalysis(symbol, metrics, historicalAverages = {}, sectorAverages = {}) {
   try {
-    // Check if we have valid data
-    if (!metrics || (!metrics.pegRatio && !metrics.forwardPE && !metrics.priceToBook)) {
-      return "Insufficient data to generate analysis.";
+    let analysis = `Analysis for ${symbol}: `;
+    
+    // Check if this is an ETF or stock
+    const isETF = isETF(symbol);
+    
+    // Basic information
+    if (metrics.company) {
+      analysis += `${metrics.company}. `;
     }
     
-    // Initialize analysis
-    let analysis = "";
+    // Industry and sector information
+    if (metrics.industry && metrics.sector) {
+      analysis += `It operates in the ${metrics.sector} sector and ${metrics.industry} industry. `;
+    }
     
-    // Determine if this is an ETF
-    const isETF = ["SPY", "QQQ", "IWM", "DIA"].includes(symbol);
+    // Market cap information
+    if (metrics.marketCap) {
+      analysis += `With a market capitalization of ${metrics.formattedMarketCap}, it is a ${metrics.marketCap >= 100e9 ? 'large-cap' : metrics.marketCap >= 2e9 ? 'mid-cap' : 'small-cap'} company. `;
+    }
+    
+    // Volume information
+    if (metrics.volume) {
+      analysis += `It has a daily trading volume of ${metrics.formattedVolume}. `;
+    }
+    
+    // Price and change information
+    if (metrics.price && metrics.priceChange) {
+      analysis += `Currently trading at ${metrics.formattedPrice}${metrics.formattedPriceChange}. `;
+    }
     
     if (isETF) {
       // ETF analysis
       analysis += `${symbol} is an ETF. `;
       
       if (metrics.expenseRatio) {
-        if (metrics.expenseRatio < 0.1) {
-          analysis += `It has a low expense ratio of ${formatValue(metrics.expenseRatio * 100)}%, which is favorable for long-term investors. `;
-        } else if (metrics.expenseRatio < 0.5) {
-          analysis += `It has a moderate expense ratio of ${formatValue(metrics.expenseRatio * 100)}%. `;
-        } else {
-          analysis += `It has a relatively high expense ratio of ${formatValue(metrics.expenseRatio * 100)}%, which may impact long-term returns. `;
-        }
-      }
-      
-      if (metrics.beta) {
-        if (metrics.beta < 0.8) {
-          analysis += `With a beta of ${formatValue(metrics.beta)}, it tends to be less volatile than the overall market. `;
-        } else if (metrics.beta < 1.2) {
-          analysis += `With a beta of ${formatValue(metrics.beta)}, it tends to move in line with the overall market. `;
-        } else {
-          analysis += `With a beta of ${formatValue(metrics.beta)}, it tends to be more volatile than the overall market. `;
-        }
-      }
-      
-      if (metrics.dividendYield) {
-        if (metrics.dividendYield > 0.03) {
-          analysis += `It offers a relatively high dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
-        } else if (metrics.dividendYield > 0.01) {
-          analysis += `It offers a moderate dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
-        } else {
-          analysis += `It offers a relatively low dividend yield of ${formatValue(metrics.dividendYield * 100)}%. `;
-        }
+        analysis += `It has an expense ratio of ${metrics.expenseRatio * 100}%. `;
       }
     } else {
       // Stock analysis
@@ -1239,10 +1008,10 @@ function generateAnalysis(symbol, metrics, historicalAverages = {}, sectorAverag
       }
     }
     
-    return analysis;
+    return analysis.trim();
   } catch (error) {
     Logger.log(`Error generating analysis for ${symbol}: ${error}`);
-    return "Unable to generate analysis due to an error.";
+    return `Error generating analysis for ${symbol}`;
   }
 }
 
@@ -1364,7 +1133,7 @@ function testEnhancedFundamentalMetrics() {
         const startTime = new Date().getTime();
         
         // Yahoo Finance API endpoint for fundamentals data
-        const apiUrl = `https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals?region=US&symbol=${symbol}&lang=en-US&modules=price,summaryDetail,assetProfile,financialData`;
+        const apiUrl = `https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals?region=US&symbol=${symbol}&lang=en-US&modules=assetProfile%2CsummaryProfile%2CfundProfile`;
         
         const options = {
           method: "GET",
@@ -1383,7 +1152,7 @@ function testEnhancedFundamentalMetrics() {
         if (statusCode === 200) {
           const data = JSON.parse(response.getContentText());
           
-          if (data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
+          if (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
             const result = data.quoteSummary.result[0];
             const yahooApiData = {};
             
@@ -1402,7 +1171,7 @@ function testEnhancedFundamentalMetrics() {
               const financials = result.financialData;
               yahooApiData.returnOnEquity = financials.returnOnEquity ? financials.returnOnEquity.raw : 0;
               yahooApiData.returnOnAssets = financials.returnOnAssets ? financials.returnOnAssets.raw : 0;
-              yahooApiData.profitMargin = financials.profitMargins ? financials.profitMargins.raw : 0;
+              yahooApiData.profitMargin = financials.profitMargin ? financials.profitMargin.raw : 0;
               yahooApiData.debtToEquity = financials.debtToEquity ? financials.debtToEquity.raw : 0;
             }
             
@@ -1508,17 +1277,22 @@ function testFullFundamentalMetricsCaching() {
     const startTime1 = new Date().getTime();
     const result1 = retrieveFundamentalMetrics(testSymbols);
     const executionTime1 = (new Date().getTime() - startTime1) / 1000;
-    
-    Logger.log(`First call execution time: ${executionTime1.toFixed(3)} seconds`);
-    Logger.log(`Status: ${result1.status}`);
-    Logger.log(`Cache hits: ${result1.cachePerformance ? result1.cachePerformance.hits : 'N/A'}`);
-    Logger.log(`Cache misses: ${result1.cachePerformance ? result1.cachePerformance.misses : 'N/A'}`);
-    Logger.log(`Cache hit rate: ${result1.cachePerformance ? result1.cachePerformance.hitRate : 'N/A'}`);
-    
-    // Format the data
-    const formattedData1 = formatFundamentalMetricsData(result1.data);
+
+    // Update the logging to handle empty results
+    Logger.log(`Retrieved ${result1.metrics.length} valid metrics in ${executionTime1.toFixed(3)} seconds`);
+    if (result1.metrics.length === 0) {
+      Logger.log('No valid metrics data returned');
+    } else {
+      Logger.log(`First call execution time: ${executionTime1.toFixed(3)} seconds`);
+      Logger.log(`Status: ${result1.status}`);
+      Logger.log(`Cache hits: ${result1.cachePerformance ? result1.cachePerformance.hits : 'N/A'}`);
+      Logger.log(`Cache misses: ${result1.cachePerformance ? result1.cachePerformance.misses : 'N/A'}`);
+      Logger.log(`Cache hit rate: ${result1.cachePerformance ? result1.cachePerformance.hitRate : 'N/A'}`);
+     // Format the data
+    const formattedData1 = formatFundamentalMetricsData(result1.metrics);
     Logger.log("\nFORMATTED FUNDAMENTAL METRICS DATA:");
     Logger.log(formattedData1.substring(0, 500) + "...");
+    }
     
     Logger.log(`\nSECOND CALL - SHOULD USE CACHED DATA FOR ALL SYMBOLS:`);
     const startTime2 = new Date().getTime();
@@ -1532,9 +1306,9 @@ function testFullFundamentalMetricsCaching() {
     Logger.log(`Cache hit rate: ${result2.cachePerformance ? result2.cachePerformance.hitRate : 'N/A'}`);
     
     // Format the data
-    const formattedData2 = formatFundamentalMetricsData(result2.data);
+    const formattedData2 = formatFundamentalMetricsData(result2.metrics);
     
-    Logger.log("\nCACHING PERFORMANCE:");
+    Logger.log(`\nCACHING PERFORMANCE:`);
     Logger.log(`First call (fresh data): ${executionTime1.toFixed(3)} seconds`);
     Logger.log(`Second call (cached data): ${executionTime2.toFixed(3)} seconds`);
     
@@ -1545,14 +1319,14 @@ function testFullFundamentalMetricsCaching() {
     let dataConsistent = true;
     
     // Check if we have the same number of items
-    if (result1.data.length !== result2.data.length) {
+    if (result1.metrics.length !== result2.metrics.length) {
       dataConsistent = false;
-      Logger.log(`Data inconsistency: Different number of items (${result1.data.length} vs ${result2.data.length})`);
+      Logger.log(`Data inconsistency: Different number of items (${result1.metrics.length} vs ${result2.metrics.length})`);
     } else {
       // Compare each metrics object
-      for (let i = 0; i < result1.data.length; i++) {
-        const metrics1 = result1.data[i];
-        const metrics2 = result2.data[i];
+      for (let i = 0; i < result1.metrics.length; i++) {
+        const metrics1 = result1.metrics[i];
+        const metrics2 = result2.metrics[i];
         
         // Compare important fields
         const keysToCompare = ['symbol', 'name', 'price', 'priceChange', 'percentChange', 
@@ -1578,7 +1352,7 @@ function testFullFundamentalMetricsCaching() {
       }
     }
     
-    Logger.log("\nDATA CONSISTENCY CHECK:");
+    Logger.log(`\nDATA CONSISTENCY CHECK:`);
     Logger.log(`Metrics data from both calls is identical: ${dataConsistent ? "Yes" : "No"}`);
     
     return {
@@ -1586,7 +1360,9 @@ function testFullFundamentalMetricsCaching() {
       firstCallTime: executionTime1,
       secondCallTime: executionTime2,
       improvementPercent: improvementPercent,
-      dataConsistent: dataConsistent
+      dataConsistent: dataConsistent,
+      firstCallCachePerformance: result1.cachePerformance,
+      secondCallCachePerformance: result2.cachePerformance
     };
   } catch (error) {
     Logger.log(`Error in testFullFundamentalMetricsCaching: ${error}`);
@@ -1638,14 +1414,7 @@ function retrieveRecentlyMentionedStocks() {
  */
 function getCompanyName(symbol) {
   try {
-    // First check if we already have the name cached
-    const cache = CacheService.getScriptCache();
-    const cachedName = cache.get(`COMPANY_NAME_${symbol}`);
-    if (cachedName) {
-      return cachedName;
-    }
-
-    // Try to get the name from Google Finance
+    // First try to get the name from Google Finance
     try {
       // Get the shared finance spreadsheet
       const spreadsheet = getSharedFinanceSpreadsheet();
@@ -1666,9 +1435,8 @@ function getCompanyName(symbol) {
       // Get the company name
       const companyName = sheet.getRange("B1").getValue();
       
-      // If we got a valid name, cache it and return it
+      // If we got a valid name, return it
       if (companyName && companyName !== "#N/A" && companyName !== "#ERROR!") {
-        cache.put(`COMPANY_NAME_${symbol}`, companyName, 3600); // Cache for 1 hour
         return companyName;
       }
     } catch (e) {
@@ -1751,7 +1519,6 @@ function getCompanyName(symbol) {
     
     // If we have a hardcoded name, return it
     if (companyNames[symbol]) {
-      cache.put(`COMPANY_NAME_${symbol}`, companyNames[symbol], 3600); // Cache for 1 hour
       return companyNames[symbol];
     }
     
@@ -1800,7 +1567,7 @@ function testYahooFinanceAPI(apiKey) {
     const endpoints = [
       {
         name: "Fundamentals",
-        url: "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals?region=US&symbol=AAPL&lang=en-US&modules=price,summaryDetail,assetProfile,financialData"
+        url: "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals?region=US&symbol=AAPL&lang=en-US&modules=assetProfile%2CsummaryProfile%2CfundProfile"
       },
       {
         name: "Quote",
@@ -1971,7 +1738,7 @@ function testYahooFinanceAPIIntegration() {
         if (statusCode === 200) {
           const data = JSON.parse(response.getContentText());
           
-          if (data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
+          if (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
             const result = data.quoteSummary.result[0];
             const yahooApiData = {};
             
@@ -2093,11 +1860,12 @@ function fetchTradierData(symbol) {
       dividendYield: null,
       beta: null,
       expenseRatio: null,
-      volume: null,
-      marketCap: null,
-      name: null,
+      company: null,
       industry: null,
-      sector: null
+      sector: null,
+      price: null,
+      marketCap: null,
+      volume: null
     };
     
     // Get the API key from script properties
@@ -2172,10 +1940,18 @@ function fetchTradierData(symbol) {
         // Extract company profile data
         if (companyData.tables.company_profile) {
           const profile = companyData.tables.company_profile;
-          metrics.name = profile.company_name || null;
-          metrics.industry = profile.industry || null;
-          metrics.sector = profile.sector || null;
-          Logger.log(`Found company profile data for ${symbol}`);
+          metrics.company = profile.company_name;
+          metrics.industry = profile.industry;
+          metrics.sector = profile.sector;
+        }
+        
+        // Extract market cap and volume
+        if (companyData.tables.market_cap) {
+          metrics.marketCap = companyData.tables.market_cap[0].value;
+        }
+        
+        if (companyData.tables.volume) {
+          metrics.volume = companyData.tables.volume[0].value;
         }
       }
     }
@@ -2199,26 +1975,21 @@ function fetchTradierData(symbol) {
             // Extract return on equity
             if (ratios.r_o_e !== undefined) {
               metrics.returnOnEquity = parseFloat(ratios.r_o_e);
-              Logger.log(`Found ROE from Tradier: ${metrics.returnOnEquity}`);
             }
             
             // Extract return on assets
             if (ratios.r_o_a !== undefined) {
               metrics.returnOnAssets = parseFloat(ratios.r_o_a);
-              Logger.log(`Found ROA from Tradier: ${metrics.returnOnAssets}`);
             }
             
             // Extract profit margin
             if (ratios.net_margin !== undefined) {
               metrics.profitMargin = parseFloat(ratios.net_margin);
-              Logger.log(`Found profit margin from Tradier: ${metrics.profitMargin}`);
             }
             
             // Extract debt to equity (may need calculation)
             if (ratios.financial_leverage !== undefined) {
-              // This is an approximation, may need adjustment
               metrics.debtToEquity = parseFloat(ratios.financial_leverage) - 1;
-              Logger.log(`Calculated debt to equity from financial leverage: ${metrics.debtToEquity}`);
             }
           }
         }
@@ -2234,33 +2005,22 @@ function fetchTradierData(symbol) {
           // Extract PEG ratio
           if (valuation.peg_ratio) {
             metrics.pegRatio = parseFloat(valuation.peg_ratio);
-            Logger.log(`Found PEG ratio from Tradier: ${metrics.pegRatio}`);
           }
           
           // Extract forward P/E
           if (valuation.forward_pe) {
             metrics.forwardPE = parseFloat(valuation.forward_pe);
-            Logger.log(`Found forward P/E from Tradier: ${metrics.forwardPE}`);
           }
           
           // Extract price to book
           if (valuation.price_to_book) {
             metrics.priceToBook = parseFloat(valuation.price_to_book);
-            Logger.log(`Found price to book from Tradier: ${metrics.priceToBook}`);
           }
           
           // Extract price to sales
           if (valuation.price_to_sales) {
             metrics.priceToSales = parseFloat(valuation.price_to_sales);
-            Logger.log(`Found price to sales from Tradier: ${metrics.priceToSales}`);
           }
-        }
-        
-        // Extract market cap and volume
-        if (stockData.tables.market_data) {
-          const market = stockData.tables.market_data;
-          metrics.marketCap = market.market_cap ? parseFloat(market.market_cap) : null;
-          metrics.volume = market.volume ? parseFloat(market.volume) : null;
         }
       }
     }
@@ -2275,10 +2035,27 @@ function fetchTradierData(symbol) {
         const dividend = dividendsData.dividends.dividend;
         if (dividend.yield) {
           metrics.dividendYield = parseFloat(dividend.yield);
-          Logger.log(`Found dividend yield from Tradier: ${metrics.dividendYield}`);
         }
       }
     }
+    
+    // For ETFs, try to get expense ratio
+    if (isETF(symbol)) {
+      try {
+        // Tradier doesn't have a direct ETF expense ratio endpoint
+        // This is a placeholder - we'll keep the expense ratio as null
+        Logger.log(`${symbol} is an ETF, but Tradier doesn't provide expense ratio data`);
+      } catch (etfError) {
+        Logger.log(`Error checking ETF data for ${symbol}: ${etfError}`);
+      }
+    }
+    
+    // Validate metrics for realistic values
+    Object.keys(metrics).forEach(key => {
+      metrics[key] = validateMetric(metrics[key], key);
+    });
+    
+    Logger.log(`Final Tradier metrics for ${symbol}: ${JSON.stringify(metrics)}`);
     
     return metrics;
   } catch (error) {
@@ -2297,11 +2074,12 @@ function fetchTradierData(symbol) {
       dividendYield: null,
       beta: null,
       expenseRatio: null,
-      volume: null,
-      marketCap: null,
-      name: null,
+      company: null,
       industry: null,
-      sector: null
+      sector: null,
+      price: null,
+      marketCap: null,
+      volume: null
     };
   }
 }
@@ -2420,6 +2198,43 @@ function formatStockGroup(stocks) {
  */
 function testFundamentalMetricsCaching() {
   try {
+ const cache = CacheService.getScriptCache();
+    const defaultSymbols = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA", "XOM", "CVX", "ZM"];
+    defaultSymbols.forEach(symbol => {
+      const cacheKey = `FUNDAMENTAL_METRICS_${symbol}`;
+      cache.remove(cacheKey);
+      Logger.log(`Cleared cache for: ${cacheKey}`);
+    });
+    Logger.log('Cleared fundamental metrics cache');
+  } catch (error) {
+    Logger.log(`Error clearing fundamental metrics cache: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Gets the shared finance spreadsheet for company data
+ * @return {GoogleAppsScript.Spreadsheet.Spreadsheet} The shared finance spreadsheet
+ */
+function getSharedFinanceSpreadsheet() {
+  try {
+    const spreadsheetId = PropertiesService.getScriptProperties().getProperty('FINANCE_SPREADSHEET_ID');
+    if (!spreadsheetId) {
+      throw new Error('Finance spreadsheet ID not configured');
+    }
+    return SpreadsheetApp.openById(spreadsheetId);
+  } catch (error) {
+    Logger.log(`Error getting shared finance spreadsheet: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Tests the fundamental metrics caching system
+ * @return {Object} Test results
+ */
+function testFundamentalMetricsCaching() {
+  try {
     // Choose a test symbol
     const testSymbol = "QQQ";
     
@@ -2427,182 +2242,85 @@ function testFundamentalMetricsCaching() {
     const scriptCache = CacheService.getScriptCache();
     const cacheKey = `FUNDAMENTAL_METRICS_${testSymbol}`;
     scriptCache.remove(cacheKey);
-    Logger.log(`Cleared cache for ${testSymbol}`);
+    Logger.log(`Cleared cache for: ${cacheKey}`);
     
     Logger.log(`\nFIRST CALL - SHOULD RETRIEVE FRESH DATA:`);
     const startTime1 = new Date().getTime();
-    const result1 = retrieveFundamentalMetrics([testSymbol]);
+    const result1 = fetchFundamentalMetricsData(testSymbol);
     const executionTime1 = (new Date().getTime() - startTime1) / 1000;
     
-    // Get the first symbol's data
-    const metrics1 = result1.data[0];
-    
     Logger.log(`First call execution time: ${executionTime1.toFixed(3)} seconds`);
-    Logger.log(`Data source: ${metrics1.dataSource}`);
-    Logger.log(`Price: ${metrics1.price ? `$${metrics1.price.toFixed(2)}` : "N/A"} ${metrics1.priceChange ? `(${metrics1.priceChange >= 0 ? '+' : ''}${metrics1.priceChange.toFixed(2)}, ${metrics1.percentChange >= 0 ? '+' : ''}${metrics1.percentChange.toFixed(1)}%)` : ""}`);
-    Logger.log(`PEG Ratio: ${metrics1.pegRatio || "N/A"}`);
-    Logger.log(`Forward P/E: ${metrics1.forwardPE || "N/A"}`);
-    Logger.log(`Beta: ${metrics1.beta || "N/A"}`);
+    Logger.log(`Data source: ${result1.dataSource || "N/A"}`);
+    Logger.log(`From cache: ${result1.fromCache ? "Yes" : "No"}`);
+    Logger.log(`Price: ${result1.price ? `$${result1.price.toFixed(2)}` : "N/A"} ${result1.priceChange ? `(${result1.priceChange >= 0 ? '+' : ''}${result1.priceChange.toFixed(2)}, ${result1.percentChange >= 0 ? '+' : ''}${result1.percentChange.toFixed(1)}%)` : ""}`);
+    Logger.log(`PEG Ratio: ${result1.pegRatio || "N/A"}`);
+    Logger.log(`Forward P/E: ${result1.forwardPE || "N/A"}`);
+    Logger.log(`Beta: ${result1.beta || "N/A"}`);
     
     Logger.log(`\nSECOND CALL - SHOULD USE CACHED DATA:`);
-    
-    // Second call - should be cache hits
     const startTime2 = new Date().getTime();
-    const result2 = retrieveFundamentalMetrics([testSymbol]);
+    const result2 = fetchFundamentalMetricsData(testSymbol);
     const executionTime2 = (new Date().getTime() - startTime2) / 1000;
     
-    // Get the first symbol's data
-    const metrics2 = result2.data[0];
-    
     Logger.log(`Second call execution time: ${executionTime2.toFixed(3)} seconds`);
-    Logger.log(`Data source: ${metrics2.dataSource}`);
-    Logger.log(`From cache: ${metrics2.fromCache ? "Yes" : "No"}`);
+    Logger.log(`Data source: ${result2.dataSource || "N/A"}`);
+    Logger.log(`From cache: ${result2.fromCache ? "Yes" : "No"}`);
     
     Logger.log(`\nCACHING PERFORMANCE:`);
     Logger.log(`First call (fresh data): ${executionTime1.toFixed(3)} seconds`);
     Logger.log(`Second call (cached data): ${executionTime2.toFixed(3)} seconds`);
     
-    // Check cache performance
-    const cachePerformance = result2.cachePerformance;
-    Logger.log("\nCACHE PERFORMANCE:");
-    Logger.log(`Hits: ${cachePerformance.hits}`);
-    Logger.log(`Misses: ${cachePerformance.misses}`);
-    Logger.log(`Hit rate: ${cachePerformance.hitRate}`);
+    const improvementPercent = ((executionTime1 - executionTime2) / executionTime1) * 100;
+    Logger.log(`Performance improvement: ${improvementPercent.toFixed(1)}%`);
     
     // Verify data consistency
-    const dataConsistent = JSON.stringify(metrics1) === JSON.stringify(metrics2);
-    Logger.log("\nDATA CONSISTENCY CHECK:");
-    Logger.log(`Metrics data from both calls is identical: ${dataConsistent ? "Yes" : "No"}`);
+    const keysToCompare = ['symbol', 'name', 'price', 'priceChange', 'percentChange', 'pegRatio', 'forwardPE', 'priceToBook', 'beta'];
+    let dataConsistent = true;
+    
+    for (const key of keysToCompare) {
+      if (JSON.stringify(result1[key]) !== JSON.stringify(result2[key])) {
+        dataConsistent = false;
+        Logger.log(`Data inconsistency found in ${key}: ${result1[key]} vs ${result2[key]}`);
+      }
+    }
+    
+    Logger.log(`\nDATA CONSISTENCY CHECK:`);
+    Logger.log(`Data from both calls is identical: ${dataConsistent ? "Yes" : "No"}`);
     
     return {
-      success: true,
-      executionTime1: executionTime1,
-      executionTime2: executionTime2,
-      cachePerformance: cachePerformance,
+      status: "success",
+      firstCallTime: executionTime1,
+      secondCallTime: executionTime2,
+      improvementPercent: improvementPercent,
       dataConsistent: dataConsistent
     };
   } catch (error) {
     Logger.log(`Error in testFundamentalMetricsCaching: ${error}`);
     return {
-      success: false,
-      error: error.toString()
+      status: "error",
+      message: `Test failed: ${error}`
     };
   }
 }
 
 /**
- * Tests the Yahoo Finance API for fundamental metrics
- * @return {Object} Test results
- */
-function testFundamentalMetricsAPI() {
-  try {
-    // Test symbols
-    const testSymbols = ['AAPL', 'GOOGL', 'MSFT'];
-    Logger.log(`Testing fundamental metrics for symbols: ${testSymbols.join(', ')}`);
-    
-    // Retrieve the fundamental metrics
-    const result = retrieveFundamentalMetrics(testSymbols);
-    
-    // Check if we have metrics
-    if (!result.success) {
-      Logger.log(`Error retrieving fundamental metrics: ${result.error}`);
-      return { success: false, error: result.error };
-    }
-    
-    // Log metrics for each symbol
-    testSymbols.forEach(symbol => {
-      const metrics = result.data.find(m => m.symbol === symbol);
-      if (metrics) {
-        Logger.log(`\nMetrics for ${symbol}:`);
-        Logger.log(`PEG Ratio: ${metrics.pegRatio}`);
-        Logger.log(`Forward P/E: ${metrics.forwardPE}`);
-        Logger.log(`Price/Book: ${metrics.priceToBook}`);
-        Logger.log(`Price/Sales: ${metrics.priceToSales}`);
-        Logger.log(`Debt/Equity: ${metrics.debtToEquity}`);
-        Logger.log(`Return on Equity: ${metrics.returnOnEquity}`);
-        Logger.log(`Return on Assets: ${metrics.returnOnAssets}`);
-        Logger.log(`Profit Margin: ${metrics.profitMargin}`);
-        Logger.log(`Dividend Yield: ${metrics.dividendYield}`);
-        Logger.log(`Beta: ${metrics.beta}`);
-        Logger.log(`Expense Ratio: ${metrics.expenseRatio}`);
-        Logger.log(`Volume: ${metrics.volume}`);
-        Logger.log(`Market Cap: ${metrics.marketCap}`);
-        Logger.log(`Name: ${metrics.name}`);
-        Logger.log(`Industry: ${metrics.industry}`);
-        Logger.log(`Sector: ${metrics.sector}`);
-      }
-    });
-    
-    return { success: true, metrics: result.data };
-  } catch (error) {
-    Logger.log(`Error in testFundamentalMetricsAPI: ${error}`);
-    return { success: false, error: error.toString() };
-  }
-}
-
-/**
- * Fetches data from Yahoo Finance web page for a specific symbol
+ * Checks if a symbol is an ETF
  * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Yahoo Finance web data
+ * @return {Boolean} True if the symbol is an ETF, false otherwise
  */
-function fetchYahooFinanceWebData(symbol) {
-  try {
-    Logger.log(`Fetching Yahoo Finance web data for ${symbol}`);
-    
-    // Construct the Yahoo Finance URL
-    const url = `https://finance.yahoo.com/quote/${symbol}`;
-    
-    // Fetch the page content
-    const options = {
-      'method': 'GET',
-      'headers': {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html'
-      },
-      'muteHttpExceptions': true
-    };
-    
-    const response = UrlFetchApp.fetch(url, options);
-    const content = response.getContentText();
-    
-    // Extract after-hours data using regex
-    const afterHoursRegex = /"afterHoursPrice":\{.*?"raw":(.*?),.*?"afterHoursChange":\{.*?"raw":(.*?),.*?"afterHoursChangePercent":\{.*?"raw":(.*?)\}/;
-    const afterHoursMatch = content.match(afterHoursRegex);
-    
-    if (afterHoursMatch) {
-      const afterHoursPrice = parseFloat(afterHoursMatch[1]);
-      const afterHoursChange = parseFloat(afterHoursMatch[2]);
-      const afterHoursChangePercent = parseFloat(afterHoursMatch[3]);
-      
-      return {
-        price: afterHoursPrice,
-        priceChange: afterHoursChange,
-        changesPercentage: afterHoursChangePercent,
-        name: getCompanyName(symbol),
-        dataSource: "Yahoo Finance Web"
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    Logger.log(`Error fetching Yahoo Finance web data for ${symbol}: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Clears the fundamental metrics cache for all symbols
- */
-function clearFundamentalMetricsCache() {
-  const cache = CacheService.getScriptCache();
-  const keys = cache.getAllKeys();
+function isETF(symbol) {
+  const knownETFs = [
+    'SPY', 'QQQ', 'IWM', 'DIA', 'TLT', 'GLD', 'SLV', 'USO', 'UNG', 'HYG',
+    'VWO', 'VEA', 'EFA', 'EEM', 'XLF', 'XLK', 'XLE', 'XLU', 'XLRE', 'XLY',
+    'XLP', 'XLI', 'XLB', 'XLC', 'XLY', 'XLP', 'XLI', 'XLB', 'XLC', 'XLY',
+    'XLV', 'XLP', 'XLU', 'XLRE', 'XLY', 'XLK', 'XLF', 'XLE', 'XLU', 'XLRE',
+    'XLY', 'XLK', 'XLF', 'XLE', 'XLU', 'XLRE', 'XLY', 'XLK', 'XLF', 'XLE',
+    'XLU', 'XLRE', 'XLY', 'XLK', 'XLF', 'XLE', 'XLU', 'XLRE', 'XLY', 'XLK',
+    'XLF', 'XLE', 'XLU', 'XLRE', 'XLY', 'XLK', 'XLF', 'XLE', 'XLU', 'XLRE',
+    'XLY', 'XLK', 'XLF', 'XLE', 'XLU', 'XLRE', 'XLY', 'XLK', 'XLF', 'XLE',
+    'XLU', 'XLRE', 'XLY', 'XLK', 'XLF', 'XLE', 'XLU', 'XLRE', 'XLY', 'XLK',
+    'XLF', 'XLE', 'XLU', 'XLRE', 'XLY', 'XLK', 'XLF', 'XLE', 'XLU', 'XLRE'
+  ];
   
-  // Clear all cache entries that match our pattern
-  keys.forEach(key => {
-    if (key.startsWith('fundamental_metrics_')) {
-      cache.remove(key);
-    }
-  });
-  
-  Logger.log('Cleared fundamental metrics cache');
+  return knownETFs.includes(symbol.toUpperCase());
 }

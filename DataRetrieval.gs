@@ -227,7 +227,7 @@ function generateDataRetrievalText() {
       Logger.log(`DEBUG - Fundamental metrics before check: ${JSON.stringify(allData.fundamentalMetrics).substring(0, 200)}...`);
       
       // Check if we have fundamental metrics data
-      if (allData.fundamentalMetrics) {
+      if (allData.fundamentalMetrics && typeof allData.fundamentalMetrics === 'object') {
         // Process the actual data if it exists and is an array
         if (allData.fundamentalMetrics.data && Array.isArray(allData.fundamentalMetrics.data) && allData.fundamentalMetrics.data.length > 0) {
           const fundamentalMetricsData = allData.fundamentalMetrics;
@@ -648,6 +648,26 @@ function formatStockMetrics(stock, formattedText) {
     
     formattedText += `    - Price: $${priceStr}${changeStr ? ` (${changeStr})` : ''}\n`;
   }
+
+  // Format volume and market cap if available
+  if (stock.volume !== undefined && stock.volume !== null) {
+    const volumeStr = formatValue(stock.volume, true);
+    formattedText += `    - Volume: ${volumeStr}\n`;
+  }
+
+  if (stock.marketCap !== undefined && stock.marketCap !== null) {
+    const marketCapStr = formatValue(stock.marketCap / 1e9, true, 1);
+    formattedText += `    - Market Cap: $${marketCapStr}B\n`;
+  }
+
+  // Format industry and sector if available
+  if (stock.industry !== undefined && stock.industry !== null) {
+    formattedText += `    - Industry: ${stock.industry}\n`;
+  }
+
+  if (stock.sector !== undefined && stock.sector !== null) {
+    formattedText += `    - Sector: ${stock.sector}\n`;
+  }
   
   // Format other metrics
   const metrics = [
@@ -670,9 +690,7 @@ function formatStockMetrics(stock, formattedText) {
       formattedText += `    - ${metric.name}: ${formattedValue}${suffix}\n`;
     }
   });
-  
-  // Don't add data source information as requested by user
-  
+
   return formattedText;
 }
 
@@ -720,6 +738,21 @@ function retrieveAllData() {
     Logger.log(`Step 3: Retrieving fundamental metrics for ${allSymbols.length} stocks...`);
     const fundamentalMetrics = retrieveFundamentalMetrics(allSymbols);
     
+    // Ensure the fundamental metrics data is properly structured
+    const processedMetrics = {
+      success: fundamentalMetrics.success,
+      message: fundamentalMetrics.message,
+      data: fundamentalMetrics.data || [],
+      timestamp: new Date(),
+      fromCache: fundamentalMetrics.fromCache,
+      executionTime: fundamentalMetrics.executionTime || 0,
+      cachePerformance: {
+        hits: fundamentalMetrics.cacheHits || 0,
+        misses: fundamentalMetrics.cacheMisses || 0,
+        hitRate: fundamentalMetrics.cacheHits > 0 ? ((fundamentalMetrics.cacheHits / (fundamentalMetrics.cacheHits + fundamentalMetrics.cacheMisses)) * 100).toFixed(1) + '%' : '0%'
+      }
+    };
+    
     // Step 4: Retrieve macroeconomic factors
     Logger.log("Step 4: Retrieving macroeconomic factors...");
     const macroeconomicFactors = retrieveMacroeconomicFactors();
@@ -729,7 +762,7 @@ function retrieveAllData() {
       success: true,
       marketSentiment: marketSentiment,
       keyMarketIndicators: keyMarketIndicators,
-      fundamentalMetrics: fundamentalMetrics,
+      fundamentalMetrics: processedMetrics,
       macroeconomicFactors: macroeconomicFactors,
       timestamp: currentDate
     };
@@ -804,17 +837,22 @@ function retrieveFundamentalMetrics(symbols) {
     
     // Debug logging to see what's being returned
     Logger.log(`DEBUG - FundamentalMetrics returned: ${JSON.stringify(metrics).substring(0, 200)}...`);
-    Logger.log(`DEBUG - FundamentalMetrics data structure: status=${metrics.status}, data=${metrics.data ? 'present' : 'missing'}, metrics=${metrics.metrics ? 'present' : 'missing'}`);
+    Logger.log(`DEBUG - FundamentalMetrics data structure: metrics=${metrics ? 'present' : 'missing'}, failedSymbols=${metrics.failedSymbols ? 'present' : 'missing'}`);
+    Logger.log(`DEBUG - FundamentalMetrics data keys: ${Object.keys(metrics)}`);
     
     // Properly handle the response structure from FundamentalMetrics.gs
     return {
-      success: metrics.status === 'success',
-      message: metrics.message || '',
-      data: metrics.data || [],
+      success: metrics && metrics.metrics && metrics.metrics.length > 0,
+      message: metrics && metrics.metrics && metrics.metrics.length > 0 ? 'Successfully retrieved fundamental metrics' : 'No valid metrics data available',
+      data: metrics && metrics.metrics ? metrics.metrics : [],
       timestamp: new Date(),
-      fromCache: metrics.cachePerformance ? metrics.cachePerformance.hits > 0 : false,
+      fromCache: metrics.cacheHits > 0,
       executionTime: metrics.executionTime || 0,
-      cachePerformance: metrics.cachePerformance || { hits: 0, misses: 0, hitRate: '0%' }
+      cachePerformance: {
+        hits: metrics.cacheHits || 0,
+        misses: metrics.cacheMisses || 0,
+        hitRate: metrics.cacheHits > 0 ? ((metrics.cacheHits / (metrics.cacheHits + metrics.cacheMisses)) * 100).toFixed(1) + '%' : '0%'
+      }
     };
   } catch (error) {
     Logger.log(`Error retrieving fundamental metrics data: ${error}`);
@@ -822,8 +860,15 @@ function retrieveFundamentalMetrics(symbols) {
       success: false,
       error: true,
       message: `Failed to retrieve fundamental metrics data: ${error}`,
+      data: [],
       timestamp: new Date(),
-      data: []
+      fromCache: false,
+      executionTime: 0,
+      cachePerformance: {
+        hits: 0,
+        misses: 0,
+        hitRate: '0%'
+      }
     };
   }
 }

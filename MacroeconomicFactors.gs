@@ -1,3 +1,43 @@
+
+/**
+* The main prompt to ensure the sources consulted are relevant
+*/
+function getMacroeconomicfactorsPrompt() {
+  return `Search and analyze current geopolitical risks impacting financial markets within the last week.
+    
+    Focus on insights from these authoritative sources:
+    - Think Tanks: CFR, Brookings, Carnegie, Chatham House, Atlantic Council, CSIS, RAND, Wilson Center
+    - Defense Analysis: Geopolitical Futures, Jane's, FPRI, Understanding War
+    - Financial Institutions: BlackRock, EBA, ECB, Banking Supervision
+    - News: Foreign Affairs, Foreign Policy, Economist, Diplomat, War on the Rocks
+    - Government Sources: State Department, ECFR, Crisis Group, NATO, UN
+    - Academic Journals: JSTOR, MIT International Security, Taylor & Francis Security Studies
+    - Market Analysis: S&P Global, RMAS, Wellington Management
+    - Media: NYT, Bloomberg, CNN, The Atlantic, BBC, Reuters, Al Jazeera
+
+    Format your response as a valid JSON object with the following structure:
+    {
+      "geopoliticalRiskIndex": 50, // A number from 0-100 representing overall risk level
+      "risks": [
+        {
+          "type": "Event/Conflict/Policy",
+          "name": "Brief name of the risk",
+          "description": "Detailed description of the risk",
+          "region": "Affected region",
+          "impactLevel": "High/Medium/Low",
+          "marketImpact": "Description of potential market impact",
+          "source": "Source of information",
+          "url": "URL to source"
+        }
+      ],
+      "source": "Data sources used",
+      "sourceUrl": "URL to primary source",
+      "lastUpdated": "Date in which that source was last updated"
+    }
+    
+    Include 5 of the most significant current geopolitical risks. Ensure all data is accurate and from reputable sources.`;
+}
+
 /**
  * Retrieves macroeconomic factors data
  * @return {Object} Macroeconomic factors data
@@ -2144,33 +2184,8 @@ function retrieveGeopoliticalRisksFromPerplexity() {
       throw new Error("Perplexity API key not found in script properties");
     }
     
-    // Create the prompt for Perplexity
-    const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
-    
-    const prompt = `Analyze the current major geopolitical risks that could impact financial markets as of ${formattedDate}. Ensure you only retrive recent data (i.e. within the last week)
-    
-    Format your response as a valid JSON object with the following structure:
-    {
-      "geopoliticalRiskIndex": 50, // A number from 0-100 representing overall risk level
-      "risks": [
-        {
-          "type": "Event/Conflict/Policy",
-          "name": "Brief name of the risk",
-          "description": "Detailed description of the risk",
-          "region": "Affected region",
-          "impactLevel": "High/Medium/Low",
-          "marketImpact": "Description of potential market impact",
-          "source": "Source of information",
-          "url": "URL to source"
-        }
-      ],
-      "source": "Data sources used",
-      "sourceUrl": "URL to primary source",
-      "lastUpdated": "${currentDate.toISOString()}"
-    }
-    
-    Include 3-5 of the most significant current geopolitical risks. Ensure all data is accurate and from reputable sources.`;
+    // Create the prompt
+    const prompt = getMacroeconomicfactorsPrompt();
     
     // Set up the API request
     const url = "https://api.perplexity.ai/chat/completions";
@@ -2280,29 +2295,7 @@ function retrieveGeopoliticalRisksFromOpenAI() {
     const currentDate = new Date();
     const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
     
-    const prompt = `Analyze the current major geopolitical risks that could impact financial markets as of ${formattedDate}. 
-    
-    Format your response as a valid JSON object with the following structure:
-    {
-      "geopoliticalRiskIndex": 50, // A number from 0-100 representing overall risk level
-      "risks": [
-        {
-          "type": "Event/Conflict/Policy",
-          "name": "Brief name of the risk",
-          "description": "Detailed description of the risk",
-          "region": "Affected region",
-          "impactLevel": "High/Medium/Low",
-          "marketImpact": "Description of potential market impact",
-          "source": "Source of information",
-          "url": "URL to source"
-        }
-      ],
-      "source": "Data sources used",
-      "sourceUrl": "URL to primary source",
-      "lastUpdated": "${currentDate.toISOString()}"
-    }
-    
-    Include 3-5 of the most significant current geopolitical risks. Ensure all data is accurate and from reputable sources.`;
+    const prompt = getMacroeconomicfactorsPrompt();
     
     // Set up the API request
     const url = "https://api.openai.com/v1/chat/completions";

@@ -181,7 +181,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
   <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Market Pulse Daily</title>
+    <title>${NEWSLETTER_NAME}</title>
     <style>
       body {
         font-family: 'Segoe UI', Arial, sans-serif;
@@ -292,7 +292,7 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
   <body>
     <div class="container">
       <div class="header">
-        <h1 class="title">Market Pulse Daily</h1>
+        <h1 class="title">${NEWSLETTER_NAME}</h1>
         <p class="subtitle">Professional Trading Insights</p>
         <p class="subtitle">Analysis Time: ${formattedAnalysisTime}</p>
       </div>
@@ -517,7 +517,7 @@ function formatPlainTextEmailBodyWithAnalysis(decision, analysis, analysisTime, 
   
   // Build the plain text email
   let text = `
-MARKET PULSE DAILY
+${NEWSLETTER_NAME}
 Professional Trading Insights
 Analysis Time: ${formattedAnalysisTime}
 
@@ -621,8 +621,8 @@ Regional Risks:`;
 
 Next analysis scheduled for: ${formattedNextAnalysisTime}
 
-Market Pulse Daily - Professional Trading Insights
-${new Date().getFullYear()} Market Pulse Daily. All rights reserved.
+${NEWSLETTER_NAME} - Professional Trading Insights
+${new Date().getFullYear()} ${NEWSLETTER_NAME}. All rights reserved.
 Delivering data-driven market analysis to help you make informed trading decisions.
 `;
   
@@ -693,7 +693,7 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
-      <title>Market Pulse Daily</title>
+      <title>${NEWSLETTER_NAME}</title>
       <style>
         body {
           font-family: 'Segoe UI', Arial, sans-serif;
@@ -805,7 +805,7 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
       <div class="container">
         <!-- Header -->
         <div style="text-align: center; margin-bottom: 25px;">
-          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">Market Pulse Daily</h1>
+          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${NEWSLETTER_NAME}</h1>
           <p style="color: #7f8c8d; margin: 5px 0 0;">Generated on ${formattedAnalysisTime}</p>
           ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
         </div>
@@ -846,8 +846,8 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
         
         <!-- Footer -->
         <div style="background-color: #1a365d; padding: 20px; text-align: center; color: white; border-radius: 6px;">
-          <p style="margin: 0; font-size: 14px;">Market Pulse Daily - Professional Trading Insights</p>
-          <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().getFullYear()} Market Pulse Daily</p>
+          <p style="margin: 0; font-size: 14px;">${NEWSLETTER_NAME} - Professional Trading Insights</p>
+          <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().getFullYear()} ${NEWSLETTER_NAME}</p>
           <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaaaaa;">
             This email contains information based on market data and analysis algorithms. 
             It is not financial advice. Always conduct your own research before making investment decisions.
@@ -1268,7 +1268,7 @@ function generateFundamentalMetricsSection(analysis) {
 
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Fundamental Metrics</h2>
       ${html}
     </div>
     `;
@@ -1276,7 +1276,7 @@ function generateFundamentalMetricsSection(analysis) {
     Logger.log("Error generating fundamental metrics section: " + error);
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Fundamental Metrics</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Fundamental Metrics</h2>
       <p style="text-align: center; color: #757575;">Error generating stock data: ${error}</p>
     </div>
     `;
@@ -1422,7 +1422,7 @@ function generateMacroeconomicFactorsSection(analysis) {
     
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
       ${yieldsHtml}
       ${inflationHtml}
     </div>
@@ -1431,7 +1431,7 @@ function generateMacroeconomicFactorsSection(analysis) {
     Logger.log("Error generating macroeconomic factors section: " + error);
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
       <p style="text-align: center; color: #757575;">Error generating macroeconomic factors section: ${error}</p>
     </div>
     `;
@@ -1454,9 +1454,9 @@ function generateGeopoliticalRisksSection(analysis) {
     // If no data and no overview, return empty section
     if ((!geopoliticalRisks || geopoliticalRisks.length === 0) && !analysis.geopoliticalOverview) {
       return `
-      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
-        <p style="text-align: center; color: #757575;">No geopolitical risk data available</p>
+      <div class="section">
+        <h2>Geopolitical Risks</h2>
+        <p>No geopolitical risk data available</p>
       </div>
       `;
     }
@@ -1495,10 +1495,10 @@ function generateGeopoliticalRisksSection(analysis) {
         <div style="margin-bottom: 15px;">
           <div style="margin-bottom: 10px; padding: 10px; background-color: white; border-radius: 4px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-              <div style="font-weight: bold; color: #333;">${risk.region || 'Global'}</div>
-              <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">
-                <span style="background-color: ${riskColor}; color: white; padding: 2px 6px; border-radius: 3px;">${risk.level || 'Moderate'}</span>
-              </div>
+            <div style="font-weight: bold; color: #333;">${risk.region || 'Global'}</div>
+            <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">
+              <span style="background-color: ${riskColor}; color: white; padding: 2px 6px; border-radius: 3px;">${risk.level || 'Moderate'}</span>
+            </div>
             </div>
             <div style="color: #555; margin-bottom: 5px;">${risk.description || 'No description available'}</div>
             ${risk.source ? `
@@ -1516,8 +1516,8 @@ function generateGeopoliticalRisksSection(analysis) {
     
     // Return the complete HTML for the geopolitical risks section
     return `
-    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+    <div class="section">
+      <h2>Geopolitical Risks</h2>
       ${overviewHtml}
       ${risksHtml}
     </div>
@@ -1525,9 +1525,9 @@ function generateGeopoliticalRisksSection(analysis) {
   } catch (error) {
     Logger.log("Error generating geopolitical risks section: " + error);
     return `
-    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
-      <p style="text-align: center; color: #757575;">Error generating geopolitical risks data</p>
+    <div class="section">
+      <h2>Geopolitical Risks</h2>
+      <p>Error generating geopolitical risks section: ${error}</p>
     </div>
     `;
   }
@@ -1594,9 +1594,9 @@ function generateGeopoliticalRisksSection(analysis) {
             risksHtml += `
             <div style="padding: 10px; background-color: white; border-radius: 4px; margin-top: 5px;">
               <div style="display: flex; justify-content: space-between;">
-                <div style="color: #555;">${risk.description || 'No description available'}</div>
-                <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">
-                  <span style="background-color: ${riskColor}; color: white; padding: 2px 6px; border-radius: 3px;">${risk.impactLevel || 'Moderate'}</span>
+              <div style="color: #555;">${risk.description || 'No description available'}</div>
+              <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">
+                <span style="background-color: ${riskColor}; color: white; padding: 2px 6px; border-radius: 3px;">${risk.impactLevel || 'Moderate'}</span>
                 </div>
               </div>
               ${risk.source ? `<div style="font-size: 11px; text-align: right; color: #888;">Source: ${risk.source}${risk.lastUpdated ? ` | Last updated: ${risk.lastUpdated}` : ''}</div>` : ''}
@@ -1657,5 +1657,51 @@ function saveToGoogleDrive(filename, content) {
   } catch (error) {
     Logger.log('Error saving to Google Drive: ' + error);
     throw new Error('Failed to save file to Google Drive: ' + error);
+  }
+}
+
+/**
+ * Test function to retrieve stock data and fundamentals from FMP
+ * @return {Object} The stock data and fundamentals
+ */
+function testFMPStockData() {
+  const apiKey = PropertiesService.getScriptProperties().getProperty('FMP_API_KEY');
+  if (!apiKey) {
+    throw new Error('FMP_API_KEY not found in script properties');
+  }
+
+  // Test with a well-known stock symbol
+  const symbol = 'AAPL';
+  
+  try {
+    // Get company quote
+    const quoteUrl = `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${apiKey}`;
+    const quoteResponse = UrlFetchApp.fetch(quoteUrl);
+    const quoteData = JSON.parse(quoteResponse.getContentText())[0];
+
+    // Get company profile
+    const profileUrl = `https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${apiKey}`;
+    const profileResponse = UrlFetchApp.fetch(profileUrl);
+    const profileData = JSON.parse(profileResponse.getContentText())[0];
+
+    // Get key metrics
+    const metricsUrl = `https://financialmodelingprep.com/api/v3/key-metrics/${symbol}?period=quarter&limit=1&apikey=${apiKey}`;
+    const metricsResponse = UrlFetchApp.fetch(metricsUrl);
+    const metricsData = JSON.parse(metricsResponse.getContentText())[0];
+
+    // Combine all data into a single object
+    const result = {
+      symbol: symbol,
+      quote: quoteData,
+      profile: profileData,
+      metrics: metricsData,
+      timestamp: new Date().toISOString()
+    };
+
+    Logger.log('Successfully retrieved FMP data');
+    return result;
+  } catch (error) {
+    Logger.log(`Error retrieving FMP data: ${error}`);
+    throw error;
   }
 }
