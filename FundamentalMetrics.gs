@@ -282,7 +282,9 @@ function fetchFundamentalMetricsData(symbol) {
     metrics.lastUpdated = new Date().toISOString();
     
     // Cache the data if we have valid metrics
-    if (metrics.price !== null || metrics.volume !== null) {
+    const hasValidMetrics = Object.values(metrics).some(value => value !== null && value !== undefined && value !== "");
+    
+    if (hasValidMetrics) {
       const cacheData = {
         ...metrics,
         fromCache: false,
@@ -633,7 +635,7 @@ function fetchGoogleFinanceData(symbol) {
     sheet.getRange("L2").setFormula(`=IF(REGEXMATCH("${symbol}", "^(SPY|QQQ|IWM|DIA|VOO|VTI|VXUS|BND|AGG)$"), GOOGLEFINANCE("${symbol}", "expenseratio"), "")`);
     
     // Wait for formulas to calculate
-    Utilities.sleep(1000);
+    Utilities.sleep(3000); // Increased from 1000 to 3000ms
     
     // Extract the data
     const price = sheet.getRange("B2").getValue();
@@ -653,16 +655,28 @@ function fetchGoogleFinanceData(symbol) {
     
     // Count how many fundamental metrics we actually have
     let validMetricsCount = 0;
-    if (typeof pegRatio === 'number' && !isNaN(pegRatio)) validMetricsCount++;
-    if (typeof forwardPE === 'number' && !isNaN(forwardPE)) validMetricsCount++;
-    if (typeof priceToBook === 'number' && !isNaN(priceToBook)) validMetricsCount++;
-    if (typeof priceToSales === 'number' && !isNaN(priceToSales)) validMetricsCount++;
-    if (typeof debtToEquity === 'number' && !isNaN(debtToEquity)) validMetricsCount++;
-    if (typeof returnOnEquity === 'number' && !isNaN(returnOnEquity)) validMetricsCount++;
-    if (typeof beta === 'number' && !isNaN(beta)) validMetricsCount++;
+    const metrics = {
+      pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta
+    };
+    
+    for (const [key, value] of Object.entries(metrics)) {
+      // Convert #N/A to null
+      const cleanValue = value === '#N/A' ? null : value;
+      
+      // Validate the metric
+      if (cleanValue !== null && 
+          typeof cleanValue === 'number' && 
+          !isNaN(cleanValue) && 
+          Math.abs(cleanValue) !== Infinity) {
+        validMetricsCount++;
+      }
+    }
     
     // For ETFs, we need fewer metrics to consider the data valid
-    const minRequiredMetrics = isETF ? 1 : 3;
+    const minRequiredMetrics = isETF ? 1 : 2; // Reduced from 3 to 2
+    
+    // Log the metrics we found
+    Logger.log(`Found ${validMetricsCount} valid metrics for ${symbol}: ${JSON.stringify(metrics)}`);
     
     // If we don't have enough valid metrics, throw an error to try the next data source
     if (validMetricsCount < minRequiredMetrics) {
@@ -676,17 +690,17 @@ function fetchGoogleFinanceData(symbol) {
       price: price,
       change: change,
       changePct: changePct,
-      pegRatio: pegRatio,
-      forwardPE: forwardPE,
-      priceToBook: priceToBook,
-      priceToSales: priceToSales,
-      debtToEquity: debtToEquity,
-      returnOnEquity: returnOnEquity,
+      pegRatio: pegRatio === '#N/A' ? null : pegRatio,
+      forwardPE: forwardPE === '#N/A' ? null : forwardPE,
+      priceToBook: priceToBook === '#N/A' ? null : priceToBook,
+      priceToSales: priceToSales === '#N/A' ? null : priceToSales,
+      debtToEquity: debtToEquity === '#N/A' ? null : debtToEquity,
+      returnOnEquity: returnOnEquity === '#N/A' ? null : returnOnEquity,
       returnOnAssets: 0,
       profitMargin: 0,
       dividendYield: 0,
-      beta: beta,
-      expenseRatio: expenseRatio
+      beta: beta === '#N/A' ? null : beta,
+      expenseRatio: expenseRatio === '#N/A' ? null : expenseRatio
     };
   } catch (error) {
     Logger.log(`Error fetching Google Finance data for ${symbol}: ${error}`);
