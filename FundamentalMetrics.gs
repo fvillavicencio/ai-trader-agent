@@ -190,7 +190,8 @@ function fetchFundamentalMetricsData(symbol) {
     
     // Get basic stock data from StockDataRetriever
     Logger.log(`Retrieving basic stock data for ${symbol} from StockDataRetriever...`);
-    const stockData = StockDataRetriever.retrieveStockMetrics(symbol);
+    // Use global reference to access the StockDataRetriever script
+    const stockData = retrieveStockMetrics(symbol);
     
     // Initialize metrics object with stock data
     let metrics = {
