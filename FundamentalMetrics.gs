@@ -2595,14 +2595,25 @@ function fetchYahooFinanceWebData(symbol) {
  */
 function clearFundamentalMetricsCache() {
   const cache = CacheService.getScriptCache();
-  const keys = cache.getAllKeys();
   
-  // Clear all cache entries that match our pattern
-  keys.forEach(key => {
-    if (key.startsWith('fundamental_metrics_')) {
-      cache.remove(key);
-    }
-  });
+  // Define our stock symbols
+  const stockSymbols = [
+    // Major Indices
+    'SPY', 'QQQ', 'IWM', 'DIA',
+    // Magnificent Seven
+    'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA',
+    // Other common stocks
+    'V', 'JPM', 'JNJ', 'UNH', 'HD', 'PG', 'MA', 'BAC', 'DIS', 'ADBE',
+    'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM'
+  ];
+  
+  // Create cache keys for each symbol
+  const keys = stockSymbols.map(symbol => `FUNDAMENTAL_METRICS_${symbol}`);
+  
+  // Remove all matching keys at once
+  if (keys.length > 0) {
+    cache.removeAll(keys);
+  }
   
   Logger.log('Cleared fundamental metrics cache');
 }
