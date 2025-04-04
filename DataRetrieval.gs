@@ -695,6 +695,334 @@ function formatStockMetrics(stock, formattedText) {
 }
 
 /**
+ * Formats fundamental metrics data for output
+ * @param {Array} mentionedStocks - Optional list of stocks mentioned in market sentiment
+ * @return {String} Formatted fundamental metrics data
+ */
+function formatFundamentalMetricsOutput(mentionedStocks = []) {
+  // Define the symbols to include
+  const symbols = [
+    // Major Indices
+    "SPY", "QQQ", "IWM", "DIA",
+    // Magnificent Seven
+    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA",
+    // Other stocks
+    "XOM", "CVX", "BA", "CAT", "PG"
+  ];
+  
+  // Helper functions for formatting
+  function formatMarketCap(marketCap) {
+    if (!marketCap || isNaN(marketCap)) return "N/A";
+    if (marketCap >= 1e12) return "$" + (marketCap / 1e12).toFixed(2) + "T";
+    if (marketCap >= 1e9) return "$" + (marketCap / 1e9).toFixed(2) + "B";
+    if (marketCap >= 1e6) return "$" + (marketCap / 1e6).toFixed(2) + "M";
+    return "$" + marketCap.toFixed(2);
+  }
+  
+  function formatVolume(volume) {
+    if (!volume || isNaN(volume)) return "N/A";
+    if (volume >= 1e9) return (volume / 1e9).toFixed(2) + "B";
+    if (volume >= 1e6) return (volume / 1e6).toFixed(2) + "M";
+    if (volume >= 1e3) return (volume / 1e3).toFixed(2) + "K";
+    return volume.toString();
+  }
+  
+  function formatValue(value, fixedDecimals = false, decimals = 2) {
+    if (value === undefined || value === null || isNaN(value)) {
+      return "N/A";
+    }
+    
+    if (fixedDecimals) {
+      return parseFloat(value).toFixed(decimals);
+    }
+    
+    return parseFloat(value).toString();
+  }
+  
+  function formatPriceData(stock) {
+    Logger.log(`DEBUG - formatPriceData for ${stock.symbol}: price=${stock.price}, priceChange=${stock.priceChange}, percentChange=${stock.percentChange}`);
+    
+    if (!stock.price && stock.price !== 0) return "N/A";
+    
+    let priceStr = "$" + Number(stock.price).toFixed(2);
+    if (stock.priceChange !== undefined && !isNaN(stock.priceChange)) {
+      priceStr += ` (${stock.priceChange >= 0 ? '+' : ''}${Number(stock.priceChange).toFixed(2)}`;
+      if (stock.percentChange !== undefined && !isNaN(stock.percentChange)) {
+        priceStr += `, ${stock.percentChange >= 0 ? '+' : ''}${Number(stock.percentChange).toFixed(2)}%`;
+      }
+      priceStr += ")";
+    }
+    return priceStr;
+  }
+  
+  // Get real data from FundamentalMetrics.gs
+  const metricsResults = retrieveFundamentalMetrics(symbols, mentionedStocks);
+  
+  // Format the output
+  let output = "## Stock Data\n\n";
+  
+  if (!metricsResults || !metricsResults.data || metricsResults.data.length === 0) {
+    output += "No fundamental metrics data available.\n";
+    return output;
+  }
+  
+  const allStocks = metricsResults.data;
+  
+  // Create a map of symbol to company name for better handling of missing names
+  const companyNames = {
+    "SPY": "SPDR S&P 500 ETF Trust",
+    "QQQ": "Invesco QQQ Trust",
+    "IWM": "iShares Russell 2000 ETF",
+    "DIA": "SPDR Dow Jones Industrial Average ETF Trust",
+    "AAPL": "Apple Inc.",
+    "MSFT": "Microsoft Corporation",
+    "GOOGL": "Alphabet Inc.",
+    "AMZN": "Amazon.com, Inc.",
+    "META": "Meta Platforms Inc.",
+    "TSLA": "Tesla, Inc.",
+    "NVDA": "NVIDIA Corporation",
+    "XOM": "Exxon Mobil Corporation",
+    "CVX": "Chevron Corporation",
+    "BA": "The Boeing Company",
+    "CAT": "Caterpillar Inc.",
+    "PG": "Procter & Gamble Company"
+  };
+  
+  // Major Indices
+  const majorIndices = allStocks.filter(stock => ["SPY", "QQQ", "IWM", "DIA"].includes(stock.symbol));
+  if (majorIndices.length > 0) {
+    output += "### Major Indices\n";
+    majorIndices.forEach(stock => {
+      // Get company name from map if not available in data
+      const companyName = stock.name || companyNames[stock.symbol] || "Unknown";
+      
+      // Format the stock data
+      output += `* ${stock.symbol} (${companyName}): ${formatPriceData(stock)}\n`;
+      output += `  * Sector: ${stock.sector || "N/A"}\n`;
+      output += `  * Industry: ${stock.industry || "N/A"}\n`;
+      
+      // Add volume
+      const formattedVolume = formatVolume(stock.volume);
+      output += `  * Volume: ${formattedVolume}\n`;
+      
+      // Add metrics
+      if (stock.pegRatio !== null && !isNaN(stock.pegRatio)) output += `  * PEG Ratio: ${formatValue(stock.pegRatio)}\n`;
+      if (stock.forwardPE !== null && !isNaN(stock.forwardPE)) output += `  * Forward P/E: ${formatValue(stock.forwardPE)}\n`;
+      if (stock.priceToBook !== null && !isNaN(stock.priceToBook)) output += `  * Price/Book: ${formatValue(stock.priceToBook)}\n`;
+      if (stock.priceToSales !== null && !isNaN(stock.priceToSales)) output += `  * Price/Sales: ${formatValue(stock.priceToSales)}\n`;
+      if (stock.debtToEquity !== null && !isNaN(stock.debtToEquity)) output += `  * Debt/Equity: ${formatValue(stock.debtToEquity)}\n`;
+      if (stock.returnOnEquity !== null && !isNaN(stock.returnOnEquity)) output += `  * Return on Equity: ${formatValue(stock.returnOnEquity)}%\n`;
+      if (stock.beta !== null && !isNaN(stock.beta)) output += `  * Beta: ${formatValue(stock.beta)}\n`;
+      
+      output += "\n";
+    });
+  }
+  
+  // Magnificent Seven
+  const magSeven = allStocks.filter(stock => ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol));
+  if (magSeven.length > 0) {
+    output += "### Magnificent Seven\n";
+    magSeven.forEach(stock => {
+      // Get company name from map if not available in data
+      const companyName = stock.name || companyNames[stock.symbol] || "Unknown";
+      
+      // Format the stock data
+      output += `* ${stock.symbol} (${companyName}): ${formatPriceData(stock)}\n`;
+      output += `  * Sector: ${stock.sector || "N/A"}\n`;
+      output += `  * Industry: ${stock.industry || "N/A"}\n`;
+      
+      // Add market cap
+      const formattedMarketCap = formatMarketCap(stock.marketCap);
+      output += `  * Market Cap: ${formattedMarketCap}\n`;
+      
+      // Add volume
+      const formattedVolume = formatVolume(stock.volume);
+      output += `  * Volume: ${formattedVolume}\n`;
+      
+      // Add metrics
+      if (stock.pegRatio !== null && !isNaN(stock.pegRatio)) output += `  * PEG Ratio: ${formatValue(stock.pegRatio)}\n`;
+      if (stock.forwardPE !== null && !isNaN(stock.forwardPE)) output += `  * Forward P/E: ${formatValue(stock.forwardPE)}\n`;
+      if (stock.priceToBook !== null && !isNaN(stock.priceToBook)) output += `  * Price/Book: ${formatValue(stock.priceToBook)}\n`;
+      if (stock.priceToSales !== null && !isNaN(stock.priceToSales)) output += `  * Price/Sales: ${formatValue(stock.priceToSales)}\n`;
+      if (stock.debtToEquity !== null && !isNaN(stock.debtToEquity)) output += `  * Debt/Equity: ${formatValue(stock.debtToEquity)}\n`;
+      if (stock.returnOnEquity !== null && !isNaN(stock.returnOnEquity)) output += `  * Return on Equity: ${formatValue(stock.returnOnEquity)}%\n`;
+      if (stock.beta !== null && !isNaN(stock.beta)) output += `  * Beta: ${formatValue(stock.beta)}\n`;
+      
+      output += "\n";
+    });
+  }
+  
+  // Other Stocks
+  const otherStocks = allStocks.filter(stock => ![
+    "SPY", "QQQ", "IWM", "DIA", 
+    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"
+  ].includes(stock.symbol));
+  if (otherStocks.length > 0) {
+    output += "### Other Stocks\n";
+    otherStocks.forEach(stock => {
+      // Get company name from map if not available in data
+      const companyName = stock.name || companyNames[stock.symbol] || "Unknown";
+      
+      // Format the stock data
+      output += `* ${stock.symbol} (${companyName}): ${formatPriceData(stock)}\n`;
+      output += `  * Sector: ${stock.sector || "N/A"}\n`;
+      output += `  * Industry: ${stock.industry || "N/A"}\n`;
+      
+      // Add market cap
+      const formattedMarketCap = formatMarketCap(stock.marketCap);
+      output += `  * Market Cap: ${formattedMarketCap}\n`;
+      
+      // Add volume
+      const formattedVolume = formatVolume(stock.volume);
+      output += `  * Volume: ${formattedVolume}\n`;
+      
+      // Add metrics
+      if (stock.pegRatio !== null && !isNaN(stock.pegRatio)) output += `  * PEG Ratio: ${formatValue(stock.pegRatio)}\n`;
+      if (stock.forwardPE !== null && !isNaN(stock.forwardPE)) output += `  * Forward P/E: ${formatValue(stock.forwardPE)}\n`;
+      if (stock.priceToBook !== null && !isNaN(stock.priceToBook)) output += `  * Price/Book: ${formatValue(stock.priceToBook)}\n`;
+      if (stock.priceToSales !== null && !isNaN(stock.priceToSales)) output += `  * Price/Sales: ${formatValue(stock.priceToSales)}\n`;
+      if (stock.debtToEquity !== null && !isNaN(stock.debtToEquity)) output += `  * Debt/Equity: ${formatValue(stock.debtToEquity)}\n`;
+      if (stock.returnOnEquity !== null && !isNaN(stock.returnOnEquity)) output += `  * Return on Equity: ${formatValue(stock.returnOnEquity)}%\n`;
+      if (stock.beta !== null && !isNaN(stock.beta)) output += `  * Beta: ${formatValue(stock.beta)}\n`;
+      
+      output += "\n";
+    });
+  }
+  
+  // Log the output
+  Logger.log(output);
+  
+  return output;
+}
+
+/**
+ * Test function to output all stock data for debugging
+ * This function retrieves fundamental metrics for a set of stocks and outputs them in a formatted way
+ */
+function testFundamentalMetricsOutput() {
+  // Define the symbols to test
+  const symbols = [
+    // Major Indices
+    "SPY", "QQQ", "IWM", "DIA",
+    // Magnificent Seven
+    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA",
+    // Other stocks
+    "XOM", "CVX", "BA", "CAT", "PG", "KO", "TGT", "WMT"
+  ];
+  
+  Logger.log("## Stock Data for Debugging\n");
+  
+  // Get mentioned stocks (if any)
+  const mentionedStocks = [];
+  Logger.log(`Mentioned stocks from market sentiment: ${mentionedStocks.length ? mentionedStocks.join(", ") : "None"}`);
+  
+  // Log all symbols we're retrieving data for
+  Logger.log(`Retrieving fundamental metrics for ${symbols.length} symbols: ${symbols.join(", ")}`);
+  
+  // Get metrics for all symbols in a single call
+  const startTime = new Date();
+  const metrics = retrieveFundamentalMetrics(symbols, mentionedStocks);
+  
+  // Track cache performance
+  const cacheHits = metrics.data.filter(d => d.fromCache).length;
+  const cacheMisses = metrics.data.filter(d => !d.fromCache).length;
+  
+  // Process the results
+  const allStocks = metrics.data.map(stock => ({
+    ...stock,
+    fromCache: stock.fromCache || false
+  }));
+  
+  const totalDuration = (new Date() - startTime) / 1000;
+  Logger.log(`Fundamental metrics retrieval completed in ${totalDuration.toFixed(3)} seconds`);
+  Logger.log(`Cache performance: ${cacheHits} hits, ${cacheMisses} misses (${(cacheHits/(cacheHits+cacheMisses)*100).toFixed(0)}% hit rate)`);
+  
+  // Output formatted data
+  let output = "## Stock Data for Debugging\n\n";
+  
+  // Helper functions for formatting
+  function formatMarketCap(marketCap) {
+    if (!marketCap || isNaN(marketCap)) return "N/A";
+    if (marketCap >= 1e12) return `$${(marketCap/1e12).toFixed(2)}T`;
+    if (marketCap >= 1e9) return `$${(marketCap/1e9).toFixed(2)}B`;
+    if (marketCap >= 1e6) return `$${(marketCap/1e6).toFixed(2)}M`;
+    return `$${marketCap.toFixed(2)}`;
+  }
+  
+  function formatVolume(volume) {
+    if (!volume || isNaN(volume)) return "N/A";
+    if (volume >= 1e9) return `${(volume/1e9).toFixed(2)}B`;
+    if (volume >= 1e6) return `${(volume/1e6).toFixed(2)}M`;
+    if (volume >= 1e3) return `${(volume/1e3).toFixed(2)}K`;
+    return volume.toString();
+  }
+  
+  function formatValue(value) {
+    if (!value || isNaN(value)) return "N/A";
+    return value.toFixed(2);
+  }
+  
+  function formatPriceChange(price, change, changePercent) {
+    if (!price || isNaN(price)) return "N/A";
+    let result = `$${formatValue(price)}`;
+    if (change && !isNaN(change)) {
+      const sign = change >= 0 ? "+" : "";
+      result += ` (${sign}${formatValue(change)}`;
+      if (changePercent && !isNaN(changePercent)) {
+        result += `, ${sign}${formatValue(changePercent)}%`;
+      }
+      result += ")";
+    }
+    return result;
+  }
+  
+  // Helper function to format all metrics
+  function formatStockData(stock) {
+    let data = '';
+    data += `${stock.symbol} (${stock.name || 'Unknown'})\n`;
+    data += `- Price: ${formatPriceChange(stock.price, stock.priceChange, stock.percentChange)}\n`;
+    data += `- Market Cap: ${formatMarketCap(stock.marketCap)}\n`;
+    data += `- Volume: ${formatVolume(stock.volume)}\n`;
+    data += `- Beta: ${formatValue(stock.beta)}\n`;
+    data += `- PEG Ratio: ${formatValue(stock.pegRatio)}\n`;
+    data += `- Forward P/E: ${formatValue(stock.forwardPE)}\n`;
+    data += `- Price/Book: ${formatValue(stock.priceToBook)}\n`;
+    data += `- Price/Sales: ${formatValue(stock.priceToSales)}\n`;
+    data += `- Debt/Equity: ${formatValue(stock.debtToEquity)}\n`;
+    data += `- ROE: ${formatValue(stock.returnOnEquity)}\n`;
+    data += `- Sector: ${stock.sector || "N/A"}\n`;
+    data += `- Industry: ${stock.industry || "N/A"}\n`;
+    data += `- Data Sources: ${stock.sources ? stock.sources.join(", ") : stock.dataSource || "N/A"}\n`;
+    data += `- From Cache: ${stock.fromCache ? "Yes" : "No"}\n\n`;
+    return data;
+  }
+  
+  // Major Indices
+  output += "### Major Indices\n";
+  const indices = allStocks.filter(stock => ["SPY", "QQQ", "IWM", "DIA"].includes(stock.symbol));
+  indices.forEach(stock => {
+    output += formatStockData(stock);
+  });
+  
+  // Magnificent Seven
+  output += "### Magnificent Seven\n";
+  const magSeven = allStocks.filter(stock => ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol));
+  magSeven.forEach(stock => {
+    output += formatStockData(stock);
+  });
+  
+  // Other Stocks
+  output += "### Other Stocks\n";
+  const otherStocks = allStocks.filter(stock => !["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol));
+  otherStocks.forEach(stock => {
+    output += formatStockData(stock);
+  });
+  
+  Logger.log(output);
+  return output;
+}
+
+/**
  * Retrieves all data needed for the trading analysis
  * @return {Object} All data needed for the trading analysis
  */
@@ -717,6 +1045,7 @@ function retrieveAllData() {
         if (analyst.mentionedStocks && Array.isArray(analyst.mentionedStocks)) {
           mentionedStocks = mentionedStocks.concat(analyst.mentionedStocks);
         } else if (analyst.mentionedSymbols && Array.isArray(analyst.mentionedSymbols)) {
+          // For backward compatibility
           mentionedStocks = mentionedStocks.concat(analyst.mentionedSymbols);
         }
       });
@@ -735,8 +1064,8 @@ function retrieveAllData() {
     const defaultSymbols = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
     const allSymbols = [...new Set([...mentionedStocks, ...defaultSymbols])];
     
-    Logger.log(`Step 3: Retrieving fundamental metrics for ${allSymbols.length} stocks...`);
-    const fundamentalMetrics = retrieveFundamentalMetrics(allSymbols);
+    Logger.log(`Step 3: Retrieving fundamental metrics for ${allSymbols.length} symbols...`);
+    const fundamentalMetrics = retrieveFundamentalMetrics(allSymbols, mentionedStocks);
     
     // Ensure the fundamental metrics data is properly structured
     const processedMetrics = {
@@ -821,9 +1150,10 @@ function retrieveKeyMarketIndicators() {
 /**
  * Retrieves fundamental metrics data from FundamentalMetrics.gs
  * @param {Array} symbols - Array of stock symbols to retrieve data for
+ * @param {Array} mentionedStocks - Optional list of stocks mentioned in market sentiment
  * @return {Object} Fundamental metrics data
  */
-function retrieveFundamentalMetrics(symbols) {
+function retrieveFundamentalMetrics(symbols, mentionedStocks = []) {
   try {
     // Handle empty symbols array
     if (!symbols || !Array.isArray(symbols)) {
@@ -833,7 +1163,7 @@ function retrieveFundamentalMetrics(symbols) {
     Logger.log(`Retrieving fundamental metrics data for ${symbols.length} symbols...`);
     
     // Call the function from FundamentalMetrics.gs with the same name
-    const metrics = FundamentalMetrics.retrieveFundamentalMetrics(symbols);
+    const metrics = FundamentalMetrics.retrieveFundamentalMetrics(symbols, mentionedStocks);
     
     // Debug logging to see what's being returned
     Logger.log(`DEBUG - FundamentalMetrics returned: ${JSON.stringify(metrics).substring(0, 200)}...`);
@@ -842,9 +1172,9 @@ function retrieveFundamentalMetrics(symbols) {
     
     // Properly handle the response structure from FundamentalMetrics.gs
     return {
-      success: metrics && metrics.metrics && metrics.metrics.length > 0,
-      message: metrics && metrics.metrics && metrics.metrics.length > 0 ? 'Successfully retrieved fundamental metrics' : 'No valid metrics data available',
-      data: metrics && metrics.metrics ? metrics.metrics : [],
+      success: metrics && metrics.data && metrics.data.length > 0,
+      message: metrics && metrics.data && metrics.data.length > 0 ? 'Successfully retrieved fundamental metrics' : 'No valid metrics data available',
+      data: metrics && metrics.data ? metrics.data : [],
       timestamp: new Date(),
       fromCache: metrics.cacheHits > 0,
       executionTime: metrics.executionTime || 0,
@@ -900,12 +1230,8 @@ function retrieveMacroeconomicFactors() {
  * @return {string} The formatted value
  */
 function formatValue(value, fixedDecimals = false, decimals = 2) {
-  if (value === undefined || value === null) {
+  if (value === undefined || value === null || isNaN(value)) {
     return "N/A";
-  }
-  
-  if (isNaN(value)) {
-    return value.toString();
   }
   
   if (fixedDecimals) {

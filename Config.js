@@ -3,19 +3,31 @@
  */
 
 // Perplexity API configuration
-const PERPLEXITY_API_KEY = "YOUR_PERPLEXITY_API_KEY"; // Replace with your actual API key or use PropertiesService
+const PERPLEXITY_API_KEY = ""; // Don't hardcode the key here, use Script Properties instead
 const PERPLEXITY_MODEL = "sonar-pro"; // Using Perplexity's latest model for web browsing
 const PERPLEXITY_API_URL = "https://api.perplexity.ai/chat/completions";
+
+// AI Provider configuration
+const MACROECONOMIC_AI_PROVIDER = "openai"; // Options: "openai" or "perplexity"
 
 // Alpha Vantage API configuration
 // Note: Free tier is limited to 25 API calls per day
 // For production use, consider upgrading to a paid plan: https://www.alphavantage.co/premium/
 const ALPHA_VANTAGE_API_KEY = ""; // Don't hardcode the key here, use Script Properties instead
 
+//newsletter name
+const NEWSLETTER_NAME = "Market Pulse Daily";
+
+
 // Email configuration
-const EMAIL_SUBJECT_PREFIX = "[AI Trading Decision] "; // Prefix for email subject
-//const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com", "zitro123@yahoo.com"]; // Array of recipient email addresses
-const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com"]; // Array of recipient email addresses
+const EMAIL_SUBJECT_PREFIX = NEWSLETTER_NAME || "[Market Pulse Daily] "; // Prefix for email subject
+const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com", "zitro123@yahoo.com"]; // Array of recipient email addresses
+//const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com"]; // Array of recipient email addresses
+
+// Dedicated email address for prompt and error emails
+const PROMPT_ERROR_EMAIL = "fvillavicencio+AI_trading_agent@gmail.com";
+const TEST_EMAIL = "fvillavicencio@gmail.com";
+
 
 // Schedule configuration
 const MORNING_SCHEDULE_HOUR = 8;
@@ -75,6 +87,105 @@ function getAlphaVantageApiKey() {
 }
 
 /**
+ * Gets the OpenAI API key from script properties
+ * 
+ * @return {String} - OpenAI API key
+ */
+function getOpenAIApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    return scriptProperties.getProperty('OPENAI_API_KEY');
+  } catch (error) {
+    Logger.log("Error getting OpenAI API key: " + error.message);
+    return null;
+  }
+}
+
+/**
+ * Gets the Yahoo Finance API key from script properties
+ * 
+ * @return {String} - Yahoo Finance API key
+ */
+function getYahooFinanceApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    return scriptProperties.getProperty('YAHOO_FINANCE_API_KEY');
+  } catch (error) {
+    Logger.log("Error getting Yahoo Finance API key: " + error.message);
+    return null;
+  }
+}
+
+/**
+ * Gets the BLS API key from script properties
+ * 
+ * @return {String} - BLS API key
+ */
+function getBLSApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    return scriptProperties.getProperty('BLS_API_KEY');
+  } catch (error) {
+    Logger.log("Error getting BLS API key: " + error.message);
+    return null;
+  }
+}
+
+/**
+ * Gets the BEA API key from script properties
+ * 
+ * @return {String} - BEA API key
+ */
+function getBEAApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    return scriptProperties.getProperty('BEA_API_KEY');
+  } catch (error) {
+    Logger.log("Error getting BEA API key: " + error.message);
+    return null;
+  }
+}
+
+/**
+ * Gets the FRED API key from script properties
+ * 
+ * @return {String} - FRED API key
+ */
+function getFREDApiKey() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    return scriptProperties.getProperty('FRED_API_KEY');
+  } catch (error) {
+    Logger.log("Error getting FRED API key: " + error.message);
+    return null;
+  }
+}
+
+/**
+ * Gets the configured AI provider for macroeconomic factors data retrieval
+ * Checks script properties first, then falls back to the constant
+ * 
+ * @return {String} - AI provider ("openai" or "perplexity")
+ */
+function getMacroeconomicAIProvider() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const provider = scriptProperties.getProperty('MACROECONOMIC_AI_PROVIDER');
+    
+    // If found in script properties, return it
+    if (provider && (provider === "openai" || provider === "perplexity")) {
+      return provider;
+    }
+    
+    // Otherwise, return the hardcoded value
+    return MACROECONOMIC_AI_PROVIDER;
+  } catch (error) {
+    Logger.log("Error getting macroeconomic AI provider: " + error.message);
+    return MACROECONOMIC_AI_PROVIDER;
+  }
+}
+
+/**
  * Gets the email recipients from script properties if not hardcoded
  * 
  * @return {Array} - Array of email addresses
@@ -117,7 +228,7 @@ function testAllAPIKeys() {
     "BLS_API_KEY",
     "BEA_API_KEY",
     "FRED_API_KEY",
-    "YAHOO_FINANCE_API_KEY" // If applicable
+    "YAHOO_FINANCE_API_KEY"
   ];
   
   // Check if each API key is set
@@ -187,6 +298,26 @@ function testAllAPIKeys() {
   } catch (error) {
     Logger.log(`Alpha Vantage API:  Error - ${error}`);
     results.testResults.alphaVantage = { success: false, error: error.toString() };
+  }
+  
+  // Test Yahoo Finance API
+  Logger.log("\n=== TESTING YAHOO FINANCE API ===");
+  try {
+    const yahooFinanceKey = scriptProperties.getProperty("YAHOO_FINANCE_API_KEY");
+    if (yahooFinanceKey) {
+      const testResult = testYahooFinanceAPI(yahooFinanceKey);
+      results.testResults.yahooFinance = testResult;
+      Logger.log(`Yahoo Finance API: ${testResult.success ? " Working" : " Failed"}`);
+      if (!testResult.success) {
+        Logger.log(`Error: ${testResult.error}`);
+      }
+    } else {
+      Logger.log("Yahoo Finance API:  Key not found");
+      results.testResults.yahooFinance = { success: false, error: "API key not found" };
+    }
+  } catch (error) {
+    Logger.log(`Yahoo Finance API:  Error - ${error}`);
+    results.testResults.yahooFinance = { success: false, error: error.toString() };
   }
   
   // Test BLS API
@@ -392,6 +523,56 @@ function testAlphaVantageAPI(apiKey) {
       
       // Check if the response contains the expected data
       if (responseData.hasOwnProperty("Symbol") && responseData["Symbol"] === "AAPL") {
+        return { success: true };
+      } else {
+        return { success: false, error: "API response did not contain expected data" };
+      }
+    } else {
+      const responseText = response.getContentText();
+      return { success: false, error: `API returned status code ${responseCode}: ${responseText}` };
+    }
+  } catch (error) {
+    return { success: false, error: error.toString() };
+  }
+}
+
+/**
+ * Tests the Yahoo Finance API with a simple query
+ * @param {string} apiKey - Optional Yahoo Finance API key (if not provided, will use the stored key)
+ * @return {Object} Test result with success status and error message if applicable
+ */
+function testYahooFinanceAPI(apiKey) {
+  try {
+    // Use the provided API key or get it from script properties
+    const apiKeyToUse = apiKey || getYahooFinanceApiKey();
+    
+    if (!apiKeyToUse) {
+      return { success: false, error: "No API key provided or found in script properties" };
+    }
+    
+    // Yahoo Finance API endpoint for a simple query (quote for AAPL)
+    const apiUrl = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/market/v2/get-quotes?region=US&symbols=AAPL";
+    
+    const options = {
+      method: "get",
+      headers: {
+        "X-RapidAPI-Key": apiKeyToUse,
+        "X-RapidAPI-Host": "apidojo-yahoo-finance-v1.p.rapidapi.com"
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(apiUrl, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode === 200) {
+      const responseData = JSON.parse(response.getContentText());
+      
+      // Check if the response contains the expected data
+      if (responseData.quoteResponse && 
+          responseData.quoteResponse.result && 
+          responseData.quoteResponse.result.length > 0 &&
+          responseData.quoteResponse.result[0].symbol === "AAPL") {
         return { success: true };
       } else {
         return { success: false, error: "API response did not contain expected data" };

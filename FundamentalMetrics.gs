@@ -181,7 +181,7 @@ function fetchFundamentalMetricsData(symbol) {
     const startTime = new Date().getTime();
     
     // Initialize metrics object
-    const metrics = {
+    let metrics = {
       symbol: symbol,
       price: null,
       priceChange: null,
@@ -190,7 +190,7 @@ function fetchFundamentalMetricsData(symbol) {
       marketCap: null,
       industry: null,
       sector: null,
-      company: null,
+      name: null,
       pegRatio: null,
       forwardPE: null,
       priceToBook: null,
@@ -205,7 +205,7 @@ function fetchFundamentalMetricsData(symbol) {
       dataSource: [],
       fromCache: false
     };
-
+    
     let sourcesUsed = [];
     let validMetricsCount = 0;
     
@@ -213,8 +213,9 @@ function fetchFundamentalMetricsData(symbol) {
     const dataSources = [
       { name: "Yahoo Finance API", func: fetchYahooFinanceData },
       { name: "Google Finance", func: fetchGoogleFinanceData },
+      { name: "FMP API", func: fetchFMPData },
       { name: "Tradier API", func: fetchTradierData },
-      { name: "FMP API", func: fetchFMPData }
+      { name: "Yahoo Finance Web Scraper", func: fetchYahooFinanceWebData }
     ];
 
     for (const source of dataSources) {
@@ -230,19 +231,33 @@ function fetchFundamentalMetricsData(symbol) {
             metrics.changesPercentage = data.changesPercentage || null;
             metrics.volume = data.volume || null;
             metrics.marketCap = data.marketCap || null;
-            metrics.company = data.company || null;
+            metrics.name = data.name || getCompanyName(symbol);
+            metrics.industry = data.industry || null;
+            metrics.sector = data.sector || null;
             
             // Then proceed with other metrics
-            for (const key in data) {
-              if (!metrics[key]) {
-                metrics[key] = data[key];
-                if (key !== 'price' && key !== 'volume') {
-                  validMetricsCount++;
-                }
-              }
-            }
+            metrics.pegRatio = data.pegRatio || null;
+            metrics.forwardPE = data.forwardPE || null;
+            metrics.priceToBook = data.priceToBook || null;
+            metrics.priceToSales = data.priceToSales || null;
+            metrics.debtToEquity = data.debtToEquity || null;
+            metrics.returnOnEquity = data.returnOnEquity || null;
+            metrics.returnOnAssets = data.returnOnAssets || null;
+            metrics.profitMargin = data.profitMargin || null;
+            metrics.dividendYield = data.dividendYield || null;
+            metrics.beta = data.beta || null;
+            metrics.expenseRatio = data.expenseRatio || null;
             
+            // Count valid metrics
+            validMetricsCount = Object.values(metrics).filter(v => v !== null).length;
+            
+            // Add source to sources used
             sourcesUsed.push(source.name);
+            
+            // Break if we have enough valid metrics
+            if (validMetricsCount >= 5) {
+              break;
+            }
           }
         } catch (error) {
           Logger.log(`Error fetching data from ${source.name} for ${symbol}: ${error}`);
@@ -250,79 +265,16 @@ function fetchFundamentalMetricsData(symbol) {
       }
     }
     
-    // For ETFs, we need fewer metrics to consider the data valid
-    const isETF = ["SPY", "QQQ", "IWM", "DIA"].includes(symbol);
-    const minRequiredMetrics = isETF ? 2 : 5;
+    // Add sources used to metrics
+    metrics.dataSource = sourcesUsed;
     
-    // If we don't have enough valid metrics, try Yahoo Finance one more time
-    if (validMetricsCount < minRequiredMetrics) {
-      try {
-        Logger.log(`Attempting final Yahoo Finance fetch for ${symbol}...`);
-        const data = fetchYahooFinanceData(symbol);
-        if (data && Object.keys(data).length > 0) {
-          for (const key in data) {
-            if (!metrics[key]) {
-              metrics[key] = data[key];
-              if (key !== 'price' && key !== 'volume') {
-                validMetricsCount++;
-              }
-            }
-          }
-          if (!sourcesUsed.includes("Yahoo Finance API")) {
-            sourcesUsed.push("Yahoo Finance API (final attempt)");
-          }
-        }
-      } catch (error) {
-        Logger.log(`Final Yahoo Finance attempt failed for ${symbol}: ${error}`);
-      }
-    }
+    // Cache the data for 30 minutes
+    const cacheData = {
+      ...metrics,
+      lastUpdated: new Date().toISOString()
+    };
+    scriptCache.put(cacheKey, JSON.stringify(cacheData), 1800); // 30 minutes in seconds
     
-    // Finalize metrics object
-    metrics.dataSource = sourcesUsed.join(", ");
-    metrics.lastUpdated = new Date().toISOString();
-    
-    // Cache the data if we have valid metrics
-    const hasValidMetrics = Object.values(metrics).some(value => value !== null && value !== undefined && value !== "");
-    
-    if (hasValidMetrics) {
-      const cacheData = {
-        ...metrics,
-        fromCache: false,
-        lastUpdated: metrics.lastUpdated
-      };
-      scriptCache.put(cacheKey, JSON.stringify(cacheData), 30 * 60); // 30-minute cache
-      Logger.log(`Cached fundamental metrics for ${symbol}`);
-    } else {
-      Logger.log(`No valid metrics to cache for ${symbol}`);
-    }
-
-    // Get company name from the spreadsheet
-    try {
-      const spreadsheet = getSharedFinanceSpreadsheet();
-      const sheet = spreadsheet.getSheetByName('Companies') || spreadsheet.insertSheet('Companies');
-      
-      // Find or create the company entry
-      const data = sheet.getDataRange().getValues();
-      let found = false;
-      
-      for (let i = 0; i < data.length; i++) {
-        if (data[i][0] === symbol) {
-          metrics.company = data[i][1];
-          found = true;
-          break;
-        }
-      }
-      
-      if (!found && metrics.company) {
-        // Add new entry
-        const nextRow = data.length + 1;
-        sheet.getRange(nextRow, 1).setValue(symbol);
-        sheet.getRange(nextRow, 2).setValue(metrics.company);
-      }
-    } catch (error) {
-      Logger.log(`Error getting company name from spreadsheet: ${error}`);
-    }
-
     const executionTime = (new Date().getTime() - startTime) / 1000;
     Logger.log(`Retrieved fundamental metrics for ${symbol} in ${executionTime} seconds`);
     Logger.log(`Sources used: ${metrics.dataSource}`);
@@ -339,7 +291,7 @@ function fetchFundamentalMetricsData(symbol) {
       marketCap: null,
       industry: null,
       sector: null,
-      company: null,
+      name: null,
       pegRatio: null,
       forwardPE: null,
       priceToBook: null,
@@ -351,10 +303,67 @@ function fetchFundamentalMetricsData(symbol) {
       dividendYield: null,
       beta: null,
       expenseRatio: null,
-      dataSource: "Error",
-      error: error.message,
+      dataSource: [],
       fromCache: false
     };
+  }
+}
+
+/**
+ * Fetches data from Google Finance
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Google Finance data
+ */
+function fetchGoogleFinanceData(symbol) {
+  try {
+    Logger.log(`Fetching Google Finance data for ${symbol}`);
+    
+    // Get the shared spreadsheet
+    const spreadsheet = getSharedFinanceSpreadsheet();
+    const sheet = spreadsheet.getSheets()[0];
+    
+    // Clear any existing data
+    sheet.clear();
+    
+    // Set up the GOOGLEFINANCE formulas
+    sheet.getRange("A1").setValue(symbol);
+    sheet.getRange("B1").setFormula(`=GOOGLEFINANCE(A1,"price")`);
+    sheet.getRange("C1").setFormula(`=GOOGLEFINANCE(A1,"priceopen")`);
+    sheet.getRange("D1").setFormula(`=GOOGLEFINANCE(A1,"volume")`);
+    sheet.getRange("E1").setFormula(`=GOOGLEFINANCE(A1,"marketcap")`);
+    sheet.getRange("F1").setFormula(`=GOOGLEFINANCE(A1,"beta")`);
+    
+    // Wait for formulas to calculate
+    Utilities.sleep(2000);
+    
+    // Get the values
+    const price = sheet.getRange("B1").getValue();
+    const openPrice = sheet.getRange("C1").getValue();
+    const volume = sheet.getRange("D1").getValue();
+    const marketCap = sheet.getRange("E1").getValue();
+    const beta = sheet.getRange("F1").getValue();
+    
+    // Calculate price change and percentage change
+    const priceChange = price - openPrice;
+    const changesPercentage = (priceChange / openPrice) * 100;
+    
+    // Get company name from the shared spreadsheet
+    const companyData = getCompanyName(symbol);
+    
+    return {
+      price: price,
+      priceChange: priceChange,
+      changesPercentage: changesPercentage,
+      volume: volume,
+      marketCap: marketCap,
+      beta: beta,
+      name: companyData?.name || null,
+      industry: companyData?.industry || null,
+      sector: companyData?.sector || null
+    };
+  } catch (error) {
+    Logger.log(`Error fetching Google Finance data for ${symbol}: ${error}`);
+    return null;
   }
 }
 
@@ -460,7 +469,6 @@ function fetchFMPData(symbol) {
         name: profile.companyName || null,
         industry: profile.industry || null,
         sector: profile.sector || null,
-        beta: parseFloat(latestRatios.beta) || null,
         pegRatio: parseFloat(latestRatios.pegRatio) || null,
         forwardPE: parseFloat(latestRatios.forwardPERatio) || null,
         priceToBook: parseFloat(latestRatios.priceToBookRatio) || null,
@@ -470,7 +478,7 @@ function fetchFMPData(symbol) {
         returnOnAssets: parseFloat(latestRatios.returnOnAssets) || null,
         profitMargin: parseFloat(latestRatios.profitMargin) || null,
         dividendYield: parseFloat(profile.dividendYield) || null,
-        beta: parseFloat(latestRatios.beta) || null
+        beta: parseFloat(profile.beta) || null
       };
     }
     
@@ -635,7 +643,7 @@ function fetchGoogleFinanceData(symbol) {
     sheet.getRange("L2").setFormula(`=IF(REGEXMATCH("${symbol}", "^(SPY|QQQ|IWM|DIA|VOO|VTI|VXUS|BND|AGG)$"), GOOGLEFINANCE("${symbol}", "expenseratio"), "")`);
     
     // Wait for formulas to calculate
-    Utilities.sleep(3000); // Increased from 1000 to 3000ms
+    Utilities.sleep(1000);
     
     // Extract the data
     const price = sheet.getRange("B2").getValue();
@@ -655,28 +663,16 @@ function fetchGoogleFinanceData(symbol) {
     
     // Count how many fundamental metrics we actually have
     let validMetricsCount = 0;
-    const metrics = {
-      pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta
-    };
-    
-    for (const [key, value] of Object.entries(metrics)) {
-      // Convert #N/A to null
-      const cleanValue = value === '#N/A' ? null : value;
-      
-      // Validate the metric
-      if (cleanValue !== null && 
-          typeof cleanValue === 'number' && 
-          !isNaN(cleanValue) && 
-          Math.abs(cleanValue) !== Infinity) {
-        validMetricsCount++;
-      }
-    }
+    if (typeof pegRatio === 'number' && !isNaN(pegRatio)) validMetricsCount++;
+    if (typeof forwardPE === 'number' && !isNaN(forwardPE)) validMetricsCount++;
+    if (typeof priceToBook === 'number' && !isNaN(priceToBook)) validMetricsCount++;
+    if (typeof priceToSales === 'number' && !isNaN(priceToSales)) validMetricsCount++;
+    if (typeof debtToEquity === 'number' && !isNaN(debtToEquity)) validMetricsCount++;
+    if (typeof returnOnEquity === 'number' && !isNaN(returnOnEquity)) validMetricsCount++;
+    if (typeof beta === 'number' && !isNaN(beta)) validMetricsCount++;
     
     // For ETFs, we need fewer metrics to consider the data valid
-    const minRequiredMetrics = isETF ? 1 : 2; // Reduced from 3 to 2
-    
-    // Log the metrics we found
-    Logger.log(`Found ${validMetricsCount} valid metrics for ${symbol}: ${JSON.stringify(metrics)}`);
+    const minRequiredMetrics = isETF ? 1 : 3;
     
     // If we don't have enough valid metrics, throw an error to try the next data source
     if (validMetricsCount < minRequiredMetrics) {
@@ -690,17 +686,17 @@ function fetchGoogleFinanceData(symbol) {
       price: price,
       change: change,
       changePct: changePct,
-      pegRatio: pegRatio === '#N/A' ? null : pegRatio,
-      forwardPE: forwardPE === '#N/A' ? null : forwardPE,
-      priceToBook: priceToBook === '#N/A' ? null : priceToBook,
-      priceToSales: priceToSales === '#N/A' ? null : priceToSales,
-      debtToEquity: debtToEquity === '#N/A' ? null : debtToEquity,
-      returnOnEquity: returnOnEquity === '#N/A' ? null : returnOnEquity,
+      pegRatio: pegRatio,
+      forwardPE: forwardPE,
+      priceToBook: priceToBook,
+      priceToSales: priceToSales,
+      debtToEquity: debtToEquity,
+      returnOnEquity: returnOnEquity,
       returnOnAssets: 0,
       profitMargin: 0,
       dividendYield: 0,
-      beta: beta === '#N/A' ? null : beta,
-      expenseRatio: expenseRatio === '#N/A' ? null : expenseRatio
+      beta: beta,
+      expenseRatio: expenseRatio
     };
   } catch (error) {
     Logger.log(`Error fetching Google Finance data for ${symbol}: ${error}`);
@@ -997,27 +993,26 @@ function formatStockGroup(stocks) {
       
       // Add price information if available
       if (stock.price !== null) {
-        const priceFormatted = `$${stock.price.toFixed(2)}`;
+        const priceFormatted = typeof stock.price === 'number' ? `$${stock.price.toFixed(2)}` : '$N/A';
         let priceChangeFormatted = "";
         
         if (stock.priceChange !== null && stock.changesPercentage !== null) {
           const changePrefix = stock.priceChange >= 0 ? '+' : '';
           const percentPrefix = stock.changesPercentage >= 0 ? '+' : '';
-          priceChangeFormatted = ` (${changePrefix}${stock.priceChange.toFixed(2)}, ${percentPrefix}${stock.changesPercentage.toFixed(1)}%)`;
+          const changeValue = typeof stock.priceChange === 'number' ? stock.priceChange.toFixed(2) : 'N/A';
+          const percentValue = typeof stock.changesPercentage === 'number' ? stock.changesPercentage.toFixed(1) : 'N/A';
+          priceChangeFormatted = ` (${changePrefix}${changeValue}, ${percentPrefix}${percentValue}%)`;
         }
         
         formattedData += `  - Price: ${priceFormatted}${priceChangeFormatted}\n`;
-      } else if (stock.formattedPrice && stock.formattedPriceChange) {
-        // Use pre-formatted price if available
-        formattedData += `  - Price: ${stock.formattedPrice} ${stock.formattedPriceChange}\n`;
       }
       
       // Add volume and market cap if available
       if (stock.volume !== null) {
-        formattedData += `  - Volume: ${stock.volume.toLocaleString()}\n`;
+        formattedData += `  - Volume: ${typeof stock.volume === 'number' ? stock.volume.toLocaleString() : 'N/A'}\n`;
       }
       if (stock.marketCap !== null) {
-        formattedData += `  - Market Cap: $${(stock.marketCap / 1e9).toFixed(1)}B\n`;
+        formattedData += `  - Market Cap: $${typeof stock.marketCap === 'number' ? (stock.marketCap / 1e9).toFixed(1) : 'N/A'}B\n`;
       }
       
       // Add fundamental metrics
@@ -1587,17 +1582,17 @@ function testFullFundamentalMetricsCaching() {
     Logger.log(`Metrics data from both calls is identical: ${dataConsistent ? "Yes" : "No"}`);
     
     return {
-      success: true,
-      executionTime1: executionTime1,
-      executionTime2: executionTime2,
+      status: "success",
+      firstCallTime: executionTime1,
+      secondCallTime: executionTime2,
       improvementPercent: improvementPercent,
       dataConsistent: dataConsistent
     };
   } catch (error) {
     Logger.log(`Error in testFullFundamentalMetricsCaching: ${error}`);
     return {
-      success: false,
-      error: error.toString()
+      status: "error",
+      message: `Test failed: ${error}`
     };
   }
 }
@@ -1611,6 +1606,8 @@ function retrieveRecentlyMentionedStocks() {
     Logger.log("Retrieving recently mentioned stocks/ETFs...");
     
     // This would be implemented with actual web scraping in a production environment
+    // For example, using UrlFetchApp to fetch the CNBC website and parse the data
+    
     // For now, we'll return a placeholder array of popular stocks
     // In a production environment, this would be dynamically scraped
     const stocks = [
@@ -1832,13 +1829,14 @@ function testYahooFinanceAPI(apiKey) {
         // Make the API request
         const response = UrlFetchApp.fetch(endpoint.url, options);
         const statusCode = response.getResponseCode();
+        const responseText = response.getContentText();
         
         // Log the response for debugging
         Logger.log(`Response status code: ${statusCode}`);
         
         // Check if the request was successful
         if (statusCode === 200) {
-          const data = JSON.parse(response.getContentText());
+          const data = JSON.parse(responseText);
           
           // Log the keys in the response for debugging
           Logger.log(`Response keys: ${Object.keys(data).join(', ')}`);
@@ -2503,24 +2501,24 @@ function testFundamentalMetricsAPI() {
     Logger.log(`Testing fundamental metrics for symbols: ${testSymbols.join(', ')}`);
     
     // Retrieve the fundamental metrics
-    const fundamentalMetrics = retrieveFundamentalMetrics(testSymbols);
+    const result = retrieveFundamentalMetrics(testSymbols);
     
     // Check if we have metrics
-    if (!fundamentalMetrics.success) {
-      Logger.log(`Error retrieving fundamental metrics: ${fundamentalMetrics.error}`);
-      return { success: false, error: fundamentalMetrics.error };
+    if (!result.success) {
+      Logger.log(`Error retrieving fundamental metrics: ${result.error}`);
+      return { success: false, error: result.error };
     }
     
     // Log metrics for each symbol
     testSymbols.forEach(symbol => {
-      const metrics = fundamentalMetrics.metrics.find(m => m.symbol === symbol);
+      const metrics = result.data.find(m => m.symbol === symbol);
       if (metrics) {
         Logger.log(`\nMetrics for ${symbol}:`);
         Logger.log(`PEG Ratio: ${metrics.pegRatio}`);
         Logger.log(`Forward P/E: ${metrics.forwardPE}`);
-        Logger.log(`Price to Book: ${metrics.priceToBook}`);
-        Logger.log(`Price to Sales: ${metrics.priceToSales}`);
-        Logger.log(`Debt to Equity: ${metrics.debtToEquity}`);
+        Logger.log(`Price/Book: ${metrics.priceToBook}`);
+        Logger.log(`Price/Sales: ${metrics.priceToSales}`);
+        Logger.log(`Debt/Equity: ${metrics.debtToEquity}`);
         Logger.log(`Return on Equity: ${metrics.returnOnEquity}`);
         Logger.log(`Return on Assets: ${metrics.returnOnAssets}`);
         Logger.log(`Profit Margin: ${metrics.profitMargin}`);
@@ -2535,7 +2533,7 @@ function testFundamentalMetricsAPI() {
       }
     });
     
-    return { success: true, metrics: fundamentalMetrics.metrics };
+    return { success: true, metrics: result.data };
   } catch (error) {
     Logger.log(`Error in testFundamentalMetricsAPI: ${error}`);
     return { success: false, error: error.toString() };
@@ -2606,8 +2604,7 @@ function clearFundamentalMetricsCache() {
     'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA',
     // Other common stocks
     'V', 'JPM', 'JNJ', 'UNH', 'HD', 'PG', 'MA', 'BAC', 'DIS', 'ADBE',
-    'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM',
-    'XOM', 'CVX', 'BA', 'CAT', 'PG', 'KO', 'FB', 'TGT', 'WMT'
+    'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM'
   ];
   
   // Create cache keys for each symbol
@@ -2619,53 +2616,4 @@ function clearFundamentalMetricsCache() {
   }
   
   Logger.log('Cleared fundamental metrics cache');
-}
-
-/**
- * Fetches ETF-specific metrics from Yahoo Finance
- * @param {String} symbol - The ETF symbol
- * @return {Object} ETF metrics
- */
-function fetchETFData(symbol) {
-  try {
-    Logger.log(`Fetching ETF data for ${symbol}`);
-    
-    // Construct the Yahoo Finance URL
-    const url = `https://finance.yahoo.com/quote/${symbol}`;
-    
-    // Fetch the page content
-    const options = {
-      'method': 'GET',
-      'headers': {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-        'Accept': 'text/html'
-      },
-      'muteHttpExceptions': true
-    };
-    
-    const response = UrlFetchApp.fetch(url, options);
-    const content = response.getContentText();
-    
-    // Extract ETF metrics using regex
-    const etfMetricsRegex = /"fundProfile":\{.*?"totalNetAssets":\{.*?"raw":(.*?)\}.*?"expenseRatio":\{.*?"raw":(.*?)\}.*?"yield":\{.*?"raw":(.*?)\}/;
-    const etfMetricsMatch = content.match(etfMetricsRegex);
-    
-    if (etfMetricsMatch) {
-      const totalNetAssets = parseFloat(etfMetricsMatch[1]);
-      const expenseRatio = parseFloat(etfMetricsMatch[2]);
-      const yieldValue = parseFloat(etfMetricsMatch[3]);
-      
-      return {
-        totalNetAssets: totalNetAssets,
-        expenseRatio: expenseRatio,
-        yield: yieldValue,
-        dataSource: "Yahoo Finance Web"
-      };
-    }
-    
-    return null;
-  } catch (error) {
-    Logger.log(`Error fetching ETF data for ${symbol}: ${error}`);
-    return null;
-  }
 }

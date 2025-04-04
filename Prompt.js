@@ -18,93 +18,188 @@ function getTradingAnalysisPrompt() {
   };
   const formattedDate = currentDate.toLocaleString('en-US', options);
   
-  return `Provide a trading recommendation based on the following criteria, formatting your entire response as a valid JSON object:
+  return `**Optimized Trading Analysis Prompt for GPT-4.5 API**
 
-1. Market Sentiment:
-   - Analyze recent commentary from CNBC analysts (Dan Nathan, Josh Brown, Steve Weiss, Joe Terranova)
-   - Consider recent insights from Dan Niles and Mohamed El-Erian if available
+Today's Date and Time: ${formattedDate}
 
-2. Key Market Indicators:
-   - Current CNN Fear & Greed Index value and what it suggests
-   - CBOE Volatility Index (VIX) level and trend
-   - Upcoming economic events that could impact markets
+**Instructions:**
+Using only the retrieved data provided below, generate a concise trading recommendation in JSON format with the following requirements:
+	1.	Decision Options: "Buy Now", "Sell Now", or "Watch for Better Price Action".
+	2.	Summary: Include a one-sentence overview of market sentiment, key indicators, fundamental metrics, and macroeconomic factors that support your decision.
+	3.  Justification: Provide a clear, one-paragraph long, detailed explanation for your decision and what factors contributed to it.
+  4.	Fundamental Metrics:
+	•	Include ALL available stocks from the data, do not omit any symbol.
+	•	For each stock, incorporate every provided metric (e.g., price, priceChange, volume, marketCap, dividendYield, pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta, etc.).
+	•	Do not omit any stocks or metrics mentioned in the provided data.
+	5.	Market Sentiment Analysis:
+	•	Present an overall sentiment summary.
+	•	Include all analyst comments (without timestamps) in the marketSentiment section.
+	6.	Macroeconomic & Geopolitical Factors:
+	•	Summarize treasury yields to two decimal places.
+	•	For inflation, provide CPI Headline, CPI Core, PCE Headline, and PCE Core with clear values.
+	•	Include an insightful regional geopolitical analysis for each major region/area included in the retrieved data plus a brief global summary.
+	7.	Sources & Timestamps:
+	•	Always cite source URLs and include timestamps for each data point wherever available.
+	•	Do not include timestamps next to analyst comments in the final output.
+	8.	No External Data:
+	•	Use only the data provided below. Do not retrieve or reference any additional information.
+	9.	Support Your Recommendation:
+	•	Your final recommendation must be directly justified by the provided data.
 
-3. Fundamental Metrics for Stocks/ETFs:
-   - Analyze PEG ratios, Forward P/E Ratios, and other relevant metrics for stocks/ETFs recently mentioned on CNBC
-   - Compare current valuations to historical averages
-
-4. Macroeconomic Factors:
-   - Treasury Yields: Provide the EXACT current 2-Year and 10-Year US Treasury yields from the U.S. Department of the Treasury (https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve). Include the precise date of the data and the specific source URL you used. Also analyze the current yield curve (normal, flat, or inverted) and explain its economic implications.
-   - Fed Policy: Provide the current Federal Funds Rate, the date of the most recent FOMC meeting, and any forward guidance from Fed officials. Include the source of this information (preferably from federalreserve.gov or official Fed statements).
-   - Inflation: Provide the most recent CPI and PCE inflation data, including core and headline figures. Include the exact release date and source (preferably from bls.gov for CPI and bea.gov for PCE). Analyze the trend and how it might impact Fed policy.
-   - Geopolitical Risks: Identify the top 3 to 4 current geopolitical risks that could impact markets. For each risk, provide a brief description, the regions affected, potential market impact, and a reputable news source reporting on the issue.
-
-Based on this analysis, provide ONE of these three possible recommendations:
-- Buy Now
-- Sell Now
-- Watch for Better Price Action
-
-Format your response as a valid JSON object following this structure:
+**Output JSON Structure:**
 {
   "decision": "Buy Now | Sell Now | Watch for Better Price Action",
-  "summary": "Brief summary of the recommendation",
+  "summary": "Brief, clear summary of your recommendation",
   "analysis": {
-    "marketSentiment": [
-      {"analyst": "Analyst Name", "comment": "Quote or summary", "source": "Source URL", "timestamp": "Date and time ET"}
-    ],
+    "marketSentiment": {
+      "overall": "Brief overall market sentiment analysis",
+      "analysts": [
+        {
+          "analyst": "Analyst Name",
+          "comment": "Brief commentary",
+          "mentionedSymbols": [
+            "TICKER"
+          ],
+          "source": "Source name",
+          "sourceUrl": "https://source.url"
+        }
+      ],
+      "lastUpdated": "YYYY-MM-DD HH:MM"
+    },
     "marketIndicators": {
-      "fearGreedIndex": {"value": 0, "interpretation": "Description"},
-      "vix": {"value": 0, "trend": "Description"},
+      "fearGreedIndex": {
+        "value": 0,
+        "interpretation": "Brief interpretation",
+        "comment": "One-line explanation of what this means for investors",
+        "source": "Source name",
+        "sourceUrl": "https://source.url",
+        "lastUpdated": "YYYY-MM-DD HH:MM"
+      },
+      "vix": {
+        "value": 0,
+        "trend": "Brief trend",
+        "analysis": "Brief analysis",
+        "source": "Source name",
+        "sourceUrl": "https://source.url",
+        "lastUpdated": "YYYY-MM-DD HH:MM"
+      },
       "upcomingEvents": [
-        {"event": "Event name", "date": "Date"}
+        {
+          "event": "Event name",
+          "date": "Date"
+        }
       ]
     },
     "fundamentalMetrics": [
-      {"symbol": "Ticker", "name": "Company Name", "pegRatio": 0, "forwardPE": 0, "comment": "Analysis"}
+      {
+        "symbol": "Ticker",
+        "name": "Company Name",
+        "price": 0,
+        "priceChange": "+0.00 (0.00%)",
+        "marketCap": "Market Cap",
+        "peRatio": 0,
+        "pegRatio": 0,
+        "forwardPE": 0,
+        "priceToBook": 0,
+        "priceToSales": 0,
+        "debtToEquity": 0,
+        "returnOnEquity": "0.0%",
+        "returnOnAssets": "0.0%",
+        "profitMargin": "0.0%",
+        "dividendYield": "0.0%",
+        "beta": 0,
+        "summary": "Analysis",
+        "lastUpdated": "YYYY-MM-DD HH:MM"
+      }
     ],
     "macroeconomicFactors": {
       "treasuryYields": {
+        "threeMonth": 0.00,
+        "oneYear": 0.00,
         "twoYear": 0.00,
+        "fiveYear": 0.00,
         "tenYear": 0.00,
-        "date": "YYYY-MM-DD",
-        "source": "https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value=YYYY-MM",
+        "thirtyYear": 0.00,
         "yieldCurve": "normal|inverted|flat",
-        "implications": "Economic implications of the current yield curve"
+        "implications": "Brief analysis",
+        "source": "Source name",
+        "sourceUrl": "https://source.url",
+        "lastUpdated": "YYYY-MM-DD HH:MM"
       },
       "fedPolicy": {
         "federalFundsRate": 0.00,
-        "fomcMeetingDate": "YYYY-MM-DD",
-        "forwardGuidance": "Description",
-        "source": "https://www.federalreserve.gov/ or official Fed statement"
+        "forwardGuidance": "Brief statement",
+        "source": "Source name",
+        "sourceUrl": "https://source.url",
+        "lastUpdated": "YYYY-MM-DD HH:MM"
       },
       "inflation": {
+        "currentRate": 0.00,
         "cpi": {
-          "core": 0.0,
-          "headline": 0.0,
-          "releaseDate": "YYYY-MM-DD",
-          "source": "https://www.bls.gov/"
+          "headline": 0.00,
+          "core": 0.00
         },
         "pce": {
-          "core": 0.0,
-          "headline": 0.0,
-          "releaseDate": "YYYY-MM-DD",
-          "source": "https://www.bea.gov/"
+          "headline": 0.00,
+          "core": 0.00
         },
-        "trend": "Description",
-        "impactOnFedPolicy": "Description"
+        "trend": "Brief trend",
+        "outlook": "Brief outlook",
+        "marketImpact": "Brief market impact analysis",
+        "source": "Source name",
+        "sourceUrl": "https://source.url",
+        "lastUpdated": "YYYY-MM-DD HH:MM"
       },
-      "geopoliticalRisks": [
-        {
-          "description": "Brief description of the risk",
-          "regionsAffected": ["Region 1", "Region 2"],
-          "potentialMarketImpact": "Description",
-          "newsSource": "Reputable news source URL"
-        }
-      ]
+      "geopoliticalRisks": {
+        "global": "Brief global geopolitical risk summary",
+        "regions": [
+          {
+            "region": "Region Name or Aread (e.g., North America, Europe, Asia, Middle East, Cyber Security, etc.)",
+            "risks": [
+              {
+                "description": "Geopolitical risk description",
+                "impactLevel": "High|Moderate|Low",
+                "source": "Source name",
+                "sourceUrl": "https://source.url",
+                "lastUpdated": "YYYY-MM-DD HH:MM"
+              }
+            ]
+          }
+        ],
+        "lastUpdated": "YYYY-MM-DD HH:MM"
+      }
     }
   },
-  "justification": "Detailed explanation for the decision"
+  "justification": "Provide a clear, detailed explanation for your decision",
+  "source": "Overall analysis source",
+  "sourceUrl": "https://analysis.source.url",
+  "timestamp": "YYYY-MM-DD HH:MM"
+}
+`;
 }
 
-The current date and time is: ${formattedDate}`;
+/**
+ * Generates the OpenAI prompt with all the data
+ * 
+ * @param {Object} allData - All the retrieved data
+ * @return {string} - The generated prompt
+ */
+function generateOpenAIPrompt(allData) {
+  try {
+    // Get the base prompt template
+    const basePrompt = getTradingAnalysisPrompt();
+    
+    // Generate the data retrieval text
+    const dataRetrievalText = generateDataRetrievalText();
+    
+    // Combine the base prompt with the data retrieval text
+    const fullPrompt = basePrompt + dataRetrievalText;
+    
+    Logger.log("Generated full OpenAI prompt");
+    
+    return fullPrompt;
+  } catch (error) {
+    Logger.log(`Error generating OpenAI prompt: ${error}`);
+    throw new Error(`Failed to generate OpenAI prompt: ${error}`);
+  }
 }

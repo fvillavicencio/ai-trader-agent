@@ -1,490 +1,5 @@
-/**
- * Email formatting and sending functions
- */
-
-/**
- * Formats the trading decision and justification as an HTML email
- * 
- * @param {string} decision - The trading decision (Buy Now, Sell Now, Watch for Better Price Action)
- * @param {string} justification - The justification for the decision in JSON format
- * @param {Date} analysisTime - The time of the current analysis
- * @param {Date} nextAnalysisTime - The time of the next scheduled analysis
- * @return {string} - The formatted HTML email body
- */
-function formatHtmlEmailBody(decision, justification, analysisTime, nextAnalysisTime) {
-  const formattedAnalysisDate = Utilities.formatDate(analysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
-  const formattedNextDate = Utilities.formatDate(nextAnalysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
-  
-  // Determine color based on decision
-  let decisionColor = "#FFA500"; // Default orange for "Watch for Better Price Action"
-  let decisionIcon = "⚠️"; // Default icon for Watch
-  let decisionBg = "#FFF8E1"; // Light yellow background
-  
-  if (decision.includes("Buy")) {
-    decisionColor = "#4CAF50"; // Green for Buy
-    decisionIcon = "🔼"; // Up arrow for Buy
-    decisionBg = "#E8F5E9"; // Light green background
-  } else if (decision.includes("Sell")) {
-    decisionColor = "#F44336"; // Red for Sell
-    decisionIcon = "🔽"; // Down arrow for Sell
-    decisionBg = "#FFEBEE"; // Light red background
-  }
-  
-  // Parse the JSON data
-  let jsonData;
-  try {
-    jsonData = JSON.parse(justification);
-  } catch (e) {
-    Logger.log("Error parsing JSON: " + e);
-    // If parsing fails, create a basic structure
-    jsonData = {
-      decision: decision,
-      summary: "Unable to parse analysis data",
-      analysis: {},
-      justification: "The analysis data could not be properly parsed."
-    };
-  }
-  
-  // Create HTML email template with improved design
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <style>
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      max-width: 800px;
-      margin: 0 auto;
-      background-color: #f9f9f9;
-    }
-    .container {
-      padding: 25px;
-      border-radius: 8px;
-      background-color: #ffffff;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      border-bottom: 2px solid #eee;
-      padding-bottom: 20px;
-    }
-    .header h1 {
-      color: #444;
-      margin-bottom: 10px;
-      font-size: 28px;
-    }
-    .header p {
-      color: #666;
-      font-size: 16px;
-      margin-top: 5px;
-    }
-    .decision-container {
-      text-align: center;
-      margin: 30px 0;
-    }
-    .decision {
-      font-size: 24px;
-      font-weight: bold;
-      color: white;
-      background-color: ${decisionColor};
-      padding: 12px 25px;
-      border-radius: 50px;
-      display: inline-block;
-      margin-bottom: 20px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-    }
-    .decision-icon {
-      font-size: 32px;
-      margin-right: 10px;
-    }
-    .summary {
-      background-color: ${decisionBg};
-      border-left: 5px solid ${decisionColor};
-      padding: 20px;
-      border-radius: 5px;
-      margin: 20px 0;
-      font-size: 18px;
-    }
-    h2 {
-      color: #2c3e50;
-      border-bottom: 1px solid #eee;
-      padding-bottom: 10px;
-      margin-top: 30px;
-    }
-    h3 {
-      color: #3498db;
-      margin-top: 20px;
-    }
-    .analyst {
-      margin-bottom: 20px;
-      padding: 15px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      border-left: 4px solid #3498db;
-    }
-    .analyst-name {
-      font-weight: bold;
-      color: #2c3e50;
-    }
-    .timestamp {
-      font-style: italic;
-      color: #7f8c8d;
-      font-size: 0.9em;
-    }
-    .source {
-      font-size: 0.9em;
-      color: #3498db;
-    }
-    .indicator {
-      margin-bottom: 15px;
-    }
-    .indicator-name {
-      font-weight: bold;
-    }
-    .event {
-      margin-bottom: 10px;
-    }
-    .stock {
-      margin-bottom: 20px;
-      padding: 15px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-    }
-    .stock-header {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 10px;
-    }
-    .stock-name {
-      font-weight: bold;
-      color: #2c3e50;
-    }
-    .stock-metrics {
-      display: flex;
-      gap: 15px;
-      margin-bottom: 10px;
-    }
-    .metric {
-      background-color: #e8f4f8;
-      padding: 5px 10px;
-      border-radius: 4px;
-      font-size: 0.9em;
-    }
-    .justification {
-      margin-top: 30px;
-      padding: 20px;
-      background-color: #f5f5f5;
-      border-radius: 8px;
-      line-height: 1.8;
-    }
-    .footer {
-      margin-top: 40px;
-      font-size: 14px;
-      color: #777;
-      border-top: 1px solid #eee;
-      padding-top: 20px;
-      text-align: center;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>AI Trading Analysis</h1>
-      <p>Generated on ${formattedAnalysisDate}</p>
-    </div>
-    
-    <div class="decision-container">
-      <div class="decision">
-        <span class="decision-icon">${decisionIcon}</span> ${decision}
-      </div>
-    </div>
-    
-    ${jsonData.summary ? `<div class="summary">${jsonData.summary}</div>` : ''}
-    
-    <h2>Market Sentiment</h2>
-    ${jsonData.analysis && jsonData.analysis.marketSentiment ? 
-      jsonData.analysis.marketSentiment.map(analyst => `
-        <div class="analyst">
-            <div class="analyst-name">${analyst.analyst}</div>
-            <div class="comment">${analyst.comment}</div>
-            ${analyst.timestamp ? `<div class="timestamp">Time: ${analyst.timestamp}</div>` : ''}
-            ${analyst.source ? `<div class="source">Source: <a href="${analyst.source}" target="_blank">${analyst.source}</a></div>` : ''}
-        </div>
-      `).join('') : '<p>No market sentiment data available</p>'}
-    
-    <h2>Key Market Indicators</h2>
-    ${jsonData.analysis && jsonData.analysis.marketIndicators ? `
-        <div class="indicators">
-            ${jsonData.analysis.marketIndicators.fearGreedIndex ? `
-                <div class="indicator">
-                    <div class="indicator-name">CNN Fear & Greed Index</div>
-                    <div>Value: ${jsonData.analysis.marketIndicators.fearGreedIndex.value}</div>
-                    <div>Interpretation: ${jsonData.analysis.marketIndicators.fearGreedIndex.interpretation}</div>
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.marketIndicators.vix ? `
-                <div class="indicator">
-                    <div class="indicator-name">CBOE Volatility Index (VIX)</div>
-                    <div>Value: ${jsonData.analysis.marketIndicators.vix.value}</div>
-                    <div>Trend: ${jsonData.analysis.marketIndicators.vix.trend}</div>
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.marketIndicators.upcomingEvents && jsonData.analysis.marketIndicators.upcomingEvents.length > 0 ? `
-                <div class="indicator">
-                    <div class="indicator-name">Upcoming Economic Events</div>
-                    ${jsonData.analysis.marketIndicators.upcomingEvents.map(event => `
-                        <div class="event">
-                            <div>${event.event} - ${event.date}</div>
-                        </div>
-                    `).join('')}
-                </div>
-            ` : ''}
-        </div>
-    ` : '<p>No market indicator data available</p>'}
-    
-    <h2>Fundamental Metrics</h2>
-    ${jsonData.analysis && jsonData.analysis.fundamentalMetrics && jsonData.analysis.fundamentalMetrics.length > 0 ? 
-      jsonData.analysis.fundamentalMetrics.map(stock => `
-        <div class="stock">
-            <div class="stock-header">
-                <div class="stock-name">${stock.symbol} - ${stock.name}</div>
-            </div>
-            <div class="stock-metrics">
-                <div class="metric">PEG Ratio: ${stock.pegRatio}</div>
-                <div class="metric">Forward P/E: ${stock.forwardPE}</div>
-            </div>
-            <div>${stock.comment}</div>
-        </div>
-      `).join('') : '<p>No fundamental metrics data available</p>'}
-    
-    <h2>Macroeconomic Factors</h2>
-    ${jsonData.analysis && jsonData.analysis.macroeconomicFactors ? `
-        <div class="macro">
-            ${jsonData.analysis.macroeconomicFactors.treasuryYields ? `
-                <h3>Treasury Yields</h3>
-                <div style="margin-left: 15px; display: flex; flex-wrap: wrap;">
-                    <div style="margin-right: 30px;">
-                        <p><strong>10-Year:</strong> ${formatYieldValue(jsonData.analysis.macroeconomicFactors.treasuryYields.tenYear)}%</p>
-                        <p><strong>2-Year:</strong> ${formatYieldValue(jsonData.analysis.macroeconomicFactors.treasuryYields.twoYear)}%</p>
-                    </div>
-                    <div>
-                        ${jsonData.analysis.macroeconomicFactors.treasuryYields.date ? 
-                          `<p><strong>Date:</strong> ${jsonData.analysis.macroeconomicFactors.treasuryYields.date}</p>` : ''}
-                        ${jsonData.analysis.macroeconomicFactors.treasuryYields.yieldCurve ? 
-                          `<p><strong>Yield Curve:</strong> ${jsonData.analysis.macroeconomicFactors.treasuryYields.yieldCurve}</p>` : ''}
-                    </div>
-                </div>
-                <div style="margin-left: 15px;">
-                    <p><strong>Sources:</strong> 
-                      <a href="https://home.treasury.gov/resource-center/data-chart-center/interest-rates/TextView?type=daily_treasury_yield_curve&field_tdr_date_value_month=${getCurrentYearMonth()}" target="_blank">U.S. Treasury Daily Yield Curve Rates</a>
-                      ${jsonData.analysis.macroeconomicFactors.treasuryYields.sources && jsonData.analysis.macroeconomicFactors.treasuryYields.sources.fallback ? 
-                        ` | <a href="https://www.marketwatch.com/investing/bond/tmubmusd10y?countrycode=bx" target="_blank">MarketWatch 10-Year</a> | 
-                           <a href="https://www.marketwatch.com/investing/bond/tmubmusd02y?countrycode=bx" target="_blank">MarketWatch 2-Year</a>` : ''}
-                    </p>
-                    ${jsonData.analysis.macroeconomicFactors.treasuryYields.implications ? 
-                      `<p><strong>Implications:</strong> ${jsonData.analysis.macroeconomicFactors.treasuryYields.implications}</p>` : ''}
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.macroeconomicFactors.fedPolicy ? `
-                <h3>Federal Reserve Policy</h3>
-                <div style="margin-left: 15px;">
-                    <p><strong>Federal Funds Rate:</strong> ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' ? 
-                      (jsonData.analysis.macroeconomicFactors.fedPolicy.federalFundsRate || 'N/A') : 'N/A'}</p>
-                    
-                    <div style="display: flex; flex-wrap: wrap;">
-                        <div style="margin-right: 30px;">
-                            ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' && jsonData.analysis.macroeconomicFactors.fedPolicy.fomcMeetingDate ? 
-                              `<p><strong>FOMC Meeting Date:</strong> ${jsonData.analysis.macroeconomicFactors.fedPolicy.fomcMeetingDate}</p>` : ''}
-                        </div>
-                        <div>
-                            ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' && jsonData.analysis.macroeconomicFactors.fedPolicy.source ? 
-                              `<p><strong>Source:</strong> ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy.source === 'string' && 
-                                jsonData.analysis.macroeconomicFactors.fedPolicy.source.startsWith('http') ? 
-                                `<a href="${jsonData.analysis.macroeconomicFactors.fedPolicy.source}" target="_blank">${jsonData.analysis.macroeconomicFactors.fedPolicy.source}</a>` : 
-                                jsonData.analysis.macroeconomicFactors.fedPolicy.source}</p>` : ''}
-                        </div>
-                    </div>
-                    
-                    ${typeof jsonData.analysis.macroeconomicFactors.fedPolicy === 'object' && jsonData.analysis.macroeconomicFactors.fedPolicy.forwardGuidance ? 
-                      `<p><strong>Forward Guidance:</strong> ${jsonData.analysis.macroeconomicFactors.fedPolicy.forwardGuidance}</p>` : ''}
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.macroeconomicFactors.inflation ? `
-                <h3>Inflation</h3>
-                <div style="margin-left: 15px;">
-                    ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.cpi ? `
-                        <h4>CPI:</h4>
-                        <div style="margin-left: 15px; display: flex; flex-wrap: wrap;">
-                            <div style="margin-right: 30px;">
-                                <p><strong>Headline:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.cpi.headline || 'N/A') : 'N/A'}</p>
-                                <p><strong>Core:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.cpi.core || 'N/A') : 'N/A'}</p>
-                            </div>
-                            <div>
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' && jsonData.analysis.macroeconomicFactors.inflation.cpi.releaseDate ? 
-                                  `<p><strong>Release Date:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.cpi.releaseDate}</p>` : ''}
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi === 'object' && jsonData.analysis.macroeconomicFactors.inflation.cpi.source ? 
-                                  `<p><strong>Source:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.cpi.source === 'string' && 
-                                    jsonData.analysis.macroeconomicFactors.inflation.cpi.source.startsWith('http') ? 
-                                    `<a href="${jsonData.analysis.macroeconomicFactors.inflation.cpi.source}" target="_blank">${jsonData.analysis.macroeconomicFactors.inflation.cpi.source}</a>` : 
-                                    jsonData.analysis.macroeconomicFactors.inflation.cpi.source}</p>` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.pce ? `
-                        <h4>PCE:</h4>
-                        <div style="margin-left: 15px; display: flex; flex-wrap: wrap;">
-                            <div style="margin-right: 30px;">
-                                <p><strong>Headline:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.pce.headline || 'N/A') : 'N/A'}</p>
-                                <p><strong>Core:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' ? 
-                                  (jsonData.analysis.macroeconomicFactors.inflation.pce.core || 'N/A') : 'N/A'}</p>
-                            </div>
-                            <div>
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' && jsonData.analysis.macroeconomicFactors.inflation.pce.releaseDate ? 
-                                  `<p><strong>Release Date:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.pce.releaseDate}</p>` : ''}
-                                ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce === 'object' && jsonData.analysis.macroeconomicFactors.inflation.pce.source ? 
-                                  `<p><strong>Source:</strong> ${typeof jsonData.analysis.macroeconomicFactors.inflation.pce.source === 'string' && 
-                                    jsonData.analysis.macroeconomicFactors.inflation.pce.source.startsWith('http') ? 
-                                    `<a href="${jsonData.analysis.macroeconomicFactors.inflation.pce.source}" target="_blank">${jsonData.analysis.macroeconomicFactors.inflation.pce.source}</a>` : 
-                                    jsonData.analysis.macroeconomicFactors.inflation.pce.source}</p>` : ''}
-                            </div>
-                        </div>
-                    ` : ''}
-                    
-                    <div style="margin-top: 10px;">
-                        ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.trend ? 
-                          `<p><strong>Trend:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.trend}</p>` : ''}
-                        ${typeof jsonData.analysis.macroeconomicFactors.inflation === 'object' && jsonData.analysis.macroeconomicFactors.inflation.impactOnFedPolicy ? 
-                          `<p><strong>Impact on Fed Policy:</strong> ${jsonData.analysis.macroeconomicFactors.inflation.impactOnFedPolicy}</p>` : ''}
-                    </div>
-                </div>
-            ` : ''}
-            
-            ${jsonData.analysis.macroeconomicFactors.geopoliticalRisks && jsonData.analysis.macroeconomicFactors.geopoliticalRisks.length > 0 ? `
-                <h3>Geopolitical Risks</h3>
-                <div style="margin-left: 15px;">
-                    <ul style="margin-top: 5px; padding-left: 20px;">
-                        ${Array.isArray(jsonData.analysis.macroeconomicFactors.geopoliticalRisks) ? 
-                          jsonData.analysis.macroeconomicFactors.geopoliticalRisks.map(risk => {
-                            if (typeof risk === 'object' && risk.description) {
-                              return `<li>${risk.description}</li>`;
-                            } else if (typeof risk === 'string') {
-                              return `<li>${risk}</li>`;
-                            }
-                            return '';
-                          }).join('') : 
-                          (typeof jsonData.analysis.macroeconomicFactors.geopoliticalRisks === 'string' ? 
-                            `<li>${jsonData.analysis.macroeconomicFactors.geopoliticalRisks}</li>` : '')}
-                    </ul>
-                    ${typeof jsonData.analysis.macroeconomicFactors.geopoliticalRisksImpact === 'string' ? 
-                      `<p style="margin-top: 10px;"><strong>Market Impact:</strong> ${jsonData.analysis.macroeconomicFactors.geopoliticalRisksImpact}</p>` : ''}
-                </div>
-            ` : ''}
-        </div>
-    ` : '<p>No macroeconomic factors data available</p>'}
-    
-    ${jsonData.justification ? `
-      <h2>Detailed Justification</h2>
-      <div class="justification">
-          ${jsonData.justification}
-      </div>
-    ` : ''}
-    
-    <div class="footer">
-      <p>Next analysis scheduled for ${formattedNextDate}</p>
-      <p>AI Trading Agent - Automated Analysis</p>
-    </div>
-  </div>
-</body>
-</html>
-  `;
-}
-
-function formatYieldValue(value) {
-  if (typeof value === 'number') {
-    return value.toFixed(2);
-  } else if (typeof value === 'string') {
-    return value;
-  } else {
-    return 'N/A';
-  }
-}
-
-/**
- * Formats the trading decision and justification as a plain text email (fallback)
- * 
- * @param {string} decision - The trading decision (Buy Now, Sell Now, Watch for Better Price Action)
- * @param {string} justification - The justification for the decision
- * @param {Date} analysisTime - The time of the current analysis
- * @param {Date} nextAnalysisTime - The time of the next scheduled analysis
- * @return {string} - The formatted plain text email body
- */
-function formatPlainTextEmailBody(decision, justification, analysisTime, nextAnalysisTime) {
-  const formattedAnalysisDate = Utilities.formatDate(analysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
-  const formattedNextDate = Utilities.formatDate(nextAnalysisTime, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
-  
-  return `AI TRADING DECISION
-  
-Analysis completed on ${formattedAnalysisDate}
-
-Decision: ${decision}
-
-Justification:
-${justification}
-
-Next Analysis Scheduled: ${formattedNextDate}
-
-This analysis was generated by AI Trading Agent using Perplexity API with native web browsing.`;
-}
-
-/**
- * Sends an email with the trading decision and justification
- * 
- * @param {string} decision - The trading decision (Buy Now, Sell Now, Watch for Better Price Action)
- * @param {string} justification - The justification for the decision
- * @param {Date} analysisTime - The time of the current analysis
- * @param {Date} nextAnalysisTime - The time of the next scheduled analysis
- */
-function sendTradingDecisionEmail(decision, justification, analysisTime, nextAnalysisTime) {
-  const formattedDate = Utilities.formatDate(analysisTime, TIME_ZONE, "yyyy-MM-dd");
-  const subject = `${EMAIL_SUBJECT_PREFIX}${decision} - ${formattedDate}`;
-  
-  // Create both HTML and plain text versions of the email
-  const htmlBody = formatHtmlEmailBody(decision, justification, analysisTime, nextAnalysisTime);
-  const plainTextBody = formatPlainTextEmailBody(decision, justification, analysisTime, nextAnalysisTime);
-  
-  // Get the recipients array from the Config.gs function
-  const recipients = getEmailRecipients();
-  
-  // Join multiple recipients with commas for a single email
-  const recipientString = recipients.join(',');
-  
-  // Send a single email to all recipients
-  GmailApp.sendEmail(recipientString, subject, plainTextBody, {
-    htmlBody: htmlBody
-  });
-  
-  Logger.log(`Email sent to ${recipientString} with decision: ${decision}`);
-}
-
-function getCurrentYearMonth() {
-  const date = new Date();
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  return `${year}${month}`;
-}
+// Import the TIME_ZONE constant from Code.gs
+// const TIME_ZONE = "America/New_York"; // Removing this line as TIME_ZONE is already defined in Code.gs
 
 /**
  * Sends an email with the generated OpenAI prompt
@@ -501,95 +16,553 @@ function sendPromptEmail(prompt) {
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Trader Agent - OpenAI Prompt</title>
   <style>
     body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      font-family: 'Segoe UI', Arial, sans-serif;
       line-height: 1.6;
       color: #333;
-      max-width: 800px;
-      margin: 0 auto;
+      margin: 0;
+      padding: 0;
       background-color: #f9f9f9;
     }
     .container {
+      max-width: 850px;
+      margin: 0 auto;
       padding: 25px;
-      border-radius: 8px;
       background-color: #ffffff;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
     .header {
       text-align: center;
       margin-bottom: 30px;
-      border-bottom: 2px solid #eee;
       padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
     }
     .header h1 {
-      color: #444;
-      margin-bottom: 10px;
+      margin: 0;
+      color: #2196f3;
       font-size: 28px;
     }
     .header p {
-      color: #666;
-      font-size: 16px;
-      margin-top: 5px;
+      color: #7f8c8d;
+      margin: 5px 0 0;
     }
-    pre {
+    .prompt-box {
       background-color: #f5f5f5;
-      padding: 15px;
-      border-radius: 5px;
-      overflow-x: auto;
-      white-space: pre-wrap;
-      word-wrap: break-word;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 5px solid #2196f3;
+      margin-bottom: 20px;
+    }
+    .prompt-title {
+      color: #2196f3;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .prompt-content {
       font-family: monospace;
+      white-space: pre-wrap;
+      overflow-x: auto;
       font-size: 14px;
-      line-height: 1.4;
+      line-height: 1.5;
+      color: #333;
+      padding: 15px;
+      background-color: #ffffff;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
     }
     .footer {
-      margin-top: 40px;
-      font-size: 14px;
-      color: #777;
-      border-top: 1px solid #eee;
-      padding-top: 20px;
+      margin-top: 30px;
       text-align: center;
+      font-size: 14px;
+      color: #95a5a6;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    .footer p {
+      margin: 5px 0;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>AI Trading Analysis - Generated Prompt</h1>
+      <h1>AI Trader Agent - AI Prompt</h1>
       <p>Generated on ${formattedDate}</p>
     </div>
     
-    <h2>Prompt Being Sent to OpenAI API:</h2>
-    <pre>${prompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+    <div class="prompt-box">
+      <h2 class="prompt-title">AI Prompt</h2>
+      <div class="prompt-content">
+${prompt}
+      </div>
+    </div>
     
     <div class="footer">
-      <p>This is an automated email from the AI Trading Agent.</p>
-      <p>Generated on ${formattedDate}</p>
+      <p>  ${NEWSLETTER_NAME}</p>
+      <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>
 </body>
-</html>`;
+</html>
+    `;
 
-    // Create plain text version as fallback
-    const plainTextBody = `AI Trading Analysis - Generated Prompt\n\nGenerated on ${formattedDate}\n\nPrompt Being Sent to OpenAI API:\n\n${prompt}\n\nThis is an automated email from the AI Trading Agent.`;
+    // Create plain text version
+    const plainTextBody = `AI Trader Agent - AI Prompt
+Generated on ${formattedDate}
+
+OpenAI Prompt:
+${prompt}
+
+  ${NEWSLETTER_NAME}
+This is an automated message. Please do not reply.`;
+
+var subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
+
+    // Send the email using our enhanced sendEmail function
+    const emailResult = sendEmail(subject, htmlBody, plainTextBody, true); // Always send as test email
     
-    // Send the email
-    const subject = `${EMAIL_SUBJECT_PREFIX} Generated Prompt - ${Utilities.formatDate(currentDate, TIME_ZONE, "yyyy-MM-dd HH:mm")}`;
+    if (!emailResult.success) {
+      throw new Error(`Failed to send prompt email: ${emailResult.error}`);
+    }
     
-    GmailApp.sendEmail(
-      RECIPIENT_EMAILS.join(','),
-      subject,
-      plainTextBody,
-      {
-        htmlBody: htmlBody,
-        name: "AI Trading Agent"
-      }
-    );
-    
-    Logger.log("Prompt email sent successfully");
+    return true;
   } catch (error) {
-    Logger.log("Error sending prompt email: " + error);
+    Logger.log(`Error in sendPromptEmail: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Sends an error notification email
+ * 
+ * @param {string} subject - The email subject
+ * @param {string} errorMessage - The error message to include in the email
+ * @return {Object} - The result of the email sending operation
+ */
+function sendErrorEmail(subject, errorMessage) {
+  try {
+    const currentDate = new Date();
+    const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+    
+    // Create HTML email template
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${NEWSLETTER_NAME} - Error</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      background-color: #f9f9f9;
+    }
+    .container {
+      max-width: 650px;
+      margin: 0 auto;
+      padding: 25px;
+      background-color: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-bottom: 20px;
+      border-bottom: 2px solid #f0f0f0;
+    }
+    .header h1 {
+      margin: 0;
+      color: #e74c3c;
+      font-size: 28px;
+    }
+    .header p {
+      color: #7f8c8d;
+      margin: 5px 0 0;
+    }
+    .error-box {
+      background-color: #ffebee;
+      padding: 20px;
+      border-radius: 8px;
+      border-left: 5px solid #e74c3c;
+      margin-bottom: 20px;
+    }
+    .error-title {
+      color: #c0392b;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+    .error-message {
+      font-family: monospace;
+      white-space: pre-wrap;
+      overflow-x: auto;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #333;
+      padding: 15px;
+      background-color: #f9f9f9;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+    }
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 14px;
+      color: #95a5a6;
+      padding-top: 15px;
+      border-top: 1px solid #eee;
+    }
+    .footer p {
+      margin: 5px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Error Notification</h1>
+      <p>Generated on ${formattedDate}</p>
+    </div>
+    
+    <div class="error-box">
+      <h2 class="error-title">Error Details</h2>
+      <div class="error-message">
+${errorMessage}
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>  ${NEWSLETTER_NAME}</p>
+      <p>This is an automated message. Please do not reply.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+    
+    // Create plain text version
+    const plainTextBody = `Error Notification
+Generated on ${formattedDate}
+
+Error Details:
+${errorMessage}
+
+  ${NEWSLETTER_NAME}
+This is an automated message. Please do not reply.`;
+
+    // Send the email using our enhanced sendEmail function
+    const emailResult = sendEmail(subject, htmlBody, plainTextBody, true); // Always send as test email
+    
+    if (!emailResult.success) {
+      throw new Error(`Failed to send error email: ${emailResult.error}`);
+    }
+    
+    return {
+      success: true,
+      result: emailResult.result
+    };
+  } catch (error) {
+    Logger.log(`Error in sendErrorEmail: ${error}`);
+    return {
+      success: false,
+      error: error.toString()
+    };
+  }
+}
+
+/**
+ * Sends an email with the trading analysis results
+ * 
+ * @param {string} subject - The email subject
+ * @param {string} htmlBody - The HTML body of the email
+ * @param {string} plainTextBody - The plain text body of the email
+ * @param {boolean} isTest - Whether this is a test email
+ * @return {Object} - The result of the email sending operation
+ */
+function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
+  try {
+    // Get user email from script properties
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const userEmail = scriptProperties.getProperty('USER_EMAIL') || Session.getEffectiveUser().getEmail();
+    
+    // Check if DEBUG_MODE is enabled
+    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+    
+    // Get the test email address and validate it
+    const testEmail = TEST_EMAIL || userEmail;
+    if (!testEmail || !testEmail.includes('@')) {
+      throw new Error('Invalid test email address configured');
+    }
+    
+    // Determine the recipient based on debug mode
+    const recipient = debugMode ? testEmail : userEmail;
+    
+    // Add test prefix if needed
+    if (isTest) {
+      subject = `[TEST] ${subject}`;
+    }
+    
+    // Attempt to send the email with retry logic
+    let retryCount = 0;
+    const maxRetries = 3;
+    let result;
+    
+    while (retryCount < maxRetries) {
+      try {
+        result = GmailApp.sendEmail(recipient, subject, plainTextBody, {
+          htmlBody: htmlBody,
+          name: NEWSLETTER_NAME,
+          replyTo: Session.getEffectiveUser().getEmail()
+        });
+        break;
+      } catch (sendError) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          throw sendError;
+        }
+        Logger.log(`Email send attempt ${retryCount} failed for ${recipient}: ${sendError}. Retrying...`);
+        Utilities.sleep(5000); // Wait 5 seconds between retries
+      }
+    }
+    
+    Logger.log(`Email sent successfully to ${recipient}`);
+    return {
+      success: true,
+      result: result,
+      recipient: recipient
+    };
+  } catch (error) {
+    const errorMessage = `Failed to send email to ${recipient}: ${error}`;
+    Logger.log(errorMessage);
+    
+    // Try to send the error to the test email as a fallback
+    if (recipient !== testEmail) {
+      try {
+        GmailApp.sendEmail(testEmail, `Email Sending Failed - ${subject}`, 
+          `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${plainTextBody}`, {
+            htmlBody: `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`,
+            name: NEWSLETTER_NAME
+          });
+        Logger.log(`Error notification sent to test email ${testEmail}`);
+      } catch (fallbackError) {
+        Logger.log(`Failed to send error notification to test email: ${fallbackError}`);
+      }
+    }
+    
+    return {
+      success: false,
+      error: errorMessage,
+      recipient: recipient
+    };
+  }
+}
+
+/**
+ * Generates a complete HTML email from a trading analysis JSON object
+ * This function can be used for testing without making OpenAI API calls
+ * 
+ * @param {Object} analysisJson - The trading analysis JSON object
+ * @param {Date} nextScheduledTime - The next scheduled analysis time
+ * @param {Boolean} isTest - Whether this is a test email
+ * @return {String} Complete HTML email as a string
+ */
+function generateHtmlFromAnalysisJson(analysisJson, nextScheduledTime, isTest = false) {
+  // Call the generateEmailTemplate function from Utils.gs
+  return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
+}
+
+/**
+ * Sends a trading analysis email
+ * 
+ * @param {String} recipient - Email address of the recipient
+ * @param {Object} analysisJson - The analysis result JSON object
+ * @param {Date} nextScheduledTime - When the next analysis is scheduled
+ * @param {Boolean} isTest - Whether this is a test email
+ * @return {Boolean} Success status
+ */
+function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest = false) {
+  try {
+    // Extract data from analysis result
+    const decision = analysisJson.decision || 'No Decision';
+    const analysis = analysisJson.analysis || {};
+    const analysisTime = analysisJson.timestamp ? new Date(analysisJson.timestamp) : new Date();
+    
+    // Set email subject based on decision
+    let subject = `Trading Analysis: ${decision}`;
+    if (isTest) {
+      subject = `[TEST] ${subject}`;
+    }
+    
+    // Generate HTML and plain text email bodies
+    const htmlBody = generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
+    const plainTextBody = formatPlainTextEmailBodyWithAnalysis(
+      decision, 
+      analysisJson, 
+      analysisTime, 
+      nextScheduledTime
+    );
+
+    // Send the email using our enhanced sendEmail function
+    const emailResult = sendEmail(subject, htmlBody, plainTextBody, isTest);
+    
+    if (!emailResult.success) {
+      throw new Error(`Failed to send trading analysis email: ${emailResult.error}`);
+    }
+    
+    return true;
+  } catch (error) {
+    Logger.log(`Error in sendTradingAnalysisEmail: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Sends a test trading analysis email to the current user
+ * 
+ * @param {Object} analysisJson - The analysis result JSON object
+ * @return {Boolean} Success status
+ */
+function sendTestTradingAnalysisEmail(analysisJson) {
+  try {
+    const userEmail = Session.getEffectiveUser().getEmail();
+    const nextScheduledTime = new Date();
+    nextScheduledTime.setDate(nextScheduledTime.getDate() + 1); // Next day
+    
+    return sendTradingAnalysisEmail(userEmail, analysisJson, nextScheduledTime, true);
+  } catch (error) {
+    Logger.log(`Error sending test trading analysis email: ${error}`);
+    return false;
+  }
+}
+
+/**
+ * Formats the analysis result into an email and sends it to the user
+ * 
+ * @param {Object} analysisJson - The analysis result JSON object
+ * @param {Date} nextScheduledTime - When the next analysis is scheduled
+ * @param {Boolean} isTest - Whether this is a test email
+ * @return {String} HTML email content
+ */
+function formatAndSendAnalysisEmail(analysisJson, nextScheduledTime, isTest = false) {
+  // Get user email from script properties
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const userEmail = scriptProperties.getProperty('USER_EMAIL') || Session.getEffectiveUser().getEmail();
+  
+  // Send the email
+  sendTradingAnalysisEmail(userEmail, analysisJson, nextScheduledTime, isTest);
+  
+  // Return the HTML content for logging or debugging
+  return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
+}
+
+/**
+ * Sends the trade decision email and saves the HTML to Google Drive
+ * 
+ * @param {Object} analysisJson - The analysis result JSON object
+ * @return {Boolean} Success status
+ */
+function sendTradeDecisionEmail(analysisJson) {
+  try {
+    Logger.log("Preparing to send trade decision email...");
+    
+    // Calculate the next scheduled analysis time
+    const currentTime = new Date();
+    const nextScheduledTime = calculateNextAnalysisTime(currentTime);
+    
+    // Generate the HTML email content using the function from Utils.gs
+    const htmlContent = generateEmailTemplate(analysisJson, nextScheduledTime, false);
+    
+    // Save the HTML to Google Drive
+    try {
+      Logger.log("Saving HTML email to Google Drive...");
+      
+      // Use a generic filename that will be overwritten each time
+      const fileName = "Latest_Trading_Analysis.html";
+      
+      // Find or create the "Trading Analysis Emails" folder
+      let folder;
+      const folderName = "Trading Analysis Emails";
+      const folderIterator = DriveApp.getFoldersByName(folderName);
+      
+      if (folderIterator.hasNext()) {
+        folder = folderIterator.next();
+        Logger.log(`Found existing folder: ${folderName}`);
+      } else {
+        folder = DriveApp.createFolder(folderName);
+        Logger.log(`Created new folder: ${folderName}`);
+      }
+      
+      // Check if the file already exists and delete it
+      const existingFiles = folder.getFilesByName(fileName);
+      if (existingFiles.hasNext()) {
+        existingFiles.next().setTrashed(true);
+        Logger.log(`Deleted existing file: ${fileName}`);
+      }
+      
+      // Create the file in the folder
+      const file = folder.createFile(fileName, htmlContent, MimeType.HTML);
+      Logger.log(`HTML email saved to Google Drive: ${fileName}`);
+    } catch (driveError) {
+      Logger.log(`Error saving HTML to Google Drive: ${driveError}`);
+      // Continue with sending emails even if Drive save fails
+    }
+    
+    // Get the final recipients from script properties
+    const recipients = RECIPIENT_EMAILS || [Session.getEffectiveUser().getEmail()];
+    
+    // Send the email to each recipient
+    let allSuccessful = true;
+    for (const recipient of recipients) {
+      const success = sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, false);
+      if (!success) {
+        allSuccessful = false;
+        Logger.log(`Failed to send email to recipient: ${recipient}`);
+      }
+    }
+    
+    Logger.log("Trade decision email process completed.");
+    return allSuccessful;
+  } catch (error) {
+    Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
+    sendErrorEmail("Trade Decision Email Error", error.toString());
+    return false;
+  }
+}
+
+/**
+ * Gets the email recipient address from script properties
+ * Falls back to the default email if not set
+ * 
+ * @return {string} The email address to send to
+ */
+function getEmailRecipient() {
+  try {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const emailAddress = scriptProperties.getProperty("EMAIL_RECIPIENT");
+    
+    // If the email address is not set, use the default
+    if (!emailAddress) {
+      return PROMPT_ERROR_EMAIL;
+    }
+    
+    return emailAddress;
+  } catch (error) {
+    Logger.log(`Error getting email recipient: ${error}`);
+    return PROMPT_ERROR_EMAIL;
   }
 }

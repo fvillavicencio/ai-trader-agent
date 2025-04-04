@@ -2,8 +2,133 @@
  * AI Trading Agent - Main Script
  * 
  * This script analyzes financial data and sends trading decisions via email.
- * It uses the Perplexity API to get real-time market data through web browsing.
+ * It uses the OpenAI API to analyze market data and generate trading recommendations.
  */
+
+/**
+ * Gets the trading analysis from OpenAI
+ * This function retrieves all necessary data, generates a prompt,
+ * sends it to OpenAI, and returns the cleaned analysis result
+ * @return {Object} The trading analysis result from OpenAI
+ */
+function getOpenAITradingAnalysis() {
+  try {
+    Logger.log("Getting trading analysis from OpenAI...");
+    
+    // Retrieve all data with caching
+    const allData = retrieveAllData();
+    
+    if (!allData.success && !allData.status) {
+      // Log the error but continue if possible
+      Logger.log("Warning: " + allData.message);
+      // Only throw an error if data is completely missing
+      if (!allData.marketSentiment || !allData.keyMarketIndicators || 
+          !allData.fundamentalMetrics || !allData.macroeconomicFactors) {
+        throw new Error("Failed to retrieve essential trading data: " + allData.message);
+      }
+    }
+    
+    Logger.log("Retrieved trading data with warnings or success");
+    
+    // Cache the allData object for later use in email generation
+    try {
+      const cache = CacheService.getScriptCache();
+      // Convert allData to JSON string and cache it
+      // Note: Script cache has a 100KB limit per cached value
+      const allDataJson = JSON.stringify(allData);
+      
+      // Check if the JSON string is too large for the cache (100KB limit)
+      if (allDataJson.length > 100000) {
+        Logger.log("Warning: allData is too large to cache completely. Caching essential parts only.");
+        
+        // Create a smaller version with just the essential data
+        const essentialData = {
+          fundamentalMetrics: allData.fundamentalMetrics,
+          timestamp: allData.timestamp
+        };
+        
+        cache.put('allData', JSON.stringify(essentialData), 600); // Cache for 10 minutes
+      } else {
+        cache.put('allData', allDataJson, 600); // Cache for 10 minutes
+      }
+      
+      Logger.log("Successfully cached allData for later use");
+    } catch (cacheError) {
+      Logger.log("Warning: Failed to cache allData: " + cacheError);
+      // Continue even if caching fails
+    }
+    
+    // Get the prompt template from Prompt.gs
+    const promptTemplate = getTradingAnalysisPrompt();
+    Logger.log("Retrieved prompt template from Prompt.gs");
+    
+    // Generate the data retrieval text for OpenAI
+    const dataRetrievalText = generateDataRetrievalText();
+    Logger.log("Generated data retrieval text for OpenAI");
+    
+    // Combine the prompt template with the data retrieval text
+    const fullPrompt = promptTemplate + dataRetrievalText;
+    Logger.log("Combined prompt template with data retrieval text");
+    
+    // Always send the prompt email before checking cache or submitting to OpenAI
+    Logger.log("Sending prompt email before checking cache or submitting to OpenAI...");
+    const promptEmailSent = sendPromptEmail(fullPrompt);
+    
+    if (!promptEmailSent) {
+      Logger.log("Warning: Failed to send prompt email, but continuing with OpenAI submission");
+    } else {
+      Logger.log("Prompt email sent successfully");
+    }
+    
+    // Add a small delay to ensure the prompt email is sent before continuing
+    Utilities.sleep(1000);
+    
+    // Check cache after sending the prompt email
+    const cache = CacheService.getScriptCache();
+    const cachedAnalysis = cache.get('OPENAI_ANALYSIS_CACHE');
+    
+    if (cachedAnalysis) {
+      Logger.log("Using cached OpenAI analysis (valid for 10 minutes)");
+      return JSON.parse(cachedAnalysis);
+    }
+    
+    // Get the OpenAI API key
+    const apiKey = getOpenAIApiKey();
+    
+    // Send the prompt to OpenAI
+    Logger.log("Sending prompt to OpenAI...");
+    //// temporary code start
+      // Check if DEBUG_MODE is enabled
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+    
+    if (debugMode) {
+      Logger.log("Debug mode enabled - skipping OpenAI call");
+      return {
+        success: true,
+        analysis: "This is a debug response"
+      };
+    }
+    //// temporary code end
+    const response = sendPromptToOpenAI(fullPrompt, apiKey);
+    const content = extractContentFromResponse(response);
+    Logger.log("Received response from OpenAI");
+    
+    // Parse the analysis result
+    Logger.log("Parsing analysis result");
+    const analysisJson = cleanAnalysisResult(content);
+    
+    // Cache the result for 10 minutes (600 seconds)
+    Logger.log("Caching OpenAI analysis");
+    cache.put('OPENAI_ANALYSIS_CACHE', JSON.stringify(analysisJson), 600);
+    Logger.log("Cached OpenAI analysis for 10 minutes");
+    
+    return analysisJson;
+  } catch (error) {
+    Logger.log("Error in getOpenAITradingAnalysis: " + error);
+    throw new Error("Failed to get OpenAI trading analysis: " + error);
+  }
+}
 
 /**
  * Main function to run the trading analysis
@@ -12,11 +137,13 @@ function runTradingAnalysis() {
   try {
     Logger.log("Starting trading analysis...");
     
-    // Get the analysis from Perplexity
-    const analysisResult = getPerplexityAnalysis();
+    // Get the analysis from OpenAI (will use cache if available)
+    const analysisJson = getOpenAITradingAnalysis();
     
-    // Parse the analysis result to extract the decision and justification
-    const { decision, justification, analysisJson } = parseAnalysisResult(analysisResult);
+    // Save the JSON response to Google Drive for debugging
+    const jsonFileName = "openai_response.json";
+    const jsonFileUrl = saveJsonToGoogleDrive(analysisJson, jsonFileName);
+    Logger.log(`OpenAI response saved to Google Drive: ${jsonFileUrl}`);
     
     // Get the current time
     const currentTime = new Date();
@@ -24,14 +151,32 @@ function runTradingAnalysis() {
     // Calculate the next analysis time
     const nextAnalysisTime = calculateNextAnalysisTime(currentTime);
     
-    // Send the trading decision email
-    sendTradeDecisionEmailWrapper(decision, justification);
+    // Send the trading decision email - only call this once
+    sendTradeDecisionEmail(analysisJson);
     
     Logger.log("Trading analysis completed successfully.");
     return "Trading analysis completed successfully.";
   } catch (error) {
     Logger.log("Error in runTradingAnalysis: " + error);
     return "Error: " + error;
+  }
+}
+
+/**
+ * Clears the OpenAI analysis cache
+ * Use this function to force a fresh analysis from OpenAI
+ * 
+ * @return {string} Status message
+ */
+function clearOpenAIAnalysisCache() {
+  try {
+    const cache = CacheService.getScriptCache();
+    cache.remove('OPENAI_ANALYSIS_CACHE');
+    Logger.log("OpenAI analysis cache cleared successfully");
+    return "OpenAI analysis cache cleared successfully";
+  } catch (error) {
+    Logger.log("Error clearing OpenAI analysis cache: " + error);
+    return "Error clearing OpenAI analysis cache: " + error;
   }
 }
 
@@ -44,238 +189,514 @@ function testTradingAnalysis() {
 }
 
 /**
- * Gets the Perplexity API key from script properties
+ * Gets the OpenAI API key from script properties
  * 
- * @return {string} - The Perplexity API key
+ * @return {string} - The OpenAI API key
  */
-function getPerplexityApiKey() {
+function getOpenAIApiKey() {
   const scriptProperties = PropertiesService.getScriptProperties();
-  return scriptProperties.getProperty('PERPLEXITY_API_KEY');
+  const apiKey = scriptProperties.getProperty('OPENAI_API_KEY');
+  
+  if (!apiKey) {
+    throw new Error("OpenAI API key not found in script properties");
+  }
+  
+  return apiKey;
 }
 
 /**
- * Calls the Perplexity API to get the trading analysis
+ * Sends a prompt to the OpenAI API and returns the response
  * 
- * @return {string} - The analysis result from Perplexity
+ * @param {string} prompt - The prompt to send to OpenAI
+ * @param {string} apiKey - The OpenAI API key
+ * @return {Object} - The response from OpenAI
  */
-function getPerplexityAnalysis() {
+function sendPromptToOpenAI(prompt, apiKey) {
   try {
-    Logger.log("Starting analysis with Perplexity API...");
+    // OpenAI API endpoint
+    const apiUrl = "https://api.openai.com/v1/chat/completions";
     
-    // Retrieve all data from our modules
-    Logger.log("Retrieving all trading data...");
-    const allData = retrieveAllData();
-    
-    if (!allData.success) {
-      Logger.log("Error retrieving data: " + allData.message);
-      throw new Error("Failed to retrieve trading data: " + allData.message);
-    }
-    
-    Logger.log("Successfully retrieved all trading data");
-    
-    // Generate the Perplexity prompt with all our data
-    const prompt = generatePerplexityPrompt(allData);
-    Logger.log("Generated Perplexity prompt");
-    
-    // Send the prompt via email before passing it to Perplexity
-    sendPromptEmail(prompt);
-    Logger.log("Sent prompt email");
-    
-    const apiKey = getPerplexityApiKey();
-    
+    // Request payload
     const payload = {
-      model: "sonar-pro",  // Updated to the latest model name
+      model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
-          content: "You are an AI agent tasked with providing actionable trading recommendations in JSON format. Your analysis should be accurate, clearly sourced, and include timestamps (Eastern Time) and URLs for cited data points when available. Use the most current data you can find through web browsing.\n\nIMPORTANT: Return ONLY raw JSON without any markdown formatting, code blocks, or explanatory text. Do not wrap your response in ```json``` or any other formatting. Your entire response must be a valid, parseable JSON object with the following structure:\n\n{\n  \"decision\": \"Buy Now | Sell Now | Watch for Better Price Action\",\n  \"summary\": \"Brief summary of the recommendation\",\n  \"analysis\": {\n    \"marketSentiment\": [\n      {\"analyst\": \"Analyst Name\", \"comment\": \"Quote or summary\", \"source\": \"Source URL\", \"timestamp\": \"Date and time ET\"}\n    ],\n    \"marketIndicators\": {\n      \"fearGreedIndex\": {\"value\": 0, \"interpretation\": \"Description\"},\n      \"vix\": {\"value\": 0, \"trend\": \"Description\"},\n      \"upcomingEvents\": [\n        {\"event\": \"Event name\", \"date\": \"Date\"}\n      ]\n    },\n    \"fundamentalMetrics\": [\n      {\"symbol\": \"Ticker\", \"name\": \"Company Name\", \"pegRatio\": 0, \"forwardPE\": 0, \"comment\": \"Analysis\"}\n    ],\n    \"macroeconomicFactors\": {\n      \"treasuryYields\": {\"twoYear\": 0, \"tenYear\": 0, \"date\": \"YYYY-MM-DD\", \"source\": \"URL\", \"yieldCurve\": \"normal|inverted|flat\", \"implications\": \"Description\"},\n      \"fedPolicy\": {\"federalFundsRate\": 0.00, \"fomcMeetingDate\": \"YYYY-MM-DD\", \"forwardGuidance\": \"Description\", \"source\": \"URL\"},\n      \"inflation\": {\"cpi\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"pce\": {\"core\": 0.0, \"headline\": 0.0, \"releaseDate\": \"YYYY-MM-DD\", \"source\": \"URL\"}, \"trend\": \"Description\", \"impactOnFedPolicy\": \"Description\"},\n      \"geopoliticalRisks\": [{\"description\": \"Description\", \"regionsAffected\": [\"Region\"], \"potentialMarketImpact\": \"Description\", \"newsSource\": \"URL\"}]\n    }\n  },\n  \"justification\": \"Detailed explanation for the decision\"\n}"
+          content: "You are a professional financial analyst specializing in market analysis and trading recommendations. Please provide your analysis in valid JSON format."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      // Add parameters to enable web browsing capabilities
-      search_mode: "websearch",
-      max_tokens: 4000,
-      temperature: 0.7,
-      frequency_penalty: 0.5
+      temperature: 0.3,
+      max_tokens: 4000
     };
     
-    Logger.log("Sending request to Perplexity API...");
-    
+    // Request options
     const options = {
-      method: 'post',
-      contentType: 'application/json',
+      method: "post",
       headers: {
-        'Authorization': 'Bearer ' + apiKey
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey
       },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     };
     
-    const response = UrlFetchApp.fetch('https://api.perplexity.ai/chat/completions', options);
+    // Send the request
+    const response = UrlFetchApp.fetch(apiUrl, options);
     const responseCode = response.getResponseCode();
-    const responseText = response.getContentText();
     
-    Logger.log("Perplexity API response code: " + responseCode);
-    
+    // Check if the request was successful
     if (responseCode !== 200) {
-      Logger.log("API Error: " + responseCode);
-      Logger.log("API Error Details: " + responseText);
-      
-      // Provide a fallback response for API errors
-      return `Recommendation: Watch for Better Price Action
-
-Justification:
-
-I was unable to retrieve real-time market data due to an API error (HTTP ${responseCode}). Without current market information, I cannot confidently recommend buying or selling at this time.
-
-1. Market Sentiment:
-   Unable to access current CNBC commentary and analyst opinions.
-
-2. Key Market Indicators:
-   Unable to access current Fear & Greed Index, VIX, and other market indicators.
-
-3. Fundamental Metrics:
-   Unable to access current stock/ETF metrics and performance data.
-
-4. Macroeconomic Factors:
-   Unable to access current Treasury yields, Fed statements, and economic indicators.
-
-Given the lack of real-time data, the most prudent course of action is to watch for better price action. Please check that the Perplexity API is functioning correctly and try again later.`;
+      const errorText = response.getContentText();
+      Logger.log(`OpenAI API error (${responseCode}): ${errorText}`);
+      throw new Error(`OpenAI API returned error ${responseCode}: ${errorText}`);
     }
     
-    const result = JSON.parse(responseText);
+    // Parse the response
+    const jsonResponse = JSON.parse(response.getContentText());
     
-    if (!result.choices || !result.choices[0] || !result.choices[0].message || !result.choices[0].message.content) {
-      Logger.log("Unexpected API response structure: " + JSON.stringify(result));
-      
-      // Provide a fallback response for unexpected response structures
-      return `Recommendation: Watch for Better Price Action
-
-Justification:
-
-I received an unexpected response format from the API and could not retrieve real-time market data. Without current market information, I cannot confidently recommend buying or selling at this time.
-
-1. Market Sentiment:
-   Unable to access current CNBC commentary and analyst opinions.
-
-2. Key Market Indicators:
-   Unable to access current Fear & Greed Index, VIX, and other market indicators.
-
-3. Fundamental Metrics:
-   Unable to access current stock/ETF metrics and performance data.
-
-4. Macroeconomic Factors:
-   Unable to access current Treasury yields, Fed statements, and economic indicators.
-
-Given the lack of real-time data, the most prudent course of action is to watch for better price action. Please check that the Perplexity API is functioning correctly and try again later.`;
+    // Validate the response structure
+    if (!jsonResponse.choices || !Array.isArray(jsonResponse.choices) || 
+        jsonResponse.choices.length === 0 || !jsonResponse.choices[0].message.content) {
+      throw new Error('Invalid response structure from OpenAI');
     }
     
-    return result.choices[0].message.content;
+    return jsonResponse;
   } catch (error) {
-    Logger.log("Error in getPerplexityAnalysis: " + error.toString());
-    throw error;
+    Logger.log('Error in sendPromptToOpenAI: ' + error);
+    throw new Error('Failed to get response from OpenAI: ' + error);
   }
 }
 
 /**
- * Extracts the trading decision and justification from the analysis result
+ * Extracts the content from the OpenAI API response
  * 
- * @param {string} analysisResult - The analysis result from Perplexity
- * @return {Object} - Object containing the decision and justification
+ * @param {Object} response - The response from OpenAI
+ * @return {string} - The content of the response
  */
-function parseAnalysisResult(analysisResult) {
-  // First, check if the response is wrapped in markdown code blocks and extract the JSON
-  let cleanedResult = analysisResult;
-  
+function extractContentFromResponse(response) {
   try {
-    // Remove markdown code blocks if present (```json ... ```)
-    const codeBlockMatch = analysisResult.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
-    if (codeBlockMatch && codeBlockMatch[1]) {
-      cleanedResult = codeBlockMatch[1].trim();
-      Logger.log("Extracted JSON from markdown code block");
+    if (!response || typeof response !== 'object') {
+      throw new Error('Invalid response format: expected an object');
     }
-    
-    // Clean up any potential issues in the JSON
-    // Replace any non-standard quotes with standard ones
-    cleanedResult = cleanedResult.replace(/[\u2018\u2019]/g, "'").replace(/[\u201C\u201D]/g, '"');
-    
-    // Remove any trailing commas in arrays or objects (common JSON error)
-    cleanedResult = cleanedResult.replace(/,\s*([}\]])/g, '$1');
-    
-    // Fix any unescaped quotes in strings
-    cleanedResult = cleanedResult.replace(/"([^"]*)":/g, function(match, p1) {
-      return '"' + p1.replace(/"/g, '\\"') + '":';
-    });
-    
-    // Try to parse the cleaned JSON
-    let analysisJson;
-    try {
-      analysisJson = JSON.parse(cleanedResult);
-      
-      // Extract the decision from the JSON
-      let decision = analysisJson.decision || "Watch for Better Price Action";
-      
-      // Use the full JSON as justification
-      const justification = JSON.stringify(analysisJson, null, 2);
-      
-      return { 
-        decision: decision, 
-        justification: justification,
-        analysisJson: analysisJson
-      };
-    } catch (e) {
-      // If parsing still fails, log the error with more details
-      Logger.log("Error parsing JSON: " + e);
-      Logger.log("Error position: " + e.message);
-      
-      // Log a portion of the JSON around the error position if possible
-      const errorMatch = e.message.match(/position (\d+)/);
-      if (errorMatch && errorMatch[1]) {
-        const position = parseInt(errorMatch[1]);
-        const start = Math.max(0, position - 50);
-        const end = Math.min(cleanedResult.length, position + 50);
-        Logger.log("JSON snippet around error: " + cleanedResult.substring(start, end));
-      }
-      
-      // Try to extract decision using regex as a fallback
-      const decisionMatch = cleanedResult.match(/decision["\s:]+([^"]+)/i);
-      let decision = "Watch for Better Price Action"; // Default
-      
-      if (decisionMatch && decisionMatch[1]) {
-        decision = decisionMatch[1].trim();
-        // Clean up any trailing commas or quotes
-        decision = decision.replace(/[",}]/g, '').trim();
-      }
-      
-      return { 
-        decision: decision, 
-        justification: cleanedResult,
-        analysisJson: null
-      };
+
+    if (!response.choices || !Array.isArray(response.choices) || response.choices.length === 0) {
+      throw new Error('Invalid response format: missing choices array');
     }
-  } catch (outerError) {
-    // Catch any errors in the preprocessing steps
-    Logger.log("Error in preprocessing JSON: " + outerError);
-    
-    // Fall back to a very basic extraction
-    let decision = "Watch for Better Price Action"; // Default
-    
-    // Try to extract decision using a simple pattern
-    if (analysisResult.includes("Buy Now")) {
-      decision = "Buy Now";
-    } else if (analysisResult.includes("Sell Now")) {
-      decision = "Sell Now";
+
+    const content = response.choices[0].message.content;
+    if (!content || typeof content !== 'string') {
+      throw new Error('Invalid response format: content is not a string');
     }
-    
-    return {
-      decision: decision,
-      justification: analysisResult,
-      analysisJson: null
-    };
+
+    return content;
+  } catch (error) {
+    Logger.log('Error extracting content from response: ' + error);
+    throw new Error('Failed to extract content from OpenAI response: ' + error);
   }
+}
+
+/**
+ * Cleans and parses the analysis result from OpenAI
+ * 
+ * @param {string} content - The content of the response from OpenAI
+ * @return {Object} - The cleaned and parsed analysis result
+ */
+function cleanAnalysisResult(content) {
+  try {
+    // Save the raw response for debugging
+    saveToGoogleDrive('raw_openai_response.json', content);
+
+    // Remove markdown code fences if present
+    let cleanedContent = content;
+    if (cleanedContent.trim().startsWith("```")) {
+      cleanedContent = cleanedContent.trim()
+        .replace(/^```(?:json)?\s*/, '')
+        .replace(/\s*```$/, '');
+    }
+
+    // First, try to parse the cleaned content
+    try {
+      const parsed = JSON.parse(cleanedContent);
+      validateAnalysisStructure(parsed);
+      return parsed;
+    } catch (e) {
+      Logger.log("Parsing failed on cleaned content: " + e);
+
+      // Try minimal cleanup: remove trailing commas and comments
+      let minimalCleaned = cleanedContent
+        .replace(/,\s*\}\s*/g, '}')
+        .replace(/,\s*\]\s*/g, ']')
+        .replace(/\}\s*,\s*\}\s*/g, '}')
+        .replace(/\]\s*,\s*\]\s*/g, ']')
+        // Remove comments and trailing content
+        .replace(/\/\/.*?\n/g, '\n')
+        .replace(/\/\*.*?\*\//g, '')
+        .replace(/\s*\}\s*\]\s*/g, ']')
+        .replace(/\s*\]\s*\}\s*/g, '}');
+      saveToGoogleDrive('minimally_cleaned_openai_response.json', minimalCleaned);
+
+      try {
+        const parsed2 = JSON.parse(minimalCleaned);
+        validateAnalysisStructure(parsed2);
+        return parsed2;
+      } catch (e2) {
+        Logger.log("Parsing failed after minimal cleanup: " + e2);
+
+        // Try more aggressive cleanup: fix common JSON issues
+        let aggressiveCleaned = minimalCleaned
+          // Fix missing commas between properties
+          .replace(/(["']\s*:\s*[^,\}\[]+)(["']\s*:\s*[^,\}\[]+)/g, '$1,$2')
+          // Fix missing commas in arrays
+          .replace(/(["']\s*\]\s*[^,\}\[]+)/g, '$1,')
+          // Fix missing commas between array elements
+          .replace(/(["']\s*\]\s*[^,\}\[]+)/g, '$1,')
+          // Fix missing quotes around keys
+          .replace(/([{,]\s*)([^"'\{\}\[\]\s,]+)(\s*:\s*)/g, '$1"$2"$3')
+          // Fix missing quotes around string values
+          .replace(/([{,]\s*)([^"'\{\}\[\]\s,]+)(\s*[\},\]])/g, '$1"$2"$3');
+        saveToGoogleDrive('aggressively_cleaned_openai_response.json', aggressiveCleaned);
+
+        try {
+          const parsed3 = JSON.parse(aggressiveCleaned);
+          validateAnalysisStructure(parsed3);
+          return parsed3;
+        } catch (e3) {
+          Logger.log("Parsing failed after aggressive cleanup: " + e3);
+          
+          // Try to extract JSON from within text
+          const jsonMatch = aggressiveCleaned.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            try {
+              const extractedJson = JSON.parse(jsonMatch[0]);
+              validateAnalysisStructure(extractedJson);
+              return extractedJson;
+            } catch (e4) {
+              Logger.log("Failed to parse extracted JSON: " + e4);
+            }
+          }
+
+          throw new Error("Failed to parse OpenAI response after multiple attempts. " + 
+            "Please check the saved JSON files in Google Drive for debugging.");
+        }
+      }
+    }
+  } catch (error) {
+    Logger.log('Error in cleanAnalysisResult: ' + error);
+    throw new Error('Failed to clean and parse OpenAI response: ' + error);
+  }
+}
+
+/**
+ * Validates the structure of the analysis object
+ * @param {Object} analysis - The parsed analysis object
+ * @throws {Error} If the analysis structure is invalid
+ */
+function validateAnalysisStructure(analysis) {
+  if (!analysis || typeof analysis !== 'object') {
+    throw new Error('Invalid analysis object');
+  }
+
+  const requiredKeys = ['decision', 'summary', 'analysis'];
+  for (const key of requiredKeys) {
+    if (!analysis[key]) {
+      throw new Error(`Missing required key: ${key}`);
+    }
+  }
+
+  // Validate analysis substructure
+  if (!analysis.analysis) {
+    throw new Error('Missing required analysis section');
+  }
+
+  const analysisKeys = ['marketSentiment', 'marketIndicators', 'fundamentalMetrics', 'macroeconomicFactors'];
+  for (const key of analysisKeys) {
+    if (!analysis.analysis[key]) {
+      Logger.log(`Warning: Missing optional analysis section: ${key}`);
+      continue;
+    }
+
+    // Validate arrays have proper structure
+    const arrayKeys = {
+      marketSentiment: 'analysts',
+      marketIndicators: 'upcomingEvents',
+      fundamentalMetrics: undefined, // fundamentalMetrics is an array itself
+      macroeconomicFactors: 'geopoliticalRisks.regions'
+    };
+
+    if (arrayKeys[key]) {
+      const path = arrayKeys[key].split('.');
+      let obj = analysis.analysis[key];
+      for (const p of path) {
+        if (!obj[p]) {
+          Logger.log(`Warning: Missing optional array: ${key}.${p}`);
+          break;
+        }
+        obj = obj[p];
+      }
+      if (obj && !Array.isArray(obj)) {
+        Logger.log(`Warning: ${key}.${path.join('.')} is not an array`);
+      }
+    }
+  }
+}
+
+/**
+ * Test function to generate and email the trading analysis prompt without sending it to OpenAI
+ * This is useful for reviewing the prompt before making actual API calls
+ * @return {String} Status message
+ */
+function testGenerateAndEmailPrompt() {
+  try {
+    Logger.log("Starting prompt generation test...");
+    
+    // Retrieve all data with caching
+    const allData = retrieveAllData();
+    
+    // Check if data retrieval was successful
+    // Note: fundamentalMetricsData uses status:"success" instead of success:true
+    if (!allData.success && !allData.status) {
+      // Log the error but continue if possible
+      Logger.log("Warning: " + allData.message);
+      // Only throw an error if data is completely missing
+      if (!allData.marketSentiment || !allData.keyMarketIndicators || 
+          !allData.fundamentalMetrics || !allData.macroeconomicFactors) {
+        throw new Error("Failed to retrieve essential trading data: " + allData.message);
+      }
+    }
+    
+    Logger.log("Retrieved trading data with warnings or success");
+    
+    // Get the prompt template from Prompt.gs
+    const promptTemplate = getTradingAnalysisPrompt();
+    Logger.log("Retrieved prompt template from Prompt.gs");
+    
+    // Generate the data retrieval text for OpenAI
+    const dataRetrievalText = generateDataRetrievalText();
+    Logger.log("Generated data retrieval text for OpenAI");
+    
+    // Combine the prompt template with the data retrieval text
+    const fullPrompt = promptTemplate + dataRetrievalText;
+    Logger.log("Combined prompt template with data retrieval text");
+    
+    // Send the prompt via email for review
+    sendPromptEmail(fullPrompt);
+    Logger.log("Sent prompt email for review");
+    
+    // Create a sample JSON response for testing the HTML template
+    const sampleResponse = createSampleJsonResponse();
+    
+    // Save the sample JSON response to Google Drive
+    const jsonFileName = "sample_openai_response.json";
+    const jsonFileUrl = saveJsonToGoogleDrive(sampleResponse, jsonFileName);
+    Logger.log(`Sample response saved to Google Drive: ${jsonFileUrl}`);
+    
+    // Generate and send a test email with the sample response
+    sendTradeDecisionEmail(sampleResponse);
+    Logger.log("Sent test email with sample response");
+    
+    // Display the first 500 characters of the prompt in the logs
+    const previewLength = 500;
+    const promptPreview = fullPrompt.length > previewLength 
+      ? fullPrompt.substring(0, previewLength) + "..." 
+      : fullPrompt;
+    
+    Logger.log("Prompt preview: " + promptPreview);
+    
+    return "Prompt generation test completed successfully.";
+  } catch (error) {
+    Logger.log("Error in testGenerateAndEmailPrompt: " + error);
+    return "Error: " + error;
+  }
+}
+
+/**
+ * Creates a sample JSON response for testing the HTML template
+ * @return {Object} Sample JSON response
+ */
+function createSampleJsonResponse() {
+  return {
+    "timestamp": new Date().toISOString(),
+    "decision": "Watch for Better Price Action",
+    "summary": "Given the current market volatility, particularly in the tech sector, and mixed macroeconomic signals, a cautious approach is recommended.",
+    "justification": "The decision to 'Watch for Better Price Action' is based on the current market volatility, particularly in the tech sector, and the mixed macroeconomic signals. The presence of geopolitical tensions and the cautious stance of analysts suggest waiting for clearer market direction before making significant moves.",
+    "analysis": {
+      "marketSentiment": {
+        "overall": "Mixed sentiment with a lean towards caution due to volatility in the tech sector and economic uncertainties.",
+        "analysts": [
+          {
+            "name": "Dan Nathan",
+            "quote": "The tech sector remains volatile, but I see potential in select AI-driven companies.",
+            "source": "CNBC",
+            "mentionedStocks": ["AAPL", "NVDA"]
+          },
+          {
+            "name": "Josh Brown",
+            "quote": "Markets are showing resilience despite economic uncertainties, leaning towards a more bullish stance.",
+            "source": "Financial Times",
+            "mentionedStocks": ["MSFT", "AMZN"]
+          },
+          {
+            "name": "Steve Weiss",
+            "quote": "I'm cautious about the current market, particularly with the overheated real estate sector.",
+            "source": "Bloomberg"
+          },
+          {
+            "name": "Joe Terranova",
+            "quote": "Energy stocks are undervalued and present a good buying opportunity.",
+            "source": "MarketWatch",
+            "mentionedStocks": ["XOM", "CVX"]
+          },
+          {
+            "name": "Dan Niles",
+            "quote": "The semiconductor sector could face challenges from regulatory pressures.",
+            "source": "Reuters",
+            "mentionedStocks": ["INTC", "AMD"]
+          },
+          {
+            "name": "Mohamed El-Erian",
+            "quote": "Inflation concerns are overstated; the economy is on a stable path.",
+            "source": "The Wall Street Journal"
+          }
+        ],
+        "lastUpdated": "2025-03-26 15:31"
+      },
+      "keyMarketIndicators": {
+        "fearAndGreedIndex": {
+          "value": 29,
+          "interpretation": "Market sentiment is leaning towards fear.",
+          "source": "CNN",
+          "lastUpdated": "2025-03-26 17:02"
+        },
+        "vix": {
+          "value": 18.33,
+          "trend": "Increasing",
+          "interpretation": "Volatility indicator showing market fear and uncertainty.",
+          "source": "CBOE",
+          "lastUpdated": "2025-03-26 16:15"
+        },
+        "lastUpdated": "2025-03-26 17:02"
+      },
+      "fundamentalMetrics": [
+        {
+          "symbol": "SPY",
+          "name": "SPDR S&P 500 ETF Trust",
+          "price": "486.25",
+          "priceChange": "+1.25 (+0.26%)",
+          "marketCap": "N/A",
+          "peRatio": "24.5",
+          "beta": "1.0",
+          "summary": "SPY shows slight positive movement with stable fundamentals.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "QQQ",
+          "name": "Invesco QQQ Trust",
+          "price": "480.80",
+          "priceChange": "+1.60 (+0.33%)",
+          "marketCap": "N/A",
+          "peRatio": "31.2",
+          "beta": "1.2",
+          "summary": "QQQ continues to show strength in the tech sector despite broader market concerns.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "AAPL",
+          "name": "Apple Inc",
+          "price": "175.45",
+          "priceChange": "-0.85 (-0.48%)",
+          "marketCap": "2.75T",
+          "peRatio": "28.9",
+          "pegRatio": "2.8",
+          "beta": "1.3",
+          "summary": "Apple faces slight pressure amid broader tech sector volatility.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "MSFT",
+          "name": "Microsoft Corporation",
+          "price": "425.22",
+          "priceChange": "+2.15 (+0.51%)",
+          "marketCap": "3.16T",
+          "peRatio": "36.5",
+          "pegRatio": "2.2",
+          "beta": "0.9",
+          "summary": "Microsoft shows resilience with strong cloud segment performance.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "NVDA",
+          "name": "NVIDIA Corporation",
+          "price": "925.15",
+          "priceChange": "+15.30 (+1.68%)",
+          "marketCap": "2.28T",
+          "peRatio": "78.4",
+          "pegRatio": "1.9",
+          "beta": "1.7",
+          "summary": "NVIDIA continues its strong performance driven by AI demand.",
+          "lastUpdated": "2025-03-26 16:30"
+        },
+        {
+          "symbol": "GOOGL",
+          "name": "Alphabet Inc",
+          "price": "152.80",
+          "priceChange": "+0.65 (+0.43%)",
+          "marketCap": "1.92T",
+          "peRatio": "26.2",
+          "pegRatio": "1.5",
+          "beta": "1.1",
+          "summary": "Google parent Alphabet shows steady growth with strong ad revenue.",
+          "lastUpdated": "2025-03-26 16:30"
+        }
+      ],
+      "macroeconomicFactors": {
+        "treasuryYields": {
+          "threeMonth": "4.33",
+          "oneYear": "4.11",
+          "twoYear": "4.04",
+          "tenYear": "4.34",
+          "thirtyYear": "4.66",
+          "yieldCurve": "flat",
+          "interpretation": "The flat yield curve suggests market uncertainty about future economic conditions."
+        },
+        "inflation": {
+          "cpiHeadline": "2.82",
+          "cpiCore": "3.12",
+          "pceHeadline": "2.51",
+          "pceCore": "2.65",
+          "trend": "Moderating",
+          "outlook": "Inflation appears to be moderating toward the Fed's target."
+        }
+      },
+      "geopoliticalRisks": [
+        {
+          "region": "Asia-Pacific, Global",
+          "level": "High",
+          "description": "Escalating tensions between the US and China over trade policies and military activities in the South China Sea.",
+          "source": "Reuters",
+          "lastUpdated": "2025-03-26 14:15"
+        },
+        {
+          "region": "Europe, Global",
+          "level": "Severe",
+          "description": "Ongoing military conflict between Russia and Ukraine, causing global energy supply concerns and sanctions.",
+          "source": "Bloomberg",
+          "lastUpdated": "2025-03-26 15:30"
+        },
+        {
+          "region": "Middle East",
+          "level": "Moderate",
+          "description": "Rising tensions in the Middle East, particularly involving Iran's nuclear program and relations with Israel.",
+          "source": "Financial Times",
+          "lastUpdated": "2025-03-26 13:45"
+        }
+      ],
+      "geopoliticalOverview": "High geopolitical risks from US-China tensions, the Russia-Ukraine conflict, and Middle East tensions may impact market stability."
+    }
+  };
 }
 
 /**
@@ -285,48 +706,66 @@ function parseAnalysisResult(analysisResult) {
  * @return {Date} - The next analysis time
  */
 function calculateNextAnalysisTime(currentTime) {
-  // Convert to Eastern Time for calculation
-  const etDate = new Date(currentTime.toLocaleString('en-US', { timeZone: getTimeZone() }));
-  const currentHour = etDate.getHours();
-  const currentMinute = etDate.getMinutes();
-  
-  // Use the schedule configuration from Config.gs
+  // Get the schedule configuration
   const scheduleConfig = getScheduleConfig();
-  const morningScheduleHour = scheduleConfig.morningScheduleHour;
-  const morningScheduleMinute = scheduleConfig.morningScheduleMinute;
-  const eveningScheduleHour = scheduleConfig.eveningScheduleHour;
-  const eveningScheduleMinute = scheduleConfig.eveningScheduleMinute;
   
-  const nextTime = new Date(currentTime);
+  // Create a formatter for the time zone
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: TIME_ZONE,
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true
+  });
   
-  // Determine if the next analysis is morning or evening
-  if (currentHour < morningScheduleHour || 
-      (currentHour === morningScheduleHour && currentMinute < morningScheduleMinute)) {
-    // Next analysis is this morning
-    nextTime.setHours(morningScheduleHour);
-    nextTime.setMinutes(morningScheduleMinute);
-  } else if (currentHour < eveningScheduleHour || 
-             (currentHour === eveningScheduleHour && currentMinute < eveningScheduleMinute)) {
-    // Next analysis is this evening
-    nextTime.setHours(eveningScheduleHour);
-    nextTime.setMinutes(eveningScheduleMinute);
+  // Create a new date object for the next analysis time
+  const nextAnalysisTime = new Date(currentTime);
+  
+  // Get the current day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+  const currentDayOfWeek = currentTime.getDay();
+  
+  // If it's a weekend, schedule for Monday morning
+  if (currentDayOfWeek === 0 || currentDayOfWeek === 6) {
+    // Calculate days until Monday
+    const daysUntilMonday = currentDayOfWeek === 0 ? 1 : 2;
+    
+    // Set the next analysis time to Monday morning
+    nextAnalysisTime.setDate(nextAnalysisTime.getDate() + daysUntilMonday);
+    nextAnalysisTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
   } else {
-    // Next analysis is tomorrow morning
-    nextTime.setDate(nextTime.getDate() + 1);
-    nextTime.setHours(morningScheduleHour);
-    nextTime.setMinutes(morningScheduleMinute);
+    // It's a weekday, schedule for the next analysis time
+    // If it's before morning analysis time, schedule for morning
+    // If it's after morning but before evening, schedule for evening
+    // If it's after evening, schedule for next morning
+    
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    
+    if (currentHour < scheduleConfig.morningHour || 
+        (currentHour === scheduleConfig.morningHour && currentMinute < scheduleConfig.morningMinute)) {
+      // Schedule for today morning
+      nextAnalysisTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
+    } else if (currentHour < scheduleConfig.eveningHour || 
+               (currentHour === scheduleConfig.eveningHour && currentMinute < scheduleConfig.eveningMinute)) {
+      // Schedule for today evening
+      nextAnalysisTime.setHours(scheduleConfig.eveningHour, scheduleConfig.eveningMinute, 0, 0);
+    } else {
+      // Schedule for tomorrow morning
+      nextAnalysisTime.setDate(nextAnalysisTime.getDate() + 1);
+      nextAnalysisTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
+      
+      // If tomorrow is a weekend, schedule for Monday
+      const nextDayOfWeek = nextAnalysisTime.getDay();
+      if (nextDayOfWeek === 0 || nextDayOfWeek === 6) {
+        // Calculate days until Monday
+        const daysUntilMonday = nextDayOfWeek === 0 ? 1 : 2;
+        
+        // Set the next analysis time to Monday morning
+        nextAnalysisTime.setDate(nextAnalysisTime.getDate() + daysUntilMonday);
+      }
+    }
   }
   
-  return nextTime;
-}
-
-/**
- * Gets the time zone from Config.gs
- * 
- * @return {string} - The time zone
- */
-function getTimeZone() {
-  return TIME_ZONE;
+  return nextAnalysisTime;
 }
 
 /**
@@ -336,10 +775,10 @@ function getTimeZone() {
  */
 function getScheduleConfig() {
   return {
-    morningScheduleHour: MORNING_SCHEDULE_HOUR,
-    morningScheduleMinute: MORNING_SCHEDULE_MINUTE,
-    eveningScheduleHour: EVENING_SCHEDULE_HOUR,
-    eveningScheduleMinute: EVENING_SCHEDULE_MINUTE
+    morningHour: MORNING_SCHEDULE_HOUR || 9,
+    morningMinute: MORNING_SCHEDULE_MINUTE || 15,
+    eveningHour: EVENING_SCHEDULE_HOUR || 18,
+    eveningMinute: EVENING_SCHEDULE_MINUTE || 0
   };
 }
 
@@ -348,9 +787,11 @@ function getScheduleConfig() {
  */
 function morningTradingAnalysis() {
   try {
+    Logger.log("Running morning trading analysis...");
     runTradingAnalysis();
   } catch (error) {
-    sendErrorEmail("Morning Trading Analysis Error", error);
+    Logger.log("Error in morningTradingAnalysis: " + error);
+    sendErrorEmail("Morning Trading Analysis Error", error.toString());
   }
 }
 
@@ -359,9 +800,11 @@ function morningTradingAnalysis() {
  */
 function eveningTradingAnalysis() {
   try {
+    Logger.log("Running evening trading analysis...");
     runTradingAnalysis();
   } catch (error) {
-    sendErrorEmail("Evening Trading Analysis Error", error);
+    Logger.log("Error in eveningTradingAnalysis: " + error);
+    sendErrorEmail("Evening Trading Analysis Error", error.toString());
   }
 }
 
@@ -370,252 +813,89 @@ function eveningTradingAnalysis() {
  */
 function mondayMorningTradingAnalysis() {
   try {
+    Logger.log("Running Monday morning trading analysis...");
     runTradingAnalysis();
   } catch (error) {
-    sendErrorEmail("Monday Morning Trading Analysis Error", error);
+    Logger.log("Error in mondayMorningTradingAnalysis: " + error);
+    sendErrorEmail("Monday Morning Trading Analysis Error", error.toString());
   }
 }
 
 /**
  * Wrapper function to send the trading decision email
  * 
- * @param {string} decision - The trading decision
- * @param {string} justification - The justification for the decision
+ * @param {Object} analysisJson - The analysis JSON object
  */
-function sendTradeDecisionEmailWrapper(decision, justification) {
-  const currentTime = new Date();
-  const nextAnalysisTime = calculateNextAnalysisTime(currentTime);
-  
-  // Call the implementation in Email.gs with all required parameters
-  sendTradingDecisionEmail(decision, justification, currentTime, nextAnalysisTime);
-}
-
-/**
- * Sends a test email with the trading decision
- * 
- * @param {string} decision - The trading decision (Buy Now, Sell Now, Watch for Better Price Action)
- * @param {string} justification - The justification for the decision
- */
-function sendTestEmail(decision, justification) {
-  const currentTime = new Date();
-  const nextTime = new Date(currentTime.getTime() + (12 * 60 * 60 * 1000)); // 12 hours later
-  
-  // Get the recipients from Config.gs
-  const recipients = getEmailRecipients();
-  
-  // Log the recipients for debugging
-  Logger.log(`Sending test email to: ${recipients.join(', ')}`);
-  
-  // Send the email
-  sendTradeDecisionEmailWrapper(decision, justification);
-}
-
-/**
- * Gets the email subject for a trading decision
- * 
- * @param {string} decision - The trading decision
- * @return {string} - The email subject
- */
-function getEmailSubject(decision) {
-  const today = new Date();
-  const dateString = today.toISOString().split('T')[0];
-  return `[AI Trading Decision] ${decision} - ${dateString}`;
-}
-
-/**
- * Gets the email body for a trading decision and justification
- * 
- * @param {string} decision - The trading decision
- * @param {string} justification - The justification for the decision
- * @return {string} - The HTML email body
- */
-function getEmailBody(decision, justification) {
-  // Get the current time and next analysis time
-  const currentTime = new Date();
-  const nextAnalysisTime = calculateNextAnalysisTime(currentTime);
-  
-  // Format the email body using the HTML formatter
-  return formatHtmlEmailBody(decision, justification, currentTime, nextAnalysisTime);
-}
-
-/**
- * Sends an error email to the admin
- * 
- * @param {string} subject - The email subject
- * @param {string} error - The error message
- */
-function sendErrorEmail(subject, error) {
-  const adminEmail = "fvillavicencio@gmail.com"; // Admin email address
-  GmailApp.sendEmail(adminEmail, subject, `Error in AI Trading Agent: ${error}`);
-}
-
-/**
- * NOTE: Trigger management has been moved to Setup.gs
- * Please use the setupTriggers() function in Setup.gs to create or modify triggers
- */
-
-/**
- * Formats market sentiment data for inclusion in the prompt
- * 
- * @param {Object} marketSentiment - The market sentiment data
- * @return {string} Formatted market sentiment data
- */
-function formatMarketSentimentData(marketSentiment) {
+function sendTradeDecisionEmailWrapper(analysisJson) {
   try {
-    let formattedData = "### Market Sentiment Data (Retrieved directly from sources)\n\n";
+    Logger.log("Sending trade decision email...");
     
-    // Format CNBC analyst comments
-    if (marketSentiment.cnbcAnalysts && marketSentiment.cnbcAnalysts.length > 0) {
-      formattedData += "#### CNBC Analyst Comments (Last 24 hours)\n\n";
-      
-      for (const comment of marketSentiment.cnbcAnalysts) {
-        const timestamp = new Date(comment.timestamp);
-        const formattedTimestamp = Utilities.formatDate(timestamp, TIME_ZONE, "MMM dd, yyyy hh:mm a 'ET'");
-        
-        formattedData += `- **${comment.analyst}**: "${comment.comment}"\n`;
-        formattedData += `  - Source: ${comment.source}\n`;
-        formattedData += `  - Time: ${formattedTimestamp}\n\n`;
-      }
-    } else {
-      formattedData += "#### CNBC Analyst Comments\n\n";
-      formattedData += "No recent comments found from CNBC analysts in the last 24 hours.\n\n";
-    }
+    // Send the email with the trading decision
+    sendTradeDecisionEmail(analysisJson);
     
-    // Format Dan Niles insights
-    if (marketSentiment.danNilesInsights && marketSentiment.danNilesInsights.length > 0) {
-      formattedData += "#### Dan Niles Insights (Last 24 hours)\n\n";
-      
-      for (const insight of marketSentiment.danNilesInsights) {
-        const timestamp = new Date(insight.timestamp);
-        const formattedTimestamp = Utilities.formatDate(timestamp, TIME_ZONE, "MMM dd, yyyy hh:mm a 'ET'");
-        
-        formattedData += `- **Dan Niles** (${insight.source}): `;
-        
-        if (insight.content) {
-          formattedData += `"${insight.content}"\n`;
-        } else if (insight.title) {
-          formattedData += `${insight.title}\n`;
-        }
-        
-        if (insight.url) {
-          formattedData += `  - Source: ${insight.url}\n`;
-        }
-        
-        formattedData += `  - Time: ${formattedTimestamp}\n\n`;
-      }
-    } else {
-      formattedData += "#### Dan Niles Insights\n\n";
-      formattedData += "No recent insights found from Dan Niles in the last 24 hours.\n\n";
-    }
-    
-    return formattedData;
+    Logger.log("Trade decision email sent successfully.");
   } catch (error) {
-    Logger.log("Error in formatMarketSentimentData: " + error);
-    return "Error formatting market sentiment data: " + error;
+    Logger.log("Error in sendTradeDecisionEmailWrapper: " + error);
+    sendErrorEmail("Trade Decision Email Error", error.toString());
   }
 }
 
 /**
- * Enhances the prompt with retrieved data
+ * Saves JSON data to a file in Google Drive
  * 
- * @param {string} originalPrompt - The original analysis prompt
- * @param {Object} data - Object containing retrieved data for different sections
- * @return {string} Enhanced prompt with retrieved data
+ * @param {Object} jsonData - The JSON data to save
+ * @param {String} fileName - The name of the file to save
+ * @return {String} The URL of the saved file
  */
-function enhancePromptWithData(originalPrompt, data) {
+function saveJsonToGoogleDrive(jsonData, fileName) {
   try {
-    let enhancedPrompt = originalPrompt;
+    // Create or get the folder
+    const folderName = "Trading Analysis Emails";
+    const folder = getOrCreateFolder(folderName);
     
-    // Add a section explaining that we're providing retrieved data
-    enhancedPrompt += "\n\n## IMPORTANT: RETRIEVED DATA\n\n";
-    enhancedPrompt += "The following data has been directly retrieved from various sources within the last 24 hours. ";
-    enhancedPrompt += "Please use this data for your analysis instead of searching for it again. ";
-    enhancedPrompt += "This ensures you have the most recent and accurate information.\n\n";
-    
-    // Add market sentiment data if available
-    if (data.marketSentiment) {
-      enhancedPrompt += "### Market Sentiment\n";
-      enhancedPrompt += data.marketSentiment + "\n\n";
+    // Check if file already exists and delete it
+    const existingFiles = folder.getFilesByName(fileName);
+    while (existingFiles.hasNext()) {
+      const file = existingFiles.next();
+      file.setTrashed(true);
+      Logger.log(`Deleted existing file: ${fileName}`);
     }
     
-    // Add key market indicators data if available
-    if (data.keyMarketIndicators) {
-      enhancedPrompt += "### Key Market Indicators\n";
-      enhancedPrompt += data.keyMarketIndicators + "\n\n";
-    }
+    // Create the JSON file
+    const jsonContent = JSON.stringify(jsonData, null, 2);
+    const file = folder.createFile(fileName, jsonContent, MimeType.PLAIN_TEXT);
     
-    // Add fundamental metrics data if available
-    if (data.fundamentalMetrics) {
-      enhancedPrompt += "### Fundamental Metrics\n";
-      enhancedPrompt += data.fundamentalMetrics + "\n\n";
-    }
-    
-    // Add macroeconomic factors data if available
-    if (data.macroeconomicFactors) {
-      enhancedPrompt += "### Macroeconomic Factors\n";
-      enhancedPrompt += data.macroeconomicFactors + "\n\n";
-    }
-    
-    // Add a reminder to use the provided data
-    enhancedPrompt += "\n## REMINDER\n\n";
-    enhancedPrompt += "Please use the data provided above for your analysis. ";
-    enhancedPrompt += "For any data points not provided, you may search for the most current information available.\n";
-    
-    return enhancedPrompt;
+    Logger.log(`JSON saved to Google Drive: ${fileName}`);
+    return file.getUrl();
   } catch (error) {
-    Logger.log("Error in enhancePromptWithData: " + error);
-    return originalPrompt; // Return the original prompt if there's an error
+    Logger.log(`Error saving JSON to Google Drive: ${error}`);
+    return null;
   }
 }
 
 /**
- * Test function to retrieve market sentiment data and display the enhanced prompt
+ * Gets or creates a folder in Google Drive
+ * @param {String} folderName - The name of the folder
+ * @return {Folder} The folder object
  */
-function testMarketSentimentEnhancement() {
+function getOrCreateFolder(folderName) {
   try {
-    Logger.log("Testing market sentiment data retrieval and prompt enhancement...");
+    // Get the root folder
+    const root = DriveApp.getRootFolder();
     
-    // Get the current date
-    const currentDate = new Date();
+    // Check if folder already exists
+    const folderIterator = root.getFoldersByName(folderName);
+    if (folderIterator.hasNext()) {
+      Logger.log(`Found existing folder: ${folderName}`);
+      return folderIterator.next();
+    }
     
-    // Retrieve market sentiment data
-    Logger.log("Retrieving market sentiment data...");
-    const marketSentiment = retrieveMarketSentiment(currentDate);
-    Logger.log(`Retrieved ${marketSentiment.cnbcAnalysts ? marketSentiment.cnbcAnalysts.length : 0} CNBC analyst comments and ${marketSentiment.danNilesInsights ? marketSentiment.danNilesInsights.length : 0} Dan Niles insights`);
-    
-    // Format the market sentiment data
-    const marketSentimentData = formatMarketSentimentData(marketSentiment);
-    
-    // Get the original prompt
-    const originalPrompt = getTradingAnalysisPrompt();
-    
-    // Enhance the prompt with the retrieved data
-    const enhancedPrompt = enhancePromptWithData(originalPrompt, {
-      marketSentiment: marketSentimentData
-    });
-    
-    // Log the enhanced prompt
-    Logger.log("Enhanced Prompt:");
-    Logger.log(enhancedPrompt);
-    
-    return "Market sentiment data retrieval and prompt enhancement test completed successfully. Check logs for details.";
+    // Create the folder if it doesn't exist
+    const folder = root.createFolder(folderName);
+    Logger.log(`Created new folder: ${folderName}`);
+    return folder;
   } catch (error) {
-    Logger.log("Error in testMarketSentimentEnhancement: " + error);
-    return "Error: " + error;
-  }
-}
-
-/**
- * Test function to run the market sentiment analysis and display the result
- */
-function runTestMarketSentiment() {
-  try {
-    Logger.log("Running market sentiment test...");
-    // Call the testMarketSentiment function from MarketSentiment.gs
-    testMarketSentiment();
-    return "Market sentiment test completed successfully.";
-  } catch (error) {
-    Logger.log("Error in runTestMarketSentiment: " + error);
-    return "Error: " + error;
+    Logger.log(`Error getting or creating folder: ${error}`);
+    throw error;
   }
 }
