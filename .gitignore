@@ -24,6 +24,9 @@ pids
 # Output of test files
 test_output/
 
+# Secrets
+vertex-search/ai-trader-agent-26a2b921b48d.json
+
 # macOS specific files
 .DS_Store
 .AppleDouble
