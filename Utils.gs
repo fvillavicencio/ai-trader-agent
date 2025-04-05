@@ -1280,28 +1280,6 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
       };
     }
     
-    // Helper function to get inflation data with priority to macroeconomicAnalysis
-    function getInflationData() {
-      const inflation = macroeconomicAnalysis?.analysis?.macroeconomicFactors?.inflation;
-      return inflation || {
-        currentRate: 'N/A',
-        cpi: {
-          headline: 'N/A',
-          core: 'N/A'
-        },
-        pce: {
-          headline: 'N/A',
-          core: 'N/A'
-        },
-        trend: 'N/A',
-        outlook: 'N/A',
-        marketImpact: 'N/A',
-        source: 'N/A',
-        sourceUrl: 'N/A',
-        lastUpdated: 'N/A'
-      };
-    }
-
     // Treasury Yields
     let yieldsHtml = '';
     if (macro.treasuryYields?.yields) {
@@ -1347,7 +1325,8 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
 
     // Inflation
     let inflationHtml = '';
-    const inflationData = getInflationData();
+    const inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
+      
     if (inflationData) {
       inflationHtml = `
         <div style="margin-bottom: 20px;">
