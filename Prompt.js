@@ -30,7 +30,10 @@ Using only the retrieved data provided below, generate a concise trading recomme
   4.	Fundamental Metrics:
 	•	Include ALL available stocks from the data, do not omit any symbol.
 	•	For each stock, incorporate every provided metric (e.g., price, priceChange, volume, marketCap, dividendYield, pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta, etc.).
-	•	Do not omit any stocks or metrics mentioned in the provided data.
+	•	If a stock is marked as deprecated (isDeprecated: true), note this in your analysis and consider its data with caution.
+	•	If any metrics are missing or null, note this in your analysis and explain how you're handling the lack of data.
+	•	Do not omit any stocks or metrics mentioned in the provided data, but give appropriate weight to deprecated symbols and missing data.
+	•	When metrics are missing, use reasonable defaults or explain why the missing data doesn't significantly impact the analysis.
 	5.	Market Sentiment Analysis:
 	•	Present an overall sentiment summary.
 	•	Include all analyst comments (without timestamps) in the marketSentiment section.

@@ -10,6 +10,13 @@ const CACHE_DURATION = 30;
  */
 function retrieveStockMetrics(symbol) {
   try {
+    // Validate symbol and handle deprecated symbols
+    if (symbol === 'FB') {
+      throw new Error('FB is no longer a valid symbol. Facebook/Meta Platforms is now represented by META.');
+    } else if (symbol === 'TWTR') {
+      throw new Error('TWTR is no longer a valid symbol. Twitter/X is now represented by X.');
+    }
+
     Logger.log(`\n=== Data Retrieval for ${symbol} ===`);
     
     // Check cache first (30-minute cache for stock metrics)
@@ -969,16 +976,28 @@ function fetchYahooFinanceData(symbol) {
 /**
  * Formats numeric values with proper formatting
  * @param {number|Object} value - Numeric value or object with raw value
+ * @param {string} metricType - Type of metric (e.g., 'beta')
  * @return {string} Formatted value
  */
-function formatValue(value) {
+function formatValue(value, metricType = 'default') {
   if (!value) return 'N/A';
   
   // Handle objects with raw values (like from Yahoo Finance)
   if (typeof value === 'object' && value !== null && 'raw' in value) {
     value = value.raw;
   }
-  
+
+  // Convert to number if it's a string
+  if (typeof value === 'string') {
+    value = parseFloat(value);
+  }
+
+  // Handle beta specifically
+  if (metricType === 'beta') {
+    return value.toFixed(2);
+  }
+
+  // Default formatting for other metrics
   return value.toFixed(2);
 }
 
@@ -1089,7 +1108,7 @@ function displayMetrics(metrics, outputRange = 'A1') {
       ['Return on Equity:', metrics.returnOnEquity ? formatPercentage(metrics.returnOnEquity) : 'N/A'],
       ['Return on Assets:', metrics.returnOnAssets ? formatPercentage(metrics.returnOnAssets) : 'N/A'],
       ['Profit Margin:', metrics.profitMargin ? formatPercentage(metrics.profitMargin) : 'N/A'],
-      ['Beta:', metrics.beta ? formatValue(metrics.beta) : 'N/A'],
+      ['Beta:', metrics.beta ? formatValue(metrics.beta, 'beta') : 'N/A'],
       ['', ''],
       ['Dividend & Expense:', ''],
       ['Dividend Yield:', metrics.dividendYield ? formatPercentage(metrics.dividendYield) : 'N/A'],
@@ -1355,7 +1374,9 @@ function clearStockMetricsCache() {
       'V', 'JPM', 'JNJ', 'UNH', 'HD', 'PG', 'MA', 'BAC', 'DIS', 'ADBE',
       'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM',
       // Energy and Industrial
-      'XOM', 'CVX', 'BA', 'CAT', 'GE', 'MMM'
+      'XOM', 'CVX', 'BA', 'CAT', 'GE', 'MMM',
+      // Deprecated stock symbols
+      'FB', 'TWTR'
     ];
     
     // Create cache keys for each symbol
@@ -1485,3 +1506,4 @@ function getCompanyName(symbol) {
     };
   }
 }
+

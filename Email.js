@@ -525,18 +525,25 @@ function sendTradeDecisionEmail(analysisJson) {
     // Get the final recipients from script properties
     const recipients = RECIPIENT_EMAILS || [Session.getEffectiveUser().getEmail()];
     
+    // Check if DEBUG_MODE is enabled
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+    
     // Send the email to each recipient
     let allSuccessful = true;
-    for (const recipient of recipients) {
-      const success = sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, false);
-      if (!success) {
-        allSuccessful = false;
-        Logger.log(`Failed to send email to recipient: ${recipient}`);
+    if (debugMode) {
+      Logger.log("Debug mode enabled - skipping email sending for trade decision email");
+    } else {
+      for (const recipient of recipients) {
+        const success = sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, false);
+        if (!success) {
+          allSuccessful = false;
+          Logger.log(`Failed to send email to recipient: ${recipient}`);
+        }
       }
+      Logger.log("Trade decision email process completed.");
     }
-    
-    Logger.log("Trade decision email process completed.");
-    return allSuccessful;
+  return allSuccessful;
   } catch (error) {
     Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
     sendErrorEmail("Trade Decision Email Error", error.toString());

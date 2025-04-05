@@ -1,380 +1,679 @@
 /**
- * Test function to output all stock data for debugging
- * This function retrieves fundamental metrics for a set of stocks and outputs them in a formatted way
+ * Generates a complete data retrieval text for the OpenAI prompt
+ * Retrieves all data (market sentiment, key market indicators, fundamental metrics, and macroeconomic factors)
+ * and formats it in a text format similar to sampleDataRetrieval.txt
+ * @return {String} Formatted data retrieval text
  */
-function testFundamentalMetricsOutput() {
-  // Define the symbols to test
-  const symbols = [
-    // Major Indices
-    "SPY", "QQQ", "IWM", "DIA",
-    // Magnificent Seven
-    "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA",
-    // Other stocks
-    "XOM", "CVX", "BA", "CAT", "PG", "KO", "TGT", "WMT"
+function generateDataRetrievalText() {
+  try {
+    Logger.log("Generating data retrieval text...");
+    
+    // Retrieve all data
+    const allData = retrieveAllData();
+    
+    // Initialize formatted text
+    let formattedText = "\n\n**Retrieved Data:**\n\n";
+    
+    try {
+      // Add Market Sentiment section
+      formattedText += "**Market Sentiment Data:**\n";
+      
+      if (allData && allData.success) {
+        // Format market sentiment data
+        if (allData.marketSentiment && allData.marketSentiment.success) {
+          const marketSentimentData = allData.marketSentiment;
+          
+          // Format overall sentiment
+          if (marketSentimentData.overall) {
+            formattedText += `- Overall Market Sentiment: ${marketSentimentData.overall}\n`;
+          }
+          
+          // Format analyst comments
+          if (marketSentimentData.analysts && marketSentimentData.analysts.length > 0) {
+            formattedText += "- Analyst Comments:\n";
+            
+            for (const analyst of marketSentimentData.analysts) {
+              formattedText += `  * ${analyst.name}: "${analyst.comment}"\n`;
+              
+              // Add mentioned stocks if available
+              if (analyst.mentionedSymbols && analyst.mentionedSymbols.length > 0) {
+                formattedText += `    - Mentioned Stocks: ${analyst.mentionedSymbols.join(", ")}\n`;
+              }
+              
+              // Add source if available
+              if (analyst.source) {
+                formattedText += `    - Source: ${analyst.source}\n`;
+              }
+            }
+          }
+          
+          // Add timestamp
+          const timestamp = marketSentimentData.timestamp || new Date().toLocaleString();
+          formattedText += `- Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+        } else {
+          formattedText += "- Error: Market sentiment data not available\n";
+        }
+        
+        formattedText += "\n";
+      }
+    } catch (error) {
+      Logger.log(`Error in market sentiment section: ${error}`);
+      formattedText += `- Error processing market sentiment data: ${error}\n\n`;
+    }
+    
+    try {
+      // Add Key Market Indicators section
+      formattedText += "**Key Market Indicators Data:**\n";
+      
+      if (allData && allData.success) {
+        // Format key market indicators data
+        if (allData.keyMarketIndicators && allData.keyMarketIndicators.success) {
+          const keyMarketIndicatorsData = allData.keyMarketIndicators;
+          
+          // Format Fear & Greed Index
+          if (keyMarketIndicatorsData.fearGreedIndex) {
+            const fgIndex = keyMarketIndicatorsData.fearGreedIndex;
+            formattedText += "- Fear & Greed Index:\n";
+            
+            if (fgIndex.value !== undefined) {
+              formattedText += `  * Value: ${fgIndex.value}\n`;
+            }
+            
+            if (fgIndex.interpretation) {
+              formattedText += `  * Interpretation: ${fgIndex.interpretation}\n`;
+            }
+            
+            if (fgIndex.source) {
+              formattedText += `  * Source: ${fgIndex.source}\n`;
+            }
+            
+            // Add timestamp
+            const timestamp = fgIndex.timestamp || keyMarketIndicatorsData.timestamp || new Date().toLocaleString();
+            formattedText += `  * Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+          }
+          
+          // Format VIX
+          if (keyMarketIndicatorsData.vix) {
+            const vix = keyMarketIndicatorsData.vix;
+            formattedText += "- VIX (Volatility Index):\n";
+            
+            if (vix.value !== undefined) {
+              formattedText += `  * Value: ${vix.value}\n`;
+            }
+            
+            if (vix.trend) {
+              formattedText += `  * Trend: ${vix.trend}\n`;
+            }
+            
+            if (vix.analysis) {
+              formattedText += `  * Analysis: ${vix.analysis}\n`;
+            }
+            
+            if (vix.source) {
+              formattedText += `  * Source: ${vix.source}\n`;
+            }
+            
+            // Add timestamp
+            const timestamp = vix.timestamp || keyMarketIndicatorsData.timestamp || new Date().toLocaleString();
+            formattedText += `  * Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+          }
+          
+          // Format Treasury Yields
+          if (keyMarketIndicatorsData.treasuryYields && keyMarketIndicatorsData.treasuryYields.yields) {
+            formattedText += "- Treasury Yields:\n";
+            
+            // Sort yields by term length (in months)
+            const sortedYields = [...keyMarketIndicatorsData.treasuryYields.yields].sort((a, b) => {
+              const aMonths = parseTermToMonths(a.term);
+              const bMonths = parseTermToMonths(b.term);
+              return aMonths - bMonths;
+            });
+            
+            // Add each yield
+            for (const yield_ of sortedYields) {
+              try {
+                const yieldValue = yield_.yield !== undefined ? `${Number(yield_.yield).toFixed(2)}%` : "N/A";
+                const changeValue = yield_.change !== undefined ? 
+                          `${yield_.change >= 0 ? "+" : ""}${Number(yield_.change).toFixed(2)}%` : 
+                          "N/A";
+                
+                formattedText += `  * ${yield_.term}: ${yieldValue} (${changeValue})\n`;
+              } catch (yieldError) {
+                Logger.log(`Error formatting yield for ${yield_.term}: ${yieldError}`);
+                formattedText += `  * ${yield_.term}: Error formatting yield data\n`;
+              }
+            }
+            
+            // Add timestamp
+            const timestamp = keyMarketIndicatorsData.treasuryYields.timestamp || keyMarketIndicatorsData.timestamp || new Date().toLocaleString();
+            formattedText += `  * Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+          }
+          
+          // Format upcoming economic events
+          if (keyMarketIndicatorsData.upcomingEconomicEvents && keyMarketIndicatorsData.upcomingEconomicEvents.length > 0) {
+            formattedText += `* Upcoming Economic Events:\n`;
+            
+            for (const event of keyMarketIndicatorsData.upcomingEconomicEvents) {
+              formattedText += `  * ${event.date}: ${event.event}\n`;
+            }
+          }
+        } else {
+          formattedText += "- Error: Key market indicators data not available\n";
+        }
+        
+        formattedText += "\n";
+      }
+    } catch (error) {
+      Logger.log(`Error in key market indicators section: ${error}`);
+      formattedText += `- Error processing key market indicators data: ${error}\n\n`;
+    }
+    
+    try {
+      // Add Fundamental Metrics section
+      formattedText += "**Fundamental Metrics Data:**\n";
+      
+      if (allData && allData.success) {
+        // Format fundamental metrics data
+        if (allData.fundamentalMetrics && allData.fundamentalMetrics.data && allData.fundamentalMetrics.data.length > 0) {
+          Logger.log("DEBUG - Fundamental metrics before check: " + JSON.stringify(allData.fundamentalMetrics).substring(0, 500) + "...");
+          
+          // Log the structure of the fundamental metrics data
+          Logger.log("DEBUG - Formatting fundamental metrics: " + JSON.stringify(allData.fundamentalMetrics).substring(0, 500) + "...");
+          Logger.log(`DEBUG - Fundamental metrics structure: success=${allData.fundamentalMetrics.success}, data=${allData.fundamentalMetrics.data ? 'present' : 'missing'}, data length=${allData.fundamentalMetrics.data ? allData.fundamentalMetrics.data.length : 0}`);
+          
+          // Log the keys of the fundamental metrics data
+          Logger.log(`DEBUG - Fundamental metrics data keys: ${Object.keys(allData.fundamentalMetrics).join(',')}`);
+          
+          const stocks = allData.fundamentalMetrics.data;
+          
+          // Define major indices for sorting
+          const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
+          
+          // Sort stocks: first major indices, then alphabetically
+          const sortedStocks = [...stocks].sort((a, b) => {
+            const aSymbol = a.symbol || "";
+            const bSymbol = b.symbol || "";
+            
+            // Check if either stock is a major index
+            const aIsMajor = majorIndices.includes(aSymbol);
+            const bIsMajor = majorIndices.includes(bSymbol);
+            
+            // Major indices come first
+            if (aIsMajor && !bIsMajor) return -1;
+            if (!aIsMajor && bIsMajor) return 1;
+            if (aIsMajor && bIsMajor) {
+              return majorIndices.indexOf(aSymbol) - majorIndices.indexOf(bSymbol);
+            }
+            
+            // Then sort alphabetically
+            return aSymbol.localeCompare(bSymbol);
+          });
+          
+          // Group stocks into categories
+          const indices = sortedStocks.filter(stock => majorIndices.includes(stock.symbol));
+          const magSeven = sortedStocks.filter(stock => ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol));
+          const otherStocks = sortedStocks.filter(stock => 
+            !majorIndices.includes(stock.symbol) && 
+            !["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol)
+          );
+          
+          // Format major indices
+          if (indices.length > 0) {
+            formattedText += "- Major Indices:\n";
+            for (const stock of indices) {
+              try {
+                formattedText = formatStockMetrics(stock, formattedText);
+              } catch (stockError) {
+                Logger.log(`Error formatting stock metrics for ${stock.symbol}: ${stockError}`);
+                formattedText += `  * ${stock.symbol}: Error formatting stock data\n`;
+              }
+            }
+          }
+          
+          // Format Magnificent Seven
+          if (magSeven.length > 0) {
+            formattedText += "- Magnificent Seven:\n";
+            for (const stock of magSeven) {
+              try {
+                formattedText = formatStockMetrics(stock, formattedText);
+              } catch (stockError) {
+                Logger.log(`Error formatting stock metrics for ${stock.symbol}: ${stockError}`);
+                formattedText += `  * ${stock.symbol}: Error formatting stock data\n`;
+              }
+            }
+          }
+          
+          // Format other stocks
+          if (otherStocks.length > 0) {
+            formattedText += "- Other Stocks:\n";
+            for (const stock of otherStocks) {
+              try {
+                formattedText = formatStockMetrics(stock, formattedText);
+              } catch (stockError) {
+                Logger.log(`Error formatting stock metrics for ${stock.symbol}: ${stockError}`);
+                formattedText += `  * ${stock.symbol}: Error formatting stock data\n`;
+              }
+            }
+          }
+          
+          // Add timestamp
+          const timestamp = allData.fundamentalMetrics.timestamp || new Date().toLocaleString();
+          formattedText += `- Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+        } else {
+          formattedText += "- Error: Fundamental metrics data not available\n";
+        }
+        
+        formattedText += "\n";
+      }
+    } catch (error) {
+      Logger.log(`Error in fundamental metrics section: ${error}`);
+      formattedText += `- Error processing fundamental metrics data: ${error}\n\n`;
+    }
+    
+    try {
+      // Format macroeconomic factors data
+      formattedText += "**Macroeconomic Factors Data:**\n";
+      
+      if (allData.macroeconomicFactors && allData.macroeconomicFactors.success) {
+        const macroData = allData.macroeconomicFactors;
+        
+        // Format treasury yields if available
+        if (macroData.treasuryYields && macroData.treasuryYields.yields) {
+          formattedText += "- Treasury Yields:\n";
+          
+          // Check if we have the yields array (new structure) or direct properties (old structure)
+          if (macroData.treasuryYields.yields && Array.isArray(macroData.treasuryYields.yields)) {
+            // New structure: array of yield objects
+            macroData.treasuryYields.yields.forEach(yieldObj => {
+              try {
+                const yieldValue = yieldObj.yield !== undefined ? `${Number(yieldObj.yield).toFixed(2)}%` : "N/A";
+                formattedText += `  * ${yieldObj.term}: ${yieldValue}\n`;
+              } catch (yieldError) {
+                Logger.log(`Error formatting yield for ${yieldObj.term}: ${yieldError}`);
+                formattedText += `  * ${yieldObj.term}: Error formatting yield data\n`;
+              }
+            });
+          } else {
+            // Old structure: direct properties
+            const yieldTerms = ["threeMonth", "oneYear", "twoYear", "fiveYear", "tenYear", "thirtyYear"];
+            
+            yieldTerms.forEach(term => {
+              try {
+                if (macroData.treasuryYields[term] !== undefined) {
+                  const displayTerm = term.replace(/([A-Z])/g, ' $1').toLowerCase();
+                  const yieldValue = `${Number(macroData.treasuryYields[term]).toFixed(2)}%`;
+                  formattedText += `  * ${displayTerm}: ${yieldValue}\n`;
+                }
+              } catch (yieldError) {
+                Logger.log(`Error formatting yield for ${term}: ${yieldError}`);
+                formattedText += `  * ${term}: Error formatting yield data\n`;
+              }
+            });
+          }
+          
+          // Add yield curve status if available
+          if (macroData.treasuryYields.yieldCurve) {
+            formattedText += `  * Yield Curve: ${macroData.treasuryYields.yieldCurve}\n`;
+          }
+          
+          // Add timestamp
+          const timestamp = macroData.treasuryYields.timestamp || macroData.timestamp || new Date().toLocaleString();
+          formattedText += `  * Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+        }
+        
+        // Format Fed policy if available
+        if (macroData.fedPolicy) {
+          formattedText += "- Federal Reserve Policy:\n";
+          
+          if (macroData.fedPolicy.rate !== undefined) {
+            try {
+              formattedText += `  * Federal Funds Rate: ${Number(macroData.fedPolicy.rate).toFixed(2)}%\n`;
+            } catch (rateError) {
+              Logger.log(`Error formatting Fed rate: ${rateError}`);
+              formattedText += `  * Federal Funds Rate: Error formatting rate data\n`;
+            }
+          }
+          
+          if (macroData.fedPolicy.guidance) {
+            formattedText += `  * Forward Guidance: ${macroData.fedPolicy.guidance}\n`;
+          }
+          
+          // Add timestamp
+          const timestamp = macroData.fedPolicy.timestamp || macroData.timestamp || new Date().toLocaleString();
+          formattedText += `  * Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+        }
+        
+        // Format inflation data if available
+        if (macroData.inflation) {
+          formattedText += "- Inflation:\n";
+          
+          if (macroData.inflation.currentRate !== undefined) {
+            try {
+              formattedText += `  * Current Rate: ${Number(macroData.inflation.currentRate).toFixed(2)}%\n`;
+            } catch (inflationError) {
+              Logger.log(`Error formatting inflation rate: ${inflationError}`);
+              formattedText += `  * Current Rate: Error formatting inflation data\n`;
+            }
+          }
+          
+          // Format CPI data if available
+          if (macroData.inflation.cpi) {
+            formattedText += "  * CPI (Consumer Price Index):\n";
+            
+            if (macroData.inflation.cpi.headline !== undefined) {
+              try {
+                formattedText += `    - Headline: ${Number(macroData.inflation.cpi.headline).toFixed(2)}%\n`;
+              } catch (cpiError) {
+                Logger.log(`Error formatting CPI headline: ${cpiError}`);
+                formattedText += `    - Headline: Error formatting CPI data\n`;
+              }
+            }
+            
+            if (macroData.inflation.cpi.core !== undefined) {
+              try {
+                formattedText += `    - Core: ${Number(macroData.inflation.cpi.core).toFixed(2)}%\n`;
+              } catch (cpiError) {
+                Logger.log(`Error formatting CPI core: ${cpiError}`);
+                formattedText += `    - Core: Error formatting CPI data\n`;
+              }
+            }
+          }
+          
+          // Format PCE data if available
+          if (macroData.inflation.pce) {
+            formattedText += "  * PCE (Personal Consumption Expenditures):\n";
+            
+            if (macroData.inflation.pce.headline !== undefined) {
+              try {
+                formattedText += `    - Headline: ${Number(macroData.inflation.pce.headline).toFixed(2)}%\n`;
+              } catch (pceError) {
+                Logger.log(`Error formatting PCE headline: ${pceError}`);
+                formattedText += `    - Headline: Error formatting PCE data\n`;
+              }
+            }
+            
+            if (macroData.inflation.pce.core !== undefined) {
+              try {
+                formattedText += `    - Core: ${Number(macroData.inflation.pce.core).toFixed(2)}%\n`;
+              } catch (pceError) {
+                Logger.log(`Error formatting PCE core: ${pceError}`);
+                formattedText += `    - Core: Error formatting PCE data\n`;
+              }
+            }
+          }
+          
+          if (macroData.inflation.trend) {
+            formattedText += `  * Trend: ${macroData.inflation.trend}\n`;
+          }
+          
+          // Add timestamp
+          const timestamp = macroData.inflation.timestamp || macroData.timestamp || new Date().toLocaleString();
+          formattedText += `  * Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+        }
+        
+        // Format geopolitical risks if available
+        if (macroData.geopoliticalRisks) {
+          formattedText += "- Geopolitical Risks:\n";
+          
+          if (macroData.geopoliticalRisks.global) {
+            formattedText += `  * Global: ${macroData.geopoliticalRisks.global}\n`;
+          }
+          
+          // Format regional risks if available
+          if (macroData.geopoliticalRisks.regions && macroData.geopoliticalRisks.regions.length > 0) {
+            formattedText += "  * Regional Risks:\n";
+            
+            for (const region of macroData.geopoliticalRisks.regions) {
+              formattedText += `    - ${region.name}:\n`;
+              
+              if (region.risks && region.risks.length > 0) {
+                for (const risk of region.risks) {
+                  formattedText += `      * ${risk.description} (Impact: ${risk.impact})\n`;
+                }
+              }
+            }
+          }
+          
+          // Add timestamp
+          const timestamp = macroData.geopoliticalRisks.timestamp || macroData.timestamp || new Date().toLocaleString();
+          formattedText += `  * Last Updated: ${new Date(timestamp).toLocaleString()}\n`;
+        }
+      } else {
+        formattedText += "- Error: Macroeconomic factors data not available\n";
+      }
+    } catch (error) {
+      Logger.log(`Error in macroeconomic factors section: ${error}`);
+      formattedText += `- Error processing macroeconomic factors data: ${error}\n\n`;
+    }
+    
+    return formattedText;
+  } catch (error) {
+    Logger.log(`Error in generateDataRetrievalText: ${error}`);
+    return `**Error generating data retrieval text:** ${error}`;
+  }
+}
+
+/**
+ * Helper function to format stock metrics
+ * @param {Object} stock - Stock data
+ * @param {String} formattedText - Formatted text to append to
+ * @return {String} - Updated formatted text
+ */
+function formatStockMetrics(stock, formattedText) {
+  const symbol = stock.symbol || "Unknown";
+  const name = stock.name || "Unknown";
+  
+  formattedText += `  * ${symbol} (${name}):\n`;
+  
+  // Format price and price change if available
+  if (stock.price !== undefined && stock.price !== null) {
+    const priceStr = formatPriceData(stock);
+    formattedText += `    - Price: ${priceStr}\n`;
+  }
+
+  // Format volume and market cap if available
+  if (stock.volume !== undefined && stock.volume !== null) {
+    const volumeStr = formatVolume(stock.volume);
+    formattedText += `    - Volume: ${volumeStr}\n`;
+  }
+
+  if (stock.marketCap !== undefined && stock.marketCap !== null) {
+    const marketCapStr = formatMarketCap(stock.marketCap);
+    formattedText += `    - Market Cap: ${marketCapStr}\n`;
+  }
+
+  // Format industry and sector if available
+  if (stock.industry !== undefined && stock.industry !== null) {
+    formattedText += `    - Industry: ${stock.industry}\n`;
+  }
+
+  if (stock.sector !== undefined && stock.sector !== null) {
+    formattedText += `    - Sector: ${stock.sector}\n`;
+  }
+  
+  // Format other metrics
+  const metrics = [
+    { name: "PEG Ratio", value: stock.pegRatio },
+    { name: "Forward P/E", value: stock.forwardPE },
+    { name: "Price/Book", value: stock.priceToBook },
+    { name: "Price/Sales", value: stock.priceToSales },
+    { name: "Debt/Equity", value: stock.debtToEquity },
+    { name: "Return on Equity", value: stock.returnOnEquity, suffix: "%" },
+    { name: "Return on Assets", value: stock.returnOnAssets, suffix: "%" },
+    { name: "Profit Margin", value: stock.profitMargin, suffix: "%" },
+    { name: "Dividend Yield", value: stock.dividendYield, suffix: "%" },
+    { name: "Beta", value: stock.beta }
   ];
   
-  // Helper functions for formatting
-  function formatMarketCap(marketCap) {
-    if (!marketCap) return "N/A";
-    if (marketCap >= 1e12) return "$" + (marketCap / 1e12).toFixed(2) + "T";
-    if (marketCap >= 1e9) return "$" + (marketCap / 1e9).toFixed(2) + "B";
-    if (marketCap >= 1e6) return "$" + (marketCap / 1e6).toFixed(2) + "M";
-    return "$" + marketCap.toFixed(2);
-  }
-  
-  function formatVolume(volume) {
-    if (!volume) return "N/A";
-    if (volume >= 1e9) return (volume / 1e9).toFixed(2) + "B";
-    if (volume >= 1e6) return (volume / 1e6).toFixed(2) + "M";
-    if (volume >= 1e3) return (volume / 1e3).toFixed(2) + "K";
-    return volume.toString();
-  }
-  
-  function formatValue(value, fixedDecimals = false, decimals = 2) {
-    if (value === undefined || value === null) {
+  metrics.forEach(metric => {
+    if (metric.value !== undefined && metric.value !== null) {
+      const formattedValue = formatValue(metric.value);
+      const suffix = metric.suffix || "";
+      formattedText += `    - ${metric.name}: ${formattedValue}${suffix}\n`;
+    }
+  });
+
+  return formattedText;
+}
+
+/**
+ * Helper function to format values for display
+ * @param {number} value - The value to format
+ * @param {boolean} fixedDecimals - Whether to use a fixed number of decimals
+ * @param {number} decimals - Number of decimals to use if fixedDecimals is true
+ * @return {string} The formatted value
+ */
+function formatValue(value, fixedDecimals = false, decimals = 2) {
+  if (value === undefined || value === null || isNaN(value) || typeof value !== 'number') {
+    // Try to convert to number if it's a string
+    if (typeof value === 'string') {
+      const parsedValue = parseFloat(value);
+      if (!isNaN(parsedValue)) {
+        value = parsedValue;
+      } else {
+        return "N/A";
+      }
+    } else {
       return "N/A";
     }
-    
-    if (isNaN(value)) {
-      return value.toString();
-    }
-    
-    if (fixedDecimals) {
-      return parseFloat(value).toFixed(decimals);
-    }
-    
-    return parseFloat(value).toString();
   }
   
-  // Format the output
-  let output = "## Stock Data for Debugging\n\n";
+  if (fixedDecimals) {
+    return value.toFixed(decimals);
+  }
   
-  // Major Indices
-  output += "### Major Indices\n";
-  ["SPY", "QQQ", "IWM", "DIA"].forEach(symbol => {
-    // Create sample data for each symbol
-    const sampleData = {
-      symbol: symbol,
-      // Use sample data directly
-      price: symbol === "SPY" ? 480.75 : 
-             symbol === "QQQ" ? 430.45 : 
-             symbol === "IWM" ? 205.30 : 
-             symbol === "DIA" ? 385.20 : 0,
-      priceChange: symbol === "SPY" ? 1.62 : 
-                  symbol === "QQQ" ? 2.15 : 
-                  symbol === "IWM" ? -0.75 : 
-                  symbol === "DIA" ? 0.95 : 0,
-      changesPercentage: symbol === "SPY" ? 0.34 : 
-                        symbol === "QQQ" ? 0.50 : 
-                        symbol === "IWM" ? -0.36 : 
-                        symbol === "DIA" ? 0.25 : 0,
-      pegRatio: null,
-      forwardPE: symbol === "SPY" ? 20.1 : 
-                symbol === "QQQ" ? 25.6 : 
-                symbol === "IWM" ? 18.9 : 
-                symbol === "DIA" ? 19.5 : 0,
-      priceToBook: symbol === "SPY" ? 4.2 : 
-                  symbol === "QQQ" ? 6.8 : 
-                  symbol === "IWM" ? 2.2 : 
-                  symbol === "DIA" ? 4.0 : 0,
-      priceToSales: symbol === "SPY" ? 2.8 : 
-                   symbol === "QQQ" ? 4.5 : 
-                   symbol === "IWM" ? 1.4 : 
-                   symbol === "DIA" ? 2.5 : 0,
-      debtToEquity: null,
-      returnOnEquity: null,
-      beta: symbol === "SPY" ? 1.0 : 
-           symbol === "QQQ" ? 1.2 : 
-           symbol === "IWM" ? 1.3 : 
-           symbol === "DIA" ? 0.9 : 0,
-      marketCap: null, // ETF doesn't have market cap
-      volume: symbol === "SPY" ? 75000000 : 
-             symbol === "QQQ" ? 45000000 : 
-             symbol === "IWM" ? 25000000 : 
-             symbol === "DIA" ? 3500000 : 0,
-      industry: "Index ETF",
-      sector: "Financial Services",
-      company: symbol === "SPY" ? "SPDR S&P 500 ETF Trust" : 
-              symbol === "QQQ" ? "Invesco QQQ Trust" : 
-              symbol === "IWM" ? "iShares Russell 2000 ETF" : 
-              symbol === "DIA" ? "SPDR Dow Jones Industrial Average ETF" : ""
-    };
+  return value.toString();
+}
+
+/**
+ * Helper function to format market cap values
+ * @param {number} marketCap - The market cap value to format
+ * @return {string} The formatted market cap value
+ */
+function formatMarketCap(marketCap) {
+  if (!marketCap || isNaN(marketCap)) return "N/A";
+  if (marketCap >= 1e12) return "$" + (marketCap / 1e12).toFixed(2) + "T";
+  if (marketCap >= 1e9) return "$" + (marketCap / 1e9).toFixed(2) + "B";
+  if (marketCap >= 1e6) return "$" + (marketCap / 1e6).toFixed(2) + "M";
+  return "$" + marketCap.toFixed(2);
+}
+
+/**
+ * Helper function to format volume values
+ * @param {number} volume - The volume value to format
+ * @return {string} The formatted volume value
+ */
+function formatVolume(volume) {
+  if (!volume || isNaN(volume)) return "N/A";
+  if (volume >= 1e9) return (volume / 1e9).toFixed(2) + "B";
+  if (volume >= 1e6) return (volume / 1e6).toFixed(2) + "M";
+  if (volume >= 1e3) return (volume / 1e3).toFixed(2) + "K";
+  return volume.toString();
+}
+
+/**
+ * Helper function to format price data
+ * @param {Object} stock - The stock object containing price data
+ * @return {string} The formatted price string
+ */
+function formatPriceData(stock) {
+  if (!stock.price && stock.price !== 0) return "N/A";
+  
+  let priceStr = "$" + Number(stock.price).toFixed(2);
+  if (stock.priceChange !== undefined && !isNaN(stock.priceChange)) {
+    priceStr += ` (${stock.priceChange >= 0 ? '+' : ''}${Number(stock.priceChange).toFixed(2)}`;
+    if (stock.percentChange !== undefined && !isNaN(stock.percentChange)) {
+      priceStr += `, ${stock.percentChange >= 0 ? '+' : ''}${Number(stock.percentChange).toFixed(2)}%`;
+    }
+    priceStr += ")";
+  }
+  return priceStr;
+}
+
+/**
+ * Retrieves all data needed for trading analysis
+ * This includes market sentiment, key market indicators, fundamental metrics, and macroeconomic factors
+ * @return {Object} All data needed for trading analysis
+ */
+function retrieveAllData() {
+  try {
+    Logger.log("Retrieving all data for trading analysis...");
     
-    // Format the stock data
-    output += `* ${symbol} (${sampleData.company}): $${formatValue(sampleData.price, true)} (${sampleData.priceChange >= 0 ? '+' : ''}${formatValue(sampleData.priceChange, true)}, ${sampleData.changesPercentage >= 0 ? '+' : ''}${formatValue(sampleData.changesPercentage, true)}%)\n`;
-    output += `  * Sector: ${sampleData.sector}\n`;
-    output += `  * Industry: ${sampleData.industry}\n`;
+    // Get the current date
+    const currentDate = new Date();
     
-    // Add market cap if available
-    if (sampleData.marketCap) {
-      const formattedMarketCap = formatMarketCap(sampleData.marketCap);
-      output += `  * Market Cap: ${formattedMarketCap}\n`;
+    // Step 1: Retrieve market sentiment data
+    Logger.log("Step 1: Retrieving market sentiment data...");
+    const marketSentiment = retrieveMarketSentiment();
+    
+    // Extract any stock symbols mentioned in the market sentiment data
+    let mentionedStocks = [];
+    if (marketSentiment && marketSentiment.success && marketSentiment.data && marketSentiment.data.analysts) {
+      // Extract stock symbols from analyst comments
+      marketSentiment.data.analysts.forEach(analyst => {
+        if (analyst.mentionedStocks && Array.isArray(analyst.mentionedStocks)) {
+          mentionedStocks = mentionedStocks.concat(analyst.mentionedStocks);
+        } else if (analyst.mentionedSymbols && Array.isArray(analyst.mentionedSymbols)) {
+          // For backward compatibility
+          mentionedStocks = mentionedStocks.concat(analyst.mentionedSymbols);
+        }
+      });
+      
+      // Remove duplicates
+      mentionedStocks = [...new Set(mentionedStocks)];
+      Logger.log(`Found ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.join(', ')}`);
     }
     
-    // Add volume
-    const formattedVolume = formatVolume(sampleData.volume);
-    output += `  * Volume: ${formattedVolume}\n`;
+    // Step 2: Retrieve key market indicators
+    Logger.log("Step 2: Retrieving key market indicators...");
+    const keyMarketIndicators = retrieveKeyMarketIndicators();
     
-    // Add metrics
-    if (sampleData.pegRatio !== null) output += `  * PEG Ratio: ${formatValue(sampleData.pegRatio)}\n`;
-    if (sampleData.forwardPE !== null) output += `  * Forward P/E: ${formatValue(sampleData.forwardPE)}\n`;
-    if (sampleData.priceToBook !== null) output += `  * Price/Book: ${formatValue(sampleData.priceToBook)}\n`;
-    if (sampleData.priceToSales !== null) output += `  * Price/Sales: ${formatValue(sampleData.priceToSales)}\n`;
-    if (sampleData.debtToEquity !== null) output += `  * Debt/Equity: ${formatValue(sampleData.debtToEquity)}\n`;
-    if (sampleData.returnOnEquity !== null) output += `  * Return on Equity: ${formatValue(sampleData.returnOnEquity)}%\n`;
-    if (sampleData.beta !== null) output += `  * Beta: ${formatValue(sampleData.beta)}\n`;
+    // Step 3: Retrieve fundamental metrics for mentioned stocks and default symbols
+    // Always include the Magnificent Seven and major indices
+    const defaultSymbols = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
+    const allSymbols = [...new Set([...mentionedStocks, ...defaultSymbols])];
     
-    output += "\n";
-  });
-  
-  // Magnificent Seven
-  output += "### Magnificent Seven\n";
-  ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].forEach(symbol => {
-    // Create sample data for each symbol
-    const sampleData = {
-      symbol: symbol,
-      price: symbol === "AAPL" ? 175.50 : 
-             symbol === "MSFT" ? 410.30 : 
-             symbol === "GOOGL" ? 142.75 : 
-             symbol === "AMZN" ? 178.25 : 
-             symbol === "META" ? 485.60 : 
-             symbol === "TSLA" ? 175.30 : 
-             symbol === "NVDA" ? 820.75 : 0,
-      priceChange: symbol === "AAPL" ? 0.85 : 
-                  symbol === "MSFT" ? 2.15 : 
-                  symbol === "GOOGL" ? 0.65 : 
-                  symbol === "AMZN" ? 1.20 : 
-                  symbol === "META" ? 3.25 : 
-                  symbol === "TSLA" ? -2.15 : 
-                  symbol === "NVDA" ? 15.30 : 0,
-      changesPercentage: symbol === "AAPL" ? 0.49 : 
-                        symbol === "MSFT" ? 0.53 : 
-                        symbol === "GOOGL" ? 0.46 : 
-                        symbol === "AMZN" ? 0.68 : 
-                        symbol === "META" ? 0.67 : 
-                        symbol === "TSLA" ? -1.21 : 
-                        symbol === "NVDA" ? 1.90 : 0,
-      pegRatio: symbol === "AAPL" ? 2.8 : 
-               symbol === "MSFT" ? 2.2 : 
-               symbol === "GOOGL" ? 1.5 : 
-               symbol === "AMZN" ? 1.8 : 
-               symbol === "META" ? 1.1 : 
-               symbol === "TSLA" ? 5.8 : 
-               symbol === "NVDA" ? 0.9 : 0,
-      forwardPE: symbol === "AAPL" ? 28.5 : 
-                symbol === "MSFT" ? 32.1 : 
-                symbol === "GOOGL" ? 21.8 : 
-                symbol === "AMZN" ? 42.5 : 
-                symbol === "META" ? 23.5 : 
-                symbol === "TSLA" ? 62.3 : 
-                symbol === "NVDA" ? 32.8 : 0,
-      priceToBook: symbol === "AAPL" ? 35.2 : 
-                  symbol === "MSFT" ? 12.8 : 
-                  symbol === "GOOGL" ? 6.1 : 
-                  symbol === "AMZN" ? 8.9 : 
-                  symbol === "META" ? 6.8 : 
-                  symbol === "TSLA" ? 12.5 : 
-                  symbol === "NVDA" ? 38.5 : 0,
-      priceToSales: symbol === "AAPL" ? 7.5 : 
-                   symbol === "MSFT" ? 12.2 : 
-                   symbol === "GOOGL" ? 5.8 : 
-                   symbol === "AMZN" ? 2.7 : 
-                   symbol === "META" ? 7.2 : 
-                   symbol === "TSLA" ? 8.1 : 
-                   symbol === "NVDA" ? 25.6 : 0,
-      debtToEquity: symbol === "AAPL" ? 1.5 : 
-                   symbol === "MSFT" ? 0.4 : 
-                   symbol === "GOOGL" ? 0.1 : 
-                   symbol === "AMZN" ? 0.6 : 
-                   symbol === "META" ? 0.3 : 
-                   symbol === "TSLA" ? 0.2 : 
-                   symbol === "NVDA" ? 0.4 : 0,
-      returnOnEquity: symbol === "AAPL" ? 160.0 : 
-                     symbol === "MSFT" ? 42.5 : 
-                     symbol === "GOOGL" ? 28.5 : 
-                     symbol === "AMZN" ? 18.2 : 
-                     symbol === "META" ? 25.6 : 
-                     symbol === "TSLA" ? 15.8 : 
-                     symbol === "NVDA" ? 62.5 : 0,
-      beta: symbol === "AAPL" ? 1.3 : 
-           symbol === "MSFT" ? 0.9 : 
-           symbol === "GOOGL" ? 1.1 : 
-           symbol === "AMZN" ? 1.2 : 
-           symbol === "META" ? 1.4 : 
-           symbol === "TSLA" ? 2.0 : 
-           symbol === "NVDA" ? 1.7 : 0,
-      marketCap: symbol === "AAPL" ? 2750000000000 : 
-                symbol === "MSFT" ? 3050000000000 : 
-                symbol === "GOOGL" ? 1800000000000 : 
-                symbol === "AMZN" ? 1850000000000 : 
-                symbol === "META" ? 1250000000000 : 
-                symbol === "TSLA" ? 550000000000 : 
-                symbol === "NVDA" ? 2020000000000 : 0,
-      volume: symbol === "AAPL" ? 65000000 : 
-             symbol === "MSFT" ? 25000000 : 
-             symbol === "GOOGL" ? 30000000 : 
-             symbol === "AMZN" ? 35000000 : 
-             symbol === "META" ? 20000000 : 
-             symbol === "TSLA" ? 125000000 : 
-             symbol === "NVDA" ? 45000000 : 0,
-      industry: symbol === "AAPL" ? "Consumer Electronics" : 
-               symbol === "MSFT" ? "Software—Infrastructure" : 
-               symbol === "GOOGL" ? "Internet Content & Information" : 
-               symbol === "AMZN" ? "Internet Retail" : 
-               symbol === "META" ? "Internet Content & Information" : 
-               symbol === "TSLA" ? "Auto Manufacturers" : 
-               symbol === "NVDA" ? "Semiconductors" : "",
-      sector: symbol === "AAPL" ? "Technology" : 
-             symbol === "MSFT" ? "Technology" : 
-             symbol === "GOOGL" ? "Communication Services" : 
-             symbol === "AMZN" ? "Consumer Cyclical" : 
-             symbol === "META" ? "Communication Services" : 
-             symbol === "TSLA" ? "Consumer Cyclical" : 
-             symbol === "NVDA" ? "Technology" : "",
-      company: symbol === "AAPL" ? "Apple Inc." : 
-              symbol === "MSFT" ? "Microsoft Corporation" : 
-              symbol === "GOOGL" ? "Alphabet Inc." : 
-              symbol === "AMZN" ? "Amazon.com, Inc." : 
-              symbol === "META" ? "Meta Platforms, Inc." : 
-              symbol === "TSLA" ? "Tesla, Inc." : 
-              symbol === "NVDA" ? "NVIDIA Corporation" : ""
+    Logger.log(`Step 3: Retrieving fundamental metrics for ${allSymbols.length} symbols...`);
+    const fundamentalMetrics = retrieveFundamentalMetrics(allSymbols, mentionedStocks);
+    
+    // Ensure the fundamental metrics data is properly structured
+    const processedMetrics = {
+      success: fundamentalMetrics.success,
+      message: fundamentalMetrics.message,
+      data: fundamentalMetrics.data || [],
+      timestamp: new Date(),
+      fromCache: fundamentalMetrics.fromCache,
+      executionTime: fundamentalMetrics.executionTime || 0,
+      cachePerformance: {
+        hits: fundamentalMetrics.cacheHits || 0,
+        misses: fundamentalMetrics.cacheMisses || 0,
+        hitRate: fundamentalMetrics.cacheHits > 0 ? ((fundamentalMetrics.cacheHits / (fundamentalMetrics.cacheHits + fundamentalMetrics.cacheMisses)) * 100).toFixed(1) + '%' : '0%'
+      }
     };
     
-    // Format the stock data
-    output += `* ${symbol} (${sampleData.company}): $${formatValue(sampleData.price, true)} (${sampleData.priceChange >= 0 ? '+' : ''}${formatValue(sampleData.priceChange, true)}, ${sampleData.changesPercentage >= 0 ? '+' : ''}${formatValue(sampleData.changesPercentage, true)}%)\n`;
-    output += `  * Sector: ${sampleData.sector}\n`;
-    output += `  * Industry: ${sampleData.industry}\n`;
+    // Step 4: Retrieve macroeconomic factors
+    Logger.log("Step 4: Retrieving macroeconomic factors...");
+    const macroeconomicFactors = retrieveMacroeconomicFactors();
     
-    // Add market cap
-    const formattedMarketCap = formatMarketCap(sampleData.marketCap);
-    output += `  * Market Cap: ${formattedMarketCap}\n`;
-    
-    // Add volume
-    const formattedVolume = formatVolume(sampleData.volume);
-    output += `  * Volume: ${formattedVolume}\n`;
-    
-    // Add metrics
-    if (sampleData.pegRatio !== null) output += `  * PEG Ratio: ${formatValue(sampleData.pegRatio)}\n`;
-    if (sampleData.forwardPE !== null) output += `  * Forward P/E: ${formatValue(sampleData.forwardPE)}\n`;
-    if (sampleData.priceToBook !== null) output += `  * Price/Book: ${formatValue(sampleData.priceToBook)}\n`;
-    if (sampleData.priceToSales !== null) output += `  * Price/Sales: ${formatValue(sampleData.priceToSales)}\n`;
-    if (sampleData.debtToEquity !== null) output += `  * Debt/Equity: ${formatValue(sampleData.debtToEquity)}\n`;
-    if (sampleData.returnOnEquity !== null) output += `  * Return on Equity: ${formatValue(sampleData.returnOnEquity)}%\n`;
-    if (sampleData.beta !== null) output += `  * Beta: ${formatValue(sampleData.beta)}\n`;
-    
-    output += "\n";
-  });
-  
-  // Other stocks - just a few examples
-  output += "### Other Stocks\n";
-  ["XOM", "CVX", "BA", "CAT", "PG"].forEach(symbol => {
-    // Create sample data for each symbol
-    const sampleData = {
-      symbol: symbol,
-      price: symbol === "XOM" ? 115.25 : 
-             symbol === "CVX" ? 155.80 : 
-             symbol === "BA" ? 185.45 : 
-             symbol === "CAT" ? 345.20 : 
-             symbol === "PG" ? 165.30 : 0,
-      priceChange: symbol === "XOM" ? -0.45 : 
-                  symbol === "CVX" ? 0.35 : 
-                  symbol === "BA" ? -1.25 : 
-                  symbol === "CAT" ? 2.15 : 
-                  symbol === "PG" ? 0.45 : 0,
-      changesPercentage: symbol === "XOM" ? -0.39 : 
-                        symbol === "CVX" ? 0.23 : 
-                        symbol === "BA" ? -0.67 : 
-                        symbol === "CAT" ? 0.63 : 
-                        symbol === "PG" ? 0.27 : 0,
-      pegRatio: symbol === "XOM" ? 1.2 : 
-               symbol === "CVX" ? 1.4 : 
-               symbol === "BA" ? null : 
-               symbol === "CAT" ? 1.8 : 
-               symbol === "PG" ? 3.2 : 0,
-      forwardPE: symbol === "XOM" ? 12.5 : 
-                symbol === "CVX" ? 13.2 : 
-                symbol === "BA" ? 42.5 : 
-                symbol === "CAT" ? 16.8 : 
-                symbol === "PG" ? 24.5 : 0,
-      priceToBook: symbol === "XOM" ? 2.1 : 
-                  symbol === "CVX" ? 1.9 : 
-                  symbol === "BA" ? 12.8 : 
-                  symbol === "CAT" ? 8.2 : 
-                  symbol === "PG" ? 7.8 : 0,
-      priceToSales: symbol === "XOM" ? 1.2 : 
-                   symbol === "CVX" ? 1.4 : 
-                   symbol === "BA" ? 1.8 : 
-                   symbol === "CAT" ? 2.3 : 
-                   symbol === "PG" ? 4.8 : 0,
-      debtToEquity: symbol === "XOM" ? 0.3 : 
-                   symbol === "CVX" ? 0.2 : 
-                   symbol === "BA" ? 5.2 : 
-                   symbol === "CAT" ? 1.8 : 
-                   symbol === "PG" ? 0.5 : 0,
-      returnOnEquity: symbol === "XOM" ? 28.5 : 
-                     symbol === "CVX" ? 22.1 : 
-                     symbol === "BA" ? -45.2 : 
-                     symbol === "CAT" ? 42.5 : 
-                     symbol === "PG" ? 28.5 : 0,
-      beta: symbol === "XOM" ? 1.1 : 
-           symbol === "CVX" ? 1.0 : 
-           symbol === "BA" ? 1.5 : 
-           symbol === "CAT" ? 1.1 : 
-           symbol === "PG" ? 0.4 : 0,
-      marketCap: symbol === "XOM" ? 460000000000 : 
-                symbol === "CVX" ? 290000000000 : 
-                symbol === "BA" ? 112000000000 : 
-                symbol === "CAT" ? 168000000000 : 
-                symbol === "PG" ? 390000000000 : 0,
-      volume: symbol === "XOM" ? 15000000 : 
-             symbol === "CVX" ? 8000000 : 
-             symbol === "BA" ? 7500000 : 
-             symbol === "CAT" ? 3000000 : 
-             symbol === "PG" ? 6000000 : 0,
-      industry: symbol === "XOM" ? "Oil & Gas Integrated" : 
-               symbol === "CVX" ? "Oil & Gas Integrated" : 
-               symbol === "BA" ? "Aerospace & Defense" : 
-               symbol === "CAT" ? "Farm & Heavy Construction Machinery" : 
-               symbol === "PG" ? "Household & Personal Products" : "",
-      sector: symbol === "XOM" ? "Energy" : 
-             symbol === "CVX" ? "Energy" : 
-             symbol === "BA" ? "Industrials" : 
-             symbol === "CAT" ? "Industrials" : 
-             symbol === "PG" ? "Consumer Defensive" : "",
-      company: symbol === "XOM" ? "Exxon Mobil Corporation" : 
-              symbol === "CVX" ? "Chevron Corporation" : 
-              symbol === "BA" ? "The Boeing Company" : 
-              symbol === "CAT" ? "Caterpillar Inc." : 
-              symbol === "PG" ? "The Procter & Gamble Company" : ""
+    // Compile all data
+    const allData = {
+      success: true,
+      marketSentiment: marketSentiment,
+      keyMarketIndicators: keyMarketIndicators,
+      fundamentalMetrics: processedMetrics,
+      macroeconomicFactors: macroeconomicFactors,
+      timestamp: currentDate
     };
     
-    // Format the stock data
-    output += `* ${symbol} (${sampleData.company}): $${formatValue(sampleData.price, true)} (${sampleData.priceChange >= 0 ? '+' : ''}${formatValue(sampleData.priceChange, true)}, ${sampleData.changesPercentage >= 0 ? '+' : ''}${formatValue(sampleData.changesPercentage, true)}%)\n`;
-    output += `  * Sector: ${sampleData.sector}\n`;
-    output += `  * Industry: ${sampleData.industry}\n`;
-    
-    // Add market cap
-    const formattedMarketCap = formatMarketCap(sampleData.marketCap);
-    output += `  * Market Cap: ${formattedMarketCap}\n`;
-    
-    // Add volume
-    const formattedVolume = formatVolume(sampleData.volume);
-    output += `  * Volume: ${formattedVolume}\n`;
-    
-    // Add metrics
-    if (sampleData.pegRatio !== null) output += `  * PEG Ratio: ${formatValue(sampleData.pegRatio)}\n`;
-    if (sampleData.forwardPE !== null) output += `  * Forward P/E: ${formatValue(sampleData.forwardPE)}\n`;
-    if (sampleData.priceToBook !== null) output += `  * Price/Book: ${formatValue(sampleData.priceToBook)}\n`;
-    if (sampleData.priceToSales !== null) output += `  * Price/Sales: ${formatValue(sampleData.priceToSales)}\n`;
-    if (sampleData.debtToEquity !== null) output += `  * Debt/Equity: ${formatValue(sampleData.debtToEquity)}\n`;
-    if (sampleData.returnOnEquity !== null) output += `  * Return on Equity: ${formatValue(sampleData.returnOnEquity)}%\n`;
-    if (sampleData.beta !== null) output += `  * Beta: ${formatValue(sampleData.beta)}\n`;
-    
-    output += "\n";
-  });
-  
-  // Log the output
-  Logger.log(output);
-  
-  return output;
+    Logger.log("All data retrieved successfully.");
+    return allData;
+  } catch (error) {
+    Logger.log(`Error retrieving all data: ${error}`);
+    return {
+      success: false,
+      error: true,
+      message: `Failed to retrieve all data: ${error}`,
+      timestamp: new Date()
+    };
+  }
 }

@@ -10,109 +10,125 @@ const CACHE_DURATION = 30;
  */
 function retrieveStockMetrics(symbol) {
   try {
-    // Check cache first
-    const cache = CacheService.getScriptCache();
-    const cachedData = cache.get(symbol);
+    // Validate symbol and handle deprecated symbols
+    if (symbol === 'FB') {
+      throw new Error('FB is no longer a valid symbol. Facebook/Meta Platforms is now represented by META.');
+    } else if (symbol === 'TWTR') {
+      throw new Error('TWTR is no longer a valid symbol. Twitter/X is now represented by X.');
+    }
+
+    Logger.log(`\n=== Data Retrieval for ${symbol} ===`);
     
+    // Check cache first (30-minute cache for stock metrics)
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKey = `STOCK_METRICS_${symbol}`;
+    
+    // Get cached data
+    const cachedData = scriptCache.get(cacheKey);
     if (cachedData) {
-      console.log(`Using cached data for ${symbol}`);
-      return JSON.parse(cachedData);
-    }
-
-    // Initialize metrics object
-    const metrics = {
-      symbol: symbol,
-      price: null,
-      priceChange: null,
-      changesPercentage: null,
-      volume: null,
-      marketCap: null,
-      company: null,
-      industry: null,
-      sector: null,
-      pegRatio: null,
-      forwardPE: null,
-      priceToBook: null,
-      priceToSales: null,
-      debtToEquity: null,
-      returnOnEquity: null,
-      returnOnAssets: null,
-      profitMargin: null,
-      beta: null,
-      dividendYield: null,
-      expenseRatio: null,
-      fiftyTwoWeekHigh: null,
-      fiftyTwoWeekLow: null,
-      dayHigh: null,
-      dayLow: null,
-      open: null,
-      close: null,
-      sources: [],
-      fromCache: false,
-      lastUpdated: new Date().toISOString()
-    };
-
-    console.log(`\n=== Data Retrieval for ${symbol} ===`);
-    console.log('Attempting Yahoo Finance API...');
-    const yahooMetrics = fetchYahooFinanceData(symbol);
-    if (yahooMetrics) {
-      console.log('Yahoo Finance API provided data:', Object.keys(yahooMetrics).join(', '));
-      updateMetrics(metrics, yahooMetrics, 'Yahoo Finance API');
-    } else {
-      console.log('No data from Yahoo Finance API');
-    }
-
-    console.log('Attempting Tradier API...');
-    const tradierMetrics = fetchTradierData(symbol);
-    if (tradierMetrics) {
-      console.log('Tradier API provided data:', Object.keys(tradierMetrics).join(', '));
-      updateMetrics(metrics, tradierMetrics, 'Tradier API');
-    } else {
-      console.log('No data from Tradier API');
-    }
-
-    console.log('Attempting Google Finance...');
-    const googleFinanceMetrics = fetchGoogleFinanceData(symbol);
-    if (googleFinanceMetrics) {
-      console.log('Google Finance provided data:', Object.keys(googleFinanceMetrics).join(', '));
-      updateMetrics(metrics, googleFinanceMetrics, 'Google Finance');
-    } else {
-      console.log('No data from Google Finance');
-    }
-
-    console.log('Attempting FMP API...');
-    const fmpMetrics = fetchFMPData(symbol);
-    if (fmpMetrics) {
-      console.log('FMP API provided data:', Object.keys(fmpMetrics).join(', '));
-      updateMetrics(metrics, fmpMetrics, 'FMP API');
-    } else {
-      console.log('No data from FMP API');
-    }
-
-    console.log('Attempting Yahoo Finance Web...');
-    const yahooWebMetrics = fetchYahooFinanceWebData(symbol);
-    if (yahooWebMetrics) {
-      console.log('Yahoo Finance Web provided data:', Object.keys(yahooWebMetrics).join(', '));
-      updateMetrics(metrics, yahooWebMetrics, 'Yahoo Finance Web');
-    } else {
-      console.log('No data from Yahoo Finance Web');
-    }
-
-    console.log('\nFinal metrics for', symbol, ':');
-    for (const [key, value] of Object.entries(metrics)) {
-      if (key !== 'sources' && key !== 'fromCache' && key !== 'lastUpdated') {
-        console.log(key, ':', value);
+      try {
+        const parsedData = JSON.parse(cachedData);
+        const cacheTime = new Date(parsedData.lastUpdated);
+        const currentTime = new Date();
+        const cacheAgeMinutes = (currentTime - cacheTime) / (1000 * 60);
+        
+        if (cacheAgeMinutes < CACHE_DURATION) {
+          Logger.log(`Using cached stock metrics for ${symbol} (less than ${CACHE_DURATION} minutes old)`);
+          return { ...parsedData, fromCache: true };
+        } else {
+          Logger.log(`Cached stock metrics for ${symbol} is more than ${CACHE_DURATION} minutes old`);
+        }
+      } catch (parseError) {
+        Logger.log(`Error parsing cached data for ${symbol}: ${parseError}`);
+        scriptCache.remove(cacheKey);
       }
     }
-
-    // Cache the results if we have valid data
-    if (Object.values(metrics).some(value => value !== null && value !== undefined)) {
-      cache.put(symbol, JSON.stringify(metrics), CACHE_DURATION);
+    
+    // Track execution time
+    const startTime = new Date().getTime();
+    
+    // First try Yahoo Finance API
+    Logger.log('Attempting Yahoo Finance API...');
+    const yahooMetrics = fetchYahooFinanceData(symbol);
+    
+    let metrics;
+    
+    if (yahooMetrics && yahooMetrics.price) {
+      // Yahoo Finance provided all necessary data
+      Logger.log('Yahoo Finance API provided all necessary data');
+      metrics = yahooMetrics;
+    } else {
+      // If Yahoo Finance failed or didn't provide price, try other APIs
+      Logger.log('Yahoo Finance API failed or incomplete, trying other APIs...');
+      
+      metrics = {
+        symbol: symbol,
+        price: null,
+        priceChange: null,
+        changesPercentage: null,
+        volume: null,
+        marketCap: null,
+        company: null,
+        industry: null,
+        sector: null,
+        beta: null,
+        pegRatio: null,
+        forwardPE: null,
+        priceToBook: null,
+        priceToSales: null,
+        debtToEquity: null,
+        returnOnEquity: null,
+        returnOnAssets: null,
+        profitMargin: null,
+        dividendYield: null,
+        fiftyTwoWeekHigh: null,
+        fiftyTwoWeekLow: null,
+        dayHigh: null,
+        dayLow: null,
+        open: null,
+        close: null,
+        fiftyTwoWeekAverage: null,
+        dataSource: []
+      };
+      
+      // Try other APIs only if Yahoo Finance failed
+      const apis = [
+        { name: 'Tradier', fetch: fetchTradierData },
+        { name: 'Google Finance', fetch: fetchGoogleFinanceData },
+        { name: 'FMP', fetch: fetchFMPData },
+        { name: 'Yahoo Finance Web', fetch: fetchYahooFinanceWebData }
+      ];
+      
+      for (const { name, fetch } of apis) {
+        Logger.log(`Attempting ${name}...`);
+        const apiMetrics = fetch(symbol);
+        
+        if (apiMetrics) {
+          Logger.log(`${name} provided data: ${Object.keys(apiMetrics).join(', ')}`);
+          updateMetrics(metrics, apiMetrics, name);
+          
+          // If we have all required data, break early
+          if (metrics.price && metrics.marketCap && metrics.volume) {
+            break;
+          }
+        }
+      }
     }
-
-    return metrics;
+    
+    // Cache the data for 30 minutes
+    const cacheData = {
+      ...metrics,
+      lastUpdated: new Date().toISOString()
+    };
+    scriptCache.put(cacheKey, JSON.stringify(cacheData), CACHE_DURATION * 60); // Convert minutes to seconds
+    
+    const executionTime = (new Date().getTime() - startTime) / 1000;
+    Logger.log(`Retrieved stock metrics for ${symbol} in ${executionTime} seconds`);
+    
+    return { ...metrics, fromCache: false };
+    
   } catch (error) {
-    console.error('Error in retrieveStockMetrics:', error);
+    Logger.log(`Error in retrieveStockMetrics: ${error}`);
     throw error;
   }
 }
@@ -128,6 +144,12 @@ function updateMetrics(metrics, newData, source) {
     metrics.sources = [];
   }
   
+  // Special handling for market cap from Google Finance
+  if (source === 'Google Finance' && newData.marketCap !== null && newData.marketCap !== undefined) {
+    metrics.marketCap = newData.marketCap;
+  }
+  
+  // Update other metrics
   for (const [key, value] of Object.entries(newData)) {
     if (value !== null && value !== undefined && metrics[key] === null) {
       metrics[key] = value;
@@ -630,197 +652,308 @@ function extractMetric(htmlContent, match) {
 }
 
 /**
- * Fetches data from Yahoo Finance for a specific symbol
+ * Fetches price data from Yahoo Finance for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Price data
+ */
+function fetchYahooPriceData(symbol) {
+  try {
+    const yahooFinanceKey = getYahooFinanceApiKey();
+    if (!yahooFinanceKey) {
+      Logger.log('Yahoo Finance API key not configured');
+      return null;
+    }
+    
+    const url = `https://yahu-finance2.p.rapidapi.com/price/${symbol.toLowerCase()}`;
+    const options = {
+      method: "GET",
+      headers: {
+        "X-RapidAPI-Key": yahooFinanceKey,
+        "X-RapidAPI-Host": "yahu-finance2.p.rapidapi.com"
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(url, options);
+    const statusCode = response.getResponseCode();
+    const responseText = response.getContentText();
+    
+    if (statusCode === 200) {
+      const data = JSON.parse(responseText);
+      Logger.log(`Price data received: ${JSON.stringify(data).substring(0, 200)}...`);
+      
+      return {
+        price: extractYahooValue(data, 'regularMarketPrice'),
+        fiftyTwoWeekAverage: extractYahooValue(data, 'fiftyTwoWeekAverage'),
+        dayHigh: extractYahooValue(data, 'regularMarketDayHigh'),
+        dayLow: extractYahooValue(data, 'regularMarketDayLow'),
+        open: extractYahooValue(data, 'regularMarketOpen'),
+        close: extractYahooValue(data, 'regularMarketPreviousClose'),
+        volume: extractYahooValue(data, 'regularMarketVolume')
+      };
+    }
+    
+    Logger.log(`Yahoo Price API request failed with status: ${statusCode}`);
+    return null;
+  } catch (error) {
+    Logger.log(`Error fetching Yahoo price data for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches key statistics from Yahoo Finance for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Key statistics data
+ */
+function fetchYahooKeyStatistics(symbol) {
+  try {
+    const yahooFinanceKey = getYahooFinanceApiKey();
+    if (!yahooFinanceKey) {
+      Logger.log('Yahoo Finance API key not configured');
+      return null;
+    }
+    
+    const url = `https://yahu-finance2.p.rapidapi.com/key-statistics/${symbol.toLowerCase()}`;
+    const options = {
+      method: "GET",
+      headers: {
+        "X-RapidAPI-Key": yahooFinanceKey,
+        "X-RapidAPI-Host": "yahu-finance2.p.rapidapi.com"
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(url, options);
+    const statusCode = response.getResponseCode();
+    const responseText = response.getContentText();
+    
+    if (statusCode === 200) {
+      const data = JSON.parse(responseText);
+      Logger.log(`Key statistics data received: ${JSON.stringify(data).substring(0, 200)}...`);
+      
+      return {
+        marketCap: extractYahooValue(data, 'marketCap'),
+        company: data.shortName || data.longName,
+        industry: data.industry,
+        sector: data.sector,
+        beta: extractYahooValue(data, 'beta'),
+        pegRatio: extractYahooValue(data, 'pegRatio'),
+        forwardPE: extractYahooValue(data, 'forwardPE'),
+        priceToBook: extractYahooValue(data, 'priceToBook'),
+        priceToSales: extractYahooValue(data, 'priceToSales'),
+        debtToEquity: extractYahooValue(data, 'debtToEquity'),
+        returnOnEquity: extractYahooValue(data, 'returnOnEquity'),
+        returnOnAssets: extractYahooValue(data, 'returnOnAssets'),
+        profitMargin: extractYahooValue(data, 'profitMargin'),
+        dividendYield: extractYahooValue(data, 'dividendYield'),
+        fiftyTwoWeekHigh: extractYahooValue(data, 'fiftyTwoWeekHigh'),
+        fiftyTwoWeekLow: extractYahooValue(data, 'fiftyTwoWeekLow'),
+        currentPrice: extractYahooValue(data, 'currentPrice'),
+        previousClose: extractYahooValue(data, 'previousClose')
+      };
+    }
+    
+    Logger.log(`Yahoo Key Statistics API request failed with status: ${statusCode}`);
+    return null;
+  } catch (error) {
+    Logger.log(`Error fetching Yahoo key statistics for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches search data from Yahoo Finance for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Search data
+ */
+function fetchYahooSearchData(symbol) {
+  try {
+    const yahooFinanceKey = getYahooFinanceApiKey();
+    if (!yahooFinanceKey) {
+      Logger.log('Yahoo Finance API key not configured');
+      return null;
+    }
+    
+    const url = `https://yahu-finance2.p.rapidapi.com/search/${symbol.toLowerCase()}`;
+    const options = {
+      method: "GET",
+      headers: {
+        "X-RapidAPI-Key": yahooFinanceKey,
+        "X-RapidAPI-Host": "yahu-finance2.p.rapidapi.com"
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(url, options);
+    const statusCode = response.getResponseCode();
+    const responseText = response.getContentText();
+    
+    if (statusCode === 200) {
+      const data = JSON.parse(responseText);
+      Logger.log(`Search data received: ${JSON.stringify(data).substring(0, 200)}...`);
+      
+      // Extract the first result if it's an array
+      if (Array.isArray(data.quotes) && data.quotes.length > 0) {
+        const firstResult = data.quotes[0];
+        return {
+          company: firstResult.longname || firstResult.shortname,
+          industry: firstResult.industry,
+          sector: firstResult.sector
+        };
+      }
+      
+      return {
+        company: data.longname || data.shortname,
+        industry: data.industry,
+        sector: data.sector
+      };
+    }
+    
+    Logger.log(`Yahoo Search API request failed with status: ${statusCode}`);
+    return null;
+  } catch (error) {
+    Logger.log(`Error fetching Yahoo search data for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Safely extracts a value from a potentially nested object with raw property
+ * @param {Object} data - The data object
+ * @param {String} key - The key to extract
+ * @return {any} The extracted value
+ */
+function extractYahooValue(data, key) {
+  if (!data || !data[key]) return null;
+  
+  // If the value is an object with a raw property, extract the raw value
+  if (data[key] && typeof data[key] === 'object' && 'raw' in data[key]) {
+    return data[key].raw;
+  }
+  
+  // Otherwise return the value directly
+  return data[key];
+}
+
+/**
+ * Fetches comprehensive data from Yahoo Finance for a specific symbol
  * @param {String} symbol - The stock/ETF symbol
  * @return {Object} Yahoo Finance data
  */
 function fetchYahooFinanceData(symbol) {
   try {
-    console.log(`Fetching Yahoo Finance data for ${symbol}`);
+    Logger.log(`Fetching Yahoo Finance data for ${symbol}`);
     
-    // Get the API key from script properties
-    const yahooFinanceKey = getYahooFinanceApiKey();
-    
-    if (!yahooFinanceKey) {
-      console.error('Yahoo Finance API key not configured');
-      return null;
-    }
-    
-    const options = {
-      'method': 'GET',
-      'headers': {
-        'X-RapidAPI-Key': yahooFinanceKey,
-        'X-RapidAPI-Host': 'yahoo-finance127.p.rapidapi.com'
-      },
-      'muteHttpExceptions': true
+    // Initialize metrics object
+    const metrics = {
+      symbol: symbol,
+      price: null,
+      priceChange: null,
+      changesPercentage: null,
+      volume: null,
+      marketCap: null,
+      company: null,
+      industry: null,
+      sector: null,
+      beta: null,
+      pegRatio: null,
+      forwardPE: null,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: null,
+      fiftyTwoWeekHigh: null,
+      fiftyTwoWeekLow: null,
+      dayHigh: null,
+      dayLow: null,
+      open: null,
+      close: null,
+      fiftyTwoWeekAverage: null,
+      dataSource: ['Yahoo Finance API']
     };
     
-    // Make the API request
-    const url = `https://yahoo-finance127.p.rapidapi.com/finance-analytics/${symbol}`;
-    console.log(`Yahoo Finance API URL: ${url}`);
-    
-    const response = UrlFetchApp.fetch(url, options);
-    console.log(`Yahoo Finance API response code: ${response.getResponseCode()}`);
-    
-    if (response.getResponseCode() !== 200) {
-      console.error(`Error fetching Yahoo Finance API data for ${symbol}: ${response.getContentText()}`);
-      return null;
+    // Try key statistics endpoint first (most comprehensive)
+    const statsData = fetchYahooKeyStatistics(symbol);
+    if (statsData) {
+      Logger.log('Successfully retrieved key statistics data');
+      
+      // Update metrics with key statistics
+      metrics.marketCap = statsData.marketCap;
+      metrics.company = statsData.company;
+      metrics.industry = statsData.industry;
+      metrics.sector = statsData.sector;
+      metrics.beta = statsData.beta;
+      metrics.pegRatio = statsData.pegRatio;
+      metrics.forwardPE = statsData.forwardPE;
+      metrics.priceToBook = statsData.priceToBook;
+      metrics.priceToSales = statsData.priceToSales;
+      metrics.debtToEquity = statsData.debtToEquity;
+      metrics.returnOnEquity = statsData.returnOnEquity;
+      metrics.returnOnAssets = statsData.returnOnAssets;
+      metrics.profitMargin = statsData.profitMargin;
+      metrics.dividendYield = statsData.dividendYield;
+      metrics.fiftyTwoWeekHigh = statsData.fiftyTwoWeekHigh;
+      metrics.fiftyTwoWeekLow = statsData.fiftyTwoWeekLow;
+      metrics.price = statsData.currentPrice;
+      metrics.close = statsData.previousClose;
+      
+      // Calculate price change and percentage change
+      if (metrics.price && metrics.close) {
+        metrics.priceChange = metrics.price - metrics.close;
+        metrics.changesPercentage = ((metrics.price - metrics.close) / metrics.close) * 100;
+      }
     }
     
-    // Parse the response
-    const data = JSON.parse(response.getContentText());
-    console.log(`Yahoo Finance API response:`, JSON.stringify(data, null, 2));
+    // If we're missing price data, try price endpoint
+    if (!metrics.price || !metrics.volume) {
+      Logger.log('Missing price data, trying price endpoint');
+      const priceData = fetchYahooPriceData(symbol);
+      if (priceData) {
+        Logger.log('Successfully retrieved price data');
+        
+        // Only update if values are null
+        if (!metrics.price) metrics.price = priceData.price;
+        if (!metrics.volume) metrics.volume = priceData.volume;
+        if (!metrics.dayHigh) metrics.dayHigh = priceData.dayHigh;
+        if (!metrics.dayLow) metrics.dayLow = priceData.dayLow;
+        if (!metrics.open) metrics.open = priceData.open;
+        if (!metrics.close) metrics.close = priceData.close;
+        if (!metrics.fiftyTwoWeekAverage) metrics.fiftyTwoWeekAverage = priceData.fiftyTwoWeekAverage;
+        
+        // Recalculate price change if needed
+        if (metrics.price && metrics.close && !metrics.priceChange) {
+          metrics.priceChange = metrics.price - metrics.close;
+          metrics.changesPercentage = ((metrics.price - metrics.close) / metrics.close) * 100;
+        }
+      }
+    }
     
-    if (data && data.quoteSummary && data.quoteSummary.result && data.quoteSummary.result.length > 0) {
-      const result = data.quoteSummary.result[0];
-      
-      // Extract metrics
-      const metrics = {
-        symbol: symbol,
-        price: null,
-        priceChange: null,
-        changesPercentage: null,
-        volume: null,
-        marketCap: null,
-        company: null,
-        industry: null,
-        sector: null,
-        beta: null,
-        pegRatio: null,
-        forwardPE: null,
-        priceToBook: null,
-        priceToSales: null,
-        debtToEquity: null,
-        returnOnEquity: null,
-        returnOnAssets: null,
-        profitMargin: null,
-        dividendYield: null,
-        fiftyTwoWeekHigh: null,
-        fiftyTwoWeekLow: null,
-        dayHigh: null,
-        dayLow: null,
-        open: null,
-        close: null
-      };
-      
-      // Extract defaultKeyStatistics
-      if (result.defaultKeyStatistics) {
-        const keyStats = result.defaultKeyStatistics;
+    // If we're missing company data, try search endpoint
+    if (!metrics.company || !metrics.industry || !metrics.sector) {
+      Logger.log('Missing company data, trying search endpoint');
+      const searchData = fetchYahooSearchData(symbol);
+      if (searchData) {
+        Logger.log('Successfully retrieved search data');
         
-        if (keyStats.pegRatio && keyStats.pegRatio.raw) {
-          metrics.pegRatio = keyStats.pegRatio.raw;
-        }
-        
-        if (keyStats.forwardPE && keyStats.forwardPE.raw) {
-          metrics.forwardPE = keyStats.forwardPE.raw;
-        }
-        
-        if (keyStats.priceToBook && keyStats.priceToBook.raw) {
-          metrics.priceToBook = keyStats.priceToBook.raw;
-        }
-        
-        if (keyStats.beta && keyStats.beta.raw) {
-          metrics.beta = keyStats.beta.raw;
-        }
+        // Only update if values are null
+        if (!metrics.company) metrics.company = searchData.company;
+        if (!metrics.industry) metrics.industry = searchData.industry;
+        if (!metrics.sector) metrics.sector = searchData.sector;
       }
-      
-      // Extract financialData
-      if (result.financialData) {
-        const financialData = result.financialData;
-        
-        if (financialData.debtToEquity && financialData.debtToEquity.raw) {
-          metrics.debtToEquity = financialData.debtToEquity.raw;
-        }
-        
-        if (financialData.returnOnEquity && financialData.returnOnEquity.raw) {
-          metrics.returnOnEquity = financialData.returnOnEquity.raw;
-        }
-        
-        if (financialData.returnOnAssets && financialData.returnOnAssets.raw) {
-          metrics.returnOnAssets = financialData.returnOnAssets.raw;
-        }
-        
-        if (financialData.profitMargins && financialData.profitMargins.raw) {
-          metrics.profitMargin = financialData.profitMargins.raw;
-        }
-      }
-      
-      // Extract price data
-      if (result.price) {
-        const priceData = result.price;
-        
-        if (priceData.regularMarketPrice && priceData.regularMarketPrice.raw) {
-          metrics.price = priceData.regularMarketPrice.raw;
-        }
-        
-        if (priceData.regularMarketChange && priceData.regularMarketChange.raw) {
-          metrics.priceChange = priceData.regularMarketChange.raw;
-        }
-        
-        if (priceData.regularMarketChangePercent && priceData.regularMarketChangePercent.raw) {
-          metrics.changesPercentage = priceData.regularMarketChangePercent.raw;
-        }
-        
-        if (priceData.regularMarketVolume && priceData.regularMarketVolume.raw) {
-          metrics.volume = priceData.regularMarketVolume.raw;
-        }
-        
-        if (priceData.regularMarketPreviousClose && priceData.regularMarketPreviousClose.raw) {
-          metrics.close = priceData.regularMarketPreviousClose.raw;
-        }
-      }
-      
-      // Extract summary detail
-      if (result.summaryDetail) {
-        const summaryData = result.summaryDetail;
-        
-        if (summaryData.marketCap && summaryData.marketCap.raw) {
-          metrics.marketCap = summaryData.marketCap.raw;
-        }
-        
-        if (summaryData.fiftyTwoWeekHigh && summaryData.fiftyTwoWeekHigh.raw) {
-          metrics.fiftyTwoWeekHigh = summaryData.fiftyTwoWeekHigh.raw;
-        }
-        
-        if (summaryData.fiftyTwoWeekLow && summaryData.fiftyTwoWeekLow.raw) {
-          metrics.fiftyTwoWeekLow = summaryData.fiftyTwoWeekLow.raw;
-        }
-        
-        if (summaryData.dayHigh && summaryData.dayHigh.raw) {
-          metrics.dayHigh = summaryData.dayHigh.raw;
-        }
-        
-        if (summaryData.dayLow && summaryData.dayLow.raw) {
-          metrics.dayLow = summaryData.dayLow.raw;
-        }
-        
-        if (summaryData.open && summaryData.open.raw) {
-          metrics.open = summaryData.open.raw;
-        }
-        
-        if (summaryData.dividendYield && summaryData.dividendYield.raw) {
-          metrics.dividendYield = summaryData.dividendYield.raw;
-        }
-      }
-      
-      // Extract asset profile
-      if (result.assetProfile) {
-        const assetData = result.assetProfile;
-        
-        if (assetData.companyName) {
-          metrics.company = assetData.companyName;
-        }
-        
-        if (assetData.industry) {
-          metrics.industry = assetData.industry;
-        }
-        
-        if (assetData.sector) {
-          metrics.sector = assetData.sector;
-        }
-      }
-      
-      console.log(`Yahoo Finance API result data:`, {
+    }
+    
+    // Debug the final metrics
+    Logger.log(`Final Yahoo Finance metrics: price=${metrics.price}, company=${metrics.company}, volume=${metrics.volume}`);
+    
+    // Check if we have the essential data
+    const hasEssentialData = metrics.price !== null && metrics.company !== null;
+    
+    if (hasEssentialData) {
+      Logger.log(`Yahoo Finance API result data:`, {
         price: metrics.price,
         volume: metrics.volume,
         marketCap: metrics.marketCap,
@@ -831,111 +964,41 @@ function fetchYahooFinanceData(symbol) {
       
       return metrics;
     } else {
-      console.log('Yahoo Finance API response has no results:', data);
+      Logger.log(`Failed to retrieve essential data from Yahoo Finance API. Missing: ${!metrics.price ? 'price, ' : ''}${!metrics.company ? 'company' : ''}`);
+      return null;
     }
-    
-    return null;
   } catch (error) {
-    console.error(`Error fetching Yahoo Finance data for ${symbol}: ${error}`);
-    console.error(`Error details:`, error.stack);
+    Logger.log(`Error fetching Yahoo Finance data for ${symbol}: ${error}`);
     return null;
   }
 }
 
 /**
- * Display metrics in a readable format
- * @param {Object} metrics - Metrics object
- * @param {string} outputRange - Range to output to (e.g., 'A1')
+ * Formats numeric values with proper formatting
+ * @param {number|Object} value - Numeric value or object with raw value
+ * @param {string} metricType - Type of metric (e.g., 'beta')
+ * @return {string} Formatted value
  */
-function displayMetrics(metrics, outputRange = 'A1') {
-  try {
-    // Get the shared spreadsheet
-    const spreadsheet = getSharedFinanceSpreadsheet();
-    if (!spreadsheet) {
-      console.error('No shared finance spreadsheet found');
-      return;
-    }
-    
-    // Get the first sheet for output
-    const sheet = spreadsheet.getSheets()[0];
-    if (!sheet) {
-      console.error('No sheets found in spreadsheet');
-      return;
-    }
-
-    // Create formatted output
-    const output = [
-      ['=== Metrics for ' + (metrics.symbol || 'N/A') + ' ===', ''],
-      ['Execution Time:', metrics.executionTime ? metrics.executionTime.toFixed(2) + ' seconds' : 'N/A'],
-      ['Sources:', metrics.sources?.join(', ') || 'N/A'],
-      ['', ''],
-      ['Current Price:', ''],
-      ['Price:', metrics.price ? '$' + formatValue(metrics.price) : 'N/A'],
-      ['Change:', metrics.priceChange ? '$' + formatValue(metrics.priceChange) : 'N/A'],
-      ['Change %:', metrics.changesPercentage ? formatPercentage(metrics.changesPercentage) : 'N/A'],
-      ['', ''],
-      ['Daily Range:', ''],
-      ['Open:', metrics.open ? '$' + formatValue(metrics.open) : 'N/A'],
-      ['High:', metrics.dayHigh ? '$' + formatValue(metrics.dayHigh) : 'N/A'],
-      ['Low:', metrics.dayLow ? '$' + formatValue(metrics.dayLow) : 'N/A'],
-      ['Close:', metrics.close ? '$' + formatValue(metrics.close) : 'N/A'],
-      ['', ''],
-      ['52-Week Range:', ''],
-      ['52-Week High:', metrics.fiftyTwoWeekHigh ? '$' + formatValue(metrics.fiftyTwoWeekHigh) : 'N/A'],
-      ['52-Week Low:', metrics.fiftyTwoWeekLow ? '$' + formatValue(metrics.fiftyTwoWeekLow) : 'N/A'],
-      ['', ''],
-      ['Valuation Metrics:', ''],
-      ['PEG Ratio:', metrics.pegRatio ? formatValue(metrics.pegRatio) : 'N/A'],
-      ['Forward P/E:', metrics.forwardPE ? formatValue(metrics.forwardPE) : 'N/A'],
-      ['Price/Book:', metrics.priceToBook ? formatValue(metrics.priceToBook) : 'N/A'],
-      ['Price/Sales:', metrics.priceToSales ? formatValue(metrics.priceToSales) : 'N/A'],
-      ['Debt/Equity:', metrics.debtToEquity ? formatValue(metrics.debtToEquity) : 'N/A'],
-      ['', ''],
-      ['Performance Metrics:', ''],
-      ['Return on Equity:', metrics.returnOnEquity ? formatPercentage(metrics.returnOnEquity) : 'N/A'],
-      ['Return on Assets:', metrics.returnOnAssets ? formatPercentage(metrics.returnOnAssets) : 'N/A'],
-      ['Profit Margin:', metrics.profitMargin ? formatPercentage(metrics.profitMargin) : 'N/A'],
-      ['Beta:', metrics.beta ? formatValue(metrics.beta) : 'N/A'],
-      ['', ''],
-      ['Dividend & Expense:', ''],
-      ['Dividend Yield:', metrics.dividendYield ? formatPercentage(metrics.dividendYield) : 'N/A'],
-      ['Expense Ratio:', metrics.expenseRatio ? formatPercentage(metrics.expenseRatio) : 'N/A'],
-      ['', ''],
-      ['Company Info:', ''],
-      ['Company:', metrics.company || 'N/A'],
-      ['Industry:', metrics.industry || 'N/A'],
-      ['Sector:', metrics.sector || 'N/A'],
-      ['', ''],
-      ['Market Metrics:', ''],
-      ['Market Cap:', metrics.marketCap ? formatMarketCap(metrics.marketCap) : 'N/A'],
-      ['Volume:', metrics.volume ? formatVolume(metrics.volume) : 'N/A']
-    ];
-
-    // Clear the output range
-    const range = sheet.getRange(outputRange);
-    range.offset(0, 0, output.length, 2).clearContent();  // Clear 2 columns
-
-    // Write the data
-    range.offset(0, 0, output.length, 2).setValues(output);
-
-    // Format the table
-    const tableRange = sheet.getRange(outputRange).offset(0, 0, output.length, 2);
-    tableRange.setBorder(true, true, true, true, true, true);
-    tableRange.setHorizontalAlignment('left');
-    
-    // Format header row
-    const headerRange = sheet.getRange(outputRange).offset(0, 0, 1, 2);
-    headerRange.setBackground('#f3f3f3');
-    headerRange.setFontWeight('bold');
-
-    // Set column widths
-    sheet.autoResizeColumns(1, 2);
-
-    console.log(`Metrics displayed successfully for ${metrics.symbol}`);
-  } catch (error) {
-    console.error(`Error in displayMetrics: ${error}`);
-    throw error;
+function formatValue(value, metricType = 'default') {
+  if (!value) return 'N/A';
+  
+  // Handle objects with raw values (like from Yahoo Finance)
+  if (typeof value === 'object' && value !== null && 'raw' in value) {
+    value = value.raw;
   }
+
+  // Convert to number if it's a string
+  if (typeof value === 'string') {
+    value = parseFloat(value);
+  }
+
+  // Handle beta specifically
+  if (metricType === 'beta') {
+    return value.toFixed(2);
+  }
+
+  // Default formatting for other metrics
+  return value.toFixed(2);
 }
 
 /**
@@ -993,72 +1056,234 @@ function formatPercentage(value) {
 }
 
 /**
- * Formats numeric values with proper formatting
- * @param {number} value - Numeric value
- * @return {string} Formatted value
+ * Display metrics in a readable format
+ * @param {Object} metrics - Metrics object
+ * @param {string} outputRange - Range to output to (e.g., 'A1')
  */
-function formatValue(value) {
-  if (!value) return 'N/A';
-  return value.toFixed(2);
-}
-
-/**
- * Main function to test the script
- */
-function testStockMetrics() {
+function displayMetrics(metrics, outputRange = 'A1') {
   try {
-    // Ensure spreadsheet is set up
-    setupSpreadsheet();
-    
-    // Set up Yahoo Finance API key
-    const yahooFinanceKey = 'YOUR_YAHOO_FINANCE_API_KEY'; // Replace with actual key
-    const scriptProperties = PropertiesService.getScriptProperties();
-    scriptProperties.setProperty('YAHOO_FINANCE_API_KEY', yahooFinanceKey);
-    console.log('Yahoo Finance API key set successfully');
-    
-    const symbol = 'TSLA';
-    console.log(`\nTesting stock metrics retrieval for ${symbol}...`);
-    
-    const startTime = new Date().getTime();
-    const metrics = retrieveStockMetrics(symbol);
-    const executionTime = (new Date().getTime() - startTime) / 1000;
-    
-    if (!metrics) {
-      console.error('No metrics returned');
+    // Get the shared spreadsheet
+    const spreadsheet = getSharedFinanceSpreadsheet();
+    if (!spreadsheet) {
+      console.error('No shared finance spreadsheet found');
       return;
     }
     
-    console.log(`\nMetrics for ${symbol}:`);
-    console.log(`Price: $${metrics.price}`);
-    console.log(`Company: ${metrics.company}`);
-    console.log(`Industry: ${metrics.industry}`);
-    console.log(`Sector: ${metrics.sector}`);
-    console.log(`Market Cap: ${metrics.marketCap}`);
-    console.log(`Volume: ${metrics.volume}`);
-    console.log(`Sources: ${metrics.sources.join(', ')}`);
-    console.log(`From Cache: ${metrics.fromCache ? 'Yes' : 'No'}`);
-    console.log(`Execution Time: ${executionTime.toFixed(2)} seconds`);
+    // Get the first sheet for output
+    const sheet = spreadsheet.getSheets()[0];
+    if (!sheet) {
+      console.error('No sheets found in spreadsheet');
+      return;
+    }
+
+    // Create formatted output
+    const output = [
+      ['=== Metrics for ' + (metrics.symbol || 'N/A') + ' ===', ''],
+      ['Execution Time:', metrics.executionTime ? metrics.executionTime.toFixed(2) + ' seconds' : 'N/A'],
+      ['Sources:', metrics.sources?.join(', ') || 'N/A'],
+      ['', ''],
+      ['Current Price:', ''],
+      ['Price:', metrics.price ? '$' + formatValue(metrics.price) : 'N/A'],
+      ['Change:', metrics.priceChange ? '$' + formatValue(metrics.priceChange) : 'N/A'],
+      ['Change %:', metrics.changesPercentage ? formatPercentage(metrics.changesPercentage) : 'N/A'],
+      ['', ''],
+      ['Daily Range:', ''],
+      ['Open:', metrics.open ? '$' + formatValue(metrics.open) : 'N/A'],
+      ['High:', metrics.dayHigh ? '$' + formatValue(metrics.dayHigh) : 'N/A'],
+      ['Low:', metrics.dayLow ? '$' + formatValue(metrics.dayLow) : 'N/A'],
+      ['Close:', metrics.close ? '$' + formatValue(metrics.close) : 'N/A'],
+      ['', ''],
+      ['52-Week Range:', ''],
+      ['52-Week High:', metrics.fiftyTwoWeekHigh ? '$' + formatValue(metrics.fiftyTwoWeekHigh) : 'N/A'],
+      ['52-Week Low:', metrics.fiftyTwoWeekLow ? '$' + formatValue(metrics.fiftyTwoWeekLow) : 'N/A'],
+      ['', ''],
+      ['Valuation Metrics:', ''],
+      ['PEG Ratio:', metrics.pegRatio ? formatValue(metrics.pegRatio) : 'N/A'],
+      ['Forward P/E:', metrics.forwardPE ? formatValue(metrics.forwardPE) : 'N/A'],
+      ['Price/Book:', metrics.priceToBook ? formatValue(metrics.priceToBook) : 'N/A'],
+      ['Price/Sales:', metrics.priceToSales ? formatValue(metrics.priceToSales) : 'N/A'],
+      ['Debt/Equity:', metrics.debtToEquity ? formatValue(metrics.debtToEquity) : 'N/A'],
+      ['', ''],
+      ['Performance Metrics:', ''],
+      ['Return on Equity:', metrics.returnOnEquity ? formatPercentage(metrics.returnOnEquity) : 'N/A'],
+      ['Return on Assets:', metrics.returnOnAssets ? formatPercentage(metrics.returnOnAssets) : 'N/A'],
+      ['Profit Margin:', metrics.profitMargin ? formatPercentage(metrics.profitMargin) : 'N/A'],
+      ['Beta:', metrics.beta ? formatValue(metrics.beta, 'beta') : 'N/A'],
+      ['', ''],
+      ['Dividend & Expense:', ''],
+      ['Dividend Yield:', metrics.dividendYield ? formatPercentage(metrics.dividendYield) : 'N/A'],
+      ['Expense Ratio:', metrics.expenseRatio ? formatPercentage(metrics.expenseRatio) : 'N/A'],
+      ['', ''],
+      ['Company Info:', ''],
+      ['Company:', metrics.company || 'N/A'],
+      ['Industry:', metrics.industry || 'N/A'],
+      ['Sector:', metrics.sector || 'N/A'],
+      ['', ''],
+      ['Market Metrics:', ''],
+      ['Market Cap:', metrics.marketCap ? formatMarketCap(metrics.marketCap) : 'N/A'],
+      ['Volume:', metrics.volume ? formatVolume(metrics.volume) : 'N/A']
+    ];
+
+    // Clear the output range
+    const range = sheet.getRange(outputRange);
+    range.offset(0, 0, output.length, 2).clearContent();  // Clear 2 columns
+
+    // Write the data
+    range.offset(0, 0, output.length, 2).setValues(output);
+
+    // Format the table
+    const tableRange = sheet.getRange(outputRange).offset(0, 0, output.length, 2);
+    tableRange.setBorder(true, true, true, true, true, true);
+    tableRange.setHorizontalAlignment('left');
     
-    // Display metrics in the active sheet
-    displayMetrics(metrics);
-    
+    // Format header row
+    const headerRange = sheet.getRange(outputRange).offset(0, 0, 1, 2);
+    headerRange.setBackground('#f3f3f3');
+    headerRange.setFontWeight('bold');
+
+    // Set column widths
+    sheet.autoResizeColumns(1, 2);
+
+    console.log(`Metrics displayed successfully for ${metrics.symbol}`);
   } catch (error) {
-    console.error(`Error in testStockMetrics: ${error}`);
+    console.error(`Error in displayMetrics: ${error}`);
     throw error;
   }
 }
 
 /**
- * Add menu item to run the script
+ * Tests the caching implementation for stock metrics
+ * This function will:
+ * 1. Clear the cache for a test symbol
+ * 2. Call retrieveStockMetrics once (should be cache miss)
+ * 3. Call retrieveStockMetrics again (should be cache hit)
+ * 4. Compare execution times and verify data consistency
  */
-function onOpen() {
+function testStockMetricsCaching() {
   try {
-    const ui = SpreadsheetApp.getUi();
-    const menu = ui.createMenu('Stock Data');
-    menu.addItem('Retrieve Metrics', 'testStockMetrics');
-    menu.addToUi();
+    Logger.log('Testing stock metrics caching...');
+    
+    // Test with a single symbol
+    const testSymbol = 'AAPL';
+    
+    // Clear cache for test symbol
+    clearStockMetricsCacheForSymbol(testSymbol);
+    Logger.log(`Cleared cache for ${testSymbol}`);
+    
+    // First call - should be a cache miss
+    Logger.log(`\nFirst call for ${testSymbol} (should be cache miss):`);
+    const startTime1 = new Date().getTime();
+    const metrics1 = retrieveStockMetrics(testSymbol);
+    const executionTime1 = (new Date().getTime() - startTime1) / 1000;
+    
+    Logger.log(`First call execution time: ${executionTime1.toFixed(2)} seconds`);
+    Logger.log(`From cache: ${metrics1.fromCache ? 'Yes' : 'No'}`);
+    
+    // Second call - should be a cache hit
+    Logger.log(`\nSecond call for ${testSymbol} (should be cache hit):`);
+    const startTime2 = new Date().getTime();
+    const metrics2 = retrieveStockMetrics(testSymbol);
+    const executionTime2 = (new Date().getTime() - startTime2) / 1000;
+    
+    Logger.log(`Second call execution time: ${executionTime2.toFixed(2)} seconds`);
+    Logger.log(`From cache: ${metrics2.fromCache ? 'Yes' : 'No'}`);
+    
+    // Calculate performance improvement
+    const performanceImprovement = ((executionTime1 - executionTime2) / executionTime1) * 100;
+    Logger.log(`Performance improvement: ${performanceImprovement.toFixed(2)}%`);
+    
+    // Verify data consistency
+    const consistentKeys = ['price', 'company', 'marketCap', 'volume', 'industry', 'sector'];
+    let dataConsistent = true;
+    
+    for (const key of consistentKeys) {
+      if (metrics1[key] !== metrics2[key]) {
+        Logger.log(`Data inconsistency found for ${key}: ${metrics1[key]} vs ${metrics2[key]}`);
+        dataConsistent = false;
+      }
+    }
+    
+    if (dataConsistent) {
+      Logger.log('Data consistency check passed - cached data matches original data');
+    }
+    
+    // Display summary
+    Logger.log('\nCaching Test Summary:');
+    Logger.log(`First call (fresh data): ${executionTime1.toFixed(2)} seconds`);
+    Logger.log(`Second call (cached data): ${executionTime2.toFixed(2)} seconds`);
+    Logger.log(`Performance improvement: ${performanceImprovement.toFixed(2)}%`);
+    Logger.log(`Data consistency: ${dataConsistent ? 'Passed' : 'Failed'}`);
+    
+    return {
+      firstCallTime: executionTime1,
+      secondCallTime: executionTime2,
+      performanceImprovement: performanceImprovement,
+      dataConsistent: dataConsistent
+    };
   } catch (error) {
-    console.error(`Error in onOpen: ${error}`);
+    Logger.log(`Error in testStockMetricsCaching: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Function to test retrieving multiple stocks
+ */
+function testMultipleStocks() {
+  // Define categories of stocks
+  const stocks = {
+    'Magnificent Seven': ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA'],
+    'Major Indices': ['SPY', 'QQQ', 'IWM', 'DIA'],
+    'Energy': ['XOM', 'CVX'],
+    'Aerospace & Defense': ['BA', 'CAT'],
+    'Consumer Goods': ['PG']
+  };
+
+  // Process each category
+  for (const [category, symbols] of Object.entries(stocks)) {
+    Logger.log(`\n=== ${category} ===`);
+    testStockMetrics(symbols);
+  }
+}
+
+/**
+ * Main function to test the script
+ * @param {Array} symbols - Optional array of stock symbols to test
+ */
+function testStockMetrics(symbols = ['AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA']) {
+  try {
+    // Set up the spreadsheet
+    setupSpreadsheet();
+    
+    for (const symbol of symbols) {
+      Logger.log(`\nTesting stock metrics retrieval for ${symbol}...`);
+      
+      const startTime = new Date().getTime();
+      
+      // Retrieve metrics
+      const metrics = retrieveStockMetrics(symbol);
+      
+      const endTime = new Date().getTime();
+      const executionTime = (endTime - startTime) / 1000;
+      
+      // Log results
+      Logger.log(`\nMetrics for ${symbol}:`);
+      Logger.log(`Price: $${metrics.price}`);
+      Logger.log(`Company: ${metrics.company}`);
+      Logger.log(`Industry: ${metrics.industry}`);
+      Logger.log(`Sector: ${metrics.sector}`);
+      Logger.log(`Market Cap: ${metrics.marketCap}`);
+      Logger.log(`Volume: ${metrics.volume}`);
+      Logger.log(`Sources: ${metrics.dataSource ? metrics.dataSource.join(', ') : 'Unknown'}`);
+      Logger.log(`From Cache: ${metrics.fromCache ? 'Yes' : 'No'}`);
+      Logger.log(`Execution Time: ${executionTime.toFixed(2)} seconds`);
+      
+      // Display metrics in the active sheet
+      displayMetrics(metrics);
+    }
+    
+  } catch (error) {
+    Logger.log(`Error in testStockMetrics: ${error}`);
     throw error;
   }
 }
@@ -1127,3 +1352,158 @@ function getYahooFinanceApiKey() {
     throw error;
   }
 }
+
+/**
+ * Clears the stock metrics cache for all symbols
+ * This is useful when you want to force fresh data retrieval
+ */
+function clearStockMetricsCache() {
+  try {
+    Logger.log('Clearing stock metrics cache...');
+    
+    // Get script cache
+    const scriptCache = CacheService.getScriptCache();
+    
+    // Define our stock symbols
+    const stockSymbols = [
+      // Major Indices
+      'SPY', 'QQQ', 'IWM', 'DIA',
+      // Magnificent Seven
+      'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA',
+      // Other common stocks
+      'V', 'JPM', 'JNJ', 'UNH', 'HD', 'PG', 'MA', 'BAC', 'DIS', 'ADBE',
+      'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM',
+      // Energy and Industrial
+      'XOM', 'CVX', 'BA', 'CAT', 'GE', 'MMM',
+      // Deprecated stock symbols
+      'FB', 'TWTR'
+    ];
+    
+    // Create cache keys for each symbol
+    const keysToRemove = stockSymbols.map(symbol => `STOCK_METRICS_${symbol}`);
+    
+    // Remove all keys in a batch operation
+    if (keysToRemove.length > 0) {
+      scriptCache.removeAll(keysToRemove);
+    }
+    
+    Logger.log(`Cleared stock metrics cache for ${keysToRemove.length} symbols`);
+    
+    return {
+      success: true,
+      message: `Cleared stock metrics cache for ${keysToRemove.length} symbols`
+    };
+  } catch (error) {
+    Logger.log(`Error clearing stock metrics cache: ${error}`);
+    return {
+      success: false,
+      message: `Error clearing cache: ${error}`
+    };
+  }
+}
+
+/**
+ * Clears the stock metrics cache for a specific symbol
+ * @param {string} symbol - Stock symbol to clear cache for
+ * @return {Object} Result object with success status and message
+ */
+function clearStockMetricsCacheForSymbol(symbol) {
+  try {
+    Logger.log(`Clearing stock metrics cache for ${symbol}...`);
+    
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKey = `STOCK_METRICS_${symbol}`;
+    
+    // Remove the cache entry
+    scriptCache.remove(cacheKey);
+    
+    Logger.log(`Cleared cache for ${symbol}`);
+    
+    return {
+      success: true,
+      message: `Cleared stock metrics cache for ${symbol}`
+    };
+  } catch (error) {
+    Logger.log(`Error clearing stock metrics cache for ${symbol}: ${error}`);
+    return {
+      success: false,
+      message: `Error clearing cache for ${symbol}: ${error}`
+    };
+  }
+}
+
+/**
+ * Gets the company name for a given symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Object containing company name, sector, and industry
+ */
+function getCompanyName(symbol) {
+  try {
+    // Default return if we can't find the company name
+    const defaultReturn = {
+      company: symbol,
+      sector: null,
+      industry: null
+    };
+    
+    // First try to get from cache
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKey = `COMPANY_DATA_${symbol}`;
+    const cachedData = scriptCache.get(cacheKey);
+    
+    if (cachedData) {
+      try {
+        return JSON.parse(cachedData);
+      } catch (e) {
+        Logger.log(`Error parsing cached company data for ${symbol}: ${e}`);
+      }
+    }
+    
+    // Try to get company name from Yahoo Finance search
+    try {
+      const searchData = fetchYahooSearchData(symbol);
+      if (searchData && searchData.company) {
+        const companyData = {
+          company: searchData.company,
+          sector: searchData.sector || null,
+          industry: searchData.industry || null
+        };
+        
+        // Cache the data
+        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
+        return companyData;
+      }
+    } catch (e) {
+      Logger.log(`Error getting company name from Yahoo for ${symbol}: ${e}`);
+    }
+    
+    // If Yahoo fails, try FMP
+    try {
+      const fmpData = fetchFMPData(symbol);
+      if (fmpData && fmpData.company) {
+        const companyData = {
+          company: fmpData.company,
+          sector: fmpData.sector || null,
+          industry: fmpData.industry || null
+        };
+        
+        // Cache the data
+        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
+        return companyData;
+      }
+    } catch (e) {
+      Logger.log(`Error getting company name from FMP for ${symbol}: ${e}`);
+    }
+    
+    // If all else fails, return the symbol as the company name
+    return defaultReturn;
+  } catch (error) {
+    Logger.log(`Error in getCompanyName for ${symbol}: ${error}`);
+    return {
+      company: symbol,
+      sector: null,
+      industry: null
+    };
+  }
+}
+

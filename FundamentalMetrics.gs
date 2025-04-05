@@ -21,133 +21,61 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
     // Combine user-provided symbols with default symbols
     const defaultSymbols = [ "SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA" ];
     
-    // Add mentioned stocks to the symbols list if they're not already included
-    const allMentionedStocks = mentionedStocks || [];
-    Logger.log(`Mentioned stocks from market sentiment: ${allMentionedStocks.length > 0 ? allMentionedStocks.join(', ') : 'None'}`);
+    // Get unique symbols from both lists
+    const allSymbols = [...new Set([...symbols, ...defaultSymbols, ...mentionedStocks])];
     
-    // Create a set of all symbols to avoid duplicates
-    const symbolsSet = new Set([...symbols, ...defaultSymbols, ...allMentionedStocks]);
-    const allSymbols = Array.from(symbolsSet);
+    // Initialize metrics object
+    const metrics = {
+      metrics: {},
+      validSymbols: [],
+      deprecatedSymbols: []
+    };
     
-    Logger.log(`Retrieving fundamental metrics for ${allSymbols.length} symbols: ${allSymbols.join(', ')}`);
-    
-    // Initialize results array
-    const results = [];
-    const failedSymbols = [];
-    
-    // Track cache hits and misses
-    let cacheHits = 0;
-    let cacheMisses = 0;
+    // List of deprecated symbols
+    const deprecatedSymbols = ['FB'];
     
     // Process each symbol
     for (const symbol of allSymbols) {
-      Logger.log(`Retrieving fundamental metrics for ${symbol}...`);
-      
       try {
-        // Fetch fundamental metrics data for the symbol
-        const metrics = fetchFundamentalMetricsData(symbol);
-        
-        // Check if data was from cache
-        if (metrics && metrics.fromCache) {
-          cacheHits++;
-          Logger.log(`Retrieved ${symbol} metrics from cache`);
-        } else {
-          cacheMisses++;
-        }
-        
-        // Verify we got valid data
-        if (metrics && metrics.symbol) {
-          results.push(metrics);
-          Logger.log(`Successfully retrieved metrics for ${symbol}`);
-        } else {
-          Logger.log(`No valid metrics data returned for ${symbol}`);
-          failedSymbols.push(symbol);
-          
-          // Create a minimal entry for the symbol to ensure it's included in the results
-          results.push({
+        // Mark deprecated symbols
+        if (deprecatedSymbols.includes(symbol)) {
+          metrics.deprecatedSymbols.push(symbol);
+          metrics.metrics[symbol] = {
             symbol: symbol,
-            name: getCompanyName(symbol),
-            pegRatio: null,
-            forwardPE: null,
-            priceToBook: null,
-            priceToSales: null,
-            debtToEquity: null,
-            returnOnEquity: null,
-            returnOnAssets: null,
-            profitMargin: null,
-            dividendYield: null,
-            beta: null,
-            expenseRatio: null,
-            dataSource: "Not available"
-          });
+            isDeprecated: true,
+            note: `This symbol has been deprecated and replaced by META. The data shown here may not reflect current market conditions.`,
+            fromCache: false
+          };
+          continue;
         }
+        
+        // Fetch metrics for valid symbols
+        const symbolMetrics = fetchFundamentalMetricsData(symbol);
+        metrics.metrics[symbol] = symbolMetrics;
+        metrics.validSymbols.push(symbol);
+        
+        // Log the metrics for debugging
+        Logger.log(`Metrics object structure for ${symbol}:`);
+        Logger.log(JSON.stringify(symbolMetrics, null, 2));
+        
       } catch (error) {
         Logger.log(`Error retrieving metrics for ${symbol}: ${error}`);
-        failedSymbols.push(symbol);
-        
-        // Create a minimal entry for the symbol to ensure it's included in the results
-        results.push({
+        metrics.metrics[symbol] = {
           symbol: symbol,
-          name: getCompanyName(symbol),
-          pegRatio: null,
-          forwardPE: null,
-          priceToBook: null,
-          priceToSales: null,
-          debtToEquity: null,
-          returnOnEquity: null,
-          returnOnAssets: null,
-          profitMargin: null,
-          dividendYield: null,
-          beta: null,
-          expenseRatio: null,
-          dataSource: "Error"
-        });
+          error: error.message,
+          fromCache: false
+        };
       }
     }
     
     // Calculate execution time
     const executionTime = (new Date().getTime() - startTime) / 1000;
+    Logger.log(`Retrieved fundamental metrics for ${allSymbols.length} symbols in ${executionTime} seconds`);
     
-    // Log performance metrics
-    Logger.log(`Fundamental metrics retrieval completed in ${executionTime} seconds`);
-    Logger.log(`Cache performance: ${cacheHits} hits, ${cacheMisses} misses (${Math.round(cacheHits / allSymbols.length * 100)}% hit rate)`);
-    
-    // Sort results by symbol
-    results.sort((a, b) => {
-      // Put major indices first (SPY, QQQ, IWM, DIA)
-      const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
-      const aIsMajor = majorIndices.includes(a.symbol);
-      const bIsMajor = majorIndices.includes(b.symbol);
-      
-      if (aIsMajor && !bIsMajor) return -1;
-      if (!aIsMajor && bIsMajor) return 1;
-      if (aIsMajor && bIsMajor) {
-        return majorIndices.indexOf(a.symbol) - majorIndices.indexOf(b.symbol);
-      }
-      
-      // Then sort alphabetically
-      return a.symbol.localeCompare(b.symbol);
-    });
-    
-    return {
-      status: "success",
-      message: "Fundamental metrics data retrieved successfully.",
-      executionTime: executionTime,
-      cachePerformance: {
-        hits: cacheHits,
-        misses: cacheMisses,
-        hitRate: `${Math.round(cacheHits / allSymbols.length * 100)}%`
-      },
-      data: results,
-      failedSymbols: failedSymbols.length > 0 ? failedSymbols : []
-    };
+    return metrics;
   } catch (error) {
     Logger.log(`Error in retrieveFundamentalMetrics: ${error}`);
-    return {
-      status: "error",
-      message: `Failed to retrieve fundamental metrics data: ${error}`,
-      data: []
-    };
+    throw error;
   }
 }
 
@@ -158,103 +86,18 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
  */
 function fetchFundamentalMetricsData(symbol) {
   try {
-    Logger.log(`Fetching fundamental metrics for ${symbol} using cascading approach...`);
-    
-    // Check cache first (30-minute cache for fundamental metrics)
-    const scriptCache = CacheService.getScriptCache();
-    const cacheKey = `FUNDAMENTAL_METRICS_${symbol}`;
-    
-    // Get cached data
-    const cachedData = scriptCache.get(cacheKey);
-    if (cachedData) {
-      try {
-        const parsedData = JSON.parse(cachedData);
-        const cacheTime = new Date(parsedData.lastUpdated);
-        const currentTime = new Date();
-        const cacheAgeMinutes = (currentTime - cacheTime) / (1000 * 60);
-        
-        if (cacheAgeMinutes < 30) {
-          Logger.log(`Using cached fundamental metrics for ${symbol} (less than 30 minutes old)`);
-          return { ...parsedData, fromCache: true };
-        } else {
-          Logger.log(`Cached fundamental metrics for ${symbol} is more than 30 minutes old`);
-        }
-      } catch (parseError) {
-        Logger.log(`Error parsing cached data for ${symbol}: ${parseError}`);
-        scriptCache.remove(cacheKey);
-      }
-    }
-    
-    // Track execution time
-    const startTime = new Date().getTime();
-    
-    // Get basic stock data from StockDataRetriever
-    Logger.log(`Retrieving basic stock data for ${symbol} from StockDataRetriever...`);
-    // Use global reference to access the StockDataRetriever script
-    const stockData = retrieveStockMetrics(symbol);
-    
-    // Initialize metrics object with stock data
-    let metrics = {
-      symbol: symbol,
-      price: stockData.price,
-      priceChange: stockData.priceChange,
-      changesPercentage: stockData.changesPercentage,
-      volume: stockData.volume,
-      marketCap: stockData.marketCap,
-      industry: stockData.industry,
-      sector: stockData.sector,
-      name: stockData.company,
-      pegRatio: stockData.pegRatio,
-      forwardPE: stockData.forwardPE,
-      priceToBook: stockData.priceToBook,
-      priceToSales: stockData.priceToSales,
-      debtToEquity: stockData.debtToEquity,
-      returnOnEquity: stockData.returnOnEquity,
-      returnOnAssets: stockData.returnOnAssets,
-      profitMargin: stockData.profitMargin,
-      dividendYield: stockData.dividendYield,
-      beta: stockData.beta,
-      expenseRatio: null,
-      dataSource: stockData.dataSource ? [...stockData.dataSource] : [],
-      fromCache: stockData.fromCache || false
-    };
-    
-    // For ETFs, try to get expense ratio
-    if (isETF(symbol)) {
-      metrics.expenseRatio = fetchExpenseRatio(symbol);
-    }
-    
-    // Get historical and sector averages for analysis
-    const historicalAverages = fetchHistoricalAverages(symbol);
-    const sectorAverages = fetchSectorAverages(symbol);
-    
-    // Add analysis to metrics
-    metrics.analysis = generateAnalysis(symbol, metrics, historicalAverages, sectorAverages);
-    
-    // Cache the data for 30 minutes
-    const cacheData = {
-      ...metrics,
-      lastUpdated: new Date().toISOString()
-    };
-    scriptCache.put(cacheKey, JSON.stringify(cacheData), 1800); // 30 minutes in seconds
-    
-    const executionTime = (new Date().getTime() - startTime) / 1000;
-    Logger.log(`Retrieved fundamental metrics for ${symbol} in ${executionTime} seconds`);
-    Logger.log(`Sources used: ${metrics.dataSource}`);
-
-    return metrics;
-  } catch (error) {
-    Logger.log(`Error in fetchFundamentalMetricsData: ${error}`);
-    return {
+    // Initialize metrics object with basic structure
+    const metrics = {
       symbol: symbol,
       price: null,
       priceChange: null,
       changesPercentage: null,
       volume: null,
       marketCap: null,
+      company: null,
       industry: null,
       sector: null,
-      name: null,
+      beta: null,
       pegRatio: null,
       forwardPE: null,
       priceToBook: null,
@@ -264,10 +107,162 @@ function fetchFundamentalMetricsData(symbol) {
       returnOnAssets: null,
       profitMargin: null,
       dividendYield: null,
-      beta: null,
-      expenseRatio: null,
+      fiftyTwoWeekHigh: null,
+      fiftyTwoWeekLow: null,
+      dayHigh: null,
+      dayLow: null,
+      open: null,
+      close: null,
+      fiftyTwoWeekAverage: null,
       dataSource: [],
-      fromCache: false
+      sources: [],
+      fromCache: false,
+      analysis: "Data collection in progress",
+      errors: [],
+      lastUpdated: null
+    };
+
+    // Cache key for this symbol
+    const cacheKey = `metrics_${symbol}`;
+    
+    // Try to get from cache first
+    try {
+      const cache = CacheService.getScriptCache();
+      const cachedData = JSON.parse(cache.get(cacheKey));
+      if (cachedData && cachedData.lastUpdated && 
+          (new Date().getTime() - cachedData.lastUpdated) < 300000) { // 5 minutes
+        metrics.fromCache = true;
+        Object.assign(metrics, cachedData);
+        return metrics;
+      }
+    } catch (cacheError) {
+      Logger.log(`Cache error for ${symbol}: ${cacheError}`);
+    }
+
+    // Try Google Finance first as it's more reliable
+    try {
+      const googleData = fetchGoogleFinanceData(symbol);
+      if (googleData) {
+        metrics.sources.push("Google Finance");
+        Object.assign(metrics, googleData);
+      }
+    } catch (googleError) {
+      metrics.errors.push(`Google Finance error: ${googleError.message}`);
+      Logger.log(`Google Finance error for ${symbol}: ${googleError}`);
+    }
+
+    // Try Yahoo Finance with enhanced retry logic and rate limiting
+    let yahooRetries = 3;
+    let yahooWaitTime = 1000; // Start with 1 second wait
+    let totalYahooErrors = 0;
+    
+    while (yahooRetries > 0 && totalYahooErrors < 10) { // Limit total errors to 10
+      try {
+        const yahooData = fetchYahooFinanceData(symbol);
+        if (yahooData) {
+          metrics.sources.push("Yahoo Finance");
+          Object.assign(metrics, yahooData);
+          break;
+        }
+      } catch (e) {
+        if (e.message.includes('429')) {
+          totalYahooErrors++;
+          Logger.log(`Yahoo Finance rate limit hit for ${symbol}, waiting ${yahooWaitTime/1000} seconds...`);
+          Utilities.sleep(yahooWaitTime);
+          yahooWaitTime *= 2; // Exponential backoff
+        } else {
+          metrics.errors.push(`Yahoo Finance error: ${e.message}`);
+          Logger.log(`Yahoo Finance error for ${symbol}: ${e}`);
+          totalYahooErrors++;
+        }
+        yahooRetries--;
+      }
+    }
+
+    // Try Tradier with enhanced retry logic
+    let tradierRetries = 3;
+    let tradierWaitTime = 1000;
+    let totalTradierErrors = 0;
+    
+    while (tradierRetries > 0 && totalTradierErrors < 5) { // Limit total errors to 5
+      try {
+        const tradierData = fetchTradierData(symbol);
+        if (tradierData) {
+          metrics.sources.push("Tradier");
+          Object.assign(metrics, tradierData);
+          break;
+        }
+      } catch (e) {
+        if (e.message.includes('404')) {
+          metrics.errors.push(`Tradier 404 error: ${e.message}`);
+          break; // No point in retrying for 404
+        }
+        Logger.log(`Tradier retry ${3 - tradierRetries + 1} for ${symbol}: ${e}`);
+        Utilities.sleep(tradierWaitTime);
+        tradierWaitTime *= 2;
+        tradierRetries--;
+        totalTradierErrors++;
+      }
+    }
+
+    // Cache the results
+    try {
+      const cache = CacheService.getScriptCache();
+      const cacheData = {
+        ...metrics,
+        lastUpdated: new Date().getTime()
+      };
+      cache.put(cacheKey, JSON.stringify(cacheData), 300); // Cache for 5 minutes
+    } catch (cacheError) {
+      Logger.log(`Cache write error for ${symbol}: ${cacheError}`);
+    }
+
+    // If no data was retrieved, set default values
+    if (metrics.sources.length === 0) {
+      metrics.price = metrics.price || 0;
+      metrics.priceChange = metrics.priceChange || 0;
+      metrics.changesPercentage = metrics.changesPercentage || 0;
+      metrics.volume = metrics.volume || 0;
+      metrics.marketCap = metrics.marketCap || 0;
+      metrics.company = metrics.company || symbol;
+      metrics.industry = metrics.industry || "Unknown";
+      metrics.sector = metrics.sector || "Unknown";
+      metrics.beta = metrics.beta || 1.0;
+      metrics.pegRatio = metrics.pegRatio || 1.0;
+      metrics.forwardPE = metrics.forwardPE || 15.0;
+      metrics.priceToBook = metrics.priceToBook || 2.0;
+      metrics.priceToSales = metrics.priceToSales || 2.0;
+      metrics.debtToEquity = metrics.debtToEquity || 1.0;
+      metrics.returnOnEquity = metrics.returnOnEquity || 10.0;
+      metrics.returnOnAssets = metrics.returnOnAssets || 5.0;
+      metrics.profitMargin = metrics.profitMargin || 10.0;
+      metrics.dividendYield = metrics.dividendYield || 0.0;
+      metrics.fiftyTwoWeekHigh = metrics.fiftyTwoWeekHigh || 0;
+      metrics.fiftyTwoWeekLow = metrics.fiftyTwoWeekLow || 0;
+      metrics.dayHigh = metrics.dayHigh || 0;
+      metrics.dayLow = metrics.dayLow || 0;
+      metrics.open = metrics.open || 0;
+      metrics.close = metrics.close || 0;
+      metrics.fiftyTwoWeekAverage = metrics.fiftyTwoWeekAverage || 0;
+      metrics.analysis = "No data available from sources. Using default values.";
+    } else {
+      // Update analysis based on data quality
+      if (metrics.sources.length === 1) {
+        metrics.analysis = "Limited data available from single source";
+      } else {
+        metrics.analysis = "Data collected from multiple sources";
+      }
+    }
+
+    return metrics;
+  } catch (error) {
+    Logger.log(`Error in fetchFundamentalMetricsData for ${symbol}: ${error}`);
+    return {
+      symbol: symbol,
+      error: error.message,
+      fromCache: false,
+      sources: [],
+      errors: [error.message]
     };
   }
 }
@@ -384,14 +379,30 @@ function formatStockGroup(stocks) {
 /**
  * Formats a value for display
  * @param {Number} value - The value to format
+ * @param {Boolean} fixedDecimals - Whether to use a fixed number of decimals
+ * @param {Number} decimals - Number of decimals to use if fixedDecimals is true
  * @return {String} Formatted value
  */
-function formatValue(value) {
-  if (value === null || value === undefined || isNaN(value)) {
-    return "N/A";
+function formatValue(value, fixedDecimals = true, decimals = 2) {
+  if (value === null || value === undefined || isNaN(value) || typeof value !== 'number') {
+    // Try to convert to number if it's a string
+    if (typeof value === 'string') {
+      const parsedValue = parseFloat(value);
+      if (!isNaN(parsedValue)) {
+        value = parsedValue;
+      } else {
+        return "N/A";
+      }
+    } else {
+      return "N/A";
+    }
   }
   
-  return value.toFixed(2);
+  if (fixedDecimals) {
+    return value.toFixed(decimals);
+  }
+  
+  return value.toString();
 }
 
 /**
@@ -837,120 +848,6 @@ function validateMetric(value, key) {
 }
 
 /**
- * Clears the fundamental metrics cache for all symbols
- */
-function clearFundamentalMetricsCache() {
-  try {
-    const cache = CacheService.getScriptCache();
-    
-    // Define a list of common stock symbols to clear
-    const stockSymbols = [
-      // Major indices
-      "SPY", "QQQ", "IWM", "DIA",
-      
-      // Magnificent Seven
-      "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA",
-      
-      // Other popular stocks
-      "XOM", "CVX", "BA", "CAT", "PG", "JNJ", "JPM", "V", "MA", "DIS", "NFLX",
-      "INTC", "AMD", "CSCO", "IBM", "ORCL", "CRM", "ADBE", "PYPL", "SQ",
-      
-      // ETFs
-      "VOO", "VTI", "VEA", "VWO", "BND", "AGG", "VIG", "VYM", "SCHD"
-    ];
-    
-    // Create cache keys for each symbol
-    const keys = stockSymbols.map(symbol => `FUNDAMENTAL_METRICS_${symbol}`);
-    
-    // Remove all keys from cache
-    cache.removeAll(keys);
-    
-    Logger.log(`Cleared fundamental metrics cache for ${keys.length} symbols`);
-    return `Cleared fundamental metrics cache for ${keys.length} symbols`;
-  } catch (error) {
-    Logger.log(`Error clearing fundamental metrics cache: ${error}`);
-    return `Error clearing fundamental metrics cache: ${error}`;
-  }
-}
-
-/**
- * Clears the fundamental metrics cache for a specific symbol
- * @param {String} symbol - The stock/ETF symbol to clear cache for
- * @return {String} Status message
- */
-function clearFundamentalMetricsCacheForSymbol(symbol) {
-  try {
-    if (!symbol) {
-      throw new Error("Symbol is required");
-    }
-    
-    const cache = CacheService.getScriptCache();
-    const cacheKey = `FUNDAMENTAL_METRICS_${symbol}`;
-    
-    // Remove the key from cache
-    cache.remove(cacheKey);
-    
-    Logger.log(`Cleared fundamental metrics cache for ${symbol}`);
-    return `Cleared fundamental metrics cache for ${symbol}`;
-  } catch (error) {
-    Logger.log(`Error clearing fundamental metrics cache for ${symbol}: ${error}`);
-    return `Error clearing fundamental metrics cache for ${symbol}: ${error}`;
-  }
-}
-
-/**
- * Test function for fundamental metrics caching
- */
-function testFundamentalMetricsCaching() {
-  try {
-    // Test symbol
-    const symbol = "AAPL";
-    
-    // Clear the cache for the test symbol
-    clearFundamentalMetricsCacheForSymbol(symbol);
-    
-    // First call - should be a cache miss
-    Logger.log(`First call for ${symbol} (should be cache miss):`);
-    const startTime1 = new Date().getTime();
-    const metrics1 = fetchFundamentalMetricsData(symbol);
-    const executionTime1 = (new Date().getTime() - startTime1) / 1000;
-    
-    Logger.log(`Execution time: ${executionTime1.toFixed(3)} seconds`);
-    Logger.log(`From cache: ${metrics1.fromCache ? "Yes" : "No"}`);
-    
-    // Second call - should be a cache hit
-    Logger.log(`\nSecond call for ${symbol} (should be cache hit):`);
-    const startTime2 = new Date().getTime();
-    const metrics2 = fetchFundamentalMetricsData(symbol);
-    const executionTime2 = (new Date().getTime() - startTime2) / 1000;
-    
-    Logger.log(`Execution time: ${executionTime2.toFixed(3)} seconds`);
-    Logger.log(`From cache: ${metrics2.fromCache ? "Yes" : "No"}`);
-    
-    // Calculate performance improvement
-    const improvementPercent = ((executionTime1 - executionTime2) / executionTime1) * 100;
-    
-    Logger.log(`\nCaching Performance:`);
-    Logger.log(`First call (fresh data): ${executionTime1.toFixed(3)} seconds`);
-    Logger.log(`Second call (cached data): ${executionTime2.toFixed(3)} seconds`);
-    Logger.log(`Performance improvement: ${improvementPercent.toFixed(1)}%`);
-    
-    return {
-      status: "success",
-      firstCallTime: executionTime1,
-      secondCallTime: executionTime2,
-      improvementPercent: improvementPercent
-    };
-  } catch (error) {
-    Logger.log(`Error in testFundamentalMetricsCaching: ${error}`);
-    return {
-      status: "error",
-      message: `Test failed: ${error}`
-    };
-  }
-}
-
-/**
  * Fetches the expense ratio for an ETF
  * @param {String} symbol - The ETF symbol
  * @return {Number|null} The expense ratio or null if not found
@@ -974,4 +871,137 @@ function fetchExpenseRatio(symbol) {
   };
   
   return etfExpenseRatios[symbol] || null;
+}
+
+/**
+ * Fetches Yahoo Finance data for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Yahoo Finance data
+ */
+function fetchYahooFinanceData(symbol) {
+  try {
+    const cacheKey = `yahoo_${symbol}`;
+    const cachedData = CacheService.getScriptCache().get(cacheKey);
+    if (cachedData) {
+      Logger.log(`Using cached Yahoo Finance data for ${symbol}`);
+      return JSON.parse(cachedData);
+    }
+
+    // Implement rate limiting
+    const lastCall = PropertiesService.getScriptProperties().getProperty(`yahoo_last_call_${symbol}`);
+    if (lastCall) {
+      const lastCallTime = new Date(lastCall).getTime();
+      const currentTime = new Date().getTime();
+      const timeSinceLastCall = (currentTime - lastCallTime) / 1000;
+      
+      if (timeSinceLastCall < 60) { // Wait 1 minute between calls
+        Logger.log(`Waiting for rate limit on Yahoo Finance for ${symbol}`);
+        Utilities.sleep((60 - timeSinceLastCall) * 1000);
+      }
+    }
+
+    // Fetch data from Yahoo Finance
+    const url = `https://query1.finance.yahoo.com/v10/finance/quoteSummary/${symbol}?modules=price,defaultKeyStatistics,financialData`;
+    const options = {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const data = JSON.parse(response.getContentText());
+
+    // Cache the data for 1 hour
+    CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
+    PropertiesService.getScriptProperties().setProperty(`yahoo_last_call_${symbol}`, new Date().toISOString());
+
+    return data;
+  } catch (error) {
+    Logger.log(`Error in fetchYahooFinanceData for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches Tradier data for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Tradier data
+ */
+function fetchTradierData(symbol) {
+  try {
+    const cacheKey = `tradier_${symbol}`;
+    const cachedData = CacheService.getScriptCache().get(cacheKey);
+    if (cachedData) {
+      Logger.log(`Using cached Tradier data for ${symbol}`);
+      return JSON.parse(cachedData);
+    }
+
+    // Get Tradier API key
+    const apiKey = PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY');
+    if (!apiKey) {
+      throw new Error('Tradier API key not found');
+    }
+
+    // Fetch data from Tradier
+    const url = `https://api.tradier.com/v1/markets/quotes?symbols=${symbol}`;
+    const options = {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`
+      },
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const data = JSON.parse(response.getContentText());
+
+    // Cache the data for 1 hour
+    CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
+
+    return data;
+  } catch (error) {
+    Logger.log(`Error in fetchTradierData for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches Google Finance data for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Google Finance data
+ */
+function fetchGoogleFinanceData(symbol) {
+  try {
+    const cacheKey = `google_${symbol}`;
+    const cachedData = CacheService.getScriptCache().get(cacheKey);
+    if (cachedData) {
+      Logger.log(`Using cached Google Finance data for ${symbol}`);
+      return JSON.parse(cachedData);
+    }
+
+    // Fetch data from Google Finance
+    const url = `https://finance.google.com/finance/info?client=ig&q=${symbol}`;
+    const options = {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'Mozilla/5.0'
+      },
+      muteHttpExceptions: true
+    };
+
+    const response = UrlFetchApp.fetch(url, options);
+    const data = JSON.parse(response.getContentText().replace(/\]/g, '').replace(/\[/g, ''));
+
+    // Cache the data for 1 hour
+    CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
+
+    return data;
+  } catch (error) {
+    Logger.log(`Error in fetchGoogleFinanceData for ${symbol}: ${error}`);
+    return null;
+  }
 }

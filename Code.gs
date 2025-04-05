@@ -18,14 +18,48 @@ function getOpenAITradingAnalysis() {
     // Retrieve all data with caching
     const allData = retrieveAllData();
     
-    if (!allData.success && !allData.status) {
+    // Check for success or status flag
+    const isDataSuccessful = allData.success || allData.status === "success";
+    if (!isDataSuccessful) {
       // Log the error but continue if possible
       Logger.log("Warning: " + allData.message);
       // Only throw an error if data is completely missing
       if (!allData.marketSentiment || !allData.keyMarketIndicators || 
-          !allData.fundamentalMetrics || !allData.macroeconomicFactors) {
+          (!allData.fundamentalMetrics || (!allData.fundamentalMetrics.success && allData.fundamentalMetrics.status !== "success")) || !allData.macroeconomicFactors) {
         throw new Error("Failed to retrieve essential trading data: " + allData.message);
       }
+    }
+    
+    // Check if fundamental metrics data has any actual data
+    if (allData.fundamentalMetrics && 
+        (!allData.fundamentalMetrics.metrics || Object.keys(allData.fundamentalMetrics.metrics).length === 0)) {
+      throw new Error("Failed to retrieve essential trading data: Fundamental metrics data is empty");
+    }
+    
+    // Filter out deprecated symbols from fundamental metrics
+    if (allData.fundamentalMetrics && allData.fundamentalMetrics.metrics) {
+      // List of deprecated symbols
+      const deprecatedSymbols = ['FB'];
+      
+      // Process each symbol and mark deprecated ones
+      allData.fundamentalMetrics.metrics = Object.fromEntries(
+        Object.entries(allData.fundamentalMetrics.metrics).map(([symbol, metrics]) => {
+          if (deprecatedSymbols.includes(symbol)) {
+            return [
+              symbol,
+              {
+                ...metrics,
+                isDeprecated: true,
+                note: `This symbol has been deprecated and replaced by META. The data shown here may not reflect current market conditions.`
+              }
+            ];
+          }
+          return [symbol, metrics];
+        })
+      );
+      
+      // Log the filtered metrics
+      Logger.log("Processed fundamental metrics (marked deprecated symbols): " + JSON.stringify(allData.fundamentalMetrics.metrics));
     }
     
     Logger.log("Retrieved trading data with warnings or success");
@@ -463,7 +497,7 @@ function testGenerateAndEmailPrompt() {
       Logger.log("Warning: " + allData.message);
       // Only throw an error if data is completely missing
       if (!allData.marketSentiment || !allData.keyMarketIndicators || 
-          !allData.fundamentalMetrics || !allData.macroeconomicFactors) {
+          (!allData.fundamentalMetrics || (!allData.fundamentalMetrics.success && allData.fundamentalMetrics.status !== "success")) || !allData.macroeconomicFactors) {
         throw new Error("Failed to retrieve essential trading data: " + allData.message);
       }
     }
