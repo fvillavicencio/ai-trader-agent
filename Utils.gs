@@ -1282,25 +1282,23 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     
     // Helper function to get inflation data with priority to macroeconomicAnalysis
     function getInflationData() {
-      const analysisInflation = macroeconomicAnalysis?.analysis?.macroeconomicFactors?.inflation;
-      const macroInflation = macro?.inflation;
-      
-      return {
-        currentRate: analysisInflation?.currentRate || macroInflation?.currentRate || 'N/A',
+      const inflation = macroeconomicAnalysis?.analysis?.macroeconomicFactors?.inflation;
+      return inflation || {
+        currentRate: 'N/A',
         cpi: {
-          headline: analysisInflation?.cpi?.headline || macroInflation?.cpi?.headline || 'N/A',
-          core: analysisInflation?.cpi?.core || macroInflation?.cpi?.core || 'N/A'
+          headline: 'N/A',
+          core: 'N/A'
         },
         pce: {
-          headline: analysisInflation?.pce?.headline || macroInflation?.pce?.headline || 'N/A',
-          core: analysisInflation?.pce?.core || macroInflation?.pce?.core || 'N/A'
+          headline: 'N/A',
+          core: 'N/A'
         },
-        trend: analysisInflation?.trend || macroInflation?.trend || 'N/A',
-        outlook: analysisInflation?.outlook || macroInflation?.outlook || 'N/A',
-        marketImpact: analysisInflation?.marketImpact || macroInflation?.marketImpact || 'N/A',
-        source: analysisInflation?.source || macroInflation?.source || 'N/A',
-        sourceUrl: analysisInflation?.sourceUrl || macroInflation?.sourceUrl || 'N/A',
-        lastUpdated: analysisInflation?.lastUpdated || macroInflation?.lastUpdated || 'N/A'
+        trend: 'N/A',
+        outlook: 'N/A',
+        marketImpact: 'N/A',
+        source: 'N/A',
+        sourceUrl: 'N/A',
+        lastUpdated: 'N/A'
       };
     }
 
@@ -1422,25 +1420,24 @@ function generateGeopoliticalRisksSection(analysis) {
     
     // Generate global overview HTML if available
     let globalOverviewHtml = '';
-    if (analysis && analysis.geopoliticalRisks && analysis.geopoliticalRisks.global) {
+    if (analysis && analysis.macroeconomicFactors && analysis.macroeconomicFactors.geopoliticalRisks && analysis.macroeconomicFactors.geopoliticalRisks.global) {
       globalOverviewHtml = `
       <div style="margin-top: 15px;">
         <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Global Overview</div>
-        <div style="color: #555;">${analysis.geopoliticalRisks.global}</div>
+        <div style="color: #555;">${analysis.macroeconomicFactors.geopoliticalRisks.global}</div>
       </div>
       `;
     }
-    
-    // Generate risks HTML
-    let risksHtml = '';
-    
+
     // Sort risks by impact level (descending)
     const sortedRisks = [...geoRisks.risks].sort((a, b) => {
       if (a.impactLevel === undefined || a.impactLevel === null) return 1;
       if (b.impactLevel === undefined || b.impactLevel === null) return -1;
       return b.impactLevel - a.impactLevel;
     });
-    
+
+    // Generate risk cards
+    let riskCardsHtml = '';
     sortedRisks.forEach(risk => {
       // Determine risk color based on impact level
       let riskColor = '#ff9800'; // default moderate
@@ -1452,28 +1449,25 @@ function generateGeopoliticalRisksSection(analysis) {
         riskColor = '#4caf50'; // low
       }
       
-      risksHtml += `
-      <div style="margin-bottom: 15px;">
-        <div style="font-weight: bold; color: #333;">${risk.name || 'Unknown Risk'}</div>
+      riskCardsHtml += `
+      <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 4px;">
+        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">${risk.name || 'Unknown Risk'}</div>
         <div style="color: ${riskColor}; font-weight: bold; margin-bottom: 5px;">Impact Level: ${risk.impactLevel || 0}/10</div>
         <div style="color: #555; margin-bottom: 5px;">${risk.description || 'No description available'}</div>
-        <div style="font-size: 12px; color: #888;">
-          Region: ${risk.region || 'Unknown Region'}<br>
-          ${risk.source ? `Source: ${risk.source}${risk.sourceUrl ? ` | <a href="${risk.sourceUrl}" style="color: #2196f3; text-decoration: none;">Link</a>` : ''}` : ''}
-          ${risk.lastUpdated ? ` | Last Updated: ${new Date(risk.lastUpdated).toLocaleString()}` : ''}
+        <div style="font-size: 12px; color: #757575;">
+          Region: ${risk.region || 'Unknown Region'} • Impact Level: ${risk.impactLevel || 0}
         </div>
       </div>
       `;
     });
-    
-    // Return the complete HTML for the geopolitical risks section
+
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
       ${globalOverviewHtml}
-      <div style="margin-top: 15px;">
-        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Current Risks</div>
-        ${risksHtml}
+      ${riskCardsHtml}
+      <div style="margin-top: 15px; text-align: right; font-size: 12px; color: #757575;">
+        Last Updated: ${new Date(geoRisks.lastUpdated).toLocaleString()}
       </div>
     </div>
     `;

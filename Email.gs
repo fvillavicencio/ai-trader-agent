@@ -52,39 +52,27 @@ function sendPromptEmail(prompt) {
       color: #7f8c8d;
       margin: 5px 0 0;
     }
-    .prompt-box {
-      background-color: #f5f5f5;
+    .content {
+      margin: 20px 0;
       padding: 20px;
+      background-color: #f8f9fa;
       border-radius: 8px;
-      border-left: 5px solid #2196f3;
-      margin-bottom: 20px;
     }
-    .prompt-title {
-      color: #2196f3;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 0;
-      margin-bottom: 10px;
-    }
-    .prompt-content {
-      font-family: monospace;
+    .content pre {
       white-space: pre-wrap;
-      overflow-x: auto;
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
       font-size: 14px;
       line-height: 1.5;
       color: #333;
-      padding: 15px;
-      background-color: #ffffff;
-      border-radius: 4px;
-      border: 1px solid #e0e0e0;
     }
     .footer {
-      margin-top: 30px;
       text-align: center;
-      font-size: 14px;
-      color: #95a5a6;
-      padding-top: 15px;
-      border-top: 1px solid #eee;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #f0f0f0;
     }
     .footer p {
       margin: 5px 0;
@@ -94,25 +82,27 @@ function sendPromptEmail(prompt) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>AI Trader Agent - AI Prompt</h1>
+      <h1>AI Trader Agent - OpenAI Prompt</h1>
       <p>Generated on ${formattedDate}</p>
     </div>
     
-    <div class="prompt-box">
-      <h2 class="prompt-title">AI Prompt</h2>
-      <div class="prompt-content">
+    <div class="content">
+      <h2>OpenAI Prompt</h2>
+      <pre>
 ${prompt}
-      </div>
+      </pre>
     </div>
     
     <div class="footer">
-      <p>  ${NEWSLETTER_NAME}</p>
+      <p>${NEWSLETTER_NAME}</p>
       <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>
 </body>
 </html>
     `;
+
+    const subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
 
     // Send the email using our enhanced sendEmail function
     const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
