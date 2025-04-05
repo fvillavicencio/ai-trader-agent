@@ -1,8 +1,9 @@
 /**
  * Fundamental Metrics Module
- * Handles retrieval of fundamental metrics for stocks/ETFs including PEG ratios, 
- * Forward P/E Ratios, and other relevant metrics
+ * Handles calculation and analysis of fundamental metrics for stocks/ETFs
  */
+
+
 
 /**
  * Retrieves fundamental metrics for a list of stocks/ETFs
@@ -49,8 +50,16 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
           continue;
         }
         
-        // Fetch metrics for valid symbols
-        const symbolMetrics = fetchFundamentalMetricsData(symbol);
+        // Get raw stock data from StockDataRetriever
+        const stockData = retrieveStockMetrics(symbol);
+        
+        // Calculate and analyze metrics
+        const symbolMetrics = {
+          ...stockData,
+          analysis: generateAnalysis(symbol, stockData),
+          fromCache: stockData.fromCache
+        };
+        
         metrics.metrics[symbol] = symbolMetrics;
         metrics.validSymbols.push(symbol);
         
@@ -72,378 +81,25 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
     const executionTime = (new Date().getTime() - startTime) / 1000;
     Logger.log(`Retrieved fundamental metrics for ${allSymbols.length} symbols in ${executionTime} seconds`);
     
-    return metrics;
+    // Check if we have any valid data
+    const hasValidData = metrics.validSymbols.length > 0;
+    
+    return {
+      success: hasValidData,
+      message: hasValidData ? `Retrieved fundamental metrics for ${metrics.validSymbols.length} symbols` : 'No valid fundamental metrics data retrieved',
+      error: !hasValidData ? `Failed to retrieve valid fundamental metrics for any symbols` : null,
+      metrics: metrics,
+      timestamp: new Date().toISOString()
+    };
   } catch (error) {
     Logger.log(`Error in retrieveFundamentalMetrics: ${error}`);
-    throw error;
-  }
-}
-
-/**
- * Fetches fundamental metrics data for a specific symbol
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Fundamental metrics data
- */
-function fetchFundamentalMetricsData(symbol) {
-  try {
-    // Initialize metrics object with basic structure
-    const metrics = {
-      symbol: symbol,
-      price: null,
-      priceChange: null,
-      changesPercentage: null,
-      volume: null,
-      marketCap: null,
-      company: null,
-      industry: null,
-      sector: null,
-      beta: null,
-      pegRatio: null,
-      forwardPE: null,
-      priceToBook: null,
-      priceToSales: null,
-      debtToEquity: null,
-      returnOnEquity: null,
-      returnOnAssets: null,
-      profitMargin: null,
-      dividendYield: null,
-      fiftyTwoWeekHigh: null,
-      fiftyTwoWeekLow: null,
-      dayHigh: null,
-      dayLow: null,
-      open: null,
-      close: null,
-      fiftyTwoWeekAverage: null,
-      dataSource: [],
-      sources: [],
-      fromCache: false,
-      analysis: "Data collection in progress",
-      errors: [],
-      lastUpdated: null
-    };
-
-    // Cache key for this symbol
-    const cacheKey = `metrics_${symbol}`;
-    
-    // Try to get from cache first
-    try {
-      const cache = CacheService.getScriptCache();
-      const cachedData = JSON.parse(cache.get(cacheKey));
-      if (cachedData && cachedData.lastUpdated && 
-          (new Date().getTime() - cachedData.lastUpdated) < 300000) { // 5 minutes
-        metrics.fromCache = true;
-        Object.assign(metrics, cachedData);
-        return metrics;
-      }
-    } catch (cacheError) {
-      Logger.log(`Cache error for ${symbol}: ${cacheError}`);
-    }
-
-    // Try Google Finance first as it's more reliable
-    try {
-      const googleData = fetchGoogleFinanceData(symbol);
-      if (googleData) {
-        metrics.sources.push("Google Finance");
-        Object.assign(metrics, googleData);
-      }
-    } catch (googleError) {
-      metrics.errors.push(`Google Finance error: ${googleError.message}`);
-      Logger.log(`Google Finance error for ${symbol}: ${googleError}`);
-    }
-
-    // Try Yahoo Finance with enhanced retry logic and rate limiting
-    let yahooRetries = 3;
-    let yahooWaitTime = 1000; // Start with 1 second wait
-    let totalYahooErrors = 0;
-    
-    while (yahooRetries > 0 && totalYahooErrors < 10) { // Limit total errors to 10
-      try {
-        const yahooData = fetchYahooFinanceData(symbol);
-        if (yahooData) {
-          metrics.sources.push("Yahoo Finance");
-          Object.assign(metrics, yahooData);
-          break;
-        }
-      } catch (e) {
-        if (e.message.includes('429')) {
-          totalYahooErrors++;
-          Logger.log(`Yahoo Finance rate limit hit for ${symbol}, waiting ${yahooWaitTime/1000} seconds...`);
-          Utilities.sleep(yahooWaitTime);
-          yahooWaitTime *= 2; // Exponential backoff
-        } else {
-          metrics.errors.push(`Yahoo Finance error: ${e.message}`);
-          Logger.log(`Yahoo Finance error for ${symbol}: ${e}`);
-          totalYahooErrors++;
-        }
-        yahooRetries--;
-      }
-    }
-
-    // Try Tradier with enhanced retry logic
-    let tradierRetries = 3;
-    let tradierWaitTime = 1000;
-    let totalTradierErrors = 0;
-    
-    while (tradierRetries > 0 && totalTradierErrors < 5) { // Limit total errors to 5
-      try {
-        const tradierData = fetchTradierData(symbol);
-        if (tradierData) {
-          metrics.sources.push("Tradier");
-          Object.assign(metrics, tradierData);
-          break;
-        }
-      } catch (e) {
-        if (e.message.includes('404')) {
-          metrics.errors.push(`Tradier 404 error: ${e.message}`);
-          break; // No point in retrying for 404
-        }
-        Logger.log(`Tradier retry ${3 - tradierRetries + 1} for ${symbol}: ${e}`);
-        Utilities.sleep(tradierWaitTime);
-        tradierWaitTime *= 2;
-        tradierRetries--;
-        totalTradierErrors++;
-      }
-    }
-
-    // Cache the results
-    try {
-      const cache = CacheService.getScriptCache();
-      const cacheData = {
-        ...metrics,
-        lastUpdated: new Date().getTime()
-      };
-      cache.put(cacheKey, JSON.stringify(cacheData), 300); // Cache for 5 minutes
-    } catch (cacheError) {
-      Logger.log(`Cache write error for ${symbol}: ${cacheError}`);
-    }
-
-    // If no data was retrieved, set default values
-    if (metrics.sources.length === 0) {
-      metrics.price = metrics.price || 0;
-      metrics.priceChange = metrics.priceChange || 0;
-      metrics.changesPercentage = metrics.changesPercentage || 0;
-      metrics.volume = metrics.volume || 0;
-      metrics.marketCap = metrics.marketCap || 0;
-      metrics.company = metrics.company || symbol;
-      metrics.industry = metrics.industry || "Unknown";
-      metrics.sector = metrics.sector || "Unknown";
-      metrics.beta = metrics.beta || 1.0;
-      metrics.pegRatio = metrics.pegRatio || 1.0;
-      metrics.forwardPE = metrics.forwardPE || 15.0;
-      metrics.priceToBook = metrics.priceToBook || 2.0;
-      metrics.priceToSales = metrics.priceToSales || 2.0;
-      metrics.debtToEquity = metrics.debtToEquity || 1.0;
-      metrics.returnOnEquity = metrics.returnOnEquity || 10.0;
-      metrics.returnOnAssets = metrics.returnOnAssets || 5.0;
-      metrics.profitMargin = metrics.profitMargin || 10.0;
-      metrics.dividendYield = metrics.dividendYield || 0.0;
-      metrics.fiftyTwoWeekHigh = metrics.fiftyTwoWeekHigh || 0;
-      metrics.fiftyTwoWeekLow = metrics.fiftyTwoWeekLow || 0;
-      metrics.dayHigh = metrics.dayHigh || 0;
-      metrics.dayLow = metrics.dayLow || 0;
-      metrics.open = metrics.open || 0;
-      metrics.close = metrics.close || 0;
-      metrics.fiftyTwoWeekAverage = metrics.fiftyTwoWeekAverage || 0;
-      metrics.analysis = "No data available from sources. Using default values.";
-    } else {
-      // Update analysis based on data quality
-      if (metrics.sources.length === 1) {
-        metrics.analysis = "Limited data available from single source";
-      } else {
-        metrics.analysis = "Data collected from multiple sources";
-      }
-    }
-
-    return metrics;
-  } catch (error) {
-    Logger.log(`Error in fetchFundamentalMetricsData for ${symbol}: ${error}`);
     return {
-      symbol: symbol,
+      success: false,
+      message: `Failed to retrieve fundamental metrics: ${error.message}`,
       error: error.message,
-      fromCache: false,
-      sources: [],
-      errors: [error.message]
+      metrics: {},
+      timestamp: new Date().toISOString()
     };
-  }
-}
-
-/**
- * Formats the fundamental metrics data for display
- * @param {Array} fundamentalMetrics - Array of fundamental metrics data objects
- * @return {String} Formatted fundamental metrics data
- */
-function formatFundamentalMetricsData(fundamentalMetrics) {
-  try {
-    let formattedData = "FUNDAMENTAL METRICS DATA:\n";
-    
-    // Check if we have data
-    if (!fundamentalMetrics || fundamentalMetrics.length === 0) {
-      return "No fundamental metrics data available.";
-    }
-    
-    // Add count of stocks/ETFs
-    formattedData += `- Metrics for ${fundamentalMetrics.length} stocks/ETFs:\n`;
-    
-    // Group stocks by category
-    const indices = fundamentalMetrics.filter(stock => ["SPY", "QQQ", "IWM", "DIA"].includes(stock.symbol));
-    const magSeven = fundamentalMetrics.filter(stock => ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol));
-    const otherStocks = fundamentalMetrics.filter(stock => 
-      !["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(stock.symbol)
-    );
-    
-    // Format all stocks using the formatStockGroup function
-    formattedData += formatStockGroup(fundamentalMetrics);
-    
-    // Add source and timestamp
-    formattedData += `\nSource: Multiple financial data providers, as of ${new Date().toLocaleString()}\n`;
-    
-    return formattedData;
-  } catch (error) {
-    Logger.log(`Error formatting fundamental metrics data: ${error}`);
-    return "Error formatting fundamental metrics data.";
-  }
-}
-
-/**
- * Formats a group of stocks for display
- * @param {Array} stocks - Array of stock data objects
- * @return {String} Formatted stock data
- */
-function formatStockGroup(stocks) {
-  try {
-    let formattedData = "";
-    
-    // Process each stock
-    for (const stock of stocks) {
-      // Get the symbol and name
-      const symbol = stock.symbol || "Unknown";
-      const name = stock.name || "Unknown";
-      
-      formattedData += `* ${symbol} (${name}):\n`;
-      
-      // Add price information if available
-      if (stock.price !== null) {
-        const priceFormatted = typeof stock.price === 'number' ? `$${stock.price.toFixed(2)}` : '$N/A';
-        let priceChangeFormatted = "";
-        
-        if (stock.priceChange !== null && stock.changesPercentage !== null) {
-          const changePrefix = stock.priceChange >= 0 ? '+' : '';
-          const percentPrefix = stock.changesPercentage >= 0 ? '+' : '';
-          const changeValue = typeof stock.priceChange === 'number' ? stock.priceChange.toFixed(2) : 'N/A';
-          const percentValue = typeof stock.changesPercentage === 'number' ? stock.changesPercentage.toFixed(1) : 'N/A';
-          priceChangeFormatted = ` (${changePrefix}${changeValue}, ${percentPrefix}${percentValue}%)`;
-        }
-        
-        formattedData += `  - Price: ${priceFormatted}${priceChangeFormatted}\n`;
-      }
-      
-      // Add volume and market cap if available
-      if (stock.volume !== null) {
-        formattedData += `  - Volume: ${typeof stock.volume === 'number' ? stock.volume.toLocaleString() : 'N/A'}\n`;
-      }
-      if (stock.marketCap !== null) {
-        formattedData += `  - Market Cap: $${typeof stock.marketCap === 'number' ? (stock.marketCap / 1e9).toFixed(1) : 'N/A'}B\n`;
-      }
-      
-      // Add fundamental metrics
-      formattedData += `  - PEG Ratio: ${formatValue(stock.pegRatio)}\n`;
-      formattedData += `  - Forward P/E: ${formatValue(stock.forwardPE)}\n`;
-      formattedData += `  - Price to Book: ${formatValue(stock.priceToBook)}\n`;
-      formattedData += `  - Price to Sales: ${formatValue(stock.priceToSales)}\n`;
-      formattedData += `  - Debt to Equity: ${formatValue(stock.debtToEquity)}\n`;
-      
-      // Add ROE with percentage formatting if available
-      if (stock.returnOnEquity !== null) {
-        const roeValue = typeof stock.returnOnEquity === 'number' && stock.returnOnEquity <= 1 
-          ? (stock.returnOnEquity * 100).toFixed(1) + '%' 
-          : formatValue(stock.returnOnEquity);
-        formattedData += `  - Return on Equity: ${roeValue}\n`;
-      } else {
-        formattedData += `  - Return on Equity: N/A\n`;
-      }
-      
-      // Add Beta
-      formattedData += `  - Beta: ${formatValue(stock.beta)}\n`;
-      
-      // Add a blank line between stocks
-      formattedData += "\n";
-    }
-    
-    return formattedData;
-  } catch (error) {
-    Logger.log(`Error formatting stock group: ${error}`);
-    return "Error formatting stock data.";
-  }
-}
-
-/**
- * Formats a value for display
- * @param {Number} value - The value to format
- * @param {Boolean} fixedDecimals - Whether to use a fixed number of decimals
- * @param {Number} decimals - Number of decimals to use if fixedDecimals is true
- * @return {String} Formatted value
- */
-function formatValue(value, fixedDecimals = true, decimals = 2) {
-  if (value === null || value === undefined || isNaN(value) || typeof value !== 'number') {
-    // Try to convert to number if it's a string
-    if (typeof value === 'string') {
-      const parsedValue = parseFloat(value);
-      if (!isNaN(parsedValue)) {
-        value = parsedValue;
-      } else {
-        return "N/A";
-      }
-    } else {
-      return "N/A";
-    }
-  }
-  
-  if (fixedDecimals) {
-    return value.toFixed(decimals);
-  }
-  
-  return value.toString();
-}
-
-/**
- * Evaluates a metric compared to historical and sector averages
- * @param {Number} current - Current value
- * @param {Number} historical - Historical average
- * @param {Number} sector - Sector average
- * @param {String} metricType - Type of metric (PEG, P/E, etc.)
- * @param {Boolean} higherIsBetter - Whether higher values are better
- * @return {String} Evaluation
- */
-function evaluateMetric(current, historical, sector, metricType, higherIsBetter = false) {
-  if (current === null || historical === null || sector === null || 
-      current === 0 || historical === 0 || sector === 0) {
-    return "Insufficient data";
-  }
-  
-  // Calculate percentage differences
-  const histDiff = ((current - historical) / historical) * 100;
-  const sectorDiff = ((current - sector) / sector) * 100;
-  
-  // Determine if the metric is favorable
-  let histFavorable = higherIsBetter ? (histDiff > 0) : (histDiff < 0);
-  let sectorFavorable = higherIsBetter ? (sectorDiff > 0) : (sectorDiff < 0);
-  
-  // Special case for PEG ratio
-  if (metricType === "PEG") {
-    if (current < 1.0) return "Potentially undervalued";
-    if (current > 2.0) return "Potentially overvalued";
-    return "Fairly valued";
-  }
-  
-  // Evaluation based on differences
-  if (Math.abs(histDiff) < 10 && Math.abs(sectorDiff) < 10) {
-    return "Fairly valued";
-  } else if (histFavorable && sectorFavorable) {
-    return "Favorable";
-  } else if (!histFavorable && !sectorFavorable) {
-    return "Unfavorable";
-  } else {
-    return "Mixed signals";
   }
 }
 
@@ -593,6 +249,77 @@ function generateAnalysis(symbol, metrics, historicalAverages = {}, sectorAverag
 }
 
 /**
+ * Formats a value for display
+ * @param {Number} value - The value to format
+ * @param {Boolean} fixedDecimals - Whether to use a fixed number of decimals
+ * @param {Number} decimals - Number of decimals to use if fixedDecimals is true
+ * @return {String} Formatted value
+ */
+function formatValue(value, fixedDecimals = true, decimals = 2) {
+  if (value === null || value === undefined || isNaN(value) || typeof value !== 'number') {
+    // Try to convert to number if it's a string
+    if (typeof value === 'string') {
+      const parsedValue = parseFloat(value);
+      if (!isNaN(parsedValue)) {
+        value = parsedValue;
+      } else {
+        return "N/A";
+      }
+    } else {
+      return "N/A";
+    }
+  }
+  
+  if (fixedDecimals) {
+    return value.toFixed(decimals);
+  }
+  
+  return value.toString();
+}
+
+/**
+ * Evaluates a metric compared to historical and sector averages
+ * @param {Number} current - Current value
+ * @param {Number} historical - Historical average
+ * @param {Number} sector - Sector average
+ * @param {String} metricType - Type of metric (PEG, P/E, etc.)
+ * @param {Boolean} higherIsBetter - Whether higher values are better
+ * @return {String} Evaluation
+ */
+function evaluateMetric(current, historical, sector, metricType, higherIsBetter = false) {
+  if (current === null || historical === null || sector === null || 
+      current === 0 || historical === 0 || sector === 0) {
+    return "Insufficient data";
+  }
+  
+  // Calculate percentage differences
+  const histDiff = ((current - historical) / historical) * 100;
+  const sectorDiff = ((current - sector) / sector) * 100;
+  
+  // Determine if the metric is favorable
+  let histFavorable = higherIsBetter ? (histDiff > 0) : (histDiff < 0);
+  let sectorFavorable = higherIsBetter ? (sectorDiff > 0) : (sectorDiff < 0);
+  
+  // Special case for PEG ratio
+  if (metricType === "PEG") {
+    if (current < 1.0) return "Potentially undervalued";
+    if (current > 2.0) return "Potentially overvalued";
+    return "Fairly valued";
+  }
+  
+  // Evaluation based on differences
+  if (Math.abs(histDiff) < 10 && Math.abs(sectorDiff) < 10) {
+    return "Fairly valued";
+  } else if (histFavorable && sectorFavorable) {
+    return "Favorable";
+  } else if (!histFavorable && !sectorFavorable) {
+    return "Unfavorable";
+  } else {
+    return "Mixed signals";
+  }
+}
+
+/**
  * Determines if a symbol is an ETF based on common ETF symbols
  * @param {String} symbol - The stock/ETF symbol
  * @return {Boolean} True if the symbol is likely an ETF
@@ -616,174 +343,6 @@ function isETF(symbol) {
   }
   
   return false;
-}
-
-/**
- * Gets or creates a shared spreadsheet for Google Finance data
- * @return {Spreadsheet} The shared spreadsheet
- */
-function getSharedFinanceSpreadsheet() {
-  try {
-    // Try to get the spreadsheet ID from script properties
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const spreadsheetId = scriptProperties.getProperty('FINANCE_SPREADSHEET_ID');
-    
-    if (spreadsheetId) {
-      try {
-        // Try to open the existing spreadsheet
-        return SpreadsheetApp.openById(spreadsheetId);
-      } catch (e) {
-        // If the spreadsheet doesn't exist anymore, create a new one
-        Logger.log(`Existing finance spreadsheet not found, creating a new one: ${e.message}`);
-      }
-    }
-    
-    // Create a new spreadsheet
-    const spreadsheet = SpreadsheetApp.create("AI Trading Agent - Finance Data");
-    
-    // Store the ID in script properties
-    scriptProperties.setProperty('FINANCE_SPREADSHEET_ID', spreadsheet.getId());
-    
-    Logger.log(`Created new shared finance spreadsheet with ID: ${spreadsheet.getId()}`);
-    
-    return spreadsheet;
-  } catch (error) {
-    Logger.log(`Error getting or creating shared finance spreadsheet: ${error}`);
-    throw error;
-  }
-}
-
-/**
- * Fetches historical averages for a specific symbol
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Historical averages
- */
-function fetchHistoricalAverages(symbol) {
-  try {
-    // In a production environment, you would fetch historical data
-    // For now, we'll simulate the data
-    
-    // For indices, use standard values
-    if (["SPY", "QQQ", "IWM", "DIA"].includes(symbol)) {
-      return {
-        pegRatio: 1.5,
-        forwardPE: 18.5,
-        priceToBook: 3.2,
-        priceToSales: 2.4
-      };
-    }
-    
-    // For Magnificent Seven, use higher values
-    if (["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"].includes(symbol)) {
-      return {
-        pegRatio: 2.1,
-        forwardPE: 25.0,
-        priceToBook: 8.5,
-        priceToSales: 6.0
-      };
-    }
-    
-    // For other stocks, generate random values
-    return {
-      pegRatio: getRandomMetric(1.0, 2.5),
-      forwardPE: getRandomMetric(15, 22),
-      priceToBook: getRandomMetric(2, 5),
-      priceToSales: getRandomMetric(1.5, 4)
-    };
-  } catch (error) {
-    Logger.log(`Error fetching historical averages for ${symbol}: ${error}`);
-    
-    // Return placeholder data
-    return {
-      pegRatio: 0,
-      forwardPE: 0,
-      priceToBook: 0,
-      priceToSales: 0
-    };
-  }
-}
-
-/**
- * Fetches sector averages for a specific symbol
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Sector averages
- */
-function fetchSectorAverages(symbol) {
-  try {
-    // In a production environment, you would determine the sector and fetch sector averages
-    // For now, we'll use predefined sector averages based on the symbol
-    
-    // Define sector mappings (simplified)
-    const sectorMappings = {
-      "AAPL": "Technology",
-      "MSFT": "Technology",
-      "GOOGL": "Technology",
-      "AMZN": "Consumer Cyclical",
-      "META": "Technology",
-      "TSLA": "Consumer Cyclical",
-      "NVDA": "Technology",
-      "SPY": "Market",
-      "QQQ": "Technology",
-      "IWM": "Small Cap",
-      "DIA": "Large Cap"
-    };
-    
-    // Define sector averages
-    const sectorAverages = {
-      "Technology": {
-        pegRatio: 1.8,
-        forwardPE: 24.0,
-        priceToBook: 7.5,
-        priceToSales: 5.0
-      },
-      "Consumer Cyclical": {
-        pegRatio: 1.5,
-        forwardPE: 20.0,
-        priceToBook: 4.5,
-        priceToSales: 2.5
-      },
-      "Market": {
-        pegRatio: 1.5,
-        forwardPE: 18.5,
-        priceToBook: 3.2,
-        priceToSales: 2.4
-      },
-      "Small Cap": {
-        pegRatio: 1.3,
-        forwardPE: 16.0,
-        priceToBook: 2.0,
-        priceToSales: 1.5
-      },
-      "Large Cap": {
-        pegRatio: 1.6,
-        forwardPE: 19.0,
-        priceToBook: 3.5,
-        priceToSales: 2.8
-      },
-      "Default": {
-        pegRatio: 1.5,
-        forwardPE: 18.0,
-        priceToBook: 3.0,
-        priceToSales: 2.0
-      }
-    };
-    
-    // Get the sector for the symbol
-    const sector = sectorMappings[symbol] || "Default";
-    
-    // Return the sector averages
-    return sectorAverages[sector];
-  } catch (error) {
-    Logger.log(`Error fetching sector averages for ${symbol}: ${error}`);
-    
-    // Return placeholder data
-    return {
-      pegRatio: 0,
-      forwardPE: 0,
-      priceToBook: 0,
-      priceToSales: 0
-    };
-  }
 }
 
 /**

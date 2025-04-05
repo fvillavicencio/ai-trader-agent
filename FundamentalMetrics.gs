@@ -81,10 +81,25 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
     const executionTime = (new Date().getTime() - startTime) / 1000;
     Logger.log(`Retrieved fundamental metrics for ${allSymbols.length} symbols in ${executionTime} seconds`);
     
-    return metrics;
+    // Check if we have any valid data
+    const hasValidData = metrics.validSymbols.length > 0;
+    
+    return {
+      success: hasValidData,
+      message: hasValidData ? `Retrieved fundamental metrics for ${metrics.validSymbols.length} symbols` : 'No valid fundamental metrics data retrieved',
+      error: !hasValidData ? `Failed to retrieve valid fundamental metrics for any symbols` : null,
+      metrics: metrics,
+      timestamp: new Date().toISOString()
+    };
   } catch (error) {
     Logger.log(`Error in retrieveFundamentalMetrics: ${error}`);
-    throw error;
+    return {
+      success: false,
+      message: `Failed to retrieve fundamental metrics: ${error.message}`,
+      error: error.message,
+      metrics: {},
+      timestamp: new Date().toISOString()
+    };
   }
 }
 

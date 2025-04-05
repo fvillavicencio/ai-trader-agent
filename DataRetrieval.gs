@@ -275,7 +275,12 @@ function retrieveAllData() {
     const mentionedStocks = marketSentimentData.mentionedStocks || [];
     const allSymbols = [...new Set([...defaultSymbols, ...mentionedStocks])];
     const fundamentalMetricsData = retrieveFundamentalMetrics(allSymbols);
+    
+    // Log the metrics for debugging
+    Logger.log(`Fundamental metrics data: ${JSON.stringify(fundamentalMetricsData, null, 2)}`);
+    
     if (!fundamentalMetricsData.success) {
+      Logger.log(`Error retrieving fundamental metrics: ${fundamentalMetricsData.error}`);
       return {
         success: false,
         message: "Failed to retrieve fundamental metrics",
@@ -626,44 +631,73 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
     
     let formattedText = "**Fundamental Metrics:**\n\n";
     
-    // Format each symbol's data
-    for (const symbol in fundamentalMetricsData.metrics) {
-      const metrics = fundamentalMetricsData.metrics[symbol];
-      
+    // Get the metrics object from the data
+    const metricsObj = fundamentalMetricsData.metrics?.metrics;
+    
+    if (!metricsObj) {
+      formattedText += "No fundamental metrics data available\n";
+      return formattedText;
+    }
+    
+    // Organize stocks into categories
+    const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
+    const magnificentSeven = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
+    const otherStocks = Object.keys(metricsObj).filter(
+      symbol => !majorIndices.includes(symbol) && !magnificentSeven.includes(symbol)
+    );
+    
+    // Helper function to format a single stock
+    function formatStock(symbol, metrics) {
       if (!metrics || metrics.error) {
-        formattedText += `* ${symbol}: Error retrieving data - ${metrics?.error || 'Unknown error'}\n\n`;
-        continue;
+        return `* ${symbol}: Error retrieving data - ${metrics?.error || 'Unknown error'}\n\n`;
       }
       
-      formattedText += `* ${symbol} (${metrics.company || 'N/A'}): $${formatValue(metrics.price, true)} (${metrics.priceChange >= 0 ? '+' : ''}${formatValue(metrics.priceChange, true)}, ${metrics.changesPercentage >= 0 ? '+' : ''}${formatValue(metrics.changesPercentage, true)}%)\n`;
-      formattedText += `  * Sector: ${metrics.sector || 'N/A'}\n`;
-      formattedText += `  * Industry: ${metrics.industry || 'N/A'}\n`;
-      
-      // Add market cap if available
-      if (metrics.marketCap) {
-        const formattedMarketCap = formatMarketCap(metrics.marketCap);
-        formattedText += `  * Market Cap: ${formattedMarketCap}\n`;
+      // Calculate percentage change if not available
+      let priceChangePercent = "N/A";
+      if (metrics.changesPercentage === null && metrics.priceChange !== null && metrics.price !== null) {
+        priceChangePercent = `${(metrics.priceChange / (metrics.price + metrics.priceChange) * 100).toFixed(2)}%`;
+      } else if (metrics.changesPercentage !== null) {
+        priceChangePercent = `${metrics.changesPercentage >= 0 ? '+' : ''}${formatValue(metrics.changesPercentage, true)}%`;
       }
       
-      // Add volume
-      const formattedVolume = formatVolume(metrics.volume);
-      formattedText += `  * Volume: ${formattedVolume}\n`;
-      
-      // Add metrics
-      if (metrics.pegRatio !== null) formattedText += `  * PEG Ratio: ${formatValue(metrics.pegRatio)}\n`;
-      if (metrics.forwardPE !== null) formattedText += `  * Forward P/E: ${formatValue(metrics.forwardPE)}\n`;
-      if (metrics.priceToBook !== null) formattedText += `  * Price/Book: ${formatValue(metrics.priceToBook)}\n`;
-      if (metrics.priceToSales !== null) formattedText += `  * Price/Sales: ${formatValue(metrics.priceToSales)}\n`;
-      if (metrics.debtToEquity !== null) formattedText += `  * Debt/Equity: ${formatValue(metrics.debtToEquity)}\n`;
-      if (metrics.returnOnEquity !== null) formattedText += `  * Return on Equity: ${formatValue(metrics.returnOnEquity)}%\n`;
-      if (metrics.beta !== null) formattedText += `  * Beta: ${formatValue(metrics.beta)}\n`;
-      
-      formattedText += "\n";
+      return `* ${symbol} (${metrics.company || 'N/A'}): $${formatValue(metrics.price, true)} (${metrics.priceChange >= 0 ? '+' : ''}${formatValue(metrics.priceChange, true)}, ${priceChangePercent})\n` +
+             `  * Sector: ${metrics.sector || 'N/A'}\n` +
+             `  * Industry: ${metrics.industry || 'N/A'}\n` +
+             (metrics.marketCap ? `  * Market Cap: ${formatMarketCap(metrics.marketCap)}\n` : '') +
+             `  * Volume: ${formatVolume(metrics.volume)}\n` +
+             (metrics.pegRatio !== null ? `  * PEG Ratio: ${formatValue(metrics.pegRatio)}\n` : '') +
+             (metrics.forwardPE !== null ? `  * Forward P/E: ${formatValue(metrics.forwardPE)}\n` : '') +
+             (metrics.priceToBook !== null ? `  * Price/Book: ${formatValue(metrics.priceToBook)}\n` : '') +
+             (metrics.priceToSales !== null ? `  * Price/Sales: ${formatValue(metrics.priceToSales)}\n` : '') +
+             (metrics.debtToEquity !== null ? `  * Debt/Equity: ${formatValue(metrics.debtToEquity)}\n` : '') +
+             (metrics.returnOnEquity !== null ? `  * Return on Equity: ${formatValue(metrics.returnOnEquity)}%\n` : '') +
+             (metrics.beta !== null ? `  * Beta: ${formatValue(metrics.beta)}\n` : '') +
+             `\n`;
+    }
+    
+    // Format major indices
+    formattedText += "* Major Indices:\n";
+    majorIndices.forEach(symbol => {
+      formattedText += formatStock(symbol, metricsObj[symbol]);
+    });
+    
+    // Format magnificent seven
+    formattedText += "* Magnificent Seven:\n";
+    magnificentSeven.forEach(symbol => {
+      formattedText += formatStock(symbol, metricsObj[symbol]);
+    });
+    
+    // Format other stocks
+    if (otherStocks.length > 0) {
+      formattedText += "* Other Stocks:\n";
+      otherStocks.forEach(symbol => {
+        formattedText += formatStock(symbol, metricsObj[symbol]);
+      });
     }
     
     return formattedText;
   } catch (error) {
-    Logger.log(`Error in formatFundamentalMetricsData: ${error}`);
-    throw error;
+    Logger.log(`Error formatting fundamental metrics data: ${error}`);
+    return "**Fundamental Metrics:**\nError formatting data\n";
   }
 }

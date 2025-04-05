@@ -116,6 +116,12 @@ function retrieveStockMetrics(symbol) {
     }
     
     // Cache the data for 30 minutes
+    // First calculate percentage change if we have price and price change but no percentage change
+    if (metrics.price !== null && metrics.priceChange !== null && metrics.changesPercentage === null) {
+      metrics.changesPercentage = (metrics.priceChange / metrics.price) * 100;
+      Logger.log(`Calculated changesPercentage for ${symbol}: ${metrics.changesPercentage}%`);
+    }
+    
     const cacheData = {
       ...metrics,
       lastUpdated: new Date().toISOString()
@@ -1506,4 +1512,3 @@ function getCompanyName(symbol) {
     };
   }
 }
-
