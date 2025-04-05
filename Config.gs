@@ -18,6 +18,13 @@ const ALPHA_VANTAGE_API_KEY = ""; // Don't hardcode the key here, use Script Pro
 //newsletter name
 const NEWSLETTER_NAME = "Market Pulse Daily";
 
+// List of deprecated stock symbols that should be excluded from reports
+const DEPRECATED_SYMBOLS = [
+  'FB', // Facebook (now META)
+  'GOOG', // Google (merged into GOOGL)
+  'TWTR', // Twitter (now X)  
+  // Add more deprecated symbols as needed
+];
 
 // Email configuration
 const EMAIL_SUBJECT_PREFIX = NEWSLETTER_NAME || "[Market Pulse Daily] "; // Prefix for email subject
@@ -27,7 +34,6 @@ const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com"]; // Array of recipient ema
 // Dedicated email address for prompt and error emails
 const PROMPT_ERROR_EMAIL = "fvillavicencio+AI_trading_agent@gmail.com";
 const TEST_EMAIL = "fvillavicencio@gmail.com";
-
 
 // Schedule configuration
 const MORNING_SCHEDULE_HOUR = 8;

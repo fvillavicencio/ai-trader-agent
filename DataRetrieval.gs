@@ -273,7 +273,22 @@ function retrieveAllData() {
     // Retrieve fundamental metrics
     const defaultSymbols = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
     const mentionedStocks = marketSentimentData.mentionedStocks || [];
-    const allSymbols = [...new Set([...defaultSymbols, ...mentionedStocks])];
+    
+    // Get deprecated symbols from config
+    const deprecatedSymbols = DEPRECATED_SYMBOLS;
+    
+    // Filter out deprecated symbols from both default and mentioned stocks
+    const filteredDefaultSymbols = defaultSymbols.filter(symbol => !deprecatedSymbols.includes(symbol));
+    const filteredMentionedStocks = mentionedStocks.filter(symbol => !deprecatedSymbols.includes(symbol));
+    
+    // Combine and deduplicate symbols
+    const allSymbols = [...new Set([...filteredDefaultSymbols, ...filteredMentionedStocks])];
+    
+    // Log the symbols for debugging
+    Logger.log(`Filtered default symbols: ${filteredDefaultSymbols.join(', ')}`);
+    Logger.log(`Filtered mentioned stocks: ${filteredMentionedStocks.join(', ')}`);
+    Logger.log(`All symbols to retrieve metrics for: ${allSymbols.join(', ')}`);
+    
     const fundamentalMetricsData = retrieveFundamentalMetrics(allSymbols);
     
     // Log the metrics for debugging
@@ -721,5 +736,3 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
     return "Error formatting fundamental metrics data\n";
   }
 }
-
-

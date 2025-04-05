@@ -93,28 +93,7 @@ Using only the retrieved data provided below, generate a concise trading recomme
         }
       ]
     },
-    "fundamentalMetrics": [
-      {
-        "symbol": "Ticker",
-        "name": "Company Name",
-        "price": 0,
-        "priceChange": "+0.00 (0.00%)",
-        "marketCap": "Market Cap",
-        "peRatio": 0,
-        "pegRatio": 0,
-        "forwardPE": 0,
-        "priceToBook": 0,
-        "priceToSales": 0,
-        "debtToEquity": 0,
-        "returnOnEquity": "0.0%",
-        "returnOnAssets": "0.0%",
-        "profitMargin": "0.0%",
-        "dividendYield": "0.0%",
-        "beta": 0,
-        "summary": "Analysis",
-        "lastUpdated": "YYYY-MM-DD HH:MM"
-      }
-    ],
+    
     "macroeconomicFactors": {
       "treasuryYields": {
         "threeMonth": 0.00,
@@ -155,27 +134,11 @@ Using only the retrieved data provided below, generate a concise trading recomme
       },
       "geopoliticalRisks": {
         "global": "Brief global geopolitical risk summary",
-        "regions": [
-          {
-            "region": "Region Name or Aread (e.g., North America, Europe, Asia, Middle East, Cyber Security, etc.)",
-            "risks": [
-              {
-                "description": "Geopolitical risk description",
-                "impactLevel": "High|Moderate|Low",
-                "source": "Source name",
-                "sourceUrl": "https://source.url",
-                "lastUpdated": "YYYY-MM-DD HH:MM"
-              }
-            ]
-          }
-        ],
         "lastUpdated": "YYYY-MM-DD HH:MM"
       }
     }
   },
   "justification": "Provide a clear, detailed explanation for your decision",
-  "source": "Overall analysis source",
-  "sourceUrl": "https://analysis.source.url",
   "timestamp": "YYYY-MM-DD HH:MM"
 }
 `;

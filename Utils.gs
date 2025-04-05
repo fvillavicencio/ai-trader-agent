@@ -552,174 +552,6 @@ function formatHtmlEmailBodyWithAnalysis(decision, analysis, analysisTime, nextA
 }
 
 /**
- * Formats the trading decision and full analysis as a plain text email
- * 
- * @param {String} decision - The trading decision (Buy, Sell, Hold, etc.)
- * @param {Object} analysis - The full analysis object
- * @param {Date} analysisTime - When the analysis was performed
- * @param {Date} nextAnalysisTime - When the next analysis is scheduled
- * @return {String} Formatted plain text email body
- */
-function formatPlainTextEmailBodyWithAnalysis(decision, analysis, analysisTime, nextAnalysisTime) {
-  // Format the analysis time
-  const formattedAnalysisTime = analysisTime ? 
-    Utilities.formatDate(analysisTime, TIME_ZONE, 'MMMM dd, yyyy hh:mm a z') : 
-    'N/A';
-  
-  // Format the next analysis time
-  const formattedNextAnalysisTime = nextAnalysisTime ? 
-    Utilities.formatDate(nextAnalysisTime, TIME_ZONE, 'MMMM dd, yyyy hh:mm a z') : 
-    'N/A';
-  
-  // Extract data from analysis
-  const summary = analysis.summary || 'No summary available.';
-  const justification = analysis.justification || 'No justification provided.';
-  const marketSentiment = analysis.marketSentiment && analysis.marketSentiment.overall ? 
-    analysis.marketSentiment.overall : 'No market sentiment data available.';
-  
-  // Format fear and greed index if available
-  let fearGreedText = 'Fear & Greed Index: Not available';
-  if (analysis.marketIndicators && analysis.marketIndicators.fearGreedIndex) {
-    const fgi = analysis.marketIndicators.fearGreedIndex;
-    fearGreedText = `Fear & Greed Index: ${fgi.value}/100 (${fgi.interpretation || 'N/A'})`;
-  }
-  
-  // Format VIX if available
-  let vixText = 'VIX: Not available';
-  if (analysis.marketIndicators && analysis.marketIndicators.vix) {
-    const vix = analysis.marketIndicators.vix;
-    vixText = `VIX: ${vix.value} (${vix.trend || 'N/A'})`;
-  }
-  
-  // Format put/call ratio if available
-  let putCallText = 'Put/Call Ratio: Not available';
-  if (analysis.marketIndicators && analysis.marketIndicators.putCallRatio) {
-    const pcr = analysis.marketIndicators.putCallRatio;
-    putCallText = `Put/Call Ratio: ${pcr.value} (${pcr.interpretation || 'N/A'})`;
-  }
-  
-  // Format market breadth if available
-  let breadthText = 'Market Breadth: Not available';
-  if (analysis.marketIndicators && analysis.marketIndicators.marketBreadth) {
-    const mb = analysis.marketIndicators.marketBreadth;
-    breadthText = `Market Breadth: ${mb.status || 'N/A'} (A/D Ratio: ${mb.advanceDeclineRatio || 'N/A'})`;
-  }
-  
-  // Build the plain text email
-  let text = `
-${NEWSLETTER_NAME}
-Professional Trading Insights
-Analysis Time: ${formattedAnalysisTime}
-
-=== TRADING DECISION ===
-${decision.toUpperCase()}
-
-${justification}
-
-=== MARKET SUMMARY ===
-${summary}
-
-=== MARKET SENTIMENT ===
-${marketSentiment}
-
-=== MARKET INDICATORS ===
-${fearGreedText}
-${vixText}
-${putCallText}
-${breadthText}
-`;
-
-  // Add fundamental metrics if available
-  if (analysis.fundamentalMetrics && analysis.fundamentalMetrics.metrics && analysis.fundamentalMetrics.metrics.length > 0) {
-    text += `
-=== FUNDAMENTAL METRICS ===`;
-    
-    analysis.fundamentalMetrics.metrics.forEach(metric => {
-      text += `
-${metric.symbol} (${metric.name || 'N/A'}): $${metric.price || '---'} ${metric.priceChange || '+/-0.00 (0.00%)'}
-P/E Ratio: ${metric.peRatio || 'N/A'}
-Market Cap: ${metric.marketCap || 'N/A'}
-${metric.analysis || metric.comment || ''}
-`;
-    });
-  }
-  
-  // Add macroeconomic factors if available
-  if (analysis.macroeconomicFactors) {
-    const macro = analysis.macroeconomicFactors;
-    
-    // Treasury yields
-    if (macro.treasuryYields) {
-      text += `
-=== TREASURY YIELDS ===
-3-Month: ${macro.treasuryYields.threeMonth || 'N/A'}
-2-Year: ${macro.treasuryYields.twoYear || 'N/A'}
-5-Year: ${macro.treasuryYields.fiveYear || 'N/A'}
-10-Year: ${macro.treasuryYields.tenYear || 'N/A'}
-30-Year: ${macro.treasuryYields.thirtyYear || 'N/A'}
-
-Yield Curve: ${macro.treasuryYields.yieldCurveStatus || 'N/A'}
-${macro.treasuryYields.yieldCurveAnalysis || 'No yield curve analysis available.'}
-`;
-    }
-    
-    // Inflation
-    if (macro.inflation) {
-      text += `
-=== INFLATION METRICS ===
-CPI Headline: ${macro.inflation.cpi && macro.inflation.cpi.headline ? macro.inflation.cpi.headline + '%' : 'N/A'}
-CPI Core: ${macro.inflation.cpi && macro.inflation.cpi.coreRate ? macro.inflation.cpi.coreRate + '%' : 'N/A'}
-PCE Headline: ${macro.inflation.pce && macro.inflation.pce.headline ? macro.inflation.pce.headline + '%' : 'N/A'}
-PCE Core: ${macro.inflation.pce && macro.inflation.pce.core ? macro.inflation.pce.core + '%' : 'N/A'}
-
-Trend: ${macro.inflation.trend || 'N/A'}
-Outlook: ${macro.inflation.outlook || 'No outlook available.'}
-Market Impact: ${macro.inflation.marketImpact || 'No market impact analysis available.'}
-`;
-    }
-    
-    // Geopolitical risks
-    if (macro.geopoliticalRisks) {
-      text += `
-=== GEOPOLITICAL RISKS ===
-Global Overview: ${macro.geopoliticalRisks.globalOverview || 'No global overview available.'}
-
-Regional Risks:`;
-      
-      if (macro.geopoliticalRisks.regionalRisks && macro.geopoliticalRisks.regionalRisks.length > 0) {
-        macro.geopoliticalRisks.regionalRisks.forEach(region => {
-          text += `
-- ${region.region}:`;
-          
-          if (region.risks && region.risks.length > 0) {
-            region.risks.forEach(risk => {
-              text += `
-  * ${risk.impactLevel || 'Impact'}: ${risk.description}`;
-            });
-          } else {
-            text += ` No specific risks identified`;
-          }
-        });
-      } else {
-        text += ` No regional risk data available.`;
-      }
-    }
-  }
-  
-  // Add next analysis time
-  text += `
-
-Next analysis scheduled for: ${formattedNextAnalysisTime}
-
-${NEWSLETTER_NAME} - Professional Trading Insights
-${new Date().getFullYear()} ${NEWSLETTER_NAME}. All rights reserved.
-Delivering data-driven market analysis to help you make informed trading decisions.
-`;
-  
-  return text;
-}
-
-/**
  * Generates the complete HTML email template for trading analysis
  * 
  * @param {Object} analysisResult - The complete analysis result object
@@ -1423,24 +1255,58 @@ function generateFundamentalMetricsSection(analysis) {
 /**
  * Generates the macroeconomic factors section HTML
  * 
- * @param {Object} macro - The macroeconomic data
+ * @param {Object} macroeconomicAnalysis - The analysis data containing macroeconomic factors
  * @return {String} HTML for the macroeconomic factors section
  */
-function generateMacroeconomicFactorsSection(macro) {
+function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
   try {
     // Check if macro data exists
-    if (!macro) {
+    if (!macroeconomicAnalysis) {
       return `
-        <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
-          <p style="text-align: center; color: #757575;">No macroeconomic data available</p>
-        </div>
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+        <p style="text-align: center; color: #757575;">No macroeconomic data available</p>
+      </div>
       `;
+    }
+    
+    // Retrieve macroeconomic factors
+    const macro = retrieveMacroeconomicFactors();
+    if (!macro.success) {
+      return {
+        success: false,
+        message: "Failed to retrieve macroeconomic factors",
+        error: macro.error
+      };
+    }
+    
+    // Helper function to get inflation data with priority to macroeconomicAnalysis
+    function getInflationData() {
+      const analysisInflation = macroeconomicAnalysis?.analysis?.macroeconomicFactors?.inflation;
+      const macroInflation = macro?.inflation;
+      
+      return {
+        currentRate: analysisInflation?.currentRate || macroInflation?.currentRate || 'N/A',
+        cpi: {
+          headline: analysisInflation?.cpi?.headline || macroInflation?.cpi?.headline || 'N/A',
+          core: analysisInflation?.cpi?.core || macroInflation?.cpi?.core || 'N/A'
+        },
+        pce: {
+          headline: analysisInflation?.pce?.headline || macroInflation?.pce?.headline || 'N/A',
+          core: analysisInflation?.pce?.core || macroInflation?.pce?.core || 'N/A'
+        },
+        trend: analysisInflation?.trend || macroInflation?.trend || 'N/A',
+        outlook: analysisInflation?.outlook || macroInflation?.outlook || 'N/A',
+        marketImpact: analysisInflation?.marketImpact || macroInflation?.marketImpact || 'N/A',
+        source: analysisInflation?.source || macroInflation?.source || 'N/A',
+        sourceUrl: analysisInflation?.sourceUrl || macroInflation?.sourceUrl || 'N/A',
+        lastUpdated: analysisInflation?.lastUpdated || macroInflation?.lastUpdated || 'N/A'
+      };
     }
 
     // Treasury Yields
     let yieldsHtml = '';
-    if (macro.treasuryYields && macro.treasuryYields.yields) {
+    if (macro.treasuryYields?.yields) {
       yieldsHtml = `
         <div style="margin-bottom: 20px;">
           <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
@@ -1483,52 +1349,49 @@ function generateMacroeconomicFactorsSection(macro) {
 
     // Inflation
     let inflationHtml = '';
-    if (macro.inflation) {
+    const inflationData = getInflationData();
+    if (inflationData) {
       inflationHtml = `
         <div style="margin-bottom: 20px;">
           <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
           <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-            ${macro.inflation.cpi ? `
-              <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
-                <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.inflation.cpi.yearOverYearChange)}%</div>
-                <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(macro.inflation.cpi.coreRate)}%</div>
-              </div>
-            ` : ''}
-            ${macro.inflation.pce ? `
-              <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
-                <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.inflation.pce.yearOverYearChange)}%</div>
-                <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(macro.inflation.pce.core)}%</div>
-              </div>
-            ` : ''}
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.cpi.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(inflationData.cpi.core)}%</div>
+            </div>
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.pce.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(inflationData.pce.core)}%</div>
+            </div>
           </div>
           <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
-            <div>Analysis: ${macro.inflation.analysis || 'N/A'}</div>
-            <div>Source: ${macro.inflation.source || 'N/A'} (${macro.inflation.sourceUrl || 'N/A'}), as of ${new Date(macro.inflation.lastUpdated).toLocaleString()}</div>
+            <div>Trend: ${inflationData.trend}</div>
+            <div>Outlook: ${inflationData.outlook}</div>
+            <div>Market Impact: ${inflationData.marketImpact}</div>
+            <div>Source: ${inflationData.source} (${inflationData.sourceUrl}), as of ${new Date(inflationData.lastUpdated).toLocaleString()}</div>
           </div>
         </div>
       `;
     }
 
-    // Generate the HTML
-    const html = `
-      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
-        ${yieldsHtml}
-        ${fedHtml}
-        ${inflationHtml}
-      </div>
+    // Return the complete HTML for the macroeconomic factors section
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+      ${yieldsHtml}
+      ${fedHtml}
+      ${inflationHtml}
+    </div>
     `;
-
-    return html;
   } catch (error) {
     Logger.log("Error generating macroeconomic factors section: " + error);
     return `
-      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
-        <p style="text-align: center; color: #757575;">Error generating macroeconomic factors section</p>
-      </div>
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+      <p style="text-align: center; color: #757575;">Error generating macroeconomic factors data</p>
+    </div>
     `;
   }
 }
@@ -1541,8 +1404,11 @@ function generateMacroeconomicFactorsSection(macro) {
  */
 function generateGeopoliticalRisksSection(analysis) {
   try {
-    // Retrieve geopolitical risks from macroeconomicFactors
-    const geoRisks = analysis.macroeconomicFactors && analysis.macroeconomicFactors.geopoliticalRisks;
+
+    
+     // Retrieve real macroeconomic data
+    const macroData = retrieveMacroeconomicFactors();
+    const geoRisks = macroData && macroData.data && macroData.data.geopoliticalRisks;
     
     // If no geopolitical risks data is available, return a message indicating so.
     if (!geoRisks) {
@@ -1554,69 +1420,61 @@ function generateGeopoliticalRisksSection(analysis) {
       `;
     }
     
-    // Global overview from geoRisks.global (if available)
-    let overviewHtml = '';
-    if (geoRisks.global) {
-      overviewHtml = `
-      <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
-        <div style="font-weight: bold; margin-bottom: 5px; color: #ff9800;">Global Overview</div>
-        <div style="color: #333;">${geoRisks.global}</div>
+    // Generate global overview HTML if available
+    let globalOverviewHtml = '';
+    if (analysis && analysis.geopoliticalRisks && analysis.geopoliticalRisks.global) {
+      globalOverviewHtml = `
+      <div style="margin-top: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Global Overview</div>
+        <div style="color: #555;">${analysis.geopoliticalRisks.global}</div>
       </div>
       `;
     }
     
-    // Generate regional risks using the regions array from geoRisks
+    // Generate risks HTML
     let risksHtml = '';
-    if (geoRisks.regions && geoRisks.regions.length > 0) {
-      risksHtml = `
-      <div style="margin-top: 15px;">
-        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Regional Risks</div>
+    
+    // Sort risks by impact level (descending)
+    const sortedRisks = [...geoRisks.risks].sort((a, b) => {
+      if (a.impactLevel === undefined || a.impactLevel === null) return 1;
+      if (b.impactLevel === undefined || b.impactLevel === null) return -1;
+      return b.impactLevel - a.impactLevel;
+    });
+    
+    sortedRisks.forEach(risk => {
+      // Determine risk color based on impact level
+      let riskColor = '#ff9800'; // default moderate
+      if (risk.impactLevel && risk.impactLevel >= 7) {
+        riskColor = '#f44336'; // high
+      } else if (risk.impactLevel && risk.impactLevel >= 4) {
+        riskColor = '#ff9800'; // moderate
+      } else if (risk.impactLevel && risk.impactLevel < 4) {
+        riskColor = '#4caf50'; // low
+      }
+      
+      risksHtml += `
+      <div style="margin-bottom: 15px;">
+        <div style="font-weight: bold; color: #333;">${risk.name || 'Unknown Risk'}</div>
+        <div style="color: ${riskColor}; font-weight: bold; margin-bottom: 5px;">Impact Level: ${risk.impactLevel || 0}/10</div>
+        <div style="color: #555; margin-bottom: 5px;">${risk.description || 'No description available'}</div>
+        <div style="font-size: 12px; color: #888;">
+          Region: ${risk.region || 'Unknown Region'}<br>
+          ${risk.source ? `Source: ${risk.source}${risk.sourceUrl ? ` | <a href="${risk.sourceUrl}" style="color: #2196f3; text-decoration: none;">Link</a>` : ''}` : ''}
+          ${risk.lastUpdated ? ` | Last Updated: ${new Date(risk.lastUpdated).toLocaleString()}` : ''}
+        </div>
+      </div>
       `;
-      
-      geoRisks.regions.forEach(regionData => {
-        risksHtml += `
-        <div style="margin-bottom: 15px;">
-          <div style="font-weight: bold; color: #333;">${regionData.region || 'Global'}</div>
-        `;
-        if (regionData.risks && regionData.risks.length > 0) {
-          regionData.risks.forEach(risk => {
-            // Use risk.impactLevel instead of risk.level
-            let riskColor = '#ff9800'; // default moderate
-            if (risk.impactLevel && risk.impactLevel.toLowerCase() === 'high') {
-              riskColor = '#f44336';
-            } else if (risk.impactLevel && risk.impactLevel.toLowerCase() === 'severe') {
-              riskColor = '#d32f2f';
-            } else if (risk.impactLevel && risk.impactLevel.toLowerCase() === 'low') {
-              riskColor = '#4caf50';
-            }
-            
-            risksHtml += `
-            <div style="padding: 10px; background-color: white; border-radius: 4px; margin-top: 5px;">
-              <div style="display: flex; justify-content: space-between;">
-              <div style="color: #555;">${risk.description || 'No description available'}</div>
-              <div style="color: ${riskColor}; font-weight: bold; font-size: 13px;">
-                <span style="background-color: ${riskColor}; color: white; padding: 2px 6px; border-radius: 3px;">${risk.impactLevel || 'Moderate'}</span>
-                </div>
-              </div>
-              ${risk.source ? `<div style="font-size: 11px; text-align: right; color: #888;">Source: ${risk.source}${risk.lastUpdated ? ` | Last updated: ${risk.lastUpdated}` : ''}</div>` : ''}
-            </div>
-            `;
-          });
-        } else {
-          risksHtml += `<div style="color: #757575;">No specific risks identified</div>`;
-        }
-        risksHtml += `</div>`;
-      });
-      
-      risksHtml += `</div>`;
-    }
+    });
     
     // Return the complete HTML for the geopolitical risks section
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
-      ${overviewHtml}
-      ${risksHtml}
+      ${globalOverviewHtml}
+      <div style="margin-top: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Current Risks</div>
+        ${risksHtml}
+      </div>
     </div>
     `;
   } catch (error) {

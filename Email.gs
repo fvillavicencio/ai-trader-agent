@@ -114,20 +114,8 @@ ${prompt}
 </html>
     `;
 
-    // Create plain text version
-    const plainTextBody = `AI Trader Agent - AI Prompt
-Generated on ${formattedDate}
-
-OpenAI Prompt:
-${prompt}
-
-  ${NEWSLETTER_NAME}
-This is an automated message. Please do not reply.`;
-
-var subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
-
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, plainTextBody, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send prompt email: ${emailResult.error}`);
@@ -255,18 +243,8 @@ ${errorMessage}
 </html>
     `;
     
-    // Create plain text version
-    const plainTextBody = `Error Notification
-Generated on ${formattedDate}
-
-Error Details:
-${errorMessage}
-
-  ${NEWSLETTER_NAME}
-This is an automated message. Please do not reply.`;
-
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, plainTextBody, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send error email: ${emailResult.error}`);
@@ -290,11 +268,10 @@ This is an automated message. Please do not reply.`;
  * 
  * @param {string} subject - The email subject
  * @param {string} htmlBody - The HTML body of the email
- * @param {string} plainTextBody - The plain text body of the email
  * @param {boolean} isTest - Whether this is a test email
  * @return {Object} - The result of the email sending operation
  */
-function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
+function sendEmail(subject, htmlBody, isTest = false) {
   try {
     // Get user email from script properties
     const scriptProperties = PropertiesService.getScriptProperties();
@@ -324,7 +301,7 @@ function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
     
     while (retryCount < maxRetries) {
       try {
-        result = GmailApp.sendEmail(recipient, subject, plainTextBody, {
+        result = GmailApp.sendEmail(recipient, subject, '', {
           htmlBody: htmlBody,
           name: NEWSLETTER_NAME,
           replyTo: Session.getEffectiveUser().getEmail()
@@ -354,7 +331,7 @@ function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
     if (recipient !== testEmail) {
       try {
         GmailApp.sendEmail(testEmail, `Email Sending Failed - ${subject}`, 
-          `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${plainTextBody}`, {
+          `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`, {
             htmlBody: `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`,
             name: NEWSLETTER_NAME
           });
@@ -408,17 +385,11 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
       subject = `[TEST] ${subject}`;
     }
     
-    // Generate HTML and plain text email bodies
+    // Generate HTML email body
     const htmlBody = generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
-    const plainTextBody = formatPlainTextEmailBodyWithAnalysis(
-      decision, 
-      analysisJson, 
-      analysisTime, 
-      nextScheduledTime
-    );
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, plainTextBody, isTest);
+    const emailResult = sendEmail(subject, htmlBody, isTest);
     
     if (!emailResult.success) {
       throw new Error(`Failed to send trading analysis email: ${emailResult.error}`);
