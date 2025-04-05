@@ -1314,54 +1314,30 @@ function retrieveUpcomingEconomicEvents() {
       // Continue execution - we'll get fresh data below
     }
     
-    // Try primary source (Investing.com)
+    // Fetch events from RapidAPI
     let events = null;
-    let source = "";
-    let sourceUrl = "";
     let errorMessage = "";
     
     try {
-      Logger.log("Attempting to fetch economic events from Investing.com...");
-      events = fetchInvestingEconomicEvents();
-      source = "Investing.com";
-      sourceUrl = "https://www.investing.com/economic-calendar/";
+      Logger.log("Attempting to fetch economic events from RapidAPI...");
+      events = fetchEconomicEvents();
       
       if (events && events.length > 0) {
-        Logger.log(`Successfully retrieved ${events.length} economic events from Investing.com`);
+        Logger.log(`Successfully retrieved ${events.length} economic events from RapidAPI`);
       } else {
-        errorMessage = "Investing.com economic events data unavailable";
+        errorMessage = "RapidAPI economic events data unavailable";
         Logger.log(errorMessage);
       }
-    } catch (primaryError) {
-      errorMessage = "Error fetching from Investing.com: " + primaryError;
+    } catch (error) {
+      errorMessage = "Error fetching from RapidAPI: " + error;
       Logger.log(errorMessage);
-      // Continue to alternative source
+      // Try stale cache as fallback
     }
     
-    // Try alternative source (TradingEconomics)
+    // If fetching failed, check for stale cache (up to 24 hours old)
     if (!events || events.length === 0) {
       try {
-        Logger.log("Primary source failed, attempting to fetch economic events from TradingEconomics...");
-        events = fetchTradingEconomicsEvents();
-        source = "TradingEconomics";
-        sourceUrl = "https://tradingeconomics.com/calendar";
-        
-        if (events && events.length > 0) {
-          Logger.log(`Successfully retrieved ${events.length} economic events from TradingEconomics`);
-        } else {
-          errorMessage += " | TradingEconomics economic events data unavailable";
-          Logger.log("TradingEconomics economic events data unavailable");
-        }
-      } catch (alternativeError) {
-        errorMessage += " | Error fetching from TradingEconomics: " + alternativeError;
-        Logger.log("Error fetching from TradingEconomics: " + alternativeError);
-      }
-    }
-    
-    // If both sources failed, check for stale cache (up to 24 hours old)
-    if (!events || events.length === 0) {
-      try {
-        Logger.log("All sources failed, checking for stale cache (up to 24 hours old)...");
+        Logger.log("Fetching failed, checking for stale cache (up to 24 hours old)...");
         const scriptProperties = PropertiesService.getScriptProperties();
         const staleCacheData = scriptProperties.getProperty('ECONOMIC_EVENTS_STALE_CACHE');
         
@@ -1398,7 +1374,7 @@ function retrieveUpcomingEconomicEvents() {
       };
     }
     
-    // Format the events data
+    // Format the events data (already in correct format from fetchEconomicEvents)
     const formattedEvents = events.map(event => ({
       date: event.date,
       time: event.time || "All Day",
@@ -1412,8 +1388,8 @@ function retrieveUpcomingEconomicEvents() {
     // Create the result object
     const result = {
       events: formattedEvents,
-      source: source,
-      sourceUrl: sourceUrl,
+      //source: "RapidAPI Economic Calendar",
+      //sourceUrl: "https://rapidapi.com/", // Link to RapidAPI marketplace
       timestamp: new Date(),
       error: false
     };
@@ -1433,7 +1409,7 @@ function retrieveUpcomingEconomicEvents() {
       Logger.log("Error caching economic events data: " + cacheError);
     }
     
-    Logger.log(`Retrieved ${formattedEvents.length} upcoming economic events from ${source}`);
+    Logger.log(`Retrieved ${formattedEvents.length} upcoming economic events from RapidAPI service`);
     return result;
   } catch (error) {
     Logger.log(`Error retrieving upcoming economic events: ${error}`);
@@ -1443,95 +1419,6 @@ function retrieveUpcomingEconomicEvents() {
       errorMessage: `Error retrieving upcoming economic events: ${error}`,
       timestamp: new Date()
     };
-  }
-}
-
-/**
- * Fetches economic events data from Investing.com
- * @return {Array} Economic events data or null if unavailable
- */
-function fetchInvestingEconomicEvents() {
-  try {
-    // This would be implemented with actual API calls in a production environment
-    // For now, return sample data for testing
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const sampleEvents = [
-      {
-        date: formatDate(today),
-        time: "08:30 AM",
-        country: "US",
-        event: "Initial Jobless Claims",
-        actual: "215K",
-        forecast: "220K",
-        previous: "217K"
-      },
-      {
-        date: formatDate(today),
-        time: "10:00 AM",
-        country: "US",
-        event: "Existing Home Sales",
-        actual: "4.38M",
-        forecast: "4.20M",
-        previous: "4.22M"
-      },
-      {
-        date: formatDate(tomorrow),
-        time: "09:45 AM",
-        country: "US",
-        event: "Manufacturing PMI",
-        actual: null,
-        forecast: "52.0",
-        previous: "51.9"
-      }
-    ];
-    
-    return sampleEvents;
-  } catch (error) {
-    Logger.log(`Error fetching Investing.com economic events: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetches economic events data from TradingEconomics
- * @return {Array} Economic events data or null if unavailable
- */
-function fetchTradingEconomicsEvents() {
-  try {
-    // This would be implemented with actual API calls in a production environment
-    // For now, return sample data for testing
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    
-    const sampleEvents = [
-      {
-        date: formatDate(today),
-        time: "08:30 AM",
-        country: "US",
-        event: "GDP Growth Rate QoQ Final",
-        actual: "3.4%",
-        forecast: "3.2%",
-        previous: "3.2%"
-      },
-      {
-        date: formatDate(tomorrow),
-        time: "10:00 AM",
-        country: "US",
-        event: "Consumer Sentiment Final",
-        actual: null,
-        forecast: "76.5",
-        previous: "76.9"
-      }
-    ];
-    
-    return sampleEvents;
-  } catch (error) {
-    Logger.log(`Error fetching TradingEconomics events: ${error}`);
-    return null;
   }
 }
 
