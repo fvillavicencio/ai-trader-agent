@@ -629,14 +629,11 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
   try {
     Logger.log("Formatting fundamental metrics data...");
     
-    let formattedText = "**Fundamental Metrics:**\n\n";
-    
     // Get the metrics object from the data
     const metricsObj = fundamentalMetricsData.metrics?.metrics;
     
     if (!metricsObj) {
-      formattedText += "No fundamental metrics data available\n";
-      return formattedText;
+      return "No fundamental metrics data available\n";
     }
     
     // Organize stocks into categories
@@ -660,44 +657,69 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
         priceChangePercent = `${metrics.changesPercentage >= 0 ? '+' : ''}${formatValue(metrics.changesPercentage, true)}%`;
       }
       
-      return `* ${symbol} (${metrics.company || 'N/A'}): $${formatValue(metrics.price, true)} (${metrics.priceChange >= 0 ? '+' : ''}${formatValue(metrics.priceChange, true)}, ${priceChangePercent})\n` +
-             `  * Sector: ${metrics.sector || 'N/A'}\n` +
-             `  * Industry: ${metrics.industry || 'N/A'}\n` +
-             (metrics.marketCap ? `  * Market Cap: ${formatMarketCap(metrics.marketCap)}\n` : '') +
-             `  * Volume: ${formatVolume(metrics.volume)}\n` +
-             (metrics.pegRatio !== null ? `  * PEG Ratio: ${formatValue(metrics.pegRatio)}\n` : '') +
-             (metrics.forwardPE !== null ? `  * Forward P/E: ${formatValue(metrics.forwardPE)}\n` : '') +
-             (metrics.priceToBook !== null ? `  * Price/Book: ${formatValue(metrics.priceToBook)}\n` : '') +
-             (metrics.priceToSales !== null ? `  * Price/Sales: ${formatValue(metrics.priceToSales)}\n` : '') +
-             (metrics.debtToEquity !== null ? `  * Debt/Equity: ${formatValue(metrics.debtToEquity)}\n` : '') +
-             (metrics.returnOnEquity !== null ? `  * Return on Equity: ${formatValue(metrics.returnOnEquity)}%\n` : '') +
-             (metrics.beta !== null ? `  * Beta: ${formatValue(metrics.beta)}\n` : '') +
-             `\n`;
+      // Format price change
+      const priceChange = metrics.priceChange ? `${metrics.priceChange >= 0 ? '+' : ''}${formatValue(metrics.priceChange, true)}` : "N/A";
+      
+      // Create the stock object in the expected format
+      const stock = {
+        symbol: symbol,
+        name: metrics.company || 'N/A',
+        price: metrics.price || 0,
+        priceChange: `${priceChange} (${priceChangePercent})`,
+        marketCap: metrics.marketCap ? formatMarketCap(metrics.marketCap) : 'N/A',
+        peRatio: metrics.peRatio !== null ? formatValue(metrics.peRatio) : 'N/A',
+        pegRatio: metrics.pegRatio !== null ? formatValue(metrics.pegRatio) : 'N/A',
+        forwardPE: metrics.forwardPE !== null ? formatValue(metrics.forwardPE) : 'N/A',
+        priceToBook: metrics.priceToBook !== null ? formatValue(metrics.priceToBook) : 'N/A',
+        priceToSales: metrics.priceToSales !== null ? formatValue(metrics.priceToSales) : 'N/A',
+        debtToEquity: metrics.debtToEquity !== null ? formatValue(metrics.debtToEquity) : 'N/A',
+        returnOnEquity: metrics.returnOnEquity !== null ? `${formatValue(metrics.returnOnEquity)}%` : 'N/A',
+        returnOnAssets: metrics.returnOnAssets !== null ? `${formatValue(metrics.returnOnAssets)}%` : 'N/A',
+        profitMargin: metrics.profitMargin !== null ? `${formatValue(metrics.profitMargin)}%` : 'N/A',
+        dividendYield: metrics.dividendYield !== null ? `${formatValue(metrics.dividendYield)}%` : 'N/A',
+        beta: metrics.beta !== null ? formatValue(metrics.beta) : 'N/A',
+        summary: metrics.summary || 'N/A',
+        lastUpdated: metrics.lastUpdated || new Date().toISOString()
+      };
+      
+      return JSON.stringify(stock, null, 2);
+    }
+
+    // Format each category
+    let formattedText = "**Fundamental Metrics:**\n\n";
+    
+    // Major Indices
+    if (majorIndices.length > 0) {
+      formattedText += "**Major Indices:**\n";
+      majorIndices.forEach(symbol => {
+        const metrics = metricsObj[symbol];
+        formattedText += formatStock(symbol, metrics) + "\n\n";
+      });
     }
     
-    // Format major indices
-    formattedText += "* Major Indices:\n";
-    majorIndices.forEach(symbol => {
-      formattedText += formatStock(symbol, metricsObj[symbol]);
-    });
+    // Magnificent Seven
+    if (magnificentSeven.length > 0) {
+      formattedText += "**Magnificent Seven:**\n";
+      magnificentSeven.forEach(symbol => {
+        const metrics = metricsObj[symbol];
+        formattedText += formatStock(symbol, metrics) + "\n\n";
+      });
+    }
     
-    // Format magnificent seven
-    formattedText += "* Magnificent Seven:\n";
-    magnificentSeven.forEach(symbol => {
-      formattedText += formatStock(symbol, metricsObj[symbol]);
-    });
-    
-    // Format other stocks
+    // Other Stocks
     if (otherStocks.length > 0) {
-      formattedText += "* Other Stocks:\n";
+      formattedText += "**Other Stocks:**\n";
       otherStocks.forEach(symbol => {
-        formattedText += formatStock(symbol, metricsObj[symbol]);
+        const metrics = metricsObj[symbol];
+        formattedText += formatStock(symbol, metrics) + "\n\n";
       });
     }
     
     return formattedText;
   } catch (error) {
     Logger.log(`Error formatting fundamental metrics data: ${error}`);
-    return "**Fundamental Metrics:**\nError formatting data\n";
+    return "Error formatting fundamental metrics data\n";
   }
 }
+
+

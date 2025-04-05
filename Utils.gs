@@ -668,7 +668,7 @@ ${macro.treasuryYields.yieldCurveAnalysis || 'No yield curve analysis available.
       text += `
 === INFLATION METRICS ===
 CPI Headline: ${macro.inflation.cpi && macro.inflation.cpi.headline ? macro.inflation.cpi.headline + '%' : 'N/A'}
-CPI Core: ${macro.inflation.cpi && macro.inflation.cpi.core ? macro.inflation.cpi.core + '%' : 'N/A'}
+CPI Core: ${macro.inflation.cpi && macro.inflation.cpi.coreRate ? macro.inflation.cpi.coreRate + '%' : 'N/A'}
 PCE Headline: ${macro.inflation.pce && macro.inflation.pce.headline ? macro.inflation.pce.headline + '%' : 'N/A'}
 PCE Core: ${macro.inflation.pce && macro.inflation.pce.core ? macro.inflation.pce.core + '%' : 'N/A'}
 
@@ -1040,6 +1040,7 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
     </body>
     </html>`;
     
+    Logger.log('Generated Email Template:\n' + html);
     return html;
   } catch (error) {
     Logger.log("Error generating email template: " + error);
@@ -1422,7 +1423,7 @@ function generateFundamentalMetricsSection(analysis) {
 /**
  * Generates the macroeconomic factors section HTML
  * 
- * @param {Object} analysis - The analysis data
+ * @param {Object} macro - The macroeconomic data
  * @return {String} HTML for the macroeconomic factors section
  */
 function generateMacroeconomicFactorsSection(macro) {
@@ -1439,40 +1440,22 @@ function generateMacroeconomicFactorsSection(macro) {
 
     // Treasury Yields
     let yieldsHtml = '';
-    if (macro.treasuryYields) {
+    if (macro.treasuryYields && macro.treasuryYields.yields) {
       yieldsHtml = `
         <div style="margin-bottom: 20px;">
           <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
           <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-            <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">3-Month</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.treasuryYields.threeMonth)}%</div>
-            </div>
-            <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">1-Year</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.treasuryYields.oneYear)}%</div>
-            </div>
-            <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">2-Year</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.treasuryYields.twoYear)}%</div>
-            </div>
-            <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">5-Year</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.treasuryYields.fiveYear)}%</div>
-            </div>
-            <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">10-Year</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.treasuryYields.tenYear)}%</div>
-            </div>
-            <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">30-Year</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.treasuryYields.thirtyYear)}%</div>
-            </div>
+            ${macro.treasuryYields.yields.map(yield => `
+              <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 500; margin-bottom: 5px;">${yield.term}</div>
+                <div style="font-size: 18px; font-weight: bold;">${formatValue(yield.yield)}% (${formatValue(yield.change)})</div>
+              </div>
+            `).join('')}
           </div>
           <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
-            <div>Yield Curve: ${macro.treasuryYields.yieldCurve || 'N/A'}</div>
-            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'})</div>
-            <div>Last Updated: ${new Date(macro.treasuryYields.timestamp).toLocaleString()}</div>
+            <div>Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
+            <div>Analysis: ${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
+            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${new Date(macro.treasuryYields.lastUpdated).toLocaleString()}</div>
           </div>
         </div>
       `;
@@ -1485,10 +1468,14 @@ function generateMacroeconomicFactorsSection(macro) {
         <div style="margin-bottom: 20px;">
           <div style="font-weight: bold; margin-bottom: 10px;">Federal Reserve Policy</div>
           <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-            <div style="font-size: 16px; margin-bottom: 10px;">${macro.fedPolicy.forwardGuidance || macro.fedPolicy.commentary || 'N/A'}</div>
-            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Current Rate: ${formatValue(macro.fedPolicy.federalFundsRate)}%</div>
-            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${new Date(macro.fedPolicy.nextMeetingDate).toLocaleDateString()}</div>
-            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${new Date(macro.fedPolicy.timestamp).toLocaleString()}</div>
+            <div style="font-size: 16px; margin-bottom: 10px;">${macro.fedPolicy.commentary || 'N/A'}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Current Rate: ${formatValue(macro.fedPolicy.currentRate.rate)}% (${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%)</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Last Meeting: ${new Date(macro.fedPolicy.lastMeeting.date).toLocaleDateString()}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${new Date(macro.fedPolicy.nextMeeting.date).toLocaleDateString()}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Hike: ${macro.fedPolicy.nextMeeting.probabilityOfHike}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Cut: ${macro.fedPolicy.nextMeeting.probabilityOfCut}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of No Change: ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%</div>
+            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${new Date(macro.fedPolicy.lastUpdated).toLocaleString()}</div>
           </div>
         </div>
       `;
@@ -1501,20 +1488,24 @@ function generateMacroeconomicFactorsSection(macro) {
         <div style="margin-bottom: 20px;">
           <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
           <div style="display: flex; flex-wrap: wrap; gap: 15px;">
-            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.inflation.cpi.headline)}%</div>
-              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(macro.inflation.cpi.core)}%</div>
-            </div>
-            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
-              <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.inflation.pce.headline)}%</div>
-              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(macro.inflation.pce.core)}%</div>
-            </div>
+            ${macro.inflation.cpi ? `
+              <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
+                <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.inflation.cpi.yearOverYearChange)}%</div>
+                <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(macro.inflation.cpi.coreRate)}%</div>
+              </div>
+            ` : ''}
+            ${macro.inflation.pce ? `
+              <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
+                <div style="font-size: 18px; font-weight: bold;">${formatValue(macro.inflation.pce.yearOverYearChange)}%</div>
+                <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(macro.inflation.pce.core)}%</div>
+              </div>
+            ` : ''}
           </div>
           <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
-            <div>Source: ${macro.inflation.source || 'N/A'} (${macro.inflation.sourceUrl || 'N/A'})</div>
-            <div>Last Updated: ${new Date(macro.inflation.timestamp).toLocaleString()}</div>
+            <div>Analysis: ${macro.inflation.analysis || 'N/A'}</div>
+            <div>Source: ${macro.inflation.source || 'N/A'} (${macro.inflation.sourceUrl || 'N/A'}), as of ${new Date(macro.inflation.lastUpdated).toLocaleString()}</div>
           </div>
         </div>
       `;
@@ -1639,6 +1630,38 @@ function generateGeopoliticalRisksSection(analysis) {
   }
 }
 
+/**
+ * Helper function to generate the Macroeconomic Factors section with real data
+ * @return {String} HTML for the macroeconomic factors section
+ */
+function generateMacroeconomicFactorsHelper() {
+  try {
+    // Retrieve real macroeconomic data
+    const macroData = retrieveMacroeconomicFactors();
+    
+    // Log the raw data for debugging
+    Logger.log('Retrieved Macroeconomic Data:\n' + JSON.stringify(macroData, null, 2));
+    
+    // Generate the HTML section
+    const html = generateMacroeconomicFactorsSection(macroData);
+    
+    // Log the resulting HTML
+    Logger.log('Generated Macroeconomic Factors HTML:\n' + html);
+    
+    return html;
+  } catch (error) {
+    Logger.log('Error in generateMacroeconomicFactorsHelper: ' + error);
+    throw error;
+  }
+}
+
+/**
+ * Saves the given content to Google Drive
+ * 
+ * @param {String} filename - The filename to use for the saved file
+ * @param {String} content - The content to save
+ * @return {String} The URL of the saved file
+ */
 function saveToGoogleDrive(filename, content) {
   try {
     const folderName = 'Trading Analysis Emails';
@@ -1669,47 +1692,14 @@ function saveToGoogleDrive(filename, content) {
 }
 
 /**
- * Test function to retrieve stock data and fundamentals from FMP
- * @return {Object} The stock data and fundamentals
+ * Helper function to format values safely
+ * @param {Number} value - The value to format
+ * @param {Number} decimals - Number of decimal places (default: 2)
+ * @return {String} Formatted value
  */
-function testFMPStockData() {
-  const apiKey = PropertiesService.getScriptProperties().getProperty('FMP_API_KEY');
-  if (!apiKey) {
-    throw new Error('FMP_API_KEY not found in script properties');
+function formatValue(value, decimals = 2) {
+  if (value === undefined || value === null || isNaN(value)) {
+    return "N/A";
   }
-
-  // Test with a well-known stock symbol
-  const symbol = 'AAPL';
-  
-  try {
-    // Get company quote
-    const quoteUrl = `https://financialmodelingprep.com/api/v3/quote/${symbol}?apikey=${apiKey}`;
-    const quoteResponse = UrlFetchApp.fetch(quoteUrl);
-    const quoteData = JSON.parse(quoteResponse.getContentText())[0];
-
-    // Get company profile
-    const profileUrl = `https://financialmodelingprep.com/api/v3/profile/${symbol}?apikey=${apiKey}`;
-    const profileResponse = UrlFetchApp.fetch(profileUrl);
-    const profileData = JSON.parse(profileResponse.getContentText())[0];
-
-    // Get key metrics
-    const metricsUrl = `https://financialmodelingprep.com/api/v3/key-metrics/${symbol}?period=quarter&limit=1&apikey=${apiKey}`;
-    const metricsResponse = UrlFetchApp.fetch(metricsUrl);
-    const metricsData = JSON.parse(metricsResponse.getContentText())[0];
-
-    // Combine all data into a single object
-    const result = {
-      symbol: symbol,
-      quote: quoteData,
-      profile: profileData,
-      metrics: metricsData,
-      timestamp: new Date().toISOString()
-    };
-
-    Logger.log('Successfully retrieved FMP data');
-    return result;
-  } catch (error) {
-    Logger.log(`Error retrieving FMP data: ${error}`);
-    throw error;
-  }
+  return value.toFixed(decimals);
 }
