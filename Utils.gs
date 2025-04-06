@@ -134,11 +134,10 @@ function testEnhancedJsonParsing() {
  * Generates the complete HTML email template for trading analysis
  * 
  * @param {Object} analysisResult - The complete analysis result object
- * @param {Date} nextScheduledTime - When the next analysis is scheduled
  * @param {Boolean} isTest - Whether this is a test email
  * @return {String} Complete HTML email template
  */
-function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false) {
+function generateEmailTemplate(analysisResult, isTest = false) {
   try {
     // Extract data from analysis result
     const decision = analysisResult.decision || 'No Decision';
@@ -166,11 +165,6 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
     
     // Format the analysis time
     const formattedAnalysisTime = formatDate(analysisTime);
-    
-    // Format the next analysis time
-    const formattedNextAnalysisTime = nextScheduledTime ? 
-      formatDate(nextScheduledTime) : 
-      'Not scheduled';
     
     // Generate the sentiment section HTML
     const sentimentHtml = generateMarketSentimentSection(analysis);
@@ -433,11 +427,6 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
         <!-- Geopolitical Risks Section -->
         ${geopoliticalRisksHtml}
         
-        <!-- Next Analysis Section -->
-        <div style="background-color: #e8f5e9; padding: 15px; border-radius: 6px; margin: 20px 0; text-align: center; color: #2e7d32;">
-          <p>Next analysis scheduled for: ${formattedNextAnalysisTime}</p>
-        </div>
-        
         <!-- Footer -->
         <div style="background-color: #1a365d; padding: 20px; text-align: center; color: white; border-radius: 6px;">
           <p style="margin: 0; font-size: 14px;">${NEWSLETTER_NAME} - Professional Trading Insights</p>
@@ -565,8 +554,8 @@ function generateMarketIndicatorsSection(analysis) {
       fearGreedHtml = `
       <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
-          <div style="font-weight: bold;">Fear & Greed Index:</div>
-          <div style="font-weight: bold; color: ${fgColor}">${fgValue}</div>
+          <div style="font-weight: bold; font-size: 1.3em;">Fear & Greed Index:</div>
+          <div style="font-weight: bold; color: ${fgColor}; font-size: 1.69em;">${fgValue}</div>
         </div>
         
         <div style="position: relative; height: 10px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
@@ -611,8 +600,8 @@ function generateMarketIndicatorsSection(analysis) {
       vixHtml = `
       <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
         <div style="display: flex; align-items: center; margin-bottom: 5px;">
-          <div style="font-weight: bold; margin-right: 10px;">VIX: ${vixValue}</div>
-          <div style="color: ${trendColor}; font-weight: bold; font-size: 13px;">
+          <div style="font-weight: bold; margin-right: 10px; font-size: 1.3em;">VIX: ${vixValue}</div>
+          <div style="color: ${trendColor}; font-weight: bold; font-size: 1.69em;">
             <span style="background-color: ${trendColor}; color: white; padding: 2px 6px; border-radius: 3px;">${trendIcon} ${vixTrend}</span>
             </div>
           </div>
@@ -826,18 +815,23 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
       yieldsHtml = `
         <div style="margin-bottom: 20px;">
           <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
-          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+          <div style="display: flex; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
             ${macro.treasuryYields.yields.map(yield => `
-              <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="font-weight: 500; margin-bottom: 5px;">${yield.term}</div>
-                <div style="font-size: 18px; font-weight: bold;">${formatValue(yield.yield)}% (${formatValue(yield.change)})</div>
+              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${yield.term}</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${formatValue(yield.yield)}%</div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
               </div>
             `).join('')}
           </div>
-          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
-            <div>Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
-            <div>Analysis: ${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
-            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}</div>
+          
+          <div style="margin-top: 15px; padding-left: 15px; border-left: 4px solid #FFA500;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
+            <div style="color: #555; font-size: 14px;">${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
+          </div>
+
+          <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+            Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}
           </div>
         </div>
       `;

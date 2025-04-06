@@ -438,12 +438,8 @@ function sendTradeDecisionEmail(analysisJson) {
   try {
     Logger.log("Preparing to send trade decision email...");
     
-    // Calculate the next scheduled analysis time
-    const currentTime = new Date();
-    const nextScheduledTime = calculateNextAnalysisTime(currentTime);
-    
     // Generate the HTML email content using the function from Utils.gs
-    const htmlContent = generateEmailTemplate(analysisJson, nextScheduledTime, false);
+    const htmlContent = generateEmailTemplate(analysisJson, false);
     
     // Save the HTML to Google Drive
     try {
@@ -493,7 +489,7 @@ function sendTradeDecisionEmail(analysisJson) {
       Logger.log("Debug mode enabled - skipping email sending for trade decision email");
     } else {
       for (const recipient of recipients) {
-        const success = sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, false);
+        const success = sendTradingAnalysisEmail(recipient, analysisJson, false);
         if (!success) {
           allSuccessful = false;
           Logger.log(`Failed to send email to recipient: ${recipient}`);
