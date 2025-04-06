@@ -5,15 +5,15 @@
  * It uses the OpenAI API to analyze market data and generate trading recommendations.
  */
 
-// Import utility functions
-include('Utils_DataUtils');
-include('Utils_EmailUtils');
-include('Utils_AnalysisUtils');
-include('Utils_FundamentalMetrics');
-include('Utils_MacroeconomicFactors');
-include('Utils_MarketIndicators');
-include('Utils_MarketSentiment');
-include('Utils_GeopoliticalRisks');
+// Load utility functions
+Utilities.loadScript('Utils_DataUtils');
+Utilities.loadScript('Utils_EmailUtils');
+Utilities.loadScript('Utils_AnalysisUtils');
+Utilities.loadScript('Utils_FundamentalMetrics');
+Utilities.loadScript('Utils_MacroeconomicFactors');
+Utilities.loadScript('Utils_MarketIndicators');
+Utilities.loadScript('Utils_MarketSentiment');
+Utilities.loadScript('Utils_GeopoliticalRisks');
 
 /**
  * Gets the trading analysis from OpenAI
