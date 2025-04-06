@@ -1,20 +1,15 @@
-/**
- * Main Utils file that imports and exports all utility functions
- */
+import os
 
-// Import all utility files
-var CoreUtils = include('CoreUtils');
-var EmailUtils = include('Utils_EmailUtils');
-var AnalysisUtils = include('Utils_AnalysisUtils');
-var FundamentalMetrics = include('Utils_FundamentalMetrics');
-var MacroeconomicFactors = include('Utils_MacroeconomicFactors');
-var MarketIndicators = include('Utils_MarketIndicators');
-var MarketSentiment = include('Utils_MarketSentiment');
-var GeopoliticalRisks = include('Utils_GeopoliticalRisks');
-var DataUtils = include('Utils_DataUtils');
-
-
-
+def restore_facade():
+    # Read the current content of Utils_Main.gs
+    with open('Utils_Main.gs', 'r') as main_file:
+        content = main_file.read()
+    
+    # Find the import section
+    import_section = content.split('// Export all functions directly')[0]
+    
+    # Create the new facade file
+    new_content = import_section + '''
 // Export all functions directly
 Object.assign(this, {
   enhancedCleanAnalysisResult: CoreUtils.enhancedCleanAnalysisResult,
@@ -35,3 +30,10 @@ Object.assign(this, {
   retrieveInflationData: MacroeconomicFactors.retrieveInflationData,
   retrieveFedPolicy: MacroeconomicFactors.retrieveFedPolicy
 });
+'''
+    
+    # Write the new content
+    with open('Utils_Main.gs', 'w') as main_file:
+        main_file.write(new_content)
+
+restore_facade()
