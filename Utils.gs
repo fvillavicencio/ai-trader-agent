@@ -938,7 +938,7 @@ function generateMarketSentimentSection(analysis) {
       <h2>Market Sentiment</h2>
       
       <div style="background-color: #f8f9fa; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
-        <div style="font-weight: bold; display: inline;">Overall Market Sentiment:</div>
+        <div style="font-weight: bold; display: inline;">Overall:</div>
         <div style="display: inline; margin-left: 5px;">${overallSentiment}</div>
       </div>
       
@@ -1008,7 +1008,7 @@ function generateMarketIndicatorsSection(analysis) {
         </div>
         
         <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.fearGreedIndex.source || 'CNN'} | Last updated: ${indicators.fearGreedIndex.lastUpdated || 'N/A'}
+          Source: ${indicators.fearGreedIndex.source || 'CNN'} (${indicators.fearGreedIndex.sourceUrl || 'N/A'}), as of ${formatDate(indicators.fearGreedIndex.lastUpdated)}
         </div>
       </div>
       `;
@@ -1043,7 +1043,7 @@ function generateMarketIndicatorsSection(analysis) {
         </div>
         
         <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.vix.source || 'CBOE'} | Last updated: ${indicators.vix.lastUpdated || 'N/A'}
+          Source: ${indicators.vix.source || 'CBOE'} (${indicators.vix.sourceUrl || 'N/A'}), as of ${formatDate(indicators.vix.lastUpdated)}
         </div>
       </div>
       `;
@@ -1131,84 +1131,56 @@ function generateFundamentalMetricsSection(analysis) {
           <h3>${title}</h3>
           <div class="stocks-grid">
             ${stocks.map(stock => {
-              // Format metrics with proper suffixes
-              const formatMetric = (value, suffix = '') => {
-                if (value === 'N/A' || value === null || value === undefined) return 'N/A';
-                if (typeof value === 'number') {
-                  if (suffix === 'B') return (value / 1e9).toFixed(1) + 'B';
-                  if (suffix === 'M') return (value / 1e6).toFixed(1) + 'M';
-                  if (suffix === 'K') return (value / 1e3).toFixed(1) + 'K';
-                }
-                return value;
+              // Get the color based on price change
+              const getColor = (value) => {
+                if (typeof value !== 'number') return '#555';
+                return value >= 0 ? '#4CAF50' : '#f44336';
+              };
+
+              // Create metric items only for non-N/A values
+              const createMetricItem = (label, value, suffix = '') => {
+                if (value === 'N/A' || value === null || value === undefined) return '';
+                return `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">${label}</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">${formatNumberWithSuffix(value, suffix)}</div>
+                  </div>
+                `;
               };
 
               return `
                 <div class="stock-card">
-                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); max-width: 100%;">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid ${getColor(stock.priceChange)};">
                     <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
-                      <div style="font-weight: bold; font-size: 16px; color: #2c3e50;">${stock.symbol}</div>
-                      <div style="font-size: 14px; color: #555; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.company || 'N/A'}</div>
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">${stock.symbol}</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.company || 'N/A'}${stock.sector ? ` - ${stock.sector}` : ''}${stock.industry ? ` - ${stock.industry}` : ''}</div>
                     </div>
                     <div style="padding: 15px; background-color: white; overflow: hidden;">
                       <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
-                        <div style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-right: 10px;">$${formatMetric(stock.price, '')}</div>
-                        <div style="color: ${typeof stock.priceChange === 'number' && stock.priceChange >= 0 ? '#4CAF50' : '#f44336'}; font-weight: bold;">
-                          <span style="margin-right: 3px;">${typeof stock.priceChange === 'number' && stock.priceChange >= 0 ? '↑' : '↓'}</span>
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$${formatNumberWithSuffix(stock.price, '')}</div>
+                        <div style="color: ${getColor(stock.priceChange)}; font-weight: bold;">
+                          <span style="margin-right: 3px;">${stock.priceChange >= 0 ? '↑' : '↓'}</span>
                           ${typeof stock.priceChange === 'number' ? (stock.priceChange >= 0 ? '+' : '') + stock.priceChange.toFixed(2) + '%' : stock.priceChange || 'N/A'}
                         </div>
                       </div>
                       
                       <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
-                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Key Metrics</div>
-                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">Market Cap</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${formatMetric(stock.marketCap, 'B')}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">P/E Ratio</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.peRatio || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">Forward PE</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.forwardPE || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">PEG Ratio</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.pegRatio || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">Price/Book</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.priceToBook || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">Price/Sales</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.priceToSales || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">Debt/Equity</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.debtToEquity || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">ROE</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.returnOnEquity || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">ROA</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.returnOnAssets || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">Profit Margin</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.profitMargin || 'N/A'}</div>
-                        </div>
-                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
-                          <div style="color: #555; min-width: 80px;">Dividend Yield</div>
-                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.dividendYield || 'N/A'}</div>
-                        </div>
+                        ${createMetricItem('Market Cap', stock.marketCap, 'B')}
+                        ${createMetricItem('P/E Ratio', stock.peRatio)}
+                        ${createMetricItem('Forward PE', stock.forwardPE)}
+                        ${createMetricItem('PEG Ratio', stock.pegRatio)}
+                        ${createMetricItem('Price/Book', stock.priceToBook)}
+                        ${createMetricItem('Price/Sales', stock.priceToSales)}
+                        ${createMetricItem('Debt/Equity', stock.debtToEquity)}
+                        ${createMetricItem('ROE', stock.returnOnEquity)}
+                        ${createMetricItem('ROA', stock.returnOnAssets)}
+                        ${createMetricItem('Profit Margin', stock.profitMargin)}
+                        ${createMetricItem('Dividend Yield', stock.dividendYield)}
                       </div>
                       
-                      ${stock.summary ? `<div style="margin-top: 10px; font-style: italic; font-size: 13px; color: #555; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
+                      ${stock.summary ? `<div style="margin-top: 10px; font-style: italic; font-size: 13px; color: ${getColor(stock.priceChange)}; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
                       
-                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${stock.lastUpdated || 'N/A'}</div>
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${formatDate(stock.lastUpdated)}</div>
                     </div>
                   </div>
                 </div>
@@ -1651,6 +1623,128 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
  * @param {Object} macroeconomicAnalysis - The analysis data containing macroeconomic factors
  * @return {String} HTML for the macroeconomic factors section
  */
+function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
+  try {
+    // Check if macro data exists
+    if (!macroeconomicAnalysis) {
+      return `
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+        <p style="text-align: center; color: #757575;">No macroeconomic data available</p>
+      </div>
+      `;
+    }
+    
+    // Retrieve macroeconomic factors
+    const macro = retrieveMacroeconomicFactors();
+    if (!macro.success) {
+      return {
+        success: false,
+        message: "Failed to retrieve macroeconomic factors",
+        error: macro.error
+      };
+    }
+    
+    // Treasury Yields
+    let yieldsHtml = '';
+    if (macro.treasuryYields?.yields) {
+      yieldsHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            ${macro.treasuryYields.yields.map(yield => `
+              <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 500; margin-bottom: 5px;">${yield.term}</div>
+                <div style="font-size: 18px; font-weight: bold;">${formatValue(yield.yield)}% (${formatValue(yield.change)})</div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
+            <div>Analysis: ${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
+            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Fed Policy
+    let fedHtml = '';
+    if (macro.fedPolicy) {
+      fedHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Federal Reserve Policy</div>
+          <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size: 16px; margin-bottom: 10px;">${macro.fedPolicy.commentary || 'N/A'}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Current Rate: ${formatValue(macro.fedPolicy.currentRate.rate)}% (${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%)</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Last Meeting: ${formatDate(macro.fedPolicy.lastMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${formatDate(macro.fedPolicy.nextMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Hike: ${macro.fedPolicy.nextMeeting.probabilityOfHike}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Cut: ${macro.fedPolicy.nextMeeting.probabilityOfCut}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of No Change: ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%</div>
+            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${formatDate(macro.fedPolicy.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Inflation
+    let inflationHtml = '';
+    const inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
+      
+    if (inflationData) {
+      inflationHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.cpi.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(inflationData.cpi.core)}%</div>
+            </div>
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.pce.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(inflationData.pce.core)}%</div>
+            </div>
+          </div>
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Trend: ${inflationData.trend}</div>
+            <div>Outlook: ${inflationData.outlook}</div>
+            <div>Market Impact: ${inflationData.marketImpact}</div>
+            <div>Source: ${inflationData.source} (${inflationData.sourceUrl}), as of ${formatDate(inflationData.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Return the complete HTML for the macroeconomic factors section
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      
+      ${yieldsHtml}
+      ${fedHtml}
+      ${inflationHtml}
+    </div>
+    `;
+  } catch (error) {
+    Logger.log("Error generating macroeconomic factors section: " + error);
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      <p style="text-align: center; color: #757575;">Error generating macroeconomic factors data</p>
+    </div>
+    `;
+  }
+}
+
+/**
+ * Generates the macroeconomic factors section HTML
+ * 
+ * @param {Object} macroeconomicAnalysis - The analysis data containing macroeconomic factors
+ * @return {String} HTML for the macroeconomic factors section
+ */
 function generateMacroeconomicFactorsHelper(macroeconomicAnalysis) {
   try {
     // Check if macro data exists
@@ -1790,4 +1884,287 @@ function generateMacroeconomicFactorsHelper() {
     Logger.log('Error in generateMacroeconomicFactorsHelper: ' + error);
     throw error;
   }
+}
+
+/**
+ * Generates the fundamental metrics section HTML
+ * 
+ * @param {Object} analysis - The analysis data
+ * @return {String} HTML for the fundamental metrics section
+ */
+function generateFundamentalMetricsSection(analysis) {
+  try {
+    // Get the fundamental metrics data from the cache
+    const cache = CacheService.getScriptCache();
+    const cachedDataJson = cache.get('allData');
+    
+    if (!cachedDataJson) {
+      Logger.log("No cached data found for fundamental metrics");
+      return "";
+    }
+    
+    const cachedData = JSON.parse(cachedDataJson);
+    const fundamentalMetricsData = cachedData?.fundamentalMetrics?.metrics?.metrics;
+    
+    if (!fundamentalMetricsData) {
+      Logger.log("No fundamental metrics data available in cached data");
+      return "";
+    }
+
+    // Organize stocks into categories
+    const majorIndices = [];
+    const magSeven = [];
+    const otherStocks = [];
+    
+    // Define category symbols
+    const indicesSymbols = ['SPY', 'QQQ', 'DIA', 'IWM'];
+    const magSevenSymbols = ['AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA', 'TSLA'];
+
+    // Sort stocks into categories
+    Object.entries(fundamentalMetricsData).forEach(([symbol, metrics]) => {
+      if (indicesSymbols.includes(symbol)) {
+        majorIndices.push(metrics);
+      } else if (magSevenSymbols.includes(symbol)) {
+        magSeven.push(metrics);
+      } else {
+        otherStocks.push(metrics);
+      }
+    });
+
+    // Generate HTML for each category
+    const generateStocksSection = (stocks, title) => {
+      if (!stocks || stocks.length === 0) return '';
+      
+      return `
+        <div class="subsection">
+          <h3>${title}</h3>
+          <div class="stocks-grid">
+            ${stocks.map(stock => {
+              // Get the color based on price change
+              const getColor = (value) => {
+                if (typeof value !== 'number') return '#555';
+                return value >= 0 ? '#4CAF50' : '#f44336';
+              };
+
+              // Create metric items only for non-N/A values
+              const createMetricItem = (label, value, suffix = '') => {
+                if (value === 'N/A' || value === null || value === undefined) return '';
+                return `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">${label}</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">${formatNumberWithSuffix(value, suffix)}</div>
+                  </div>
+                `;
+              };
+
+              return `
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid ${getColor(stock.priceChange)};">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">${stock.symbol}</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.company || 'N/A'}${stock.sector ? ` - ${stock.sector}` : ''}${stock.industry ? ` - ${stock.industry}` : ''}</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$${formatNumberWithSuffix(stock.price, '')}</div>
+                        <div style="color: ${getColor(stock.priceChange)}; font-weight: bold;">
+                          <span style="margin-right: 3px;">${stock.priceChange >= 0 ? '↑' : '↓'}</span>
+                          ${typeof stock.priceChange === 'number' ? (stock.priceChange >= 0 ? '+' : '') + stock.priceChange.toFixed(2) + '%' : stock.priceChange || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        ${createMetricItem('Market Cap', stock.marketCap, 'B')}
+                        ${createMetricItem('P/E Ratio', stock.peRatio)}
+                        ${createMetricItem('Forward PE', stock.forwardPE)}
+                        ${createMetricItem('PEG Ratio', stock.pegRatio)}
+                        ${createMetricItem('Price/Book', stock.priceToBook)}
+                        ${createMetricItem('Price/Sales', stock.priceToSales)}
+                        ${createMetricItem('Debt/Equity', stock.debtToEquity)}
+                        ${createMetricItem('ROE', stock.returnOnEquity)}
+                        ${createMetricItem('ROA', stock.returnOnAssets)}
+                        ${createMetricItem('Profit Margin', stock.profitMargin)}
+                        ${createMetricItem('Dividend Yield', stock.dividendYield)}
+                      </div>
+                      
+                      ${stock.summary ? `<div style="margin-top: 10px; font-style: italic; font-size: 13px; color: ${getColor(stock.priceChange)}; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${formatDate(stock.lastUpdated)}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    };
+
+    // Generate HTML for all categories
+    const html = `
+      <div class="section">
+        <h2>Fundamental Metrics</h2>
+        ${generateStocksSection(majorIndices, 'Major Indices')}
+        ${generateStocksSection(magSeven, 'Magnificent Seven')}
+        ${generateStocksSection(otherStocks, 'Other Stocks')}
+      </div>
+    `;
+
+    return html;
+  } catch (error) {
+    Logger.log("Error generating fundamental metrics section: " + error);
+    return `
+      <div class="section">
+        <h2>Fundamental Metrics</h2>
+        <p>Error generating fundamental metrics section: ${error}</p>
+      </div>
+    `;
+  }
+}
+
+/**
+ * Generates the fundamental metrics section HTML
+ * 
+ * @param {Object} analysis - The analysis data
+ * @return {String} HTML for the fundamental metrics section
+ */
+function generateFundamentalMetricsSection(analysis) {
+  try {
+    // Get the fundamental metrics data from the cache
+    const cache = CacheService.getScriptCache();
+    const cachedDataJson = cache.get('allData');
+    
+    if (!cachedDataJson) {
+      Logger.log("No cached data found for fundamental metrics");
+      return "";
+    }
+    
+    const cachedData = JSON.parse(cachedDataJson);
+    const fundamentalMetricsData = cachedData?.fundamentalMetrics?.metrics?.metrics;
+    
+    if (!fundamentalMetricsData) {
+      Logger.log("No fundamental metrics data available in cached data");
+      return "";
+    }
+
+    // Organize stocks into categories
+    const majorIndices = [];
+    const magSeven = [];
+    const otherStocks = [];
+    
+    // Define category symbols
+    const indicesSymbols = ['SPY', 'QQQ', 'DIA', 'IWM'];
+    const magSevenSymbols = ['AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA', 'TSLA'];
+
+    // Sort stocks into categories
+    Object.entries(fundamentalMetricsData).forEach(([symbol, metrics]) => {
+      if (indicesSymbols.includes(symbol)) {
+        majorIndices.push(metrics);
+      } else if (magSevenSymbols.includes(symbol)) {
+        magSeven.push(metrics);
+      } else {
+        otherStocks.push(metrics);
+      }
+    });
+
+    // Generate HTML for each category
+    const generateStocksSection = (stocks, title) => {
+      if (!stocks || stocks.length === 0) return '';
+      
+      return `
+        <div class="subsection">
+          <h3>${title}</h3>
+          <div class="stocks-grid">
+            ${stocks.map(stock => {
+              // Get the color based on price change
+              const getColor = (value) => {
+                if (typeof value !== 'number') return '#555';
+                return value >= 0 ? '#4CAF50' : '#f44336';
+              };
+
+              // Create metric items only for non-N/A values
+              const createMetricItem = (label, value, suffix = '') => {
+                if (value === 'N/A' || value === null || value === undefined) return '';
+                return `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">${label}</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">${formatNumberWithSuffix(value, suffix)}</div>
+                  </div>
+                `;
+              };
+
+              return `
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid ${getColor(stock.priceChange)};">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">${stock.symbol}</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.company || 'N/A'}${stock.sector ? ` - ${stock.sector}` : ''}${stock.industry ? ` - ${stock.industry}` : ''}</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$${formatNumberWithSuffix(stock.price, '')}</div>
+                        <div style="color: ${getColor(stock.priceChange)}; font-weight: bold;">
+                          <span style="margin-right: 3px;">${stock.priceChange >= 0 ? '↑' : '↓'}</span>
+                          ${typeof stock.priceChange === 'number' ? (stock.priceChange >= 0 ? '+' : '') + stock.priceChange.toFixed(2) + '%' : stock.priceChange || 'N/A'}
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        ${createMetricItem('Market Cap', stock.marketCap, 'B')}
+                        ${createMetricItem('P/E Ratio', stock.peRatio)}
+                        ${createMetricItem('Forward PE', stock.forwardPE)}
+                        ${createMetricItem('PEG Ratio', stock.pegRatio)}
+                        ${createMetricItem('Price/Book', stock.priceToBook)}
+                        ${createMetricItem('Price/Sales', stock.priceToSales)}
+                        ${createMetricItem('Debt/Equity', stock.debtToEquity)}
+                        ${createMetricItem('ROE', stock.returnOnEquity)}
+                        ${createMetricItem('ROA', stock.returnOnAssets)}
+                        ${createMetricItem('Profit Margin', stock.profitMargin)}
+                        ${createMetricItem('Dividend Yield', stock.dividendYield)}
+                      </div>
+                      
+                      ${stock.summary ? `<div style="margin-top: 10px; font-style: italic; font-size: 13px; color: ${getColor(stock.priceChange)}; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${formatDate(stock.lastUpdated)}</div>
+                    </div>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        </div>
+      `;
+    };
+
+    // Generate HTML for all categories
+    const html = `
+      <div class="section">
+        <h2>Fundamental Metrics</h2>
+        ${generateStocksSection(majorIndices, 'Major Indices')}
+        ${generateStocksSection(magSeven, 'Magnificent Seven')}
+        ${generateStocksSection(otherStocks, 'Other Stocks')}
+      </div>
+    `;
+
+    return html;
+  } catch (error) {
+    Logger.log("Error generating fundamental metrics section: " + error);
+    return `
+      <div class="section">
+        <h2>Fundamental Metrics</h2>
+        <p>Error generating fundamental metrics section: ${error}</p>
+      </div>
+    `;
+  }
+}
+
+function formatNumberWithSuffix(value, suffix = '') {
+  if (value === 'N/A' || value === null || value === undefined) return 'N/A';
+  if (typeof value !== 'number') return value;
+  
+  if (suffix === 'B') return (value / 1e9).toFixed(1) + 'B';
+  if (suffix === 'M') return (value / 1e6).toFixed(1) + 'M';
+  if (suffix === 'K') return (value / 1e3).toFixed(1) + 'K';
+  
+  return value.toFixed(2);
 }

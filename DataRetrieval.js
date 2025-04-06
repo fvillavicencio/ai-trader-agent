@@ -273,7 +273,22 @@ function retrieveAllData() {
     // Retrieve fundamental metrics
     const defaultSymbols = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
     const mentionedStocks = marketSentimentData.mentionedStocks || [];
-    const allSymbols = [...new Set([...defaultSymbols, ...mentionedStocks])];
+    
+    // Get deprecated symbols from config
+    const deprecatedSymbols = DEPRECATED_SYMBOLS;
+    
+    // Filter out deprecated symbols from both default and mentioned stocks
+    const filteredDefaultSymbols = defaultSymbols.filter(symbol => !deprecatedSymbols.includes(symbol));
+    const filteredMentionedStocks = mentionedStocks.filter(symbol => !deprecatedSymbols.includes(symbol));
+    
+    // Combine and deduplicate symbols
+    const allSymbols = [...new Set([...filteredDefaultSymbols, ...filteredMentionedStocks])];
+    
+    // Log the symbols for debugging
+    Logger.log(`Filtered default symbols: ${filteredDefaultSymbols.join(', ')}`);
+    Logger.log(`Filtered mentioned stocks: ${filteredMentionedStocks.join(', ')}`);
+    Logger.log(`All symbols to retrieve metrics for: ${allSymbols.join(', ')}`);
+    
     const fundamentalMetricsData = retrieveFundamentalMetrics(allSymbols);
     
     // Log the metrics for debugging
@@ -629,46 +644,95 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
   try {
     Logger.log("Formatting fundamental metrics data...");
     
+    // Get the metrics object from the data
+    const metricsObj = fundamentalMetricsData.metrics?.metrics;
+    
+    if (!metricsObj) {
+      return "No fundamental metrics data available\n";
+    }
+    
+    // Organize stocks into categories
+    const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
+    const magnificentSeven = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
+    const otherStocks = Object.keys(metricsObj).filter(
+      symbol => !majorIndices.includes(symbol) && !magnificentSeven.includes(symbol)
+    );
+    
+    // Helper function to format a single stock
+    function formatStock(symbol, metrics) {
+      if (!metrics || metrics.error) {
+        return `* ${symbol}: Error retrieving data - ${metrics?.error || 'Unknown error'}\n\n`;
+      }
+      
+      // Calculate percentage change if not available
+      let priceChangePercent = "N/A";
+      if (metrics.changesPercentage === null && metrics.priceChange !== null && metrics.price !== null) {
+        priceChangePercent = `${(metrics.priceChange / (metrics.price + metrics.priceChange) * 100).toFixed(2)}%`;
+      } else if (metrics.changesPercentage !== null) {
+        priceChangePercent = `${metrics.changesPercentage >= 0 ? '+' : ''}${formatValue(metrics.changesPercentage, true)}%`;
+      }
+      
+      // Format price change
+      const priceChange = metrics.priceChange ? `${metrics.priceChange >= 0 ? '+' : ''}${formatValue(metrics.priceChange, true)}` : "N/A";
+      
+      // Create the stock object in the expected format
+      const stock = {
+        symbol: symbol,
+        name: metrics.company || 'N/A',
+        price: metrics.price || 0,
+        priceChange: `${priceChange} (${priceChangePercent})`,
+        marketCap: metrics.marketCap ? formatMarketCap(metrics.marketCap) : 'N/A',
+        peRatio: metrics.peRatio !== null ? formatValue(metrics.peRatio) : 'N/A',
+        pegRatio: metrics.pegRatio !== null ? formatValue(metrics.pegRatio) : 'N/A',
+        forwardPE: metrics.forwardPE !== null ? formatValue(metrics.forwardPE) : 'N/A',
+        priceToBook: metrics.priceToBook !== null ? formatValue(metrics.priceToBook) : 'N/A',
+        priceToSales: metrics.priceToSales !== null ? formatValue(metrics.priceToSales) : 'N/A',
+        debtToEquity: metrics.debtToEquity !== null ? formatValue(metrics.debtToEquity) : 'N/A',
+        returnOnEquity: metrics.returnOnEquity !== null ? `${formatValue(metrics.returnOnEquity)}%` : 'N/A',
+        returnOnAssets: metrics.returnOnAssets !== null ? `${formatValue(metrics.returnOnAssets)}%` : 'N/A',
+        profitMargin: metrics.profitMargin !== null ? `${formatValue(metrics.profitMargin)}%` : 'N/A',
+        dividendYield: metrics.dividendYield !== null ? `${formatValue(metrics.dividendYield)}%` : 'N/A',
+        beta: metrics.beta !== null ? formatValue(metrics.beta) : 'N/A',
+        summary: metrics.summary || 'N/A',
+        lastUpdated: metrics.lastUpdated || new Date().toISOString()
+      };
+      
+      return JSON.stringify(stock, null, 2);
+    }
+
+    // Format each category
     let formattedText = "**Fundamental Metrics:**\n\n";
     
-    // Format each symbol's data
-    for (const symbol in fundamentalMetricsData.metrics) {
-      const metrics = fundamentalMetricsData.metrics[symbol];
-      
-      if (!metrics || metrics.error) {
-        formattedText += `* ${symbol}: Error retrieving data - ${metrics?.error || 'Unknown error'}\n\n`;
-        continue;
-      }
-      
-      formattedText += `* ${symbol} (${metrics.company || 'N/A'}): $${formatValue(metrics.price, true)} (${metrics.priceChange >= 0 ? '+' : ''}${formatValue(metrics.priceChange, true)}, ${metrics.changesPercentage >= 0 ? '+' : ''}${formatValue(metrics.changesPercentage, true)}%)\n`;
-      formattedText += `  * Sector: ${metrics.sector || 'N/A'}\n`;
-      formattedText += `  * Industry: ${metrics.industry || 'N/A'}\n`;
-      
-      // Add market cap if available
-      if (metrics.marketCap) {
-        const formattedMarketCap = formatMarketCap(metrics.marketCap);
-        formattedText += `  * Market Cap: ${formattedMarketCap}\n`;
-      }
-      
-      // Add volume
-      const formattedVolume = formatVolume(metrics.volume);
-      formattedText += `  * Volume: ${formattedVolume}\n`;
-      
-      // Add metrics
-      if (metrics.pegRatio !== null) formattedText += `  * PEG Ratio: ${formatValue(metrics.pegRatio)}\n`;
-      if (metrics.forwardPE !== null) formattedText += `  * Forward P/E: ${formatValue(metrics.forwardPE)}\n`;
-      if (metrics.priceToBook !== null) formattedText += `  * Price/Book: ${formatValue(metrics.priceToBook)}\n`;
-      if (metrics.priceToSales !== null) formattedText += `  * Price/Sales: ${formatValue(metrics.priceToSales)}\n`;
-      if (metrics.debtToEquity !== null) formattedText += `  * Debt/Equity: ${formatValue(metrics.debtToEquity)}\n`;
-      if (metrics.returnOnEquity !== null) formattedText += `  * Return on Equity: ${formatValue(metrics.returnOnEquity)}%\n`;
-      if (metrics.beta !== null) formattedText += `  * Beta: ${formatValue(metrics.beta)}\n`;
-      
-      formattedText += "\n";
+    // Major Indices
+    if (majorIndices.length > 0) {
+      formattedText += "**Major Indices:**\n";
+      majorIndices.forEach(symbol => {
+        const metrics = metricsObj[symbol];
+        formattedText += formatStock(symbol, metrics) + "\n\n";
+      });
+    }
+    
+    // Magnificent Seven
+    if (magnificentSeven.length > 0) {
+      formattedText += "**Magnificent Seven:**\n";
+      magnificentSeven.forEach(symbol => {
+        const metrics = metricsObj[symbol];
+        formattedText += formatStock(symbol, metrics) + "\n\n";
+      });
+    }
+    
+    // Other Stocks
+    if (otherStocks.length > 0) {
+      formattedText += "**Other Stocks:**\n";
+      otherStocks.forEach(symbol => {
+        const metrics = metricsObj[symbol];
+        formattedText += formatStock(symbol, metrics) + "\n\n";
+      });
     }
     
     return formattedText;
   } catch (error) {
-    Logger.log(`Error in formatFundamentalMetricsData: ${error}`);
-    throw error;
+    Logger.log(`Error formatting fundamental metrics data: ${error}`);
+    return "Error formatting fundamental metrics data\n";
   }
 }

@@ -97,13 +97,16 @@ function retrieveMarketSentiment() {
 function extractMentionedStocks(marketSentimentData) {
   const mentionedStocks = [];
   
+  // Get deprecated symbols from config
+  const deprecatedSymbols = DEPRECATED_SYMBOLS;
+  
   // Extract from analysts
   if (marketSentimentData.analysts && Array.isArray(marketSentimentData.analysts)) {
     marketSentimentData.analysts.forEach(analyst => {
       // Check both mentionedStocks and mentionedSymbols for backward compatibility
       if (analyst.mentionedStocks && Array.isArray(analyst.mentionedStocks)) {
         analyst.mentionedStocks.forEach(symbol => {
-          if (symbol && !mentionedStocks.includes(symbol)) {
+          if (symbol && !mentionedStocks.includes(symbol) && !deprecatedSymbols.includes(symbol)) {
             mentionedStocks.push(symbol);
           }
         });
@@ -111,7 +114,7 @@ function extractMentionedStocks(marketSentimentData) {
         // For backward compatibility
         analyst.mentionedStocks = analyst.mentionedSymbols; // Add mentionedStocks property
         analyst.mentionedSymbols.forEach(symbol => {
-          if (symbol && !mentionedStocks.includes(symbol)) {
+          if (symbol && !mentionedStocks.includes(symbol) && !deprecatedSymbols.includes(symbol)) {
             mentionedStocks.push(symbol);
           }
         });
@@ -121,7 +124,7 @@ function extractMentionedStocks(marketSentimentData) {
         if (extractedSymbols.length > 0) {
           analyst.mentionedStocks = extractedSymbols;
           extractedSymbols.forEach(symbol => {
-            if (!mentionedStocks.includes(symbol)) {
+            if (!mentionedStocks.includes(symbol) && !deprecatedSymbols.includes(symbol)) {
               mentionedStocks.push(symbol);
             }
           });
@@ -135,7 +138,7 @@ function extractMentionedStocks(marketSentimentData) {
     marketSentimentData.sentimentIndicators.forEach(indicator => {
       if (indicator.mentionedStocks && Array.isArray(indicator.mentionedStocks)) {
         indicator.mentionedStocks.forEach(symbol => {
-          if (symbol && !mentionedStocks.includes(symbol)) {
+          if (symbol && !mentionedStocks.includes(symbol) && !deprecatedSymbols.includes(symbol)) {
             mentionedStocks.push(symbol);
           }
         });

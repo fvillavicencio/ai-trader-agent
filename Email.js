@@ -52,39 +52,27 @@ function sendPromptEmail(prompt) {
       color: #7f8c8d;
       margin: 5px 0 0;
     }
-    .prompt-box {
-      background-color: #f5f5f5;
+    .content {
+      margin: 20px 0;
       padding: 20px;
+      background-color: #f8f9fa;
       border-radius: 8px;
-      border-left: 5px solid #2196f3;
-      margin-bottom: 20px;
     }
-    .prompt-title {
-      color: #2196f3;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 0;
-      margin-bottom: 10px;
-    }
-    .prompt-content {
-      font-family: monospace;
+    .content pre {
       white-space: pre-wrap;
-      overflow-x: auto;
+      background-color: #f8f9fa;
+      padding: 15px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
       font-size: 14px;
       line-height: 1.5;
       color: #333;
-      padding: 15px;
-      background-color: #ffffff;
-      border-radius: 4px;
-      border: 1px solid #e0e0e0;
     }
     .footer {
-      margin-top: 30px;
       text-align: center;
-      font-size: 14px;
-      color: #95a5a6;
-      padding-top: 15px;
-      border-top: 1px solid #eee;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 2px solid #f0f0f0;
     }
     .footer p {
       margin: 5px 0;
@@ -94,19 +82,19 @@ function sendPromptEmail(prompt) {
 <body>
   <div class="container">
     <div class="header">
-      <h1>AI Trader Agent - AI Prompt</h1>
+      <h1>AI Trader Agent - OpenAI Prompt</h1>
       <p>Generated on ${formattedDate}</p>
     </div>
     
-    <div class="prompt-box">
-      <h2 class="prompt-title">AI Prompt</h2>
-      <div class="prompt-content">
+    <div class="content">
+      <h2>OpenAI Prompt</h2>
+      <pre>
 ${prompt}
-      </div>
+      </pre>
     </div>
     
     <div class="footer">
-      <p>  ${NEWSLETTER_NAME}</p>
+      <p>${NEWSLETTER_NAME}</p>
       <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>
@@ -114,20 +102,10 @@ ${prompt}
 </html>
     `;
 
-    // Create plain text version
-    const plainTextBody = `AI Trader Agent - AI Prompt
-Generated on ${formattedDate}
-
-OpenAI Prompt:
-${prompt}
-
-  ${NEWSLETTER_NAME}
-This is an automated message. Please do not reply.`;
-
-var subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
+    const subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, plainTextBody, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send prompt email: ${emailResult.error}`);
@@ -255,18 +233,8 @@ ${errorMessage}
 </html>
     `;
     
-    // Create plain text version
-    const plainTextBody = `Error Notification
-Generated on ${formattedDate}
-
-Error Details:
-${errorMessage}
-
-  ${NEWSLETTER_NAME}
-This is an automated message. Please do not reply.`;
-
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, plainTextBody, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send error email: ${emailResult.error}`);
@@ -290,11 +258,10 @@ This is an automated message. Please do not reply.`;
  * 
  * @param {string} subject - The email subject
  * @param {string} htmlBody - The HTML body of the email
- * @param {string} plainTextBody - The plain text body of the email
  * @param {boolean} isTest - Whether this is a test email
  * @return {Object} - The result of the email sending operation
  */
-function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
+function sendEmail(subject, htmlBody, isTest = false) {
   try {
     // Get user email from script properties
     const scriptProperties = PropertiesService.getScriptProperties();
@@ -324,7 +291,7 @@ function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
     
     while (retryCount < maxRetries) {
       try {
-        result = GmailApp.sendEmail(recipient, subject, plainTextBody, {
+        result = GmailApp.sendEmail(recipient, subject, '', {
           htmlBody: htmlBody,
           name: NEWSLETTER_NAME,
           replyTo: Session.getEffectiveUser().getEmail()
@@ -354,7 +321,7 @@ function sendEmail(subject, htmlBody, plainTextBody, isTest = false) {
     if (recipient !== testEmail) {
       try {
         GmailApp.sendEmail(testEmail, `Email Sending Failed - ${subject}`, 
-          `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${plainTextBody}`, {
+          `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`, {
             htmlBody: `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`,
             name: NEWSLETTER_NAME
           });
@@ -408,17 +375,11 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
       subject = `[TEST] ${subject}`;
     }
     
-    // Generate HTML and plain text email bodies
+    // Generate HTML email body
     const htmlBody = generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
-    const plainTextBody = formatPlainTextEmailBodyWithAnalysis(
-      decision, 
-      analysisJson, 
-      analysisTime, 
-      nextScheduledTime
-    );
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, plainTextBody, isTest);
+    const emailResult = sendEmail(subject, htmlBody, isTest);
     
     if (!emailResult.success) {
       throw new Error(`Failed to send trading analysis email: ${emailResult.error}`);
