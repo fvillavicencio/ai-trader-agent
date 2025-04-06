@@ -1,0 +1,10 @@
+{
+  "scriptId": "YOUR_SCRIPT_ID_HERE",
+  "rootDir": ".",
+  "files": [
+    "*.gs",
+    "*.html",
+    "appsscript.json",
+    "Utils/**/*.gs"
+  ]
+}

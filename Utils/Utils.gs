@@ -3,38 +3,47 @@
  */
 
 // Import Core Utilities
-const { enhancedCleanAnalysisResult, testEnhancedJsonParsing, formatDate, formatValue, formatNumberWithSuffix, saveToGoogleDrive } = require('./CoreUtils');
+include('CoreUtils');
 
 // Import Email Utilities
-const { formatHtmlEmailBodyWithAnalysis, generateEmailTemplate } = require('./EmailUtils');
+include('EmailUtils');
 
 // Import Analysis Utilities
-const { generateMarketSentimentSection, generateMarketIndicatorsSection, generateGeopoliticalRisksSection } = require('./AnalysisUtils');
+include('AnalysisUtils');
 
 // Import Section Utilities
-const generateFundamentalMetricsSection = require('./SectionUtils/FundamentalMetrics');
-const generateMacroeconomicFactorsSection = require('./SectionUtils/MacroeconomicFactors');
+include('SectionUtils/FundamentalMetrics');
+include('SectionUtils/MacroeconomicFactors');
+include('SectionUtils/MarketIndicators');
+include('SectionUtils/MarketSentiment');
+include('SectionUtils/GeopoliticalRisks');
 
 // Import Data Utilities
-const { retrieveMacroeconomicFactors, retrieveTreasuryYields, retrieveInflationData, retrieveFedPolicy } = require('./DataUtils');
+include('DataUtils');
 
 // Export all functions
-module.exports = {
-  enhancedCleanAnalysisResult,
-  testEnhancedJsonParsing,
-  formatHtmlEmailBodyWithAnalysis,
-  generateEmailTemplate,
-  generateMarketSentimentSection,
-  generateMarketIndicatorsSection,
-  generateFundamentalMetricsSection,
-  generateMacroeconomicFactorsSection,
-  generateGeopoliticalRisksSection,
-  formatDate,
-  formatValue,
-  formatNumberWithSuffix,
-  saveToGoogleDrive,
-  retrieveMacroeconomicFactors,
-  retrieveTreasuryYields,
-  retrieveInflationData,
-  retrieveFedPolicy
-};
+function getUtils() {
+  return {
+    enhancedCleanAnalysisResult,
+    testEnhancedJsonParsing,
+    formatHtmlEmailBodyWithAnalysis,
+    generateEmailTemplate,
+    generateMarketSentimentSection,
+    generateMarketIndicatorsSection,
+    generateFundamentalMetricsSection,
+    generateMacroeconomicFactorsSection,
+    generateGeopoliticalRisksSection,
+    formatDate,
+    formatValue,
+    formatNumberWithSuffix,
+    saveToGoogleDrive,
+    retrieveMacroeconomicFactors,
+    retrieveTreasuryYields,
+    retrieveInflationData,
+    retrieveFedPolicy
+  };
+}
+
+// Export individual functions for direct use
+const utils = getUtils();
+Object.assign(this, utils);
