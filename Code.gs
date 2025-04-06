@@ -5,16 +5,6 @@
  * It uses the OpenAI API to analyze market data and generate trading recommendations.
  */
 
-// Load utility functions
-ScriptApp.include('Utils_DataUtils');
-ScriptApp.include('Utils_EmailUtils');
-ScriptApp.include('Utils_AnalysisUtils');
-ScriptApp.include('Utils_FundamentalMetrics');
-ScriptApp.include('Utils_MacroeconomicFactors');
-ScriptApp.include('Utils_MarketIndicators');
-ScriptApp.include('Utils_MarketSentiment');
-ScriptApp.include('Utils_GeopoliticalRisks');
-
 /**
  * Gets the trading analysis from OpenAI
  * This function retrieves all necessary data, generates a prompt,

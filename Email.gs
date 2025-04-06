@@ -1,10 +1,3 @@
-// Load utility functions
-ScriptApp.include('Utils_EmailUtils');
-ScriptApp.include('Utils_DataUtils');
-
-// Import the TIME_ZONE constant from Code.gs
-// const TIME_ZONE = "America/New_York"; // Removing this line as TIME_ZONE is already defined in Code.gs
-
 /**
  * Sends an email with the generated OpenAI prompt
  * 
