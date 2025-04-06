@@ -10,6 +10,10 @@
     "Utils/EmailUtils.gs",
     "Utils/AnalysisUtils.gs",
     "Utils/DataUtils.gs",
-    "Utils/SectionUtils/*.gs"
+    "Utils/SectionUtils/FundamentalMetrics.gs",
+    "Utils/SectionUtils/MacroeconomicFactors.gs",
+    "Utils/SectionUtils/MarketIndicators.gs",
+    "Utils/SectionUtils/MarketSentiment.gs",
+    "Utils/SectionUtils/GeopoliticalRisks.gs"
   ]
 }
