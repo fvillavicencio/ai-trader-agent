@@ -1,3 +1,7 @@
+// Import utility functions
+include('Utils_EmailUtils');
+include('Utils_DataUtils');
+
 // Import the TIME_ZONE constant from Code.gs
 // const TIME_ZONE = "America/New_York"; // Removing this line as TIME_ZONE is already defined in Code.gs
 
