@@ -1,6 +1,6 @@
 // Load utility functions
-Utilities.loadScript('Utils_EmailUtils');
-Utilities.loadScript('Utils_DataUtils');
+ScriptApp.include('Utils_EmailUtils');
+ScriptApp.include('Utils_DataUtils');
 
 // Import the TIME_ZONE constant from Code.gs
 // const TIME_ZONE = "America/New_York"; // Removing this line as TIME_ZONE is already defined in Code.gs

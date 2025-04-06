@@ -6,14 +6,14 @@
  */
 
 // Load utility functions
-Utilities.loadScript('Utils_DataUtils');
-Utilities.loadScript('Utils_EmailUtils');
-Utilities.loadScript('Utils_AnalysisUtils');
-Utilities.loadScript('Utils_FundamentalMetrics');
-Utilities.loadScript('Utils_MacroeconomicFactors');
-Utilities.loadScript('Utils_MarketIndicators');
-Utilities.loadScript('Utils_MarketSentiment');
-Utilities.loadScript('Utils_GeopoliticalRisks');
+ScriptApp.include('Utils_DataUtils');
+ScriptApp.include('Utils_EmailUtils');
+ScriptApp.include('Utils_AnalysisUtils');
+ScriptApp.include('Utils_FundamentalMetrics');
+ScriptApp.include('Utils_MacroeconomicFactors');
+ScriptApp.include('Utils_MarketIndicators');
+ScriptApp.include('Utils_MarketSentiment');
+ScriptApp.include('Utils_GeopoliticalRisks');
 
 /**
  * Gets the trading analysis from OpenAI
