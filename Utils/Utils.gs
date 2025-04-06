@@ -3,15 +3,15 @@
  */
 
 // Import all utility files
-include('CoreUtils');
-include('EmailUtils');
-include('AnalysisUtils');
-include('SectionUtils/FundamentalMetrics');
-include('SectionUtils/MacroeconomicFactors');
-include('SectionUtils/MarketIndicators');
-include('SectionUtils/MarketSentiment');
-include('SectionUtils/GeopoliticalRisks');
-include('DataUtils');
+var CoreUtils = include('CoreUtils');
+var EmailUtils = include('EmailUtils');
+var AnalysisUtils = include('AnalysisUtils');
+var FundamentalMetrics = include('SectionUtils/FundamentalMetrics');
+var MacroeconomicFactors = include('SectionUtils/MacroeconomicFactors');
+var MarketIndicators = include('SectionUtils/MarketIndicators');
+var MarketSentiment = include('SectionUtils/MarketSentiment');
+var GeopoliticalRisks = include('SectionUtils/GeopoliticalRisks');
+var DataUtils = include('DataUtils');
 
 // Export all functions directly
 Object.assign(this, {
