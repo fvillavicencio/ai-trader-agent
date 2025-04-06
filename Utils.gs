@@ -586,11 +586,11 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
     }
     
     // Format the analysis time
-    const formattedAnalysisTime = Utilities.formatDate(analysisTime, TIME_ZONE, 'MMMM dd, yyyy \'at\' hh:mm a z');
+    const formattedAnalysisTime = formatDate(analysisTime);
     
     // Format the next analysis time
     const formattedNextAnalysisTime = nextScheduledTime ? 
-      Utilities.formatDate(nextScheduledTime, TIME_ZONE, 'MMMM dd, yyyy \'at\' hh:mm a z') : 
+      formatDate(nextScheduledTime) : 
       'Not scheduled';
     
     // Generate the sentiment section HTML
@@ -608,7 +608,7 @@ function generateEmailTemplate(analysisResult, nextScheduledTime, isTest = false
     // Generate the geopolitical risks section HTML
     const geopoliticalRisksHtml = generateGeopoliticalRisksSection(analysis);
     
-    // Start building the HTML email
+    // Generate the HTML email
     let html = `
     <!DOCTYPE html>
     <html>
@@ -1144,83 +1144,72 @@ function generateFundamentalMetricsSection(analysis) {
 
               return `
                 <div class="stock-card">
-                  <div class="stock-header">
-                    <span class="stock-symbol">${stock.symbol}</span>
-                    <span class="stock-name">${stock.company || 'N/A'}</span>
-                    <span class="stock-price">$${formatMetric(stock.price, '')}</span>
-                  </div>
-                  <div class="stock-metrics">
-                    <div class="metric-group">
-                      <div class="metric">
-                        <span class="metric-label">Change</span>
-                        <span class="metric-value ${typeof stock.priceChange === 'number' && stock.priceChange >= 0 ? 'positive' : 'negative'}">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); max-width: 100%;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #2c3e50;">${stock.symbol}</div>
+                      <div style="font-size: 14px; color: #555; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.company || 'N/A'}</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #2c3e50; margin-right: 10px;">$${formatMetric(stock.price, '')}</div>
+                        <div style="color: ${typeof stock.priceChange === 'number' && stock.priceChange >= 0 ? '#4CAF50' : '#f44336'}; font-weight: bold;">
+                          <span style="margin-right: 3px;">${typeof stock.priceChange === 'number' && stock.priceChange >= 0 ? '↑' : '↓'}</span>
                           ${typeof stock.priceChange === 'number' ? (stock.priceChange >= 0 ? '+' : '') + stock.priceChange.toFixed(2) + '%' : stock.priceChange || 'N/A'}
-                        </span>
+                        </div>
                       </div>
-                      <div class="metric">
-                        <span class="metric-label">Market Cap</span>
-                        <span class="metric-value">${formatMetric(stock.marketCap, 'B')}</span>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">Key Metrics</div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">Market Cap</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${formatMetric(stock.marketCap, 'B')}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">P/E Ratio</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.peRatio || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">Forward PE</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.forwardPE || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">PEG Ratio</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.pegRatio || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">Price/Book</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.priceToBook || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">Price/Sales</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.priceToSales || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">Debt/Equity</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.debtToEquity || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">ROE</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.returnOnEquity || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">ROA</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.returnOnAssets || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">Profit Margin</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.profitMargin || 'N/A'}</div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; flex-wrap: wrap;">
+                          <div style="color: #555; min-width: 80px;">Dividend Yield</div>
+                          <div style="font-weight: bold; text-align: right; overflow: hidden; text-overflow: ellipsis;">${stock.dividendYield || 'N/A'}</div>
+                        </div>
                       </div>
+                      
+                      ${stock.summary ? `<div style="margin-top: 10px; font-style: italic; font-size: 13px; color: #555; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${stock.lastUpdated || 'N/A'}</div>
                     </div>
-                    <div class="metric-group">
-                      <div class="metric">
-                        <span class="metric-label">PE Ratio</span>
-                        <span class="metric-value">${stock.peRatio || 'N/A'}</span>
-                      </div>
-                      <div class="metric">
-                        <span class="metric-label">Forward PE</span>
-                        <span class="metric-value">${stock.forwardPE || 'N/A'}</span>
-                      </div>
-                    </div>
-                    <div class="metric-group">
-                      <div class="metric">
-                        <span class="metric-label">PEG Ratio</span>
-                        <span class="metric-value">${stock.pegRatio || 'N/A'}</span>
-                      </div>
-                      <div class="metric">
-                        <span class="metric-label">Price/Book</span>
-                        <span class="metric-value">${stock.priceToBook || 'N/A'}</span>
-                      </div>
-                    </div>
-                    <div class="metric-group">
-                      <div class="metric">
-                        <span class="metric-label">Price/Sales</span>
-                        <span class="metric-value">${stock.priceToSales || 'N/A'}</span>
-                      </div>
-                      <div class="metric">
-                        <span class="metric-label">Debt/Equity</span>
-                        <span class="metric-value">${stock.debtToEquity || 'N/A'}</span>
-                      </div>
-                    </div>
-                    <div class="metric-group">
-                      <div class="metric">
-                        <span class="metric-label">ROE</span>
-                        <span class="metric-value">${stock.returnOnEquity || 'N/A'}</span>
-                      </div>
-                      <div class="metric">
-                        <span class="metric-label">ROA</span>
-                        <span class="metric-value">${stock.returnOnAssets || 'N/A'}</span>
-                      </div>
-                    </div>
-                    <div class="metric-group">
-                      <div class="metric">
-                        <span class="metric-label">Profit Margin</span>
-                        <span class="metric-value">${stock.profitMargin || 'N/A'}</span>
-                      </div>
-                      <div class="metric">
-                        <span class="metric-label">Dividend Yield</span>
-                        <span class="metric-value">${stock.dividendYield || 'N/A'}</span>
-                      </div>
-                    </div>
-                    ${stock.summary ? `<div class="metric-group">
-                      <div class="metric">
-                        <span class="metric-label">Summary</span>
-                        <span class="metric-value">${stock.summary}</span>
-                      </div>
-                    </div>` : ''}
-                  </div>
-                  <div class="stock-footer">
-                    <span class="last-updated">Last Updated: ${stock.lastUpdated || 'N/A'}</span>
                   </div>
                 </div>
               `;
@@ -1297,7 +1286,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
           <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
             <div>Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
             <div>Analysis: ${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
-            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${new Date(macro.treasuryYields.lastUpdated).toLocaleString()}</div>
+            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}</div>
           </div>
         </div>
       `;
@@ -1312,12 +1301,12 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
           <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
             <div style="font-size: 16px; margin-bottom: 10px;">${macro.fedPolicy.commentary || 'N/A'}</div>
             <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Current Rate: ${formatValue(macro.fedPolicy.currentRate.rate)}% (${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%)</div>
-            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Last Meeting: ${new Date(macro.fedPolicy.lastMeeting.date).toLocaleDateString()}</div>
-            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${new Date(macro.fedPolicy.nextMeeting.date).toLocaleDateString()}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Last Meeting: ${formatDate(macro.fedPolicy.lastMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${formatDate(macro.fedPolicy.nextMeeting.date)}</div>
             <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Hike: ${macro.fedPolicy.nextMeeting.probabilityOfHike}%</div>
             <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Cut: ${macro.fedPolicy.nextMeeting.probabilityOfCut}%</div>
             <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of No Change: ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%</div>
-            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${new Date(macro.fedPolicy.lastUpdated).toLocaleString()}</div>
+            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${formatDate(macro.fedPolicy.lastUpdated)}</div>
           </div>
         </div>
       `;
@@ -1347,7 +1336,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div>Trend: ${inflationData.trend}</div>
             <div>Outlook: ${inflationData.outlook}</div>
             <div>Market Impact: ${inflationData.marketImpact}</div>
-            <div>Source: ${inflationData.source} (${inflationData.sourceUrl}), as of ${new Date(inflationData.lastUpdated).toLocaleString()}</div>
+            <div>Source: ${inflationData.source} (${inflationData.sourceUrl}), as of ${formatDate(inflationData.lastUpdated)}</div>
           </div>
         </div>
       `;
@@ -1356,7 +1345,8 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     // Return the complete HTML for the macroeconomic factors section
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      
       ${yieldsHtml}
       ${fedHtml}
       ${inflationHtml}
@@ -1366,7 +1356,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     Logger.log("Error generating macroeconomic factors section: " + error);
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
       <p style="text-align: center; color: #757575;">Error generating macroeconomic factors data</p>
     </div>
     `;
@@ -1381,9 +1371,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
  */
 function generateGeopoliticalRisksSection(analysis) {
   try {
-
-    
-     // Retrieve real macroeconomic data
+    // Retrieve real macroeconomic data
     const macroData = retrieveMacroeconomicFactors();
     const geoRisks = macroData && macroData.data && macroData.data.geopoliticalRisks;
     
@@ -1446,7 +1434,7 @@ function generateGeopoliticalRisksSection(analysis) {
       ${globalOverviewHtml}
       ${riskCardsHtml}
       <div style="margin-top: 15px; text-align: right; font-size: 12px; color: #757575;">
-        Last Updated: ${new Date(geoRisks.lastUpdated).toLocaleString()}
+        Last Updated: ${formatDate(geoRisks.lastUpdated)}
       </div>
     </div>
     `;
@@ -1462,28 +1450,28 @@ function generateGeopoliticalRisksSection(analysis) {
 }
 
 /**
- * Helper function to generate the Macroeconomic Factors section with real data
- * @return {String} HTML for the macroeconomic factors section
+ * Helper function to format dates consistently
+ * @param {Date} date - The date to format
+ * @return {String} Formatted date
  */
-function generateMacroeconomicFactorsHelper() {
-  try {
-    // Retrieve real macroeconomic data
-    const macroData = retrieveMacroeconomicFactors();
-    
-    // Log the raw data for debugging
-    Logger.log('Retrieved Macroeconomic Data:\n' + JSON.stringify(macroData, null, 2));
-    
-    // Generate the HTML section
-    const html = generateMacroeconomicFactorsSection(macroData);
-    
-    // Log the resulting HTML
-    Logger.log('Generated Macroeconomic Factors HTML:\n' + html);
-    
-    return html;
-  } catch (error) {
-    Logger.log('Error in generateMacroeconomicFactorsHelper: ' + error);
-    throw error;
-  }
+function formatDate(date) {
+  if (!date) return 'N/A';
+  
+  // Convert to Date object if needed
+  const d = date instanceof Date ? date : new Date(date);
+  
+  // Format date and time
+  const options = {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short'
+  };
+  
+  return d.toLocaleString('en-US', options);
 }
 
 /**
@@ -1533,4 +1521,273 @@ function formatValue(value, decimals = 2) {
     return "N/A";
   }
   return value.toFixed(decimals);
+}
+
+/**
+ * Generates the macroeconomic factors section HTML
+ * 
+ * @param {Object} macroeconomicAnalysis - The analysis data containing macroeconomic factors
+ * @return {String} HTML for the macroeconomic factors section
+ */
+function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
+  try {
+    // Check if macro data exists
+    if (!macroeconomicAnalysis) {
+      return `
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+        <p style="text-align: center; color: #757575;">No macroeconomic data available</p>
+      </div>
+      `;
+    }
+    
+    // Retrieve macroeconomic factors
+    const macro = retrieveMacroeconomicFactors();
+    if (!macro.success) {
+      return {
+        success: false,
+        message: "Failed to retrieve macroeconomic factors",
+        error: macro.error
+      };
+    }
+    
+    // Treasury Yields
+    let yieldsHtml = '';
+    if (macro.treasuryYields?.yields) {
+      yieldsHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            ${macro.treasuryYields.yields.map(yield => `
+              <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 500; margin-bottom: 5px;">${yield.term}</div>
+                <div style="font-size: 18px; font-weight: bold;">${formatValue(yield.yield)}% (${formatValue(yield.change)})</div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
+            <div>Analysis: ${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
+            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Fed Policy
+    let fedHtml = '';
+    if (macro.fedPolicy) {
+      fedHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Federal Reserve Policy</div>
+          <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size: 16px; margin-bottom: 10px;">${macro.fedPolicy.commentary || 'N/A'}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Current Rate: ${formatValue(macro.fedPolicy.currentRate.rate)}% (${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%)</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Last Meeting: ${formatDate(macro.fedPolicy.lastMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${formatDate(macro.fedPolicy.nextMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Hike: ${macro.fedPolicy.nextMeeting.probabilityOfHike}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Cut: ${macro.fedPolicy.nextMeeting.probabilityOfCut}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of No Change: ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%</div>
+            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${formatDate(macro.fedPolicy.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Inflation
+    let inflationHtml = '';
+    const inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
+      
+    if (inflationData) {
+      inflationHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.cpi.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(inflationData.cpi.core)}%</div>
+            </div>
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.pce.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(inflationData.pce.core)}%</div>
+            </div>
+          </div>
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Trend: ${inflationData.trend}</div>
+            <div>Outlook: ${inflationData.outlook}</div>
+            <div>Market Impact: ${inflationData.marketImpact}</div>
+            <div>Source: ${inflationData.source} (${inflationData.sourceUrl}), as of ${formatDate(inflationData.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Return the complete HTML for the macroeconomic factors section
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      
+      ${yieldsHtml}
+      ${fedHtml}
+      ${inflationHtml}
+    </div>
+    `;
+  } catch (error) {
+    Logger.log("Error generating macroeconomic factors section: " + error);
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      <p style="text-align: center; color: #757575;">Error generating macroeconomic factors data</p>
+    </div>
+    `;
+  }
+}
+
+/**
+ * Generates the macroeconomic factors section HTML
+ * 
+ * @param {Object} macroeconomicAnalysis - The analysis data containing macroeconomic factors
+ * @return {String} HTML for the macroeconomic factors section
+ */
+function generateMacroeconomicFactorsHelper(macroeconomicAnalysis) {
+  try {
+    // Check if macro data exists
+    if (!macroeconomicAnalysis) {
+      return `
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
+        <p style="text-align: center; color: #757575;">No macroeconomic data available</p>
+      </div>
+      `;
+    }
+    
+    // Retrieve macroeconomic factors
+    const macro = retrieveMacroeconomicFactors();
+    if (!macro.success) {
+      return {
+        success: false,
+        message: "Failed to retrieve macroeconomic factors",
+        error: macro.error
+      };
+    }
+    
+    // Treasury Yields
+    let yieldsHtml = '';
+    if (macro.treasuryYields?.yields) {
+      yieldsHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            ${macro.treasuryYields.yields.map(yield => `
+              <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 500; margin-bottom: 5px;">${yield.term}</div>
+                <div style="font-size: 18px; font-weight: bold;">${formatValue(yield.yield)}% (${formatValue(yield.change)})</div>
+              </div>
+            `).join('')}
+          </div>
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
+            <div>Analysis: ${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
+            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Fed Policy
+    let fedHtml = '';
+    if (macro.fedPolicy) {
+      fedHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Federal Reserve Policy</div>
+          <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size: 16px; margin-bottom: 10px;">${macro.fedPolicy.commentary || 'N/A'}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Current Rate: ${formatValue(macro.fedPolicy.currentRate.rate)}% (${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%)</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Last Meeting: ${formatDate(macro.fedPolicy.lastMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${formatDate(macro.fedPolicy.nextMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Hike: ${macro.fedPolicy.nextMeeting.probabilityOfHike}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Cut: ${macro.fedPolicy.nextMeeting.probabilityOfCut}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of No Change: ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%</div>
+            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${formatDate(macro.fedPolicy.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Inflation
+    let inflationHtml = '';
+    const inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
+      
+    if (inflationData) {
+      inflationHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.cpi.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(inflationData.cpi.core)}%</div>
+            </div>
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.pce.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(inflationData.pce.core)}%</div>
+            </div>
+          </div>
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Trend: ${inflationData.trend}</div>
+            <div>Outlook: ${inflationData.outlook}</div>
+            <div>Market Impact: ${inflationData.marketImpact}</div>
+            <div>Source: ${inflationData.source} (${inflationData.sourceUrl}), as of ${formatDate(inflationData.lastUpdated)}</div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Return the complete HTML for the macroeconomic factors section
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      
+      ${yieldsHtml}
+      ${fedHtml}
+      ${inflationHtml}
+    </div>
+    `;
+  } catch (error) {
+    Logger.log("Error generating macroeconomic factors section: " + error);
+    return `
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      <p style="text-align: center; color: #757575;">Error generating macroeconomic factors data</p>
+    </div>
+    `;
+  }
+}
+
+/**
+ * Helper function to generate the Macroeconomic Factors section with real data
+ * @return {String} HTML for the macroeconomic factors section
+ */
+function generateMacroeconomicFactorsHelper() {
+  try {
+    // Retrieve real macroeconomic data
+    const macroData = retrieveMacroeconomicFactors();
+    
+    // Log the raw data for debugging
+    Logger.log('Retrieved Macroeconomic Data:\n' + JSON.stringify(macroData, null, 2));
+    
+    // Generate the HTML section
+    const html = generateMacroeconomicFactorsSection(macroData);
+    
+    // Log the resulting HTML
+    Logger.log('Generated Macroeconomic Factors HTML:\n' + html);
+    
+    return html;
+  } catch (error) {
+    Logger.log('Error in generateMacroeconomicFactorsHelper: ' + error);
+    throw error;
+  }
 }
