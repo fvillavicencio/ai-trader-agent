@@ -1,0 +1,17 @@
+{
+  "name": "ai-trader-agent-utils",
+  "version": "1.0.0",
+  "description": "Utility functions for AI Trader Agent",
+  "main": "Utils.gs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "ai",
+    "trader",
+    "agent",
+    "utilities"
+  ],
+  "author": "",
+  "license": "ISC"
+}
