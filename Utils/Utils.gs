@@ -16,7 +16,7 @@ var DataUtils = include('DataUtils');
 // Export all functions directly
 Object.assign(this, {
   enhancedCleanAnalysisResult: CoreUtils.enhancedCleanAnalysisResult,
-  testEnhancedJsonParsing: AnalysisUtils.testEnhancedJsonParsing,
+  testEnhancedJsonParsing: CoreUtils.testEnhancedJsonParsing,
   formatHtmlEmailBodyWithAnalysis: EmailUtils.formatHtmlEmailBodyWithAnalysis,
   generateEmailTemplate: EmailUtils.generateEmailTemplate,
   generateMarketSentimentSection: MarketSentiment.generateMarketSentimentSection,
