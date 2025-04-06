@@ -804,35 +804,60 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     if (!macroeconomicAnalysis) {
       return `
       <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Macroeconomic Factors</h2>
         <p style="text-align: center; color: #757575;">No macroeconomic data available</p>
       </div>
       `;
     }
     
+    // Retrieve macroeconomic factors
+    const macro = retrieveMacroeconomicFactors();
+    if (!macro.success) {
+      return {
+        success: false,
+        message: "Failed to retrieve macroeconomic factors",
+        error: macro.error
+      };
+    }
+    
     // Treasury Yields
     let yieldsHtml = '';
-    if (macroeconomicAnalysis.treasuryYields) {
+    if (macro.treasuryYields?.yields) {
       yieldsHtml = `
         <div style="margin-bottom: 20px;">
           <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
-          <div style="display: flex; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
-            ${Object.entries(macroeconomicAnalysis.treasuryYields).map(([term, value]) => `
-              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
-                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${term}</div>
-                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${formatValue(value)}%</div>
-                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            ${macro.treasuryYields.yields.map(yield => `
+              <div style="flex: 1 1 calc(33% - 15px); min-width: 150px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="font-weight: 500; margin-bottom: 5px;">${yield.term}</div>
+                <div style="font-size: 18px; font-weight: bold;">${formatValue(yield.yield)}% (${formatValue(yield.change)})</div>
               </div>
             `).join('')}
           </div>
-          
-          <div style="margin-top: 15px; padding-left: 15px; border-left: 4px solid #FFA500;">
-            <div style="font-weight: bold; margin-bottom: 5px;">Yield Curve: ${macroeconomicAnalysis.treasuryYields.yieldCurve || 'unknown'}</div>
-            <div style="color: #555; font-size: 14px;">${macroeconomicAnalysis.treasuryYields.yieldCurveAnalysis || 'No analysis available'}</div>
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Yield Curve: ${macro.treasuryYields.yieldCurve?.status || 'N/A'}</div>
+            <div>Analysis: ${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
+            <div>Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}</div>
           </div>
-          
-          <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-            Source: ${macroeconomicAnalysis.treasuryYields.source || 'N/A'} | Last updated: ${formatDate(macroeconomicAnalysis.treasuryYields.lastUpdated)}
+        </div>
+      `;
+    }
+
+    // Fed Policy
+    let fedHtml = '';
+    if (macro.fedPolicy) {
+      fedHtml = `
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Federal Reserve Policy</div>
+          <div style="background-color: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="font-size: 16px; margin-bottom: 10px;">${macro.fedPolicy.commentary || 'N/A'}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Current Rate: ${formatValue(macro.fedPolicy.currentRate.rate)}% (${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%)</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Last Meeting: ${formatDate(macro.fedPolicy.lastMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Next Meeting: ${formatDate(macro.fedPolicy.nextMeeting.date)}</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Hike: ${macro.fedPolicy.nextMeeting.probabilityOfHike}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of Cut: ${macro.fedPolicy.nextMeeting.probabilityOfCut}%</div>
+            <div style="font-size: 14px; color: #6c757d; margin-bottom: 5px;">Probability of No Change: ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%</div>
+            <div style="font-size: 12px; color: #888;">${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${formatDate(macro.fedPolicy.lastUpdated)}</div>
           </div>
         </div>
       `;
@@ -840,75 +865,41 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
 
     // Inflation
     let inflationHtml = '';
-    if (macroeconomicAnalysis.inflation) {
+    const inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
+      
+    if (inflationData) {
       inflationHtml = `
         <div style="margin-bottom: 20px;">
-          <div style="font-weight: bold; margin-bottom: 10px;">Inflation Metrics</div>
-          <div style="display: flex; margin-bottom: 15px;">
-            <!-- CPI Card -->
-            <div style="flex: 1; margin-right: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #3498db; color: white;">CPI</div>
-              <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #3498db; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-                <div style="display: flex; justify-content: space-around;">
-                  <div>
-                    <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Headline</div>
-                    <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${formatValue(macroeconomicAnalysis.inflation.cpi.headline)}%</div>
-                  </div>
-                  <div>
-                    <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Core</div>
-                    <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${formatValue(macroeconomicAnalysis.inflation.cpi.core)}%</div>
-                  </div>
-                </div>
-              </div>
+          <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">CPI</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.cpi.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core CPI: ${formatValue(inflationData.cpi.core)}%</div>
             </div>
-            
-            <!-- PCE Card -->
-            <div style="flex: 1; margin-left: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-              <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #e67e22; color: white;">PCE</div>
-              <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #e67e22; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-                <div style="display: flex; justify-content: space-around;">
-                  <div>
-                    <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Headline</div>
-                    <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${formatValue(macroeconomicAnalysis.inflation.pce.headline)}%</div>
-                  </div>
-                  <div>
-                    <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Core</div>
-                    <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${formatValue(macroeconomicAnalysis.inflation.pce.core)}%</div>
-                  </div>
-                </div>
-              </div>
+            <div style="flex: 1 1 calc(50% - 15px); min-width: 200px; padding: 15px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: 500; margin-bottom: 5px;">PCE</div>
+              <div style="font-size: 18px; font-weight: bold;">${formatValue(inflationData.pce.headline)}%</div>
+              <div style="font-size: 14px; color: #6c757d; margin-top: 5px;">Core PCE: ${formatValue(inflationData.pce.core)}%</div>
             </div>
           </div>
-          
-          <div style="display: flex; margin-bottom: 15px;">
-            <div style="flex: 1; background-color: #f1f8e9; padding: 15px; border-radius: 4px; margin-right: 10px; border-left: 4px solid #4CAF50;">
-              <div style="font-weight: bold; color: #4CAF50; margin-bottom: 5px;">Inflation Trend Analysis</div>
-              <div style="color: #333;">${macroeconomicAnalysis.inflation.trend || 'No trend data available'}</div>
-            </div>
-            
-            <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px; margin-right: 10px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Outlook</div>
-              <div style="color: #555; font-size: 14px;">${macroeconomicAnalysis.inflation.outlook || 'No outlook data available'}</div>
-            </div>
-            
-            <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Market Impact</div>
-              <div style="color: #555; font-size: 14px;">${macroeconomicAnalysis.inflation.marketImpact || 'No market impact data available'}</div>
-            </div>
-          </div>
-          
-          <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-            Source: ${macroeconomicAnalysis.inflation.source || 'N/A'} | Last updated: ${formatDate(macroeconomicAnalysis.inflation.lastUpdated)}
+          <div style="font-size: 14px; color: #6c757d; margin-top: 10px;">
+            <div>Trend: ${inflationData.trend}</div>
+            <div>Outlook: ${inflationData.outlook}</div>
+            <div>Market Impact: ${inflationData.marketImpact}</div>
+            <div>Source: ${inflationData.source} (${inflationData.sourceUrl}), as of ${formatDate(inflationData.lastUpdated)}</div>
           </div>
         </div>
       `;
     }
 
+    // Return the complete HTML for the macroeconomic factors section
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
       
       ${yieldsHtml}
+      ${fedHtml}
       ${inflationHtml}
     </div>
     `;
@@ -939,7 +930,7 @@ function generateGeopoliticalRisksSection(analysis) {
     if (!geoRisks) {
       return `
       <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+        <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
         <p style="text-align: center; color: #757575;">No geopolitical risk data available</p>
       </div>
       `;
@@ -949,9 +940,9 @@ function generateGeopoliticalRisksSection(analysis) {
     let globalOverviewHtml = '';
     if (analysis && analysis.macroeconomicFactors && analysis.macroeconomicFactors.geopoliticalRisks && analysis.macroeconomicFactors.geopoliticalRisks.global) {
       globalOverviewHtml = `
-      <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
-        <div style="font-weight: bold; margin-bottom: 5px; color: #ff9800;">Global Overview</div>
-        <div style="color: #333;">${analysis.macroeconomicFactors.geopoliticalRisks.global}</div>
+      <div style="margin-top: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px; color: #333;">Global Overview</div>
+        <div style="color: #555;">${analysis.macroeconomicFactors.geopoliticalRisks.global}</div>
       </div>
       `;
     }
@@ -977,17 +968,12 @@ function generateGeopoliticalRisksSection(analysis) {
       }
       
       riskCardsHtml += `
-      <div style="display: flex; margin-bottom: 15px;">
-        <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
-          <div style="font-weight: bold; margin-bottom: 5px;">${risk.name || 'Unknown Risk'}</div>
-          <div style="color: #555; margin-bottom: 5px;">${risk.description || 'No description available'}</div>
-          <div style="font-size: 12px; color: #757575;">
-            Region: ${risk.region || 'Unknown Region'} • Impact Level: ${risk.impactLevel || 0}
-          </div>
-        </div>
-        <div style="width: 50px; text-align: center; background-color: ${riskColor}; color: white; border-radius: 6px;">
-          <div style="font-size: 24px; font-weight: bold;">${risk.impactLevel || 0}</div>
-          <div style="font-size: 12px;">/10</div>
+      <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 4px;">
+        <div style="font-weight: bold; margin-bottom: 5px; color: #333;">${risk.name || 'Unknown Risk'}</div>
+        <div style="color: ${riskColor}; font-weight: bold; margin-bottom: 5px;">Impact Level: ${risk.impactLevel || 0}/10</div>
+        <div style="color: #555; margin-bottom: 5px;">${risk.description || 'No description available'}</div>
+        <div style="font-size: 12px; color: #757575;">
+          Region: ${risk.region || 'Unknown Region'} • Impact Level: ${risk.impactLevel || 0}
         </div>
       </div>
       `;
@@ -995,10 +981,10 @@ function generateGeopoliticalRisksSection(analysis) {
 
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
       ${globalOverviewHtml}
       ${riskCardsHtml}
-      <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+      <div style="margin-top: 15px; text-align: right; font-size: 12px; color: #757575;">
         Last Updated: ${formatDate(geoRisks.lastUpdated)}
       </div>
     </div>
@@ -1007,7 +993,7 @@ function generateGeopoliticalRisksSection(analysis) {
     Logger.log("Error generating geopolitical risks section: " + error);
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center;">Geopolitical Risks</h2>
       <p style="text-align: center; color: #757575;">Error generating geopolitical risks data</p>
     </div>
     `;
