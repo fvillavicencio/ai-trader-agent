@@ -6,19 +6,7 @@ def update_file_content(filename):
         content = file.read()
     
     # Update include statements
-    content = re.sub(r'include\((?:["\'])([^\"\']+)(?:["\'])\)', 
-                    lambda m: f'include("Utils_{m.group(1)}")',
-                    content)
-    
-    # Update variable references
-    content = re.sub(r'(\b(?:Core|Email|Analysis|Data)Utils\b)', 
-                    lambda m: f'Utils_{m.group(1)}',
-                    content)
-    
-    # Update section references
-    content = re.sub(r'(\b(?:FundamentalMetrics|MacroeconomicFactors|MarketIndicators|MarketSentiment|GeopoliticalRisks)\b)', 
-                    lambda m: f'Utils_{m.group(1)}',
-                    content)
+    content = content.replace('Utils_Utils', 'Utils_Main')
     
     with open(filename, 'w') as file:
         file.write(content)
