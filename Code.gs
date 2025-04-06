@@ -5,6 +5,16 @@
  * It uses the OpenAI API to analyze market data and generate trading recommendations.
  */
 
+// Import utility functions
+include('Utils_DataUtils');
+include('Utils_EmailUtils');
+include('Utils_AnalysisUtils');
+include('Utils_FundamentalMetrics');
+include('Utils_MacroeconomicFactors');
+include('Utils_MarketIndicators');
+include('Utils_MarketSentiment');
+include('Utils_GeopoliticalRisks');
+
 /**
  * Gets the trading analysis from OpenAI
  * This function retrieves all necessary data, generates a prompt,
