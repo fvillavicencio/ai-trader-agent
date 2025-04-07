@@ -836,7 +836,7 @@ function generateFundamentalMetricsSection(analysis) {
                       </div>
                       
                       <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
-                        ${createMetricItem('Market Cap', `$${stock.marketCap}`, 'B')}
+                        ${createMetricItem('Market Cap', `$${formatLargeNumber(stock.marketCap)}`)}
                         ${createMetricItem('P/E Ratio', stock.peRatio)}
                         ${createMetricItem('Forward PE', stock.forwardPE)}
                         ${createMetricItem('PEG Ratio', stock.pegRatio)}
@@ -1255,6 +1255,26 @@ function formatValue(value, decimals = 2) {
     return "N/A";
   }
   return value.toFixed(decimals);
+}
+
+/**
+ * Helper function to format large numbers with suffixes (T, B, M)
+ * @param {Number} value - The number to format
+ * @return {String} Formatted number with suffix
+ */
+function formatLargeNumber(value) {
+  if (!value || value === 'N/A') return 'N/A';
+  
+  if (typeof value === 'string') {
+    value = parseFloat(value.replace(/[^\d.-]+/g, ''));
+  }
+  
+  if (isNaN(value)) return 'N/A';
+  
+  if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
+  if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+  if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+  return value.toFixed(2);
 }
 
 /**
