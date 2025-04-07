@@ -197,29 +197,15 @@ function getMacroeconomicAIProvider() {
  * @return {Array} - Array of email addresses
  */
 function getEmailRecipients() {
-  try {
-    // Try to get the recipients from script properties first
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const recipientsProperty = scriptProperties.getProperty('EMAIL_RECIPIENTS');
-    
-    // If found in script properties, parse the comma-separated string into an array
-    if (recipientsProperty) {
-      return recipientsProperty.split(',').map(email => email.trim());
-    }
-    
-    // Otherwise, return the hardcoded array (not recommended for production)
+    // If not found in script properties, use the hardcoded array
     if (RECIPIENT_EMAILS && Array.isArray(RECIPIENT_EMAILS)) {
       Logger.log("Using hardcoded recipient emails: " + RECIPIENT_EMAILS.join(', '));
       return RECIPIENT_EMAILS;
     }
     
-    // Fallback to the test email if no recipients are found
+    // If neither option is available, fall back to the test email
+    Logger.log("No email recipients found, using test email: " + TEST_EMAIL);
     return [TEST_EMAIL];
-  } catch (error) {
-    Logger.log("Error getting email recipients: " + error.message);
-    // Fallback to the test email on error
-    return [TEST_EMAIL];
-  }
 }
 
 /**

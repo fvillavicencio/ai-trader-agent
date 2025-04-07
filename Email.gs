@@ -171,7 +171,7 @@ ${prompt}
     const subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, false); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, TEST_EMAIL, false); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send prompt email: ${emailResult.error}`);
@@ -300,7 +300,7 @@ ${errorMessage}
     `;
     
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, TEST_EMAIL, true); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send error email: ${emailResult.error}`);
@@ -324,24 +324,21 @@ ${errorMessage}
  * 
  * @param {string} subject - The email subject
  * @param {string} htmlBody - The HTML body of the email
+ * @param {string} recipient - The email address of the recipient
  * @param {boolean} isTest - Whether this is a test email
  * @return {Object} - The result of the email sending operation
  */
-function sendEmail(subject, htmlBody, isTest = false) {
+function sendEmail(subject, htmlBody, recipient, isTest = false) {
   try {
-    // Get user email from script properties
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const userEmail = scriptProperties.getProperty('USER_EMAIL') || Session.getEffectiveUser().getEmail();
-    
     // Get the test email address and validate it
-    const testEmail = TEST_EMAIL || userEmail;
+    const testEmail = TEST_EMAIL;
     if (!testEmail || !testEmail.includes('@')) {
       throw new Error('Invalid test email address configured');
     }
     
-    // Determine the recipient based on debug mode
-    const recipient = isTest ? testEmail : userEmail;
-    Logger.log(`Sending email to ${recipient}`);
+    // Determine the recipient based on test mode
+    const finalRecipient = isTest ? testEmail : recipient;
+    Logger.log(`Sending email to ${finalRecipient}`);
     
     // Add test prefix if needed
     if (isTest) {
@@ -355,7 +352,7 @@ function sendEmail(subject, htmlBody, isTest = false) {
     
     while (retryCount < maxRetries) {
       try {
-        result = GmailApp.sendEmail(recipient, subject, '', {
+        result = GmailApp.sendEmail(finalRecipient, subject, '', {
           htmlBody: htmlBody,
           name: NEWSLETTER_NAME,
           replyTo: Session.getEffectiveUser().getEmail()
@@ -366,30 +363,30 @@ function sendEmail(subject, htmlBody, isTest = false) {
         if (retryCount >= maxRetries) {
           throw sendError;
         }
-        Logger.log(`Email send attempt ${retryCount} failed for ${recipient}: ${sendError}. Retrying...`);
+        Logger.log(`Email send attempt ${retryCount} failed for ${finalRecipient}: ${sendError}. Retrying...`);
         Utilities.sleep(5000); // Wait 5 seconds between retries
       }
     }
     
-    Logger.log(`Email sent successfully to ${recipient}`);
+    Logger.log(`Email sent successfully to ${finalRecipient}`);
     return {
       success: true,
       result: result,
-      recipient: recipient
+      recipient: finalRecipient
     };
   } catch (error) {
     const errorMessage = `Failed to send email to ${recipient}: ${error}`;
     Logger.log(errorMessage);
     
     // Try to send the error to the test email as a fallback
-    if (recipient !== testEmail) {
+    if (recipient !== TEST_EMAIL) {
       try {
-        GmailApp.sendEmail(testEmail, `Email Sending Failed - ${subject}`, 
+        GmailApp.sendEmail(TEST_EMAIL, `Email Sending Failed - ${subject}`, 
           `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`, {
             htmlBody: `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`,
             name: NEWSLETTER_NAME
           });
-        Logger.log(`Error notification sent to test email ${testEmail}`);
+        Logger.log(`Error notification sent to test email ${TEST_EMAIL}`);
       } catch (fallbackError) {
         Logger.log(`Failed to send error notification to test email: ${fallbackError}`);
       }
@@ -428,6 +425,8 @@ function generateHtmlFromAnalysisJson(analysisJson, nextScheduledTime, isTest = 
  */
 function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest = false) {
   try {
+    Logger.log(`Sending trading analysis email to: ${recipient}`);
+    
     // Extract data from analysis result
     const decision = analysisJson.decision || 'No Decision';
     const analysis = analysisJson.analysis || {};
@@ -443,7 +442,7 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
     const htmlBody = generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, isTest);
+    const emailResult = sendEmail(subject, htmlBody, recipient, isTest);
     
     if (!emailResult.success) {
       throw new Error(`Failed to send trading analysis email: ${emailResult.error}`);
@@ -484,12 +483,25 @@ function sendTestTradingAnalysisEmail(analysisJson) {
  * @return {String} HTML email content
  */
 function formatAndSendAnalysisEmail(analysisJson, nextScheduledTime, isTest = false) {
-  // Send the email to each recipient
-  const recipients = getEmailRecipients();
-  for (const recipient of recipients) {
-    sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest);
+  try {
+    // Get the recipients
+    const recipients = getEmailRecipients();
+    Logger.log(`Sending trading analysis email to ${recipients.length} recipients: ${recipients.join(', ')}`);
+    
+    // Send the email to each recipient
+    for (const recipient of recipients) {
+      const success = sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest);
+      if (!success) {
+        Logger.log(`Failed to send email to recipient: ${recipient}`);
+      } else {
+        Logger.log(`Successfully sent email to: ${recipient}`);
+      }
+    }
+    
+    // Return the HTML content for logging or debugging
+    return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
+  } catch (error) {
+    Logger.log(`Error in formatAndSendAnalysisEmail: ${error}`);
+    throw error;
   }
-  
-  // Return the HTML content for logging or debugging
-  return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
 }
