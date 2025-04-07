@@ -1380,6 +1380,7 @@ function retrieveUpcomingEconomicEvents() {
       time: event.time || "All Day",
       country: event.country,
       event: event.event,
+      period: event.period || "",
       actual: event.actual || "N/A",
       forecast: event.forecast || "N/A",
       previous: event.previous || "N/A"

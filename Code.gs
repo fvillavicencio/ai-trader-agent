@@ -131,19 +131,17 @@ function getOpenAITradingAnalysis() {
     
     // Send the prompt to OpenAI
     Logger.log("Sending prompt to OpenAI...");
-    //// temporary code start
-      // Check if DEBUG_MODE is enabled
+    
+    // Check if DEBUG_MODE is enabled
     const scriptProperties = PropertiesService.getScriptProperties();
     const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
     
     if (debugMode) {
-      Logger.log("Debug mode enabled - skipping OpenAI call");
-      return {
-        success: true,
-        analysis: "This is a debug response"
-      };
+      Logger.log("Debug mode enabled - using generateDebugOpenAIResponse");
+      const debugResponse = generateDebugOpenAIResponse();
+      return debugResponse;
     }
-    //// temporary code end
+    
     const response = sendPromptToOpenAI(fullPrompt, apiKey);
     const content = extractContentFromResponse(response);
     Logger.log("Received response from OpenAI");

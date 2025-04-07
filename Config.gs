@@ -44,6 +44,7 @@ const EVENING_SCHEDULE_MINUTE = 0;
 // Time zone for scheduling
 const TIME_ZONE = "America/New_York";
 
+
 /**
  * Gets the Perplexity API key from script properties if not hardcoded
  * For better security, use PropertiesService instead of hardcoding the API key
@@ -197,15 +198,24 @@ function getMacroeconomicAIProvider() {
  * @return {Array} - Array of email addresses
  */
 function getEmailRecipients() {
-    // If not found in script properties, use the hardcoded array
-    if (RECIPIENT_EMAILS && Array.isArray(RECIPIENT_EMAILS)) {
-      Logger.log("Using hardcoded recipient emails: " + RECIPIENT_EMAILS.join(', '));
-      return RECIPIENT_EMAILS;
-    }
-    
-    // If neither option is available, fall back to the test email
-    Logger.log("No email recipients found, using test email: " + TEST_EMAIL);
+  // Check if DEBUG_MODE is enabled
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+  
+  if (debugMode) {
+    Logger.log("Debug mode enabled - using test email: " + TEST_EMAIL);
     return [TEST_EMAIL];
+  }
+
+  // If not found in script properties, use the hardcoded array
+  if (RECIPIENT_EMAILS && Array.isArray(RECIPIENT_EMAILS)) {
+    Logger.log("Using hardcoded recipient emails: " + RECIPIENT_EMAILS.join(', '));
+    return RECIPIENT_EMAILS;
+  }
+  
+  // If neither option is available, fall back to the test email
+  Logger.log("No email recipients found, using test email: " + TEST_EMAIL);
+  return [TEST_EMAIL];
 }
 
 /**
@@ -722,4 +732,153 @@ function testFREDAPI(apiKey) {
   } catch (error) {
     return { success: false, error: error.toString() };
   }
+}
+
+/**
+ * Generates a debug OpenAI response with current timestamps for testing purposes
+ * @return {Object} Debug OpenAI response with current timestamps
+ */
+function generateDebugOpenAIResponse() {
+  const now = new Date();
+  const timestamp = now.toISOString().replace('T', ' ').substring(0, 19);
+  
+  return {
+    "decision": "Watch for Better Price Action",
+    "summary": "Current market conditions, characterized by extreme fear and a flat yield curve, suggest caution; however, certain sectors may offer opportunities as sentiment shifts.",
+    "analysis": {
+      "marketSentiment": {
+        "overall": "Mixed sentiment with caution advised due to tech sector headwinds and geopolitical tensions, but optimism in energy stocks and potential rebound in semiconductors.",
+        "analysts": [
+          {
+            "analyst": "Dan Nathan",
+            "comment": "The tech sector is facing significant headwinds due to increased regulatory scrutiny.",
+            "mentionedSymbols": ["AAPL", "MSFT"],
+            "source": "CNBC",
+            "sourceUrl": "https://www.cnbc.com/2025/04/06/dan-nathan-on-tech-sector-challenges.html"
+          },
+          {
+            "analyst": "Josh Brown",
+            "comment": "Market resilience is notable despite geopolitical tensions; investors seem optimistic.",
+            "mentionedSymbols": ["XOM", "JPM"],
+            "source": "CNBC",
+            "sourceUrl": "https://www.cnbc.com/2025/04/05/josh-brown-comments-on-market-resilience.html"
+          },
+          {
+            "analyst": "Steve Weiss",
+            "comment": "I'm cautious about the market right now, especially with the upcoming earnings season.",
+            "mentionedSymbols": ["TSLA", "FB"],
+            "source": "CNBC",
+            "sourceUrl": "https://www.cnbc.com/2025/04/04/steve-weiss-on-market-caution.html"
+          },
+          {
+            "analyst": "Joe Terranova",
+            "comment": "Energy stocks are looking very strong, benefiting from higher oil prices.",
+            "mentionedSymbols": ["CVX", "BP"],
+            "source": "CNBC",
+            "sourceUrl": "https://www.cnbc.com/2025/04/07/joe-terranova-on-energy-stocks.html"
+          },
+          {
+            "analyst": "Dan Niles",
+            "comment": "The semiconductor industry is due for a rebound after the recent sell-off.",
+            "mentionedSymbols": ["AMD", "NVDA"],
+            "source": "Bloomberg",
+            "sourceUrl": "https://www.bloomberg.com/2025/04/03/dan-niles-on-semiconductors.html"
+          },
+          {
+            "analyst": "Mohamed El-Erian",
+            "comment": "We are seeing a shift in investor sentiment towards more defensive stocks, indicating caution.",
+            "mentionedSymbols": ["PG", "KO"],
+            "source": "Financial Times",
+            "sourceUrl": "https://www.ft.com/content/2025/04/06/mohamed-el-erian-market-outlook.html"
+          }
+        ],
+        "lastUpdated": timestamp
+      },
+      "marketIndicators": {
+        "fearGreedIndex": {
+          "value": 4,
+          "interpretation": "Extreme Fear",
+          "comment": "Investors are extremely fearful, indicating potential overreaction and opportunities for value buying.",
+          "source": "CNN",
+          "sourceUrl": "https://money.cnn.com/data/fear-and-greed/",
+          "lastUpdated": timestamp
+        },
+        "vix": {
+          "value": 49.1,
+          "trend": "Increasing",
+          "analysis": "High volatility indicates market uncertainty and potential for increased risk.",
+          "source": "CBOE",
+          "sourceUrl": "https://www.cboe.com/vix",
+          "lastUpdated": timestamp
+        },
+        "upcomingEvents": [
+          {
+            "event": "CPI MM, SA",
+            "date": "2025-04-10"
+          },
+          {
+            "event": "CPI YY, NSA",
+            "date": "2025-04-10"
+          },
+          {
+            "event": "Core CPI MM, SA",
+            "date": "2025-04-10"
+          },
+          {
+            "event": "Core CPI YY, NSA",
+            "date": "2025-04-10"
+          },
+          {
+            "event": "Initial Jobless Clm",
+            "date": "2025-04-10"
+          }
+        ]
+      },
+      "macroeconomicFactors": {
+        "treasuryYields": {
+          "threeMonth": 4.31,
+          "oneYear": 3.92,
+          "twoYear": 3.71,
+          "fiveYear": 3.75,
+          "tenYear": 4.06,
+          "thirtyYear": 4.49,
+          "yieldCurve": "flat",
+          "implications": "The flat yield curve suggests market uncertainty about future economic conditions.",
+          "source": "Federal Reserve Economic Data (FRED)",
+          "sourceUrl": "https://fred.stlouisfed.org/",
+          "lastUpdated": timestamp
+        },
+        "fedPolicy": {
+          "federalFundsRate": 5.38,
+          "forwardGuidance": "The Federal Reserve remains committed to its dual mandate of maximum employment and price stability.",
+          "source": "Federal Reserve",
+          "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+          "lastUpdated": timestamp
+        },
+        "inflation": {
+          "currentRate": 2.82,
+          "cpi": {
+            "headline": 2.82,
+            "core": 3.12
+          },
+          "pce": {
+            "headline": 2.54,
+            "core": 2.79
+          },
+          "trend": "Increasing",
+          "outlook": "Moderating toward the Fed's target, suggesting a balanced approach to monetary policy.",
+          "marketImpact": "Inflation concerns may influence Fed's future rate decisions.",
+          "source": "Bureau of Labor Statistics, Federal Reserve",
+          "sourceUrl": "https://www.bls.gov/cpi/",
+          "lastUpdated": timestamp
+        },
+        "geopoliticalRisks": {
+          "global": "High levels of geopolitical risk from the Russia-Ukraine war, Israel-Hamas conflict, US-China trade tensions, cybersecurity threats, and global trade protectionism.",
+          "lastUpdated": timestamp
+        }
+      }
+    },
+    "justification": "Given the current extreme fear in the market, as indicated by the Fear & Greed Index, and the flat yield curve suggesting uncertainty, a cautious approach is advised. However, the mixed analyst sentiment, with optimism in energy and potential rebounds in semiconductors, suggests that selective opportunities may exist. The geopolitical risks and upcoming economic events further justify a 'Watch for Better Price Action' decision, as these factors could lead to market volatility and better buying opportunities.",
+    "timestamp": timestamp
+  };
 }

@@ -39,8 +39,14 @@ function fetchEconomicEvents() {
     // Parse response
     const data = JSON.parse(response.getContentText());
     
-    // Log raw response for debugging
-    Logger.log('Raw API Response: ' + JSON.stringify(data, null, 2));
+    // Check if DEBUG_MODE is enabled
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+    
+    if (debugMode) {
+      // Log raw response for debugging
+      Logger.log('Raw API Response: ' + JSON.stringify(data, null, 2));
+    }
 
     // The API returns an object with a result array
     const events = data.result || [];
@@ -61,7 +67,8 @@ function fetchEconomicEvents() {
         date: new Date(event.date),
         actual: event.actual !== null ? formatNumber(event.actual, event.unit) : 'N/A',
         forecast: event.forecast !== null ? formatNumber(event.forecast, event.unit) : 'N/A',
-        previous: event.previous !== null ? formatNumber(event.previous, event.unit) : 'N/A'
+        previous: event.previous !== null ? formatNumber(event.previous, event.unit) : 'N/A',
+       id: event.id || 'N/A'
       }));
 
     // Sort by importance (descending), then by date and time
@@ -74,8 +81,8 @@ function fetchEconomicEvents() {
       return a.date - b.date;
     });
 
-    // Get the top 5 most important events
-    const topEvents = filteredEvents.slice(0, 5);
+    // Get the top 7 most important events
+    const topEvents = filteredEvents.slice(0, 7);
 
     // Format the events for output
     const formattedEvents = topEvents.map(event => ({
@@ -85,10 +92,13 @@ function fetchEconomicEvents() {
       event: `${trimTrailingAsterisk(event.title)} - ${event.source}`,
       actual: event.actual,
       forecast: event.forecast,
-      previous: event.previous
+      previous: event.previous,
+      period: event.period,
+      id: event.id
     }));
 
     // Return just the events array
+    Logger.log('Fetched economic events: ' + JSON.stringify(formattedEvents, null, 2));
     return formattedEvents;
 
   } catch (error) {
@@ -168,7 +178,7 @@ function formatNumber(num, unit) {
  */
 function isSignificantEvent(event) {
   // Higher importance values indicate more significant events
-  if (event.importance >= 0) return true;
+  //if (event.importance >= 0) return true;
   
   // Check for important indicators
   const importantIndicators = [
@@ -177,6 +187,7 @@ function isSignificantEvent(event) {
     'Capacity Utilization',
     'Business Inventories',
     'Consumer Confidence',
+    'Conf Board', 
     'Employment',
     'Inflation',
     'GDP',
@@ -192,7 +203,9 @@ function isSignificantEvent(event) {
     'Consumer Spending',
     'Personal Income',
     'Trade Balance',
-    'Fed Interest Rate'
+    'Fed Interest Rate',
+    'Fed Reserve',
+    'FOMC'
   ];
   
   return importantIndicators.some(indicator => 
@@ -219,12 +232,14 @@ function testFetchEconomicEvents() {
     // Log each event with a nice format
     result.forEach((event, index) => {
       Logger.log(`Event ${index + 1}:`);
-      Logger.log(`Date: ${event.date} ${event.time}`);
+      Logger.log(`Date: ${event.date}`);
       Logger.log(`Country: ${event.country}`);
       Logger.log(`Event: ${event.event}`);
       Logger.log(`Actual: ${event.actual}`);
       Logger.log(`Forecast: ${event.forecast}`);
       Logger.log(`Previous: ${event.previous}`);
+      Logger.log(`Period: ${event.period}`);
+      Logger.log(`ID: ${event.id}`);
       Logger.log('');
     });
     

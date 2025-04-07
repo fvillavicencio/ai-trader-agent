@@ -1,136 +1,190 @@
-require('dotenv').config();
-const { google } = require('googleapis');
-const puppeteer = require('puppeteer');
-const path = require('path');
+import path from 'path';
+import dotenv from 'dotenv';
+dotenv.config({ path: path.join(process.cwd(), '.env') });
+import { google } from 'googleapis';
+import axios from 'axios';
+import clipboardy from 'clipboardy';
+import { exec } from 'child_process';
+
+// Configure RapidAPI headers
+const rapidApiHeaders = {
+    'x-rapidapi-host': 'substack-live.p.rapidapi.com',
+    'x-rapidapi-key': process.env.RAPID_API_KEY
+};
+
+// Validate environment variables
+if (!process.env.GOOGLE_DRIVE_FOLDER_URL) {
+    console.error('Error: GOOGLE_DRIVE_FOLDER_URL not set in .env');
+    process.exit(1);
+}
+
+if (!process.env.GOOGLE_FILE_NAME) {
+    console.error('Error: GOOGLE_FILE_NAME not set in .env');
+    process.exit(1);
+}
+
+if (!process.env.SUBSTACK_EMAIL) {
+    console.error('Error: SUBSTACK_EMAIL not set in .env');
+    process.exit(1);
+}
+
+if (!process.env.SUBSTACK_PASSWORD) {
+    console.error('Error: SUBSTACK_PASSWORD not set in .env');
+    process.exit(1);
+}
+
+if (!process.env.SUBSTACK_PUBLICATION_URL) {
+    console.error('Error: SUBSTACK_PUBLICATION_URL not set in .env');
+    process.exit(1);
+}
+
+if (!process.env.RAPID_API_KEY) {
+    console.error('Error: RAPID_API_KEY not set in .env');
+    process.exit(1);
+}
 
 /**
  * Fetch HTML file content from Google Drive using a service account.
- * @param {string} fileId - The Google Drive file ID.
  * @returns {Promise<string>} - Resolves to the HTML content.
  */
-async function fetchHtmlFromDrive(fileId) {
-  console.log('Fetching HTML content from Google Drive...');
-  
-  // Authenticate using service account credentials
-  const auth = new google.auth.GoogleAuth({
-    keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS || path.join(__dirname, 'ai-trader-agent-26a2b921b48d.json'),
-    scopes: ['[https://www.googleapis.com/auth/drive.readonly'],](https://www.googleapis.com/auth/drive.readonly'],)
-  });
-  
-  const drive = google.drive({ version: 'v3', auth });
-  
-  try {
-    // Get the file as a stream
-    const res = await drive.files.get(
-      { fileId, alt: 'media' },
-      { responseType: 'stream' }
-    );
-    
-    return new Promise((resolve, reject) => {
-      let data = '';
-      res.data.on('data', (chunk) => (data += chunk));
-      res.data.on('end', () => resolve(data));
-      res.data.on('error', (err) => reject(err));
-    });
-  } catch (error) {
-    console.error('Error fetching file from Google Drive:', error);
-    throw error;
-  }
+async function fetchHtmlFromGoogleDrive() {
+    try {
+        console.log('Fetching HTML content from Google Drive...');
+        
+        // Initialize Google Drive API client
+        const auth = new google.auth.GoogleAuth({
+            keyFile: path.join(process.cwd(), process.env.GOOGLE_APPLICATION_CREDENTIALS),
+            scopes: ['https://www.googleapis.com/auth/drive.readonly']
+        });
+
+        const drive = google.drive({
+            version: 'v3',
+            auth
+        });
+
+        // Get the HTML file from Google Drive
+        const folderUrl = process.env.GOOGLE_DRIVE_FOLDER_URL;
+        const fileName = process.env.GOOGLE_FILE_NAME;
+
+        // Extract folder ID from URL
+        const folderId = folderUrl.split('/').find(id => id.length === 33);
+        if (!folderId) {
+            throw new Error('Could not extract folder ID from URL');
+        }
+
+        // Search for the file
+        const files = await drive.files.list({
+            q: `name = '${fileName}' and '${folderId}' in parents and mimeType = 'text/html'`,
+            fields: 'files(id, name)'
+        });
+
+        if (!files.data.files || files.data.files.length === 0) {
+            throw new Error(`File ${fileName} not found in Google Drive`);
+        }
+
+        const fileId = files.data.files[0].id;
+        console.log(`Found file: ${fileName} (ID: ${fileId})`);
+
+        // Download the file
+        const response = await drive.files.get({
+            fileId,
+            alt: 'media'
+        });
+
+        const htmlContent = response.data;
+        console.log('Fetched HTML content successfully.');
+        return htmlContent;
+    } catch (error) {
+        console.error('Error fetching HTML from Google Drive:', error);
+        throw error;
+    }
 }
 
 /**
- * Use Puppeteer to automate logging into Substack and publishing a new post.
- * @param {string} htmlContent - The HTML content to post.
+ * Copy HTML content to clipboard for Substack.
+ * @param {string} htmlContent - The HTML content to copy.
  * @param {string} postTitle - The title of the post.
  */
-async function publishToSubstack(htmlContent, postTitle) {
-  console.log('Starting Substack publishing process...');
-  
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox']
-  });
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 800 });
+async function copyToClipboard(htmlContent, postTitle) {
+    try {
+        console.log('Starting clipboard copy process...');
+        
+        // Copy HTML content to clipboard
+        await clipboardy.write(htmlContent);
 
-  try {
-    // Navigate to the Substack sign-in page
-    await page.goto('[https://substack.com/sign-in',](https://substack.com/sign-in',) { waitUntil: 'networkidle2' });
-    
-    // Fill in email and submit
-    await page.type('input[name="email"]', process.env.SUBSTACK_EMAIL, { delay: 100 });
-    await page.click('button[type="submit"]');
-    
-    // Wait for the password field and then type password
-    await page.waitForSelector('input[name="password"]', { visible: true });
-    await page.type('input[name="password"]', process.env.SUBSTACK_PASSWORD, { delay: 100 });
-    await page.click('button[type="submit"]');
-    
-    // Wait for the navigation to complete after login
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-
-    // Navigate to the new post page
-    const newPostUrl = `${process.env.SUBSTACK_PUBLICATION_URL}/dashboard?post=new`;
-    await page.goto(newPostUrl, { waitUntil: 'networkidle2' });
-
-    // Wait for the rich-text editor
-    await page.waitForSelector('div[contenteditable="true"]', { visible: true });
-
-    // Fill in the title
-    if (postTitle) {
-      await page.type('input[name="title"]', postTitle, { delay: 100 });
+        console.log('HTML content copied to clipboard!');
+        console.log('Now you can paste it into Substack editor.');
+        
+        // Open Substack in browser
+        const substackUrl = process.env.SUBSTACK_PUBLICATION_URL;
+        if (substackUrl) {
+            console.log('Opening Substack editor...');
+            const editorUrl = `${substackUrl}/publish/post?type=newsletter&back=%2Fpublish%2Fposts`;
+            await openUrlInBrowser(editorUrl);
+        }
+    } catch (error) {
+        console.error('Error during clipboard copy:', error);
+        throw error;
     }
-
-    // Set the HTML content inside the editor
-    await page.evaluate((html) => {
-      const editor = document.querySelector('div[contenteditable="true"]');
-      if (editor) {
-        editor.innerHTML = html;
-      }
-    }, htmlContent);
-
-    // Wait briefly for the content to settle
-    await page.waitForTimeout(1000);
-
-    // Attempt to click the "Publish" button
-    const [publishButton] = await page.$x("//button[contains(., 'Publish')]");
-    if (publishButton) {
-      await publishButton.click();
-    } else {
-      console.error("Publish button not found.");
-      await browser.close();
-      return;
-    }
-
-    // Wait for the publish action to complete
-    await page.waitForNavigation({ waitUntil: 'networkidle2' });
-    console.log("Post published successfully!");
-  } catch (error) {
-    console.error("Error during publishing:", error);
-  } finally {
-    await browser.close();
-  }
 }
 
 /**
- * Main function: fetch HTML from Drive and publish it to Substack.
+ * Open URL in default browser.
+ * @param {string} url - The URL to open.
  */
-async function main() {
-  const fileId = process.env.GDRIVE_FILE_ID;
-  const postTitle = process.env.POST_TITLE || "Automated Post";
-  
-  try {
-    console.log(`Fetching HTML content from Google Drive file: ${fileId}`);
-    const htmlContent = await fetchHtmlFromDrive(fileId);
-    console.log("Fetched HTML content successfully.");
-    
-    console.log(`Publishing post titled: "${postTitle}"`);
-    await publishToSubstack(htmlContent, postTitle);
-  } catch (error) {
-    console.error("Error in main process:", error);
-    process.exit(1);
-  }
+async function openUrlInBrowser(url) {
+    try {
+        const platform = process.platform;
+        
+        let command;
+        if (platform === 'darwin') {
+            command = `open "${url}"`;
+        } else if (platform === 'win32') {
+            command = `start "" "${url}"`;
+        } else {
+            command = `xdg-open "${url}"`;
+        }
+        
+        await new Promise((resolve, reject) => {
+            exec(command, (error) => {
+                if (error) {
+                    reject(error);
+                } else {
+                    resolve();
+                }
+            });
+        });
+    } catch (error) {
+        console.error('Error opening browser:', error);
+        throw error;
+    }
 }
 
-// Run the main function
-main();  
+async function main() {
+    try {
+        console.log('Fetching HTML content from Google Drive...');
+        const htmlContent = await fetchHtmlFromGoogleDrive();
+        console.log('Fetched HTML content successfully.');
+        
+        const postTitle = process.env.POST_TITLE || 'Market Pulse Daily';
+        console.log(`Publishing post titled: "${postTitle}"`);
+        
+        // Copy content to clipboard instead of using API
+        await copyToClipboard(htmlContent, postTitle);
+        
+        console.log('Process completed successfully!');
+        console.log('1. Opened Substack editor');
+        console.log('2. HTML content copied to clipboard');
+        console.log('3. Paste the content into Substack editor');
+        console.log('4. Add title and any additional text');
+        console.log('5. Preview and publish');
+    } catch (error) {
+        console.error('Error in main process:', error);
+        process.exit(1);
+    }
+}
+
+main().catch(error => {
+    console.error('Error in main:', error);
+    process.exit(1);
+});
