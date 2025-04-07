@@ -689,10 +689,14 @@ function generateMarketIndicatorsSection(analysis) {
     let eventsHtml = '';
     if (indicators.upcomingEconomicEvents && Array.isArray(indicators.upcomingEconomicEvents) && indicators.upcomingEconomicEvents.length > 0) {
       // Sort events by date
-      const sortedEvents = indicators.upcomingEconomicEvents.sort((a, b) => {
+      const sortedEvents = [...indicators.upcomingEconomicEvents].sort((a, b) => {
         const dateA = parseEconomicEventDate(a.date);
         const dateB = parseEconomicEventDate(b.date);
-        return dateA - dateB;
+        
+        // Log for debugging
+        Logger.log(`Comparing dates: ${a.date} (${dateA.getTime()}) vs ${b.date} (${dateB.getTime()})`);
+        
+        return dateA.getTime() - dateB.getTime();
       });
 
       eventsHtml = `
@@ -1342,7 +1346,12 @@ function parseEconomicEventDate(dateString) {
     const dateStrIso = `${year}-${monthToNum[month]}-${day}T${timePart}:00-04:00`;
     
     // Parse the date
-    return new Date(dateStrIso);
+    const date = new Date(dateStrIso);
+    
+    // Log for debugging
+    Logger.log(`Parsed date: ${dateStr} -> ${date.toISOString()}`);
+    
+    return date;
   } catch (e) {
     Logger.log(`Error parsing date: ${dateString}, error: ${e}`);
     return new Date();
