@@ -1327,8 +1327,11 @@ function formatNumberWithSuffix(value, suffix = '') {
  */
 function parseEconomicEventDate(dateString) {
   try {
+    // Remove timezone (EDT) as it's not needed for sorting
+    const dateStr = dateString.replace(/ EDT$/, '');
+    
     // Extract date parts
-    const parts = dateString.split(',');
+    const parts = dateStr.split(',');
     const datePart = parts[0].trim();
     const timePart = parts[1].trim();
     
@@ -1336,10 +1339,10 @@ function parseEconomicEventDate(dateString) {
     const [month, day, year] = datePart.split(' ').filter(Boolean);
     
     // Create date string in ISO format
-    const dateStr = `${year}-${monthToNum[month]}-${day}T${timePart}`;
+    const dateStrIso = `${year}-${monthToNum[month]}-${day}T${timePart}:00-04:00`;
     
     // Parse the date
-    return new Date(dateStr);
+    return new Date(dateStrIso);
   } catch (e) {
     Logger.log(`Error parsing date: ${dateString}, error: ${e}`);
     return new Date();
