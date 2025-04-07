@@ -710,11 +710,17 @@ function generateMarketIndicatorsSection(analysis) {
             const period = event.period ? `${event.period} ` : '';
             const values = [actual, forecast, previous].filter(Boolean).join(', ');
             
+            // Split event name and source
+            const [eventName, eventSource] = event.event.split(' - ');
+            
             return `
             <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #2196f3;">
               <div style="display: flex; align-items: center;">
                 <div style="min-width: 150px; font-weight: bold; color: #2196f3; padding-right: 15px;">${event.date}</div>
-                <div style="flex: 1; padding: 0 15px;">${event.period ? event.period + ' ' : ''}${event.event} (${event.country})</div>
+                <div style="flex: 1; padding: 0 15px;">
+                  <div style="font-weight: bold;">${eventName}</div>
+                  <div style="font-size: 12px; color: #666;">${eventSource}</div>
+                </div>
                 <div style="color: #666; font-size: 12px; padding-left: 15px;">${values ? `(${values})` : ''}</div>
               </div>
             </div>
