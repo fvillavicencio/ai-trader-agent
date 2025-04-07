@@ -102,7 +102,7 @@ ${prompt}
     const subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, false); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send prompt email: ${emailResult.error}`);
