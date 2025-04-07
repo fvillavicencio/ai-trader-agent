@@ -1,4 +1,73 @@
 /**
+ * Sends the trade decision email and saves the HTML to Google Drive
+ * 
+ * @param {Object} analysisJson - The analysis result JSON object
+ * @return {Boolean} Success status
+ */
+function sendTradeDecisionEmail(analysisJson) {
+  try {
+    Logger.log("Preparing to send trade decision email...");
+    
+    // Generate the HTML email content using the function from Utils.gs
+    const htmlContent = generateEmailTemplate(analysisJson, false);
+    
+    // Save the HTML to Google Drive
+    try {
+      Logger.log("Saving HTML email to Google Drive...");
+      
+      // Use a generic filename that will be overwritten each time
+      const fileName = "Latest_Trading_Analysis.html";
+      
+      // Find or create the "Trading Analysis Emails" folder
+      let folder;
+      const folderName = "Trading Analysis Emails";
+      const folderIterator = DriveApp.getFoldersByName(folderName);
+      
+      if (folderIterator.hasNext()) {
+        folder = folderIterator.next();
+        Logger.log(`Found existing folder: ${folderName}`);
+      } else {
+        folder = DriveApp.createFolder(folderName);
+        Logger.log(`Created new folder: ${folderName}`);
+      }
+      
+      // Check if the file already exists and delete it
+      const existingFiles = folder.getFilesByName(fileName);
+      if (existingFiles.hasNext()) {
+        existingFiles.next().setTrashed(true);
+        Logger.log(`Deleted existing file: ${fileName}`);
+      }
+      
+      // Create the file in the folder
+      const file = folder.createFile(fileName, htmlContent, MimeType.HTML);
+      Logger.log(`HTML email saved to Google Drive: ${fileName}`);
+    } catch (driveError) {
+      Logger.log(`Error saving HTML to Google Drive: ${driveError}`);
+      // Continue with sending emails even if Drive save fails
+    }
+    
+    // Get the final recipients from Config.gs
+    const recipients = getEmailRecipients();
+    
+    // Send the email to each recipient
+    let allSuccessful = true;
+    for (const recipient of recipients) {
+        const success = sendTradingAnalysisEmail(recipient, analysisJson, false);
+        if (!success) {
+          allSuccessful = false;
+          Logger.log(`Failed to send email to recipient: ${recipient}`);
+        }
+    }
+    Logger.log("Trade decision email process completed.");
+    return allSuccessful;
+  } catch (error) {
+    Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
+    sendErrorEmail("Trade Decision Email Error", error.toString());
+    return false;
+  }
+}
+
+/**
  * Sends an email with the generated OpenAI prompt
  * 
  * @param {string} prompt - The prompt that will be sent to OpenAI
@@ -264,9 +333,6 @@ function sendEmail(subject, htmlBody, isTest = false) {
     const scriptProperties = PropertiesService.getScriptProperties();
     const userEmail = scriptProperties.getProperty('USER_EMAIL') || Session.getEffectiveUser().getEmail();
     
-    // Check if DEBUG_MODE is enabled
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-    
     // Get the test email address and validate it
     const testEmail = TEST_EMAIL || userEmail;
     if (!testEmail || !testEmail.includes('@')) {
@@ -274,7 +340,8 @@ function sendEmail(subject, htmlBody, isTest = false) {
     }
     
     // Determine the recipient based on debug mode
-    const recipient = debugMode ? testEmail : userEmail;
+    const recipient = isTest ? testEmail : userEmail;
+    Logger.log(`Sending email to ${recipient}`);
     
     // Add test prefix if needed
     if (isTest) {
@@ -417,113 +484,12 @@ function sendTestTradingAnalysisEmail(analysisJson) {
  * @return {String} HTML email content
  */
 function formatAndSendAnalysisEmail(analysisJson, nextScheduledTime, isTest = false) {
-  // Get user email from script properties
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const userEmail = scriptProperties.getProperty('USER_EMAIL') || Session.getEffectiveUser().getEmail();
-  
-  // Send the email
-  sendTradingAnalysisEmail(userEmail, analysisJson, nextScheduledTime, isTest);
+  // Send the email to each recipient
+  const recipients = getEmailRecipients();
+  for (const recipient of recipients) {
+    sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest);
+  }
   
   // Return the HTML content for logging or debugging
   return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
-}
-
-/**
- * Sends the trade decision email and saves the HTML to Google Drive
- * 
- * @param {Object} analysisJson - The analysis result JSON object
- * @return {Boolean} Success status
- */
-function sendTradeDecisionEmail(analysisJson) {
-  try {
-    Logger.log("Preparing to send trade decision email...");
-    
-    // Generate the HTML email content using the function from Utils.gs
-    const htmlContent = generateEmailTemplate(analysisJson, false);
-    
-    // Save the HTML to Google Drive
-    try {
-      Logger.log("Saving HTML email to Google Drive...");
-      
-      // Use a generic filename that will be overwritten each time
-      const fileName = "Latest_Trading_Analysis.html";
-      
-      // Find or create the "Trading Analysis Emails" folder
-      let folder;
-      const folderName = "Trading Analysis Emails";
-      const folderIterator = DriveApp.getFoldersByName(folderName);
-      
-      if (folderIterator.hasNext()) {
-        folder = folderIterator.next();
-        Logger.log(`Found existing folder: ${folderName}`);
-      } else {
-        folder = DriveApp.createFolder(folderName);
-        Logger.log(`Created new folder: ${folderName}`);
-      }
-      
-      // Check if the file already exists and delete it
-      const existingFiles = folder.getFilesByName(fileName);
-      if (existingFiles.hasNext()) {
-        existingFiles.next().setTrashed(true);
-        Logger.log(`Deleted existing file: ${fileName}`);
-      }
-      
-      // Create the file in the folder
-      const file = folder.createFile(fileName, htmlContent, MimeType.HTML);
-      Logger.log(`HTML email saved to Google Drive: ${fileName}`);
-    } catch (driveError) {
-      Logger.log(`Error saving HTML to Google Drive: ${driveError}`);
-      // Continue with sending emails even if Drive save fails
-    }
-    
-    // Get the final recipients from script properties
-    const recipients = RECIPIENT_EMAILS || [Session.getEffectiveUser().getEmail()];
-    
-    // Check if DEBUG_MODE is enabled
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-    
-    // Send the email to each recipient
-    let allSuccessful = true;
-    if (debugMode) {
-      Logger.log("Debug mode enabled - skipping email sending for trade decision email");
-    } else {
-      for (const recipient of recipients) {
-        const success = sendTradingAnalysisEmail(recipient, analysisJson, false);
-        if (!success) {
-          allSuccessful = false;
-          Logger.log(`Failed to send email to recipient: ${recipient}`);
-        }
-      }
-      Logger.log("Trade decision email process completed.");
-    }
-  return allSuccessful;
-  } catch (error) {
-    Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
-    sendErrorEmail("Trade Decision Email Error", error.toString());
-    return false;
-  }
-}
-
-/**
- * Gets the email recipient address from script properties
- * Falls back to the default email if not set
- * 
- * @return {string} The email address to send to
- */
-function getEmailRecipient() {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const emailAddress = scriptProperties.getProperty("EMAIL_RECIPIENT");
-    
-    // If the email address is not set, use the default
-    if (!emailAddress) {
-      return PROMPT_ERROR_EMAIL;
-    }
-    
-    return emailAddress;
-  } catch (error) {
-    Logger.log(`Error getting email recipient: ${error}`);
-    return PROMPT_ERROR_EMAIL;
-  }
 }

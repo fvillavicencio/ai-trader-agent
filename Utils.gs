@@ -432,7 +432,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           <p style="margin: 0; font-size: 14px;">${NEWSLETTER_NAME} - Professional Trading Insights</p>
           <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().getFullYear()} ${NEWSLETTER_NAME}</p>
           <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaaaaa;">
-            This email contains information based on market data and analysis algorithms. 
+            This document contains information based on market data and analysis algorithms. 
             It is not financial advice. Always conduct your own research before making investment decisions.
           </p>
         </div>
@@ -440,7 +440,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
     </body>
     </html>`;
     
-    Logger.log('Generated Email Template:\n' + html);
+    Logger.log('Generated Email Template:\n');
     return html;
   } catch (error) {
     Logger.log("Error generating email template: " + error);

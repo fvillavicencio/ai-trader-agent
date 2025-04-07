@@ -179,12 +179,6 @@ function runTradingAnalysis() {
     const jsonFileUrl = saveJsonToGoogleDrive(analysisJson, jsonFileName);
     Logger.log(`OpenAI response saved to Google Drive: ${jsonFileUrl}`);
     
-    // Get the current time
-    const currentTime = new Date();
-    
-    // Calculate the next analysis time
-    const nextAnalysisTime = calculateNextAnalysisTime(currentTime);
-    
     // Send the trading decision email - only call this once
     sendTradeDecisionEmail(analysisJson);
     
@@ -734,75 +728,6 @@ function createSampleJsonResponse() {
 }
 
 /**
- * Calculates the next analysis time based on the current time
- * 
- * @param {Date} currentTime - The current time
- * @return {Date} - The next analysis time
- */
-function calculateNextAnalysisTime(currentTime) {
-  // Get the schedule configuration
-  const scheduleConfig = getScheduleConfig();
-  
-  // Create a formatter for the time zone
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: TIME_ZONE,
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true
-  });
-  
-  // Create a new date object for the next analysis time
-  const nextAnalysisTime = new Date(currentTime);
-  
-  // Get the current day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
-  const currentDayOfWeek = currentTime.getDay();
-  
-  // If it's a weekend, schedule for Monday morning
-  if (currentDayOfWeek === 0 || currentDayOfWeek === 6) {
-    // Calculate days until Monday
-    const daysUntilMonday = currentDayOfWeek === 0 ? 1 : 2;
-    
-    // Set the next analysis time to Monday morning
-    nextAnalysisTime.setDate(nextAnalysisTime.getDate() + daysUntilMonday);
-    nextAnalysisTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
-  } else {
-    // It's a weekday, schedule for the next analysis time
-    // If it's before morning analysis time, schedule for morning
-    // If it's after morning but before evening, schedule for evening
-    // If it's after evening, schedule for next morning
-    
-    const currentHour = currentTime.getHours();
-    const currentMinute = currentTime.getMinutes();
-    
-    if (currentHour < scheduleConfig.morningHour || 
-        (currentHour === scheduleConfig.morningHour && currentMinute < scheduleConfig.morningMinute)) {
-      // Schedule for today morning
-      nextAnalysisTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
-    } else if (currentHour < scheduleConfig.eveningHour || 
-               (currentHour === scheduleConfig.eveningHour && currentMinute < scheduleConfig.eveningMinute)) {
-      // Schedule for today evening
-      nextAnalysisTime.setHours(scheduleConfig.eveningHour, scheduleConfig.eveningMinute, 0, 0);
-    } else {
-      // Schedule for tomorrow morning
-      nextAnalysisTime.setDate(nextAnalysisTime.getDate() + 1);
-      nextAnalysisTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
-      
-      // If tomorrow is a weekend, schedule for Monday
-      const nextDayOfWeek = nextAnalysisTime.getDay();
-      if (nextDayOfWeek === 0 || nextDayOfWeek === 6) {
-        // Calculate days until Monday
-        const daysUntilMonday = nextDayOfWeek === 0 ? 1 : 2;
-        
-        // Set the next analysis time to Monday morning
-        nextAnalysisTime.setDate(nextAnalysisTime.getDate() + daysUntilMonday);
-      }
-    }
-  }
-  
-  return nextAnalysisTime;
-}
-
-/**
  * Gets the schedule configuration from Config.gs
  * 
  * @return {Object} - The schedule configuration object
@@ -930,6 +855,35 @@ function getOrCreateFolder(folderName) {
     return folder;
   } catch (error) {
     Logger.log(`Error getting or creating folder: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Sends the trading decision email
+ * 
+ * @param {Object} analysisJson - The analysis JSON object
+ */
+function sendTradeDecisionEmail(analysisJson) {
+  try {
+    // Generate the email template
+    const emailTemplate = generateEmailTemplate(analysisJson);
+    
+    // Send the email
+    GmailApp.sendEmail(
+      EMAIL_RECIPIENT,
+      EMAIL_SUBJECT,
+      'Please view this email in a HTML-capable email client.',
+      {
+        htmlBody: emailTemplate,
+        noReply: true
+      }
+    );
+    
+    Logger.log('Trading decision email sent successfully');
+    return 'Email sent successfully';
+  } catch (error) {
+    Logger.log('Error sending trading decision email: ' + error.message);
     throw error;
   }
 }

@@ -28,8 +28,8 @@ const DEPRECATED_SYMBOLS = [
 
 // Email configuration
 const EMAIL_SUBJECT_PREFIX = NEWSLETTER_NAME || "[Market Pulse Daily] "; // Prefix for email subject
-//const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com", "zitro123@yahoo.com"]; // Array of recipient email addresses
-const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com"]; // Array of recipient email addresses
+const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com", "zitro123@yahoo.com"]; // Array of recipient email addresses
+//const RECIPIENT_EMAILS = ["fvillavicencio@gmail.com"]; // Array of recipient email addresses
 
 // Dedicated email address for prompt and error emails
 const PROMPT_ERROR_EMAIL = "fvillavicencio+AI_trading_agent@gmail.com";

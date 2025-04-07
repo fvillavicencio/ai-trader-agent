@@ -208,10 +208,17 @@ function getEmailRecipients() {
     }
     
     // Otherwise, return the hardcoded array (not recommended for production)
-    return RECIPIENT_EMAILS;
+    if (RECIPIENT_EMAILS && Array.isArray(RECIPIENT_EMAILS)) {
+      Logger.log("Using hardcoded recipient emails: " + RECIPIENT_EMAILS.join(', '));
+      return RECIPIENT_EMAILS;
+    }
+    
+    // Fallback to the test email if no recipients are found
+    return [TEST_EMAIL];
   } catch (error) {
     Logger.log("Error getting email recipients: " + error.message);
-    return RECIPIENT_EMAILS;
+    // Fallback to the test email on error
+    return [TEST_EMAIL];
   }
 }
 
