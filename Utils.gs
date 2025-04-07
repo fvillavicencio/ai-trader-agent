@@ -688,11 +688,18 @@ function generateMarketIndicatorsSection(analysis) {
     // Upcoming Economic Events
     let eventsHtml = '';
     if (indicators.upcomingEconomicEvents && Array.isArray(indicators.upcomingEconomicEvents) && indicators.upcomingEconomicEvents.length > 0) {
+      // Sort events by date
+      const sortedEvents = indicators.upcomingEconomicEvents.sort((a, b) => {
+        const dateA = parseEconomicEventDate(a.date);
+        const dateB = parseEconomicEventDate(b.date);
+        return dateA - dateB;
+      });
+
       eventsHtml = `
       <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Upcoming Events</div>
         <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${indicators.upcomingEconomicEvents.map(event => {
+          ${sortedEvents.map(event => {
             const actual = (event.actual && event.actual !== 'N/A') ? `Actual: ${event.actual}` : '';
             const forecast = (event.forecast && event.forecast !== 'N/A') ? `Forecast: ${event.forecast}` : '';
             const previous = (event.previous && event.previous !== 'N/A') ? `Previous: ${event.previous}` : '';
@@ -1312,3 +1319,44 @@ function formatNumberWithSuffix(value, suffix = '') {
   
   return value.toFixed(2);
 }
+
+/**
+ * Parse a date string in the format "Apr 10, 2025, 8:30 AM EDT" into a Date object
+ * @param {string} dateString - The date string to parse
+ * @return {Date} The parsed date
+ */
+function parseEconomicEventDate(dateString) {
+  try {
+    // Extract date parts
+    const parts = dateString.split(',');
+    const datePart = parts[0].trim();
+    const timePart = parts[1].trim();
+    
+    // Extract month, day, and year
+    const [month, day, year] = datePart.split(' ').filter(Boolean);
+    
+    // Create date string in ISO format
+    const dateStr = `${year}-${monthToNum[month]}-${day}T${timePart}`;
+    
+    // Parse the date
+    return new Date(dateStr);
+  } catch (e) {
+    Logger.log(`Error parsing date: ${dateString}, error: ${e}`);
+    return new Date();
+  }
+}
+
+const monthToNum = {
+  'Jan': 1,
+  'Feb': 2,
+  'Mar': 3,
+  'Apr': 4,
+  'May': 5,
+  'Jun': 6,
+  'Jul': 7,
+  'Aug': 8,
+  'Sep': 9,
+  'Oct': 10,
+  'Nov': 11,
+  'Dec': 12
+};
