@@ -78,15 +78,19 @@ function fetchEconomicEvents() {
     const topEvents = filteredEvents.slice(0, 5);
 
     // Format the events for output
-    const formattedEvents = topEvents.map(event => ({
-      date: formatDate(event.date),
-      time: formatTime(event.date),
-      country: event.country,
-      event: `${trimTrailingAsterisk(event.title)} - ${event.source}`,
-      actual: event.actual,
-      forecast: event.forecast,
-      previous: event.previous
-    }));
+    const formattedEvents = topEvents.map(event => {
+      const decryptedEventInfo = decryptEventInfo(event.title, event.source);
+      return {
+        date: formatDate(event.date),
+        time: formatTime(event.date),
+        country: event.country,
+        event: decryptedEventInfo.name,
+        source: decryptedEventInfo.source,
+        actual: event.actual,
+        forecast: event.forecast,
+        previous: event.previous
+      };
+    });
 
     // Return just the events array
     return formattedEvents;
@@ -222,6 +226,7 @@ function testFetchEconomicEvents() {
       Logger.log(`Date: ${event.date} ${event.time}`);
       Logger.log(`Country: ${event.country}`);
       Logger.log(`Event: ${event.event}`);
+      Logger.log(`Source: ${event.source}`);
       Logger.log(`Actual: ${event.actual}`);
       Logger.log(`Forecast: ${event.forecast}`);
       Logger.log(`Previous: ${event.previous}`);
@@ -254,4 +259,18 @@ function main() {
   } else {
     Logger.log('Economic events fetch test failed: ' + testResult.message);
   }
+}
+
+/**
+ * Helper function to decrypt event info
+ * @param {String} title - The event title
+ * @param {String} source - The event source
+ * @return {Object} Decrypted event info
+ */
+function decryptEventInfo(title, source) {
+  // TO DO: implement decryption logic here
+  return {
+    name: title,
+    source: source
+  };
 }

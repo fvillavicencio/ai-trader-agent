@@ -84,7 +84,8 @@ function fetchEconomicEvents() {
         date: formatDate(event.date),
         time: formatTime(event.date),
         country: event.country,
-        event: `${decryptedEventInfo.name} - ${decryptedEventInfo.source}`,
+        event: decryptedEventInfo.name,
+        source: decryptedEventInfo.source,
         actual: event.actual,
         forecast: event.forecast,
         previous: event.previous
@@ -299,6 +300,7 @@ function testFetchEconomicEvents() {
       Logger.log(`Date: ${event.date} ${event.time}`);
       Logger.log(`Country: ${event.country}`);
       Logger.log(`Event: ${event.event}`);
+      Logger.log(`Source: ${event.source}`);
       Logger.log(`Actual: ${event.actual}`);
       Logger.log(`Forecast: ${event.forecast}`);
       Logger.log(`Previous: ${event.previous}`);
