@@ -1380,6 +1380,7 @@ function retrieveUpcomingEconomicEvents() {
       time: event.time || "All Day",
       country: event.country,
       event: event.event,
+      source: event.source,
       period: event.period || "",
       actual: event.actual || "N/A",
       forecast: event.forecast || "N/A",
@@ -1389,8 +1390,6 @@ function retrieveUpcomingEconomicEvents() {
     // Create the result object
     const result = {
       events: formattedEvents,
-      //source: "RapidAPI Economic Calendar",
-      //sourceUrl: "https://rapidapi.com/", // Link to RapidAPI marketplace
       timestamp: new Date(),
       error: false
     };
