@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "@tryghost/admin-api": "^1.13.12",
+    "@tryghost/content-api": "^1.11.21",
+    "dotenv": "^16.4.7",
+    "googleapis": "^148.0.0",
+    "sanitize-html": "^2.15.0",
+    "turndown": "^7.2.0"
+  }
+}

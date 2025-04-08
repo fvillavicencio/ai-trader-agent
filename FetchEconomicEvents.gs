@@ -266,7 +266,7 @@ function decryptEventInfo(eventName, source) {
     },
     'PPI exFood/Energy MM': {
       name: 'Producer Price Index ex Food/Energy MoM',
-      source: 'BLS'
+      source: 'U.S. Bureau of Labor Statistics'
     }
   };
 
