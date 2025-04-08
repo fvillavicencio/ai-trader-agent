@@ -79,7 +79,7 @@ function fetchEconomicEvents() {
 
     // Format the events for output
     const formattedEvents = topEvents.map(event => {
-      const decryptedEventInfo = decryptEventInfo(event.title, event.source);
+      const decryptedEventInfo = decryptEventInfo(event.name, event.source);
       return {
         date: formatDate(event.date),
         time: formatTime(event.date),
@@ -171,36 +171,18 @@ function formatNumber(num, unit) {
  * @return {Boolean} True if event is significant
  */
 function isSignificantEvent(event) {
-  // Higher importance values indicate more significant events
-  if (event.importance >= 0) return true;
-  
-  // Check for important indicators
   const importantIndicators = [
-    'Retail Sales',
-    'Industrial Production',
-    'Capacity Utilization',
-    'Business Inventories',
-    'Consumer Confidence',
-    'Employment',
-    'Inflation',
-    'GDP',
-    'CPI',
-    'PPI',
-    'ISM',
-    'PMI',
-    'Jobless Claims',
-    'Housing Starts',
-    'Building Permits',
-    'New Home Sales',
-    'Existing Home Sales',
     'Consumer Spending',
     'Personal Income',
     'Trade Balance',
-    'Fed Interest Rate'
+    'Fed Interest Rate',
+    'Fed',
+    'bls',
+    'mba'
   ];
   
   return importantIndicators.some(indicator => 
-    event.title.toLowerCase().includes(indicator.toLowerCase())
+    event.name.toLowerCase().includes(indicator.toLowerCase())
   );
 }
 
@@ -262,15 +244,74 @@ function main() {
 }
 
 /**
- * Helper function to decrypt event info
- * @param {String} title - The event title
- * @param {String} source - The event source
- * @return {Object} Decrypted event info
+ * Helper function to decrypt economic event names and sources
+ * @param {string} eventName - The original event name
+ * @param {string} source - The original source
+ * @return {Object} Object containing decrypted event name and source
  */
-function decryptEventInfo(title, source) {
-  // TO DO: implement decryption logic here
-  return {
-    name: title,
+function decryptEventInfo(eventName, source) {
+  // Remove asterisks and trim whitespace
+  const cleanName = eventName.replace(/\*$/, '').trim();
+  
+  // Get base event name by removing date prefix
+  const baseName = cleanName.replace(/^[A-Za-z]+\s+\d+\s+/, '').trim();
+  
+  // Map of event names to their decrypted versions
+  const eventDecryption = {
+    'Real Weekly Earnings MM': {
+      name: 'Average weekly earnings adjusted for inflation MoM',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'MBA 30-Yr Mortgage Rate': {
+      name: '30-Year Fixed Rate Mortgage Rate',
+      source: 'Mortgage Bankers Association'
+    },
+    'MBA Mortgage Applications': {
+      name: 'Mortgage Applications Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'MBA Purchase Index': {
+      name: 'Purchase Mortgage Applications Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'Mortgage Market Index': {
+      name: 'Refinance Mortgage Applications Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'CPI MM, SA': {
+      name: 'Consumer Price Index MoM (Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'CPI YY, NSA': {
+      name: 'Consumer Price Index YoY (Not Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Core CPI MM, SA': {
+      name: 'Core Consumer Price Index MoM (Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Core CPI YY, NSA': {
+      name: 'Core Consumer Price Index YoY (Not Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Initial Jobless Clm': {
+      name: 'Initial Jobless Claims',
+      source: 'U.S. Department of Labor'
+    },
+    'EIA Wkly Crude Stk': {
+      name: 'EIA Weekly Crude Oil Stocks',
+      source: 'U.S. Energy Information Administration'
+    }
+  };
+
+  // Get decrypted info or use original if not found
+  const decrypted = eventDecryption[baseName] || {
+    name: baseName,
     source: source
+  };
+
+  return {
+    name: decrypted.name,
+    source: decrypted.source
   };
 }

@@ -187,7 +187,7 @@ function generateDataRetrievalText() {
           for (const event of eventsToShow) {
             Logger.log(`Event: ${JSON.stringify(event)}`);
             // Format the event with all available information
-            formattedText += `  * ${event.date} : ${event.period ? event.period + " " : ""}${event.event} (${event.country})\n`;
+            formattedText += `  * ${event.date} : ${event.period ? event.period + " " : ""}${event.event} [${event.source}] (${event.country})\n`;
             if (event.actual !== "N/A") formattedText += `    * Actual: ${event.actual}\n`;
             if (event.forecast !== "N/A") formattedText += `    * Forecast: ${event.forecast}\n`;
             if (event.previous !== "N/A") formattedText += `    * Previous: ${event.previous}\n`;

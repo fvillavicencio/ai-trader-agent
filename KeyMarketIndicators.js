@@ -273,7 +273,7 @@ function formatKeyMarketIndicatorsData(data) {
         const dateObj = new Date(event.date);
         const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
         
-        formattedText += `  * ${dateStr}: ${event.name || "Economic Event"} (${event.source})\n`;
+        formattedText += `  * ${dateStr}: ${event.name || "Economic Event"}\n`;
       }
       
       // Add timestamp
@@ -1275,7 +1275,7 @@ function getRatingFromValue(value) {
   
   if (value <= 25) {
     return "Extreme Fear";
-  } else if (value <= 44) {
+  } else if (value <= 45) {
     return "Fear";
   } else if (value <= 54) {
     return "Neutral";
