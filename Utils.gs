@@ -715,24 +715,14 @@ function generateMarketIndicatorsSection(analysis) {
             const eventSource = event.source;
             
             return `
-            <div style="display: flex; margin-bottom: 15px;">
-              <div style="flex: 1; margin-right: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #2196f3; color: white; line-height: 1.2;">${event.date}</div>
-                <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #2196f3; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-                  <div style="display: flex; justify-content: space-around;">
-                    <div>
-                      <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Event</div>
-                      <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${eventName}</div>
-                    </div>
-                    <div>
-                      <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${eventSource}</div>
-                    </div>
-                  </div>
+            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #2196f3;">
+              <div style="display: flex; align-items: center;">
+                <div style="min-width: 150px; font-weight: bold; color: #2196f3; padding-right: 15px;">${event.date}</div>
+                <div style="flex: 1; padding: 0 15px;">
+                  <div style="font-weight: bold;">${eventName}</div>
+                  <div style="font-size: 12px; color: #666;">${eventSource}</div>
                 </div>
-              </div>
-              <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
-                <div style="font-weight: bold; margin-bottom: 5px;">Values</div>
-                <div style="color: #555; font-size: 14px;">${values}</div>
+                <div style="color: #666; font-size: 12px; padding-left: 15px;">${values ? `(${values})` : ''}</div>
               </div>
             </div>
             `;
