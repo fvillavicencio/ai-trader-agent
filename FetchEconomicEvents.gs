@@ -39,14 +39,8 @@ function fetchEconomicEvents() {
     // Parse response
     const data = JSON.parse(response.getContentText());
     
-    // Check if DEBUG_MODE is enabled
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-    
-    if (debugMode) {
-      // Log raw response for debugging
-      Logger.log('Raw API Response: ' + JSON.stringify(data, null, 2));
-    }
+    // Log raw response for debugging
+    Logger.log('Raw API Response: ' + JSON.stringify(data, null, 2));
 
     // The API returns an object with a result array
     const events = data.result || [];
@@ -67,8 +61,7 @@ function fetchEconomicEvents() {
         date: new Date(event.date),
         actual: event.actual !== null ? formatNumber(event.actual, event.unit) : 'N/A',
         forecast: event.forecast !== null ? formatNumber(event.forecast, event.unit) : 'N/A',
-        previous: event.previous !== null ? formatNumber(event.previous, event.unit) : 'N/A',
-       id: event.id || 'N/A'
+        previous: event.previous !== null ? formatNumber(event.previous, event.unit) : 'N/A'
       }));
 
     // Sort by importance (descending), then by date and time
@@ -81,24 +74,24 @@ function fetchEconomicEvents() {
       return a.date - b.date;
     });
 
-    // Get the top 7 most important events
-    const topEvents = filteredEvents.slice(0, 7);
+    // Get the top 5 most important events
+    const topEvents = filteredEvents.slice(0, 5);
 
     // Format the events for output
-    const formattedEvents = topEvents.map(event => ({
-      date: formatDate(event.date),
-      time: formatTime(event.date),
-      country: event.country,
-      event: `${trimTrailingAsterisk(event.title)} - ${event.source}`,
-      actual: event.actual,
-      forecast: event.forecast,
-      previous: event.previous,
-      period: event.period,
-      id: event.id
-    }));
+    const formattedEvents = topEvents.map(event => {
+      const decryptedEventInfo = decryptEventInfo(event.title, event.source);
+      return {
+        date: formatDate(event.date),
+        time: formatTime(event.date),
+        country: event.country,
+        event: `${decryptedEventInfo.name} - ${decryptedEventInfo.source}`,
+        actual: event.actual,
+        forecast: event.forecast,
+        previous: event.previous
+      };
+    });
 
     // Return just the events array
-    Logger.log('Fetched economic events: ' + JSON.stringify(formattedEvents, null, 2));
     return formattedEvents;
 
   } catch (error) {
@@ -178,7 +171,7 @@ function formatNumber(num, unit) {
  */
 function isSignificantEvent(event) {
   // Higher importance values indicate more significant events
-  //if (event.importance >= 0) return true;
+  if (event.importance >= 0) return true;
   
   // Check for important indicators
   const importantIndicators = [
@@ -187,7 +180,6 @@ function isSignificantEvent(event) {
     'Capacity Utilization',
     'Business Inventories',
     'Consumer Confidence',
-    'Conf Board', 
     'Employment',
     'Inflation',
     'GDP',
@@ -203,14 +195,77 @@ function isSignificantEvent(event) {
     'Consumer Spending',
     'Personal Income',
     'Trade Balance',
-    'Fed Interest Rate',
-    'Fed Reserve',
-    'FOMC'
+    'Fed Interest Rate'
   ];
   
   return importantIndicators.some(indicator => 
     event.title.toLowerCase().includes(indicator.toLowerCase())
   );
+}
+
+/**
+ * Helper function to decrypt economic event names and sources
+ * @param {string} eventName - The original event name
+ * @param {string} source - The original source
+ * @return {Object} Object containing decrypted event name and source
+ */
+function decryptEventInfo(eventName, source) {
+  // Remove asterisks and trim whitespace
+  const cleanName = eventName.replace(/\*$/, '').trim();
+  
+  // Get base event name by removing date prefix
+  const baseName = cleanName.replace(/^[A-Za-z]+\s+\d+\s+/, '').trim();
+  
+  // Map of event names to their decrypted versions
+  const eventDecryption = {
+    'Real Weekly Earnings MM': {
+      name: 'Average weekly earnings adjusted for inflation MoM',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'MBA 30-Yr Mortgage Rate': {
+      name: '30-Year Fixed Rate Mortgage Rate',
+      source: 'Mortgage Bankers Association'
+    },
+    'MBA Mortgage Applications': {
+      name: 'Mortgage Applications Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'MBA Purchase Index': {
+      name: 'Purchase Mortgage Applications Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'Mortgage Market Index': {
+      name: 'Refinance Mortgage Applications Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'CPI MM, SA': {
+      name: 'Consumer Price Index MoM (Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'CPI YY, NSA': {
+      name: 'Consumer Price Index YoY (Not Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Core CPI MM, SA': {
+      name: 'Core Consumer Price Index MoM (Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Core CPI YY, NSA': {
+      name: 'Core Consumer Price Index YoY (Not Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    }
+  };
+
+  // Get decrypted info or use original if not found
+  const decrypted = eventDecryption[baseName] || {
+    name: baseName,
+    source: source
+  };
+
+  return {
+    name: decrypted.name,
+    source: decrypted.source
+  };
 }
 
 /**
@@ -232,14 +287,12 @@ function testFetchEconomicEvents() {
     // Log each event with a nice format
     result.forEach((event, index) => {
       Logger.log(`Event ${index + 1}:`);
-      Logger.log(`Date: ${event.date}`);
+      Logger.log(`Date: ${event.date} ${event.time}`);
       Logger.log(`Country: ${event.country}`);
       Logger.log(`Event: ${event.event}`);
       Logger.log(`Actual: ${event.actual}`);
       Logger.log(`Forecast: ${event.forecast}`);
       Logger.log(`Previous: ${event.previous}`);
-      Logger.log(`Period: ${event.period}`);
-      Logger.log(`ID: ${event.id}`);
       Logger.log('');
     });
     

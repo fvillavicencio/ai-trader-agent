@@ -727,9 +727,6 @@ function generateMarketIndicatorsSection(analysis) {
             `;
           }).join('')}
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.upcomingEconomicEvents[0]?.source || 'RapidAPI Economic Calendar'}, as of ${formatDate(indicators.upcomingEconomicEvents[0]?.timestamp)}
-        </div>
       </div>
       `;
     }
