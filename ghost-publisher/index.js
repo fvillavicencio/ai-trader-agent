@@ -75,54 +75,22 @@ async function getLatestMarketPulseHTML() {
         const rawHtml = response.data.toString();
         console.log('File content length:', rawHtml.length);
 
-        // Try different patterns to find the Justification section
-        let justificationHtml;
-        
-        // Pattern 1: Direct div with class
-        const justificationStart1 = rawHtml.indexOf('<div class="justification">');
-        const justificationEnd1 = rawHtml.indexOf('</div>', justificationStart1);
-        if (justificationStart1 !== -1 && justificationEnd1 !== -1) {
-            justificationHtml = rawHtml.substring(justificationStart1, justificationEnd1 + 6);
-        }
-
-        // Pattern 2: Section with heading
-        if (!justificationHtml) {
-            const justificationStart2 = rawHtml.indexOf('<h2>Justification</h2>');
-            if (justificationStart2 !== -1) {
-                const nextSectionStart = rawHtml.indexOf('<h2>', justificationStart2 + 1);
-                justificationHtml = rawHtml.substring(justificationStart2, nextSectionStart !== -1 ? nextSectionStart : rawHtml.length);
-            }
-        }
-
-        // Pattern 3: Section with heading (case insensitive)
-        if (!justificationHtml) {
-            const justificationStart3 = rawHtml.toLowerCase().indexOf('<h2>justification</h2>');
-            if (justificationStart3 !== -1) {
-                const nextSectionStart = rawHtml.toLowerCase().indexOf('<h2>', justificationStart3 + 1);
-                justificationHtml = rawHtml.substring(justificationStart3, nextSectionStart !== -1 ? nextSectionStart : rawHtml.length);
-            }
-        }
-
-        if (!justificationHtml) {
-            throw new Error('Justification section not found in HTML using any pattern');
-        }
-
-        console.log('Justification HTML length:', justificationHtml.length);
-
-        // Sanitize the HTML content
-        const sanitizedHtml = sanitizeHtml(justificationHtml, {
+        // Sanitize the HTML content while preserving structure
+        const sanitizedHtml = sanitizeHtml(rawHtml, {
             allowedTags: [
                 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
                 'p', 'br', 'hr',
                 'ul', 'ol', 'li',
                 'table', 'thead', 'tbody', 'tr', 'th', 'td',
                 'a', 'strong', 'em', 'span',
-                'div', 'img'
+                'div', 'img', 'pre', 'code'
             ],
             allowedAttributes: {
                 a: ['href', 'target'],
                 img: ['src', 'alt'],
-                '*': ['class', 'style']
+                '*': ['class', 'style'],
+                pre: ['class'],
+                code: ['class']
             },
             transformTags: {
                 'div': 'p',
@@ -133,17 +101,23 @@ async function getLatestMarketPulseHTML() {
             selfClosing: ['img', 'br', 'hr'],
             exclusiveFilter: function(frame) {
                 return frame.tag === 'script' || frame.tag === 'style';
-            }
+            },
+            // Preserve formatting
+            keepAttributes: true,
+            keepClassNames: true
         });
 
         console.log('Sanitized HTML length:', sanitizedHtml.length);
 
-        // Format the content with simple HTML
+        // Format the content with proper structure
         const formattedContent = `
-            <p>Market Pulse Daily</p>
-            <h2>Justification</h2>
-            <p>${sanitizedHtml}</p>
-            <p>Last updated: ${new Date(latestFile.modifiedTime).toLocaleString()}</p>
+            <div class="market-pulse-content">
+                <h1>Market Pulse Daily</h1>
+                <div class="last-updated">
+                    <p>Last updated: ${new Date(latestFile.modifiedTime).toLocaleString()}</p>
+                </div>
+                ${sanitizedHtml}
+            </div>
         `;
 
         console.log('Final content preview:', formattedContent.substring(0, 200) + '...');
@@ -158,42 +132,78 @@ async function getLatestMarketPulseHTML() {
     }
 }
 
-// Updated htmlToLexical returns a valid Lexical JSON structure.
-// This function splits the cleaned text into paragraphs.
+// Updated htmlToLexical to handle complex HTML structure
 function htmlToLexical(html) {
-    // Remove emojis and non-ASCII (optional)
+    // Clean the HTML content; adjust sanitization as needed.
     let cleanHtml = html
-        .replace(/\p{Emoji}/gu, '')
-        .replace(/[^\u0000-\u007F]+/g, '')
+        .replace(/\p{Emoji}/gu, '') // Remove emojis
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
         .trim();
 
-    // Remove HTML tags while preserving text content
-    cleanHtml = cleanHtml
-        .replace(/<style[^>]*>.*?<\/style>/gi, '') // Remove style tags
-        .replace(/<script[^>]*>.*?<\/script>/gi, '') // Remove script tags
-        .replace(/<[^>]+>/g, '') // Remove all other HTML tags
-        .replace(/\s+/g, ' ') // Remove extra whitespace
-        .trim();
-
-    // Split into paragraphs based on double newlines
-    const paragraphs = cleanHtml.split(/\n\s*\n/).filter(p => p.trim());
-
-    const children = paragraphs.map(paragraph => ({
-        type: "paragraph",
+    // Parse the HTML into a proper Lexical structure
+    const root = {
+        type: 'root',
         version: 1,
-        indent: 0,
-        format: "",
         direction: null,
-        children: [
-            {
-                type: "text",
-                version: 1,
-                text: paragraph.trim()
-            }
-        ]
-    }));
+        format: '',
+        indent: 0,
+        children: []
+    };
 
-    return { root: { type: "root", version: 1, indent: 0, format: "", direction: null, children } };
+    // Split content into sections based on heading levels
+    const sections = cleanHtml.split(/(<h[1-6][^>]*>.*?<\/h[1-6]>)|(<hr[^>]*>)/).filter(p => p.trim());
+    
+    sections.forEach(section => {
+        // Check if this is a heading
+        const headingMatch = section.match(/<h([1-6])[^>]*>(.*?)<\/h\1>/);
+        if (headingMatch) {
+            const level = parseInt(headingMatch[1]);
+            const headingText = headingMatch[2];
+            
+            root.children.push({
+                type: `heading_${level}`,
+                version: 1,
+                indent: 0,
+                format: '',
+                direction: null,
+                children: [
+                    {
+                        type: "text",
+                        version: 1,
+                        text: headingText.trim()
+                    }
+                ]
+            });
+        } else {
+            // Process regular content
+            const paragraphs = section.split(/\n\s*\n/).filter(p => p.trim());
+            paragraphs.forEach(paragraph => {
+                const textContent = paragraph
+                    .replace(/<[^>]+>/g, '') // Remove HTML tags
+                    .replace(/\s+/g, ' ') // Remove extra whitespace
+                    .trim();
+
+                if (textContent) {
+                    root.children.push({
+                        type: "paragraph",
+                        version: 1,
+                        indent: 0,
+                        format: "",
+                        direction: null,
+                        children: [
+                            {
+                                type: "text",
+                                version: 1,
+                                text: textContent
+                            }
+                        ]
+                    });
+                }
+            });
+        }
+    });
+
+    return { root: root };
 }
 
 async function createMarketPulseArticle() {
