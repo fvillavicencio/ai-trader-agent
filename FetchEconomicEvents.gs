@@ -261,7 +261,7 @@ function decryptEventInfo(eventName, source) {
       source: 'U.S. Department of Labor'
     },
     'EIA Wkly Crude Stk': {
-      name: 'EIA Weekly Crude Oil Stocks',
+      name: 'Weekly Crude Oil Stocks',
       source: 'U.S. Energy Information Administration'
     },
     'PPI exFood/Energy MM': {
