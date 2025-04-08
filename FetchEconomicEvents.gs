@@ -193,11 +193,10 @@ function isSignificantEvent(event) {
     'Consumer Spending',
     'Personal Income',
     'Trade Balance',
-    'Fed Interest Rate'
+    'Fed Interest Rate',
     'Fed',
     'bls',
-    'mba',
-
+    'mba'
   ];
   
   return importantIndicators.some(indicator => 
