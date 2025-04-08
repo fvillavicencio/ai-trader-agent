@@ -162,15 +162,23 @@ async function getLatestMarketPulseHTML() {
 // This function splits the cleaned text into paragraphs.
 function htmlToLexical(html) {
     // Remove emojis and non-ASCII (optional)
-    const cleanHtml = html
+    let cleanHtml = html
         .replace(/\p{Emoji}/gu, '')
         .replace(/[^\u0000-\u007F]+/g, '')
         .trim();
 
-    // Split the content by newlines or <p> tags (simple split, refine if needed)
-    const fragments = cleanHtml.split(/\n+/).filter(line => line.trim());
+    // Remove HTML tags while preserving text content
+    cleanHtml = cleanHtml
+        .replace(/<style[^>]*>.*?<\/style>/gi, '') // Remove style tags
+        .replace(/<script[^>]*>.*?<\/script>/gi, '') // Remove script tags
+        .replace(/<[^>]+>/g, '') // Remove all other HTML tags
+        .replace(/\s+/g, ' ') // Remove extra whitespace
+        .trim();
 
-    const children = fragments.map(fragment => ({
+    // Split into paragraphs based on double newlines
+    const paragraphs = cleanHtml.split(/\n\s*\n/).filter(p => p.trim());
+
+    const children = paragraphs.map(paragraph => ({
         type: "paragraph",
         version: 1,
         indent: 0,
@@ -180,7 +188,7 @@ function htmlToLexical(html) {
             {
                 type: "text",
                 version: 1,
-                text: fragment.trim()
+                text: paragraph.trim()
             }
         ]
     }));
