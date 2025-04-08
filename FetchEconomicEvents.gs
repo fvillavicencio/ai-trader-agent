@@ -195,7 +195,7 @@ function isSignificantEvent(event) {
     'Personal Income',
     'Trade Balance',
     'Fed Interest Rate',
-    'Fed',
+    'Fed Conf',
     'bls',
     'mba'
   ];
@@ -263,6 +263,10 @@ function decryptEventInfo(eventName, source) {
     'EIA Wkly Crude Stk': {
       name: 'EIA Weekly Crude Oil Stocks',
       source: 'U.S. Energy Information Administration'
+    },
+    'PPI exFood/Energy MM': {
+      name: 'Producer Price Index ex Food/Energy MoM',
+      source: 'BLS'
     }
   };
 
