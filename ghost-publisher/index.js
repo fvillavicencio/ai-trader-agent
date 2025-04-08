@@ -73,7 +73,7 @@ async function getLatestMarketPulseHTML() {
         });
 
         const rawHtml = response.data.toString();
-        console.log('File content length:', rawHtml.length);
+        console.log('Raw HTML content length:', rawHtml.length);
 
         // Sanitize the HTML content while preserving structure
         const sanitizedHtml = sanitizeHtml(rawHtml, {
@@ -92,24 +92,20 @@ async function getLatestMarketPulseHTML() {
                 pre: ['class'],
                 code: ['class']
             },
-            transformTags: {
-                'div': 'p',
-                'span': 'p'
-            },
+            transformTags: {}, // Preserve original structure
             allowedSchemes: ['http', 'https', 'mailto', 'tel'],
             allowedSchemesAppliedToAttributes: ['href', 'src'],
             selfClosing: ['img', 'br', 'hr'],
             exclusiveFilter: function(frame) {
                 return frame.tag === 'script' || frame.tag === 'style';
             },
-            // Preserve formatting
             keepAttributes: true,
             keepClassNames: true
         });
 
         console.log('Sanitized HTML length:', sanitizedHtml.length);
 
-        // Format the content with proper structure
+        // Build the final content with proper structure
         const formattedContent = `
             <div class="market-pulse-content">
                 <h1>Market Pulse Daily</h1>
@@ -132,78 +128,23 @@ async function getLatestMarketPulseHTML() {
     }
 }
 
-// Updated htmlToLexical to handle complex HTML structure
 function htmlToLexical(html) {
-    // Clean the HTML content; adjust sanitization as needed.
-    let cleanHtml = html
-        .replace(/\p{Emoji}/gu, '') // Remove emojis
-        .replace(/[\u0000-\u001F\u007F-\u009F]/g, '') // Remove control characters
-        .trim();
-
-    // Parse the HTML into a proper Lexical structure
-    const root = {
-        type: 'root',
-        version: 1,
-        direction: null,
-        format: '',
-        indent: 0,
-        children: []
-    };
-
-    // Split content into sections based on heading levels
-    const sections = cleanHtml.split(/(<h[1-6][^>]*>.*?<\/h[1-6]>)|(<hr[^>]*>)/).filter(p => p.trim());
-    
-    sections.forEach(section => {
-        // Check if this is a heading
-        const headingMatch = section.match(/<h([1-6])[^>]*>(.*?)<\/h\1>/);
-        if (headingMatch) {
-            const level = parseInt(headingMatch[1]);
-            const headingText = headingMatch[2];
-            
-            root.children.push({
-                type: `heading_${level}`,
-                version: 1,
-                indent: 0,
-                format: '',
-                direction: null,
-                children: [
-                    {
-                        type: "text",
-                        version: 1,
-                        text: headingText.trim()
-                    }
-                ]
-            });
-        } else {
-            // Process regular content
-            const paragraphs = section.split(/\n\s*\n/).filter(p => p.trim());
-            paragraphs.forEach(paragraph => {
-                const textContent = paragraph
-                    .replace(/<[^>]+>/g, '') // Remove HTML tags
-                    .replace(/\s+/g, ' ') // Remove extra whitespace
-                    .trim();
-
-                if (textContent) {
-                    root.children.push({
-                        type: "paragraph",
-                        version: 1,
-                        indent: 0,
-                        format: "",
-                        direction: null,
-                        children: [
-                            {
-                                type: "text",
-                                version: 1,
-                                text: textContent
-                            }
-                        ]
-                    });
+    return {
+        root: {
+            type: 'root',
+            version: 1,
+            indent: 0,
+            format: '',
+            direction: null,
+            children: [
+                {
+                    type: 'html',
+                    html: html,
+                    version: 1
                 }
-            });
+            ]
         }
-    });
-
-    return { root: root };
+    };
 }
 
 async function createMarketPulseArticle() {
@@ -212,22 +153,21 @@ async function createMarketPulseArticle() {
     })}`;
     
     try {
-        // Get the latest HTML content from Google Drive
         const { content, timestamp } = await getLatestMarketPulseHTML();
         
-        // Prepare the payload for creating/updating the Ghost post.
-        // Conditionally include the authors field only if GHOST_AUTHOR_ID is provided.
+        // Prepare the payload for creating/updating the Ghost post
         let postPayload = {
             title: title,
             lexical: JSON.stringify(htmlToLexical(content)),
             status: 'published',
             tags: ['Market Analysis', 'Daily Update']
         };
+        
         if (process.env.GHOST_AUTHOR_ID) {
             postPayload.authors = [process.env.GHOST_AUTHOR_ID];
         }
         
-        // Search for an existing post with the same title.
+        // Search for an existing post with the same title
         const existingPosts = await api.posts.browse({
             filter: `title:${encodeURIComponent(title)}`
         });
@@ -235,12 +175,10 @@ async function createMarketPulseArticle() {
         console.log('Original content:', content.substring(0, 200) + '...');
 
         if (existingPosts && existingPosts.posts && existingPosts.posts.length > 0) {
-            // Update the existing post.
             console.log('Updating existing post...');
             const updatedPost = await api.posts.edit(existingPosts.posts[0].id, postPayload);
             await verifyAndFixContent(updatedPost.id, content);
         } else {
-            // Create a new post.
             console.log('Creating new post...');
             const post = await api.posts.add(postPayload);
             await verifyAndFixContent(post.id, content);
@@ -259,7 +197,7 @@ async function verifyAndFixContent(postId, originalContent) {
         console.log(`Attempt ${attempt}: Fetched post lexical content:`, fetchedPost.lexical);
         
         if (!fetchedPost.lexical || fetchedPost.lexical === "{}") {
-            console.log(`Attempt ${attempt}: Content is empty, trying to fix...`);
+            console.log(`Attempt ${attempt}: Content is empty, retrying sanitization...`);
             currentContent = sanitizeContent(currentContent, attempt);
             await api.posts.edit(postId, {
                 lexical: JSON.stringify(htmlToLexical(currentContent))
