@@ -253,6 +253,10 @@ function decryptEventInfo(eventName, source) {
     'Core CPI YY, NSA': {
       name: 'Core Consumer Price Index YoY (Not Seasonally Adjusted)',
       source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Initial Jobless Clm': {
+      name: 'Initial Jobless Claims',
+      source: 'U.S. Department of Labor'
     }
   };
 
