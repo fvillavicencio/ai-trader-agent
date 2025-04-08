@@ -31,19 +31,37 @@ function sendTradeDecisionEmail(analysisJson) {
         Logger.log(`Created new folder: ${folderName}`);
       }
       
-      // Check if the file already exists and delete it
-      const existingFiles = folder.getFilesByName(fileName);
-      if (existingFiles.hasNext()) {
-        existingFiles.next().setTrashed(true);
-        Logger.log(`Deleted existing file: ${fileName}`);
+      // Create or update the file
+      let file;
+      const fileIterator = folder.getFilesByName(fileName);
+      
+      if (fileIterator.hasNext()) {
+        file = fileIterator.next();
+        Logger.log(`Found existing file: ${fileName}`);
+        file.setContent(htmlContent);
+      } else {
+        file = folder.createFile(fileName, htmlContent);
+        Logger.log(`Created new file: ${fileName}`);
       }
       
-      // Create the file in the folder
-      const file = folder.createFile(fileName, htmlContent, MimeType.HTML);
-      Logger.log(`HTML email saved to Google Drive: ${fileName}`);
-    } catch (driveError) {
-      Logger.log(`Error saving HTML to Google Drive: ${driveError}`);
-      // Continue with sending emails even if Drive save fails
+      // Publish to Ghost
+      try {
+        Logger.log("Publishing to Ghost...");
+        const ghostResult = GhostPublisher.runGhostPublisher({
+          fileId: file.getId(),
+          folderId: folder.getId(),
+          fileName: fileName
+        });
+        Logger.log("Ghost publishing result:", JSON.stringify(ghostResult, null, 2));
+      } catch (error) {
+        Logger.log("Error publishing to Ghost:", error.toString());
+        throw error;
+      }
+      
+      Logger.log("Email content saved successfully to Google Drive and published to Ghost");
+    } catch (error) {
+      Logger.log("Error saving HTML to Google Drive:", error.toString());
+      throw error;
     }
     
     // Get the final recipients from Config.gs
