@@ -180,6 +180,43 @@ function sanitizeHtml(html, config) {
 }
 
 /**
+ * Test function to locate and publish the latest trading analysis HTML file to Ghost.
+ * This function uses the same logic as the Node.js script to find the file in Google Drive.
+ */
+function testPublishLatestAnalysis() {
+  try {
+    // Get script properties
+    const props = PropertiesService.getScriptProperties();
+    const folderUrl = props.getProperty('GOOGLE_DRIVE_FOLDER_URL');
+    const fileName = props.getProperty('GOOGLE_FILE_NAME') || 'Latest_Trading_Analysis.html';
+
+    // Extract folder ID from the URL (assumes folder ID is the last segment)
+    const folderId = folderUrl.split('/').pop();
+    
+    Logger.log(`Searching for file: ${fileName} in folder: ${folderId}`);
+
+    // Search for the file in the specified folder
+    const files = DriveApp.getFolderById(folderId).getFilesByName(fileName);
+
+    if (!files.hasNext()) {
+      throw new Error(`File ${fileName} not found in folder ${folderId}`);
+    }
+
+    const file = files.next();
+    Logger.log(`Found file: ${file.getName()} with ID: ${file.getId()}`);
+
+    // Publish the file to Ghost
+    const result = publishToGhost(file.getId(), folderId, fileName);
+    Logger.log('Ghost publishing result:', JSON.stringify(result, null, 2));
+    
+    return result;
+  } catch (error) {
+    Logger.log('Error in testPublishLatestAnalysis:', error.toString());
+    throw error;
+  }
+}
+
+/**
  * Main function to be called from other scripts
  * 
  * @param {Object} options - Configuration options
