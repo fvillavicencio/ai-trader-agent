@@ -15,12 +15,13 @@ function sendTradeDecisionEmail(analysisJson) {
     try {
       Logger.log("Saving HTML email to Google Drive...");
       
-      // Use a generic filename that will be overwritten each time
-      const fileName = "Latest_Trading_Analysis.html";
+      // Get folder name from properties
+      const props = PropertiesService.getScriptProperties();
+      const folderName = props.getProperty('GOOGLE_FOLDER_NAME');
+      const fileName = props.getProperty('GOOGLE_FILE_NAME');
       
-      // Find or create the "Trading Analysis Emails" folder
+      // Find or create the folder
       let folder;
-      const folderName = "Trading Analysis Emails";
       const folderIterator = DriveApp.getFoldersByName(folderName);
       
       if (folderIterator.hasNext()) {
@@ -92,8 +93,9 @@ function sendTradeDecisionEmail(analysisJson) {
  */
 function sendPromptEmail(prompt) {
   try {
+    const props = PropertiesService.getScriptProperties();
     const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+    const formattedDate = Utilities.formatDate(currentDate, props.getProperty('TIME_ZONE'), "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
     // Create HTML email template
     const htmlBody = `
@@ -178,7 +180,7 @@ ${prompt}
     </div>
     
     <div class="footer">
-      <p>${NEWSLETTER_NAME}</p>
+      <p>${props.getProperty('NEWSLETTER_NAME')}</p>
       <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>
@@ -189,7 +191,7 @@ ${prompt}
     const subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, TEST_EMAIL, false); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, props.getProperty('TEST_EMAIL'), false); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send prompt email: ${emailResult.error}`);
@@ -211,8 +213,9 @@ ${prompt}
  */
 function sendErrorEmail(subject, errorMessage) {
   try {
+    const props = PropertiesService.getScriptProperties();
     const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+    const formattedDate = Utilities.formatDate(currentDate, props.getProperty('TIME_ZONE'), "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
     // Create HTML email template
     const htmlBody = `
@@ -221,7 +224,7 @@ function sendErrorEmail(subject, errorMessage) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${NEWSLETTER_NAME} - Error</title>
+  <title>${props.getProperty('NEWSLETTER_NAME')} - Error</title>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -309,7 +312,7 @@ ${errorMessage}
     </div>
     
     <div class="footer">
-      <p>  ${NEWSLETTER_NAME}</p>
+      <p>  ${props.getProperty('NEWSLETTER_NAME')}</p>
       <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>
@@ -318,7 +321,7 @@ ${errorMessage}
     `;
     
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, TEST_EMAIL, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, props.getProperty('TEST_EMAIL'), true); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send error email: ${emailResult.error}`);
@@ -348,8 +351,9 @@ ${errorMessage}
  */
 function sendEmail(subject, htmlBody, recipient, isTest = false) {
   try {
+    const props = PropertiesService.getScriptProperties();
     // Get the test email address and validate it
-    const testEmail = TEST_EMAIL;
+    const testEmail = props.getProperty('TEST_EMAIL');
     if (!testEmail || !testEmail.includes('@')) {
       throw new Error('Invalid test email address configured');
     }
@@ -372,7 +376,7 @@ function sendEmail(subject, htmlBody, recipient, isTest = false) {
       try {
         result = GmailApp.sendEmail(finalRecipient, subject, '', {
           htmlBody: htmlBody,
-          name: NEWSLETTER_NAME,
+          name: props.getProperty('NEWSLETTER_NAME'),
           replyTo: Session.getEffectiveUser().getEmail()
         });
         break;
@@ -397,14 +401,14 @@ function sendEmail(subject, htmlBody, recipient, isTest = false) {
     Logger.log(errorMessage);
     
     // Try to send the error to the test email as a fallback
-    if (recipient !== TEST_EMAIL) {
+    if (recipient !== props.getProperty('TEST_EMAIL')) {
       try {
-        GmailApp.sendEmail(TEST_EMAIL, `Email Sending Failed - ${subject}`, 
+        GmailApp.sendEmail(props.getProperty('TEST_EMAIL'), `Email Sending Failed - ${subject}`, 
           `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`, {
             htmlBody: `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`,
-            name: NEWSLETTER_NAME
+            name: props.getProperty('NEWSLETTER_NAME')
           });
-        Logger.log(`Error notification sent to test email ${TEST_EMAIL}`);
+        Logger.log(`Error notification sent to test email ${props.getProperty('TEST_EMAIL')}`);
       } catch (fallbackError) {
         Logger.log(`Failed to send error notification to test email: ${fallbackError}`);
       }
@@ -481,6 +485,7 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
  */
 function sendTestTradingAnalysisEmail(analysisJson) {
   try {
+    const props = PropertiesService.getScriptProperties();
     const userEmail = Session.getEffectiveUser().getEmail();
     const nextScheduledTime = new Date();
     nextScheduledTime.setDate(nextScheduledTime.getDate() + 1); // Next day

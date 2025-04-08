@@ -10,7 +10,7 @@ function publishToGhost(fileId, folderId, fileName) {
   try {
     // Get script properties
     const props = PropertiesService.getScriptProperties();
-    const ghostApiUrl = props.getProperty('GHOST_API_URL') || 'https://market-pulse-daily.ghost.io';
+    const ghostApiUrl = props.getProperty('GHOST_API_URL');
     const ghostAdminApiKey = props.getProperty('GHOST_ADMIN_API_KEY');
     const ghostAuthorId = props.getProperty('GHOST_AUTHOR_ID');
 
@@ -43,14 +43,7 @@ function publishToGhost(fileId, folderId, fileName) {
         '*': ['class', 'style'],
         pre: ['class'],
         code: ['class']
-      },
-      transformTags: {},
-      allowedSchemes: ['http', 'https', 'mailto', 'tel'],
-      allowedSchemesAppliedToAttributes: ['href', 'src'],
-      selfClosing: ['img', 'br', 'hr'],
-      exclusiveFilter: frame => frame.tag === 'script' || frame.tag === 'style',
-      keepAttributes: true,
-      keepClassNames: true
+      }
     });
 
     // Build the final content
@@ -187,26 +180,30 @@ function testPublishLatestAnalysis() {
   try {
     // Get script properties
     const props = PropertiesService.getScriptProperties();
-    const folderUrl = props.getProperty('GOOGLE_DRIVE_FOLDER_URL');
-    const fileName = props.getProperty('GOOGLE_FILE_NAME') || 'Latest_Trading_Analysis.html';
+    const folderName = props.getProperty('GOOGLE_FOLDER_NAME');
+    const fileName = props.getProperty('GOOGLE_FILE_NAME');
 
-    // Extract folder ID from the URL (assumes folder ID is the last segment)
-    const folderId = folderUrl.split('/').pop();
+    // Find the folder by name
+    const folderIterator = DriveApp.getFoldersByName(folderName);
+    if (!folderIterator.hasNext()) {
+      throw new Error(`Folder ${folderName} not found`);
+    }
+    const folder = folderIterator.next();
     
-    Logger.log(`Searching for file: ${fileName} in folder: ${folderId}`);
+    Logger.log(`Searching for file: ${fileName} in folder: ${folderName}`);
 
     // Search for the file in the specified folder
-    const files = DriveApp.getFolderById(folderId).getFilesByName(fileName);
+    const files = folder.getFilesByName(fileName);
 
     if (!files.hasNext()) {
-      throw new Error(`File ${fileName} not found in folder ${folderId}`);
+      throw new Error(`File ${fileName} not found in folder ${folderName}`);
     }
 
     const file = files.next();
     Logger.log(`Found file: ${file.getName()} with ID: ${file.getId()}`);
 
     // Publish the file to Ghost
-    const result = publishToGhost(file.getId(), folderId, fileName);
+    const result = publishToGhost(file.getId(), folder.getId(), fileName);
     Logger.log('Ghost publishing result:', JSON.stringify(result, null, 2));
     
     return result;
