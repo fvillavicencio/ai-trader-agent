@@ -170,8 +170,6 @@ function formatNumber(num, unit) {
  * @return {Boolean} True if event is significant
  */
 function isSignificantEvent(event) {
-  // Higher importance values indicate more significant events
-  if (event.importance >= 0) return true;
   
   // Check for important indicators
   const importantIndicators = [
@@ -196,10 +194,14 @@ function isSignificantEvent(event) {
     'Personal Income',
     'Trade Balance',
     'Fed Interest Rate'
+    'Fed',
+    'bls',
+    'mba',
+
   ];
   
   return importantIndicators.some(indicator => 
-    event.title.toLowerCase().includes(indicator.toLowerCase())
+    event.source.toLowerCase().includes(indicator.toLowerCase())
   );
 }
 
@@ -257,6 +259,10 @@ function decryptEventInfo(eventName, source) {
     'Initial Jobless Clm': {
       name: 'Initial Jobless Claims',
       source: 'U.S. Department of Labor'
+    },
+    'EIA Wkly Crude Stk': {
+      name: 'EIA Weekly Crude Oil Stocks',
+      source: 'U.S. Energy Information Administration'
     }
   };
 
