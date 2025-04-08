@@ -74,8 +74,8 @@ function fetchEconomicEvents() {
       return a.date - b.date;
     });
 
-    // Get the top 5 most important events
-    const topEvents = filteredEvents.slice(0, 5);
+    // Get the top 7 most important events
+    const topEvents = filteredEvents.slice(0, 7);
 
     // Format the events for output
     const formattedEvents = topEvents.map(event => {
