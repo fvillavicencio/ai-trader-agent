@@ -14,16 +14,22 @@ function publishToGhost(fileId, folderId, fileName) {
         const ghostAdminApiKey = props.getProperty('GHOST_ADMIN_API_KEY') || '67f553a7f41c9900013e1fbe:36fe3da206f1ebb61643868fffca951da8ce9571521c1e8f853aadffe2f56e2e';
         const ghostAuthorId = props.getProperty('GHOST_AUTHOR_ID') || null;
 
+        // Get current time in ET
+        const now = new Date();
+        const timeInET = Utilities.formatDate(now, 'America/New_York', 'HH:mm');
+        const [hour, minute] = timeInET.split(':');
+        const currentHour = parseInt(hour);
+        const currentMinute = parseInt(minute);
+
+        // Determine content type based on time
+        const isPremiumContent = currentHour < 16 || (currentHour === 16 && currentMinute < 30);
+
         // Log configuration
         Logger.log('Ghost API Configuration:');
         Logger.log('Raw API URL: ' + ghostApiUrl);
         Logger.log('Raw Admin API Key: ' + ghostAdminApiKey);
         Logger.log('Raw Author ID: ' + ghostAuthorId);
-
-        // Validate required configurations
-        if (!ghostApiUrl || !ghostAdminApiKey) {
-          throw new Error('Both Ghost API URL and Admin API Key must be configured');
-        }
+        Logger.log('Content Type: ' + (isPremiumContent ? 'Premium' : 'Standard'));
 
         // Set configuration
         const config = {
@@ -32,12 +38,6 @@ function publishToGhost(fileId, folderId, fileName) {
           authorId: ghostAuthorId
         };
 
-        // Log the final configuration being used
-        Logger.log('Final Configuration:');
-        Logger.log('Final API URL: ' + config.apiUrl);
-        Logger.log('Final API Key: ' + config.apiKey);
-        Logger.log('Final Author ID: ' + config.authorId);
-
         // Get the HTML content from the file
         const file = DriveApp.getFileById(fileId);
         const htmlContent = file.getBlob().getDataAsString();
@@ -45,13 +45,16 @@ function publishToGhost(fileId, folderId, fileName) {
         // Format the content for Ghost
         const formattedContent = formatContentForGhost(htmlContent);
         
+        // Generate title and tags
+        const { title, tags } = generateEngagingTitle();
+        
         // Build the post payload
-        const title = generateEngagingTitle();
         const postPayload = {
           title: title,
           lexical: JSON.stringify(formattedContent),
           status: "published",
-          tags: [NEWSLETTER_NAME, "Market Insights", "Daily Update", "Market Pulse"]
+          tags: tags,
+          access: isPremiumContent ? "paid-members-only" : "anyone-can-sign-up"
         };
 
         if (config.authorId) {
@@ -295,7 +298,10 @@ function publishToGhost(fileId, folderId, fileName) {
       const emoji = emojis[Math.floor(Math.random() * emojis.length)];
       
       // Format the title with emoji after the name
-      return `${phrase} ${emoji} - ${date} ${time}`;
+      return {
+        title: `${phrase} ${emoji} - ${date} ${time}`,
+        tags: ["Market Insights", "Daily Update", "Market Pulse"]
+      };
     }
 
     /**
