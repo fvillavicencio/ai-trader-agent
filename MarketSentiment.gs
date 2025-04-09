@@ -360,7 +360,7 @@ function parseOpenAIResponse(response) {
  */
 function getOpenAIMarketSentimentPrompt() {
   const currentDate = new Date();
-  const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM dd, yyyy");
+  const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy");
   
   // Get configurable analyst names
   const analystNames = getAnalystNames();

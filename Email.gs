@@ -116,8 +116,8 @@ function sendPromptEmail(prompt) {
     
     // Validate the time zone
     if (!timeZone || typeof timeZone !== 'string') {
-      Logger.log('Invalid or missing time zone configuration, defaulting to America/New_York');
-      timeZone = 'America/New_York';
+      Logger.log('Invalid or missing time zone configuration, defaulting to ' + TIME_ZONE);
+      timeZone = TIME_ZONE;
     }
 
     const currentDate = new Date();

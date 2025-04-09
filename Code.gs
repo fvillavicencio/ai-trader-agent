@@ -888,7 +888,7 @@ function sendTradeDecisionEmail(analysisJson) {
     
     // Send email
     const emailResult = sendEmail(
-      "Trading Analysis - " + Utilities.formatDate(new Date(), "America/New_York", "MMM dd, yyyy"),
+      "Trading Analysis - " + Utilities.formatDate(new Date(), TIME_ZONE, "MMM dd, yyyy"),
       htmlContent,
       props.getProperty('RECIPIENT_EMAILS'),
       false

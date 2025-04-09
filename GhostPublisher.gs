@@ -16,7 +16,7 @@ function publishToGhost(fileId, folderId, fileName) {
 
         // Get current time in ET
         const now = new Date();
-        const timeInET = Utilities.formatDate(now, 'America/New_York', 'HH:mm');
+        const timeInET = Utilities.formatDate(now, TIME_ZONE, 'HH:mm');
         const [hour, minute] = timeInET.split(':');
         const currentHour = parseInt(hour);
         const currentMinute = parseInt(minute);
@@ -29,7 +29,7 @@ function publishToGhost(fileId, folderId, fileName) {
         Logger.log('Raw API URL: ' + ghostApiUrl);
         Logger.log('Raw Admin API Key: ' + ghostAdminApiKey);
         Logger.log('Raw Author ID: ' + ghostAuthorId);
-        Logger.log('Content Type: ' + (isPremiumContent ? 'Premium' : 'Standard'));
+        Logger.log('Content Type: ' + (isPremiumContent ? 'Premium (Paid-members only)' : 'Standard (Members only)'));
 
         // Set configuration
         const config = {
@@ -54,7 +54,7 @@ function publishToGhost(fileId, folderId, fileName) {
           lexical: JSON.stringify(formattedContent),
           status: "published",
           tags: tags,
-          access: isPremiumContent ? "paid-members-only" : "anyone-can-sign-up"
+          access: isPremiumContent ? "paid-members-only" : "members-only"
         };
 
         if (config.authorId) {
