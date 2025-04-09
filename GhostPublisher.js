@@ -164,24 +164,8 @@ function publishToGhost(fileId, folderId, fileName) {
 }
 
 /**
- * Converts a hex string to a byte array with proper handling for signed 8-bit values
- * @param {string} hex - The hex string to convert
- * @returns {number[]} Array of bytes
- */
-function hexToBytes(hex) {
-  var bytes = [];
-  for (var i = 0; i < hex.length; i += 2) {
-    var byte = parseInt(hex.substr(i, 2), 16);
-    if (byte > 127) byte -= 256;  // interpret as signed 8-bit (two’s complement)
-    bytes.push(byte);
-  }
-  return bytes;
-}
-
-/**
  * Generates a valid JWT token for Ghost Admin API requests.
- * @param {string} adminApiKey - The Ghost Admin API key in format "id:secret"
- * @returns {string} The JWT token
+ * Your Admin API key should be in the form "id:secret".
  */
 function generateGhostJWT(adminApiKey) {
   var parts = adminApiKey.split(':');
@@ -189,31 +173,54 @@ function generateGhostJWT(adminApiKey) {
     throw new Error('Invalid Admin API key format. Expect "id:secret".');
   }
   var keyId = parts[0];
-  var secretHex = parts[1]; // secret is a hex string
-
-  // Convert the hex secret to bytes
-  var secretBytes = hexToBytes(secretHex);
+  var secret = parts[1]; // Hex string
   
-  // Build the JWT header and payload
-  var header = { alg: "HS256", typ: "JWT", kid: keyId };
-  var now = Math.floor(Date.now() / 1000);
-  // The token is valid for 5 minutes
-  var payload = { iat: now, exp: now + 300, aud: "/admin/" };
-
-  // Helper function to Base64Url encode an object without trailing '='
-  var base64UrlEncode = function(obj) {
-    return Utilities.base64EncodeWebSafe(JSON.stringify(obj)).replace(/=+$/, '');
+  // Convert hex to byte array
+  var keyBytes = [];
+  for (var i = 0; i < secret.length; i += 2) {
+    keyBytes.push(parseInt(secret.substr(i, 2), 16));
+  }
+  
+  // Create a proper key from bytes
+  var keyBlob = Utilities.newBlob('').setBytes(keyBytes);
+  
+  var header = {
+    alg: "HS256",
+    typ: "JWT",
+    kid: keyId
   };
+  
+  var now = Math.floor(Date.now() / 1000);
+  var payload = {
+    iat: now,
+    exp: now + 300,
+    aud: "/v5/admin/"
+  };
+  
+  // Base64Url encode the header and payload
+  var encodedHeader = Utilities.base64EncodeWebSafe(JSON.stringify(header)).replace(/=+$/, '');
+  var encodedPayload = Utilities.base64EncodeWebSafe(JSON.stringify(payload)).replace(/=+$/, '');
+  
+  // Create the content to be signed
+  var tokenContent = encodedHeader + "." + encodedPayload;
+  
+  // Sign the content
+  var signature = Utilities.computeHmacSha256Signature(tokenContent, keyBlob.getBytes());
+  var encodedSignature = Utilities.base64EncodeWebSafe(signature).replace(/=+$/, '');
+  
+  // Return the complete JWT
+  return tokenContent + "." + encodedSignature;
+}
 
-  var encodedHeader = base64UrlEncode(header);
-  var encodedPayload = base64UrlEncode(payload);
-  var toSign = Utilities.newBlob(encodedHeader + "." + encodedPayload).getBytes();
-  
-  // Compute the signature using the secret bytes
-  var signatureBytes = Utilities.computeHmacSha256Signature(toSign, secretBytes);
-  var encodedSignature = Utilities.base64EncodeWebSafe(signatureBytes).replace(/=+$/, '');
-  
-  return encodedHeader + "." + encodedPayload + "." + encodedSignature;
+/**
+ * Helper function: Converts a hex string into an array of numbers (bytes)
+ */
+function hexToBytes(hex) {
+  var bytes = [];
+  for (var i = 0; i < hex.length; i += 2) {
+    bytes.push(parseInt(hex.substr(i, 2), 16));
+  }
+  return bytes;
 }
 
 /**
