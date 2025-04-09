@@ -112,7 +112,7 @@ function publishToGhost(fileId, folderId, fileName) {
 function sendPromptEmail(prompt) {
   try {
     const props = PropertiesService.getScriptProperties();
-    const timeZone = props.getProperty('TIME_ZONE') || 'America/New_York'; // Default to Eastern Time if not set
+    const timeZone = props.getProperty('TIME_ZONE') || TIME_ZONE ||'America/New_York'; // Default to Eastern Time if not set
     
     // Validate the time zone
     if (!timeZone || typeof timeZone !== 'string') {
