@@ -13,6 +13,7 @@ function publishToGhost(fileId, folderId, fileName) {
         const ghostApiUrl = props.getProperty('GHOST_API_URL') || 'https://market-pulse-daily.ghost.io';
         const ghostAdminApiKey = props.getProperty('GHOST_ADMIN_API_KEY') || '67f553a7f41c9900013e1fbe:36fe3da206f1ebb61643868fffca951da8ce9571521c1e8f853aadffe2f56e2e';
         const ghostAuthorId = props.getProperty('GHOST_AUTHOR_ID') || null;
+        const isDebugMode = props.getProperty('DEBUG_MODE') === 'true';
 
         // Get current time in ET
         const now = new Date();
@@ -30,6 +31,7 @@ function publishToGhost(fileId, folderId, fileName) {
         Logger.log('Raw Admin API Key: ' + ghostAdminApiKey);
         Logger.log('Raw Author ID: ' + ghostAuthorId);
         Logger.log('Content Type: ' + (isPremiumContent ? 'Premium (Paid-members only)' : 'Standard (Members only)'));
+        Logger.log('Debug Mode: ' + isDebugMode);
 
         // Set configuration
         const config = {
@@ -52,7 +54,7 @@ function publishToGhost(fileId, folderId, fileName) {
         const postPayload = {
           title: title,
           lexical: JSON.stringify(formattedContent),
-          status: "published",
+          status: isDebugMode ? "draft" : "published",
           tags: tags,
           access: isPremiumContent ? "paid-members-only" : "members-only"
         };
@@ -63,6 +65,14 @@ function publishToGhost(fileId, folderId, fileName) {
 
         // Log the payload (for debugging)
         Logger.log('Post Payload: ' + JSON.stringify(postPayload, null, 2));
+
+        if (isDebugMode) {
+          Logger.log('Debug mode enabled - saving post as draft');
+          return {
+            status: 'draft',
+            message: 'Post saved as draft in debug mode'
+          };
+        }
 
         // Generate JWT token
         const token = generateGhostJWT(config.apiKey);
