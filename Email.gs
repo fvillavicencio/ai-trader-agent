@@ -112,8 +112,16 @@ function publishToGhost(fileId, folderId, fileName) {
 function sendPromptEmail(prompt) {
   try {
     const props = PropertiesService.getScriptProperties();
+    const timeZone = props.getProperty('TIME_ZONE') || 'America/New_York'; // Default to Eastern Time if not set
+    
+    // Validate the time zone
+    if (!timeZone || typeof timeZone !== 'string') {
+      Logger.log('Invalid or missing time zone configuration, defaulting to America/New_York');
+      timeZone = 'America/New_York';
+    }
+
     const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, props.getProperty('TIME_ZONE'), "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+    const formattedDate = Utilities.formatDate(currentDate, timeZone, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
     // Create HTML email template
     const htmlBody = `
