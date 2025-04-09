@@ -46,12 +46,12 @@ function publishToGhost(fileId, folderId, fileName) {
         const formattedContent = formatContentForGhost(htmlContent);
         
         // Build the post payload
-        const title = `Market Pulse Daily: ${Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "EEEE, MMMM d, yyyy")}`;
+        const title = generateEngagingTitle();
         const postPayload = {
           title: title,
           lexical: JSON.stringify(formattedContent),
           status: "published",
-          tags: ["Market Analysis", "Daily Update"]
+          tags: ["Market Insights", "Daily Update", "Market Pulse"]
         };
 
         if (config.authorId) {
@@ -233,6 +233,39 @@ function publishToGhost(fileId, folderId, fileName) {
           ]
         }
       };
+    }
+
+    /**
+     * Generates an engaging market-related title with a timestamp
+     * @returns {string} The formatted title
+     */
+    function generateEngagingTitle() {
+      const now = new Date();
+      const time = Utilities.formatDate(now, Session.getScriptTimeZone(), "h:mm a z");
+      const date = Utilities.formatDate(now, Session.getScriptTimeZone(), "MMMM d, yyyy");
+      
+      // Array of engaging market phrases
+      const marketPhrases = [
+        "Market Pulse - ",
+        "Market Whisper - ",
+        "Market Musings - ",
+        "Market Rhythms - ",
+        "Market Beats - ",
+        "Market Insights - ",
+        "Market Signals - ",
+        "Market Watch - ",
+        "Market Movements - ",
+        "Market Currents - "
+      ];
+      
+      // Randomly select a phrase
+      const phrase = marketPhrases[Math.floor(Math.random() * marketPhrases.length)];
+      
+      // Add a random emoji for engagement
+      const emojis = ["📊", "📈", "📉", "💰", "🔍", "🎯", "💡", "⚡", "💫", "🌟"];
+      const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+      
+      return `${phrase}${date} ${time} ${emoji}`;
     }
 
     /**

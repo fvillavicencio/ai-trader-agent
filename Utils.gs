@@ -394,7 +394,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
         <!-- Header -->
         <div style="text-align: center; margin-bottom: 25px;">
           <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${NEWSLETTER_NAME}</h1>
-          <p style="color: #7f8c8d; margin: 5px 0 0;">Generated on ${formattedAnalysisTime}</p>
+          <p style="color: #7f8c8d; margin: 5px 0 0;">As of ${formattedAnalysisTime}</p>
           ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
         </div>
         
@@ -715,14 +715,17 @@ function generateMarketIndicatorsSection(analysis) {
             const eventSource = event.source;
             
             return `
-            <div style="display: flex; flex-direction: column; gap: 4px; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #2196f3;">
-              <div style="display: flex; align-items: center;">
-                <div style="min-width: 150px; font-weight: bold; color: #2196f3; padding-right: 15px;">${event.date}</div>
-                <div style="flex: 1; padding: 0 15px;">
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="flex: 1; margin-right: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #2196f3; color: white; line-height: 1.2;">${event.date}</div>
+                <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #2196f3; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
                   <div style="font-weight: bold;">${eventName}</div>
                   <div style="font-size: 12px; color: #666;">${eventSource}</div>
                 </div>
-                <div style="color: #666; font-size: 12px; padding-left: 15px;">${values ? `(${values})` : ''}</div>
+              </div>
+              <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px; margin-right: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">${period}Values</div>
+                <div style="color: #555; font-size: 14px;">${values}</div>
               </div>
             </div>
             `;
