@@ -51,7 +51,7 @@ function publishToGhost(fileId, folderId, fileName) {
           title: title,
           lexical: JSON.stringify(formattedContent),
           status: "published",
-          tags: ["Market Insights", "Daily Update", "Market Pulse"]
+          tags: [NEWSLETTER_NAME, "Market Insights", "Daily Update", "Market Pulse"]
         };
 
         if (config.authorId) {
@@ -216,6 +216,10 @@ function publishToGhost(fileId, folderId, fileName) {
      * Formats the content for Ghost.
      */
     function formatContentForGhost(html) {
+      // Remove the title from the content
+      const titleRegex = /<h1[^>]*>Market Pulse Daily[^<]*<\/h1>/i;
+      let contentWithoutTitle = html.replace(titleRegex, '');
+      
       // Add CSS styles to reduce font sizes
       const styles = `
         <style>
@@ -237,7 +241,7 @@ function publishToGhost(fileId, folderId, fileName) {
       `;
 
       // Wrap the content with our styles
-      const styledHtml = `${styles}${html}`;
+      const styledHtml = `${styles}${contentWithoutTitle}`;
       
       // Convert HTML to Lexical format
       return {
@@ -269,16 +273,16 @@ function publishToGhost(fileId, folderId, fileName) {
       
       // Array of engaging market phrases
       const marketPhrases = [
-        "Market Pulse - ",
-        "Market Whisper - ",
-        "Market Musings - ",
-        "Market Rhythms - ",
-        "Market Beats - ",
-        "Market Insights - ",
-        "Market Signals - ",
-        "Market Watch - ",
-        "Market Movements - ",
-        "Market Currents - "
+        "Market Currents",
+        "Market Pulse",
+        "Market Whisper",
+        "Market Musings",
+        "Market Rhythms",
+        "Market Beats",
+        "Market Insights",
+        "Market Signals",
+        "Market Watch",
+        "Market Movements"
       ];
       
       // Randomly select a phrase
@@ -288,7 +292,8 @@ function publishToGhost(fileId, folderId, fileName) {
       const emojis = ["📊", "📈", "📉", "💰", "🔍", "🎯", "💡", "⚡", "💫", "🌟"];
       const emoji = emojis[Math.floor(Math.random() * emojis.length)];
       
-      return `${phrase}${date} ${time} ${emoji}`;
+      // Format the title with emoji after the name
+      return `${phrase} ${emoji} - ${date} ${time}`;
     }
 
     /**
