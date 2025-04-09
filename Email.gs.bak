@@ -47,7 +47,13 @@ function sendTradeDecisionEmail(analysisJson) {
       
       // Publish to Ghost
       try {
-        const ghostResult = publishToGhost(file.getId(), folder.getId(), fileName);
+        Logger.log("Publishing to Ghost...");
+        const ghostResult = GhostPublisher.runGhostPublisher({
+          fileId: file.getId(),
+          folderId: folder.getId(),
+          fileName: fileName
+        });
+        Logger.log("Ghost publishing result:", JSON.stringify(ghostResult, null, 2));
       } catch (error) {
         Logger.log("Error publishing to Ghost:", error.toString());
         throw error;
@@ -77,30 +83,6 @@ function sendTradeDecisionEmail(analysisJson) {
     Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
     sendErrorEmail("Trade Decision Email Error", error.toString());
     return false;
-  }
-}
-
-/**
- * Publishes the HTML content to Ghost CMS
- * 
- * @param {string} fileId - The ID of the HTML file in Google Drive
- * @param {string} folderId - The ID of the folder containing the HTML file
- * @param {string} fileName - The name of the HTML file
- * @return {Object} The result of the Ghost publishing operation
- */
-function publishToGhost(fileId, folderId, fileName) {
-  try {
-    Logger.log("Publishing to Ghost...");
-    const ghostResult = GhostPublisher.runGhostPublisher({
-      fileId: fileId,
-      folderId: folderId,
-      fileName: fileName
-    });
-    Logger.log("Ghost publishing result:", JSON.stringify(ghostResult, null, 2));
-    return ghostResult;
-  } catch (error) {
-    Logger.log("Error publishing to Ghost:", error.toString());
-    throw error;
   }
 }
 
@@ -395,7 +377,8 @@ function sendEmail(subject, htmlBody, recipient, isTest = false) {
         result = GmailApp.sendEmail(finalRecipient, subject, '', {
           htmlBody: htmlBody,
           name: props.getProperty('NEWSLETTER_NAME'),
-          replyTo: Session.getEffectiveUser().getEmail()
+          replyTo: Session.getEffectiveUser().getEmail(),
+          timeZone: TIME_ZONE  // Set to Eastern Time
         });
         break;
       } catch (sendError) {

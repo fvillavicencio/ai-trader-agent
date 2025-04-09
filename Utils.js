@@ -394,7 +394,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
         <!-- Header -->
         <div style="text-align: center; margin-bottom: 25px;">
           <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${NEWSLETTER_NAME}</h1>
-          <p style="color: #7f8c8d; margin: 5px 0 0;">Generated on ${formattedAnalysisTime}</p>
+          <p style="color: #7f8c8d; margin: 5px 0 0;">As of ${formattedAnalysisTime}</p>
           ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
         </div>
         
@@ -430,17 +430,16 @@ function generateEmailTemplate(analysisResult, isTest = false) {
         <!-- Footer -->
         <div style="background-color: #1a365d; padding: 20px; text-align: center; color: white; border-radius: 6px;">
           <p style="margin: 0; font-size: 14px;">${NEWSLETTER_NAME} - Professional Trading Insights</p>
-          <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().getFullYear()} ${NEWSLETTER_NAME}</p>
+          <p style="margin: 5px 0 0 0; font-size: 12px;">© ${new Date().getFullYear()} ${NEWSLETTER_NAME}. All rights reserved.</p>
           <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaaaaa;">
-            This email contains information based on market data and analysis algorithms. 
-            It is not financial advice. Always conduct your own research before making investment decisions.
+            Disclaimer: The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.
           </p>
         </div>
       </div>
     </body>
     </html>`;
     
-    Logger.log('Generated Email Template:\n' + html);
+    Logger.log('Generated Email Template:\n');
     return html;
   } catch (error) {
     Logger.log("Error generating email template: " + error);
@@ -478,8 +477,8 @@ function generateMarketSentimentSection(analysis) {
           : '';
         
         return `
-          <div style="padding: 15px 0; border-top: 1px solid #e0e0e0;">
-            <div style="font-weight: bold; margin-bottom: 8px;">${analyst.analyst || 'Unknown Analyst'}</div>
+          <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">${analyst.analyst || 'Unknown Analyst'}</div>
             <div style="font-style: italic; margin-bottom: 5px;">"${analyst.comment || 'No comment'}"</div>
             ${symbolsHtml}
             ${source}
@@ -533,13 +532,80 @@ function generateMarketSentimentSection(analysis) {
  */
 function generateMarketIndicatorsSection(analysis) {
   try {
-    const indicators = analysis.marketIndicators || {};
+    let indicators = retrieveKeyMarketIndicators() || {};
+    if (!indicators || !indicators.success) {
+      indicators = analysis.marketIndicators || {};
+    }
+    
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+    
+    if (debugMode) {
+      Logger.log("Debug mode enabled - got this indicators: " + JSON.stringify(indicators));
+    }
+    
+    // Major Indices
+    let indicesHtml = '';
+    if (indicators.majorIndices && Array.isArray(indicators.majorIndices)) {
+      indicesHtml = `
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Major Indices</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${indicators.majorIndices.map(index => {
+            const price = index.price || 'N/A';
+            const change = index.change || 0;
+            const percentChange = index.percentChange || 0;
+            const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
+            const changeIcon = percentChange >= 0 ? '↑' : '↓';
+            
+            return `
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
+              <div style="font-weight: bold; width: 200px;">${index.name}</div>
+              <div style="flex: 1; text-align: right;">${price}</div>
+              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${change.toFixed(2)} (${percentChange.toFixed(1)}%)</div>
+            </div>
+            `;
+          }).join('')}
+        </div>
+        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+          Source: ${indicators.majorIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
+        </div>
+      </div>
+      `;
+    }
+    
+    // Sector Performance
+    let sectorsHtml = '';
+    if (indicators.sectorPerformance && Array.isArray(indicators.sectorPerformance)) {
+      sectorsHtml = `
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Sector Performance</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${indicators.sectorPerformance.map(sector => {
+            const percentChange = sector.percentChange || 0;
+            const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
+            const changeIcon = percentChange >= 0 ? '↑' : '↓';
+            
+            return `
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
+              <div style="font-weight: bold; width: 200px;">${sector.name}</div>
+              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${percentChange.toFixed(1)}%</div>
+            </div>
+            `;
+          }).join('')}
+        </div>
+        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+          Source: ${indicators.sectorPerformance[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.sectorPerformance[0]?.timestamp)}
+        </div>
+      </div>
+      `;
+    }
     
     // Fear & Greed Index
     let fearGreedHtml = '';
-    if (indicators.fearGreedIndex) {
-      const fgValue = indicators.fearGreedIndex.value || 50;
-      const fgInterpretation = indicators.fearGreedIndex.interpretation || 
+    if (indicators.fearAndGreedIndex && !indicators.fearAndGreedIndex.error) {
+      const fgValue = indicators.fearAndGreedIndex.currentValue || 50;
+      const fgInterpretation = indicators.fearAndGreedIndex.rating || 
         (fgValue <= 25 ? 'Extreme Fear' : 
          fgValue <= 40 ? 'Fear' : 
          fgValue <= 60 ? 'Neutral' : 
@@ -572,46 +638,97 @@ function generateMarketIndicatorsSection(analysis) {
         </div>
         
         <div style="font-size: 14px; color: #555; margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid ${fgColor};">
-          <span style="font-weight: bold;">${fgInterpretation}:</span> <span>${indicators.fearGreedIndex.description || 'Market sentiment indicator based on various market factors.'}</span>
+          <span style="font-weight: bold;">${fgInterpretation}:</span> <span>${indicators.fearAndGreedIndex.analysis || 'Market sentiment indicator based on various market factors.'}</span>
         </div>
         
         <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.fearGreedIndex.source || 'CNN'} (${indicators.fearGreedIndex.sourceUrl || 'N/A'}), as of ${formatDate(indicators.fearGreedIndex.lastUpdated)}
+          Source: ${indicators.fearAndGreedIndex.source || 'CNN'} (${indicators.fearAndGreedIndex.sourceUrl || 'N/A'}), as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
         </div>
       </div>
       `;
     }
     
-    // VIX Volatility Index
+    // Volatility Indices
     let vixHtml = '';
-    if (indicators.vix) {
-      const vixValue = indicators.vix.value || 'N/A';
-      const vixTrend = indicators.vix.trend || 'Stable';
-      const vixColor = vixValue >= 30 ? '#f44336' : 
-                       vixValue >= 20 ? '#ff9800' : 
-                       '#4caf50';
-      
-      const trendIcon = vixTrend.toLowerCase().includes('rising') ? '↑' :
-                        vixTrend.toLowerCase().includes('falling') ? '↓' : '→';
-      
-      const trendColor = vixTrend.toLowerCase().includes('rising') ? '#f44336' :
-                         vixTrend.toLowerCase().includes('falling') ? '#4caf50' : '#757575';
-      
+    if (indicators.volatilityIndices && Array.isArray(indicators.volatilityIndices)) {
       vixHtml = `
-      <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
-        <div style="display: flex; align-items: center; margin-bottom: 5px;">
-          <div style="font-weight: bold; margin-right: 10px; font-size: 1.3em;">VIX: ${vixValue}</div>
-          <div style="color: ${trendColor}; font-weight: bold; font-size: 1.69em;">
-            <span style="background-color: ${trendColor}; color: white; padding: 2px 6px; border-radius: 3px;">${trendIcon} ${vixTrend}</span>
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Volatility Indices</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${indicators.volatilityIndices.map(vix => {
+            const vixValue = vix.value || 'N/A';
+            const vixTrend = vix.trend || 'Stable';
+            const vixColor = vixValue >= 30 ? '#f44336' : 
+                           vixValue >= 20 ? '#ff9800' : 
+                           '#4caf50';
+            
+            const trendIcon = vixTrend.toLowerCase().includes('rising') ? '↑' :
+                            vixTrend.toLowerCase().includes('falling') ? '↓' : '→';
+            
+            const trendColor = vixTrend.toLowerCase().includes('rising') ? '#f44336' :
+                            vixTrend.toLowerCase().includes('falling') ? '#4caf50' : '#757575';
+            
+            return `
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${vixColor};">
+              <div style="font-weight: bold; width: 200px;">${vix.name}</div>
+              <div style="flex: 1; text-align: right;">${vixValue}</div>
+              <div style="color: ${trendColor}; font-weight: bold; margin-left: 10px;">${trendIcon} ${vixTrend}</div>
             </div>
-          </div>
-        
-        <div style="font-size: 14px; color: #555; margin-top: 10px;">
-          ${indicators.vix.interpretation || 'Volatility indicator showing market fear and uncertainty.'}
+            `;
+          }).join('')}
         </div>
-        
         <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.vix.source || 'CBOE'} (${indicators.vix.sourceUrl || 'N/A'}), as of ${formatDate(indicators.vix.lastUpdated)}
+          Source: ${indicators.volatilityIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.volatilityIndices[0]?.timestamp)}
+        </div>
+      </div>
+      `;
+    }
+
+    // Upcoming Economic Events
+    let eventsHtml = '';
+    if (indicators.upcomingEconomicEvents && Array.isArray(indicators.upcomingEconomicEvents) && indicators.upcomingEconomicEvents.length > 0) {
+      // Sort events by date
+      const sortedEvents = [...indicators.upcomingEconomicEvents].sort((a, b) => {
+        const dateA = parseEconomicEventDate(a.date);
+        const dateB = parseEconomicEventDate(b.date);
+        
+        // Log for debugging
+        Logger.log(`Comparing dates: ${a.date} (${dateA.getTime()}) vs ${b.date} (${dateB.getTime()})`);
+        
+        return dateA.getTime() - dateB.getTime();
+      });
+
+      eventsHtml = `
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Upcoming Events</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          ${sortedEvents.map(event => {
+            const actual = (event.actual && event.actual !== 'N/A') ? `Actual: ${event.actual}` : '';
+            const forecast = (event.forecast && event.forecast !== 'N/A') ? `Forecast: ${event.forecast}` : '';
+            const previous = (event.previous && event.previous !== 'N/A') ? `Previous: ${event.previous}` : '';
+            const period = event.period ? `${event.period} ` : '';
+            const values = [actual, forecast, previous].filter(Boolean).join(', ');
+            
+            // Use the separate event and source fields
+            const eventName = event.event;
+            const eventSource = event.source;
+            
+            return `
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="flex: 1; margin-right: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #2196f3; color: white; line-height: 1.2;">${event.date}</div>
+                <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #2196f3; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                  <div style="font-weight: bold;">${eventName}</div>
+                  <div style="font-size: 12px; color: #666;">${eventSource}</div>
+                </div>
+              </div>
+              <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px; margin-right: 10px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">${period}Values</div>
+                <div style="color: #555; font-size: 14px;">${values}</div>
+              </div>
+            </div>
+            `;
+          }).join('')}
         </div>
       </div>
       `;
@@ -628,8 +745,11 @@ function generateMarketIndicatorsSection(analysis) {
     <div class="section">
       <h2>Key Market Indicators</h2>
       <div style='margin-top: 15px;'>
+        ${indicesHtml}
+        ${sectorsHtml}
         ${fearGreedHtml}
         ${vixHtml}
+        ${eventsHtml}
         ${sourceInfo}
       </div>
     </div>
@@ -733,7 +853,7 @@ function generateFundamentalMetricsSection(analysis) {
                       </div>
                       
                       <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
-                        ${createMetricItem('Market Cap', stock.marketCap, 'B')}
+                        ${createMetricItem('Market Cap', `$${formatLargeNumber(stock.marketCap)}`)}
                         ${createMetricItem('P/E Ratio', stock.peRatio)}
                         ${createMetricItem('Forward PE', stock.forwardPE)}
                         ${createMetricItem('PEG Ratio', stock.pegRatio)}
@@ -1155,6 +1275,26 @@ function formatValue(value, decimals = 2) {
 }
 
 /**
+ * Helper function to format large numbers with suffixes (T, B, M)
+ * @param {Number} value - The number to format
+ * @return {String} Formatted number with suffix
+ */
+function formatLargeNumber(value) {
+  if (!value || value === 'N/A') return 'N/A';
+  
+  if (typeof value === 'string') {
+    value = parseFloat(value.replace(/[^\d.-]+/g, ''));
+  }
+  
+  if (isNaN(value)) return 'N/A';
+  
+  if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
+  if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+  if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+  return value.toFixed(2);
+}
+
+/**
  * Helper function to generate the Macroeconomic Factors section with real data
  * @return {String} HTML for the macroeconomic factors section
  */
@@ -1189,3 +1329,52 @@ function formatNumberWithSuffix(value, suffix = '') {
   
   return value.toFixed(2);
 }
+
+/**
+ * Parse a date string in the format "Apr 10, 2025, 8:30 AM EDT" into a Date object
+ * @param {string} dateString - The date string to parse
+ * @return {Date} The parsed date
+ */
+function parseEconomicEventDate(dateString) {
+  try {
+    // Remove timezone (EDT) as it's not needed for sorting
+    const dateStr = dateString.replace(/ EDT$/, '');
+    
+    // Extract date parts
+    const parts = dateStr.split(',');
+    const datePart = parts[0].trim();
+    const timePart = parts[1].trim();
+    
+    // Extract month, day, and year
+    const [month, day, year] = datePart.split(' ').filter(Boolean);
+    
+    // Create date string in ISO format
+    const dateStrIso = `${year}-${monthToNum[month]}-${day}T${timePart}:00-04:00`;
+    
+    // Parse the date
+    const date = new Date(dateStrIso);
+    
+    // Log for debugging
+    Logger.log(`Parsed date: ${dateStr} -> ${date.toISOString()}`);
+    
+    return date;
+  } catch (e) {
+    Logger.log(`Error parsing date: ${dateString}, error: ${e}`);
+    return new Date();
+  }
+}
+
+const monthToNum = {
+  'Jan': 1,
+  'Feb': 2,
+  'Mar': 3,
+  'Apr': 4,
+  'May': 5,
+  'Jun': 6,
+  'Jul': 7,
+  'Aug': 8,
+  'Sep': 9,
+  'Oct': 10,
+  'Nov': 11,
+  'Dec': 12
+};

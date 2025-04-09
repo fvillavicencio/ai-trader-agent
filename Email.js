@@ -1,12 +1,119 @@
 /**
+ * Sends the trade decision email and saves the HTML to Google Drive
+ * 
+ * @param {Object} analysisJson - The analysis result JSON object
+ * @return {Boolean} Success status
+ */
+function sendTradeDecisionEmail(analysisJson) {
+  try {
+    Logger.log("Preparing to send trade decision email...");
+    
+    // Generate the HTML email content using the function from Utils.gs
+    const htmlContent = generateEmailTemplate(analysisJson, false);
+    
+    // Save the HTML to Google Drive
+    try {
+      Logger.log("Saving HTML email to Google Drive...");
+      
+      // Get folder name from properties
+      const props = PropertiesService.getScriptProperties();
+      const folderName = props.getProperty('GOOGLE_FOLDER_NAME');
+      const fileName = props.getProperty('GOOGLE_FILE_NAME');
+      
+      // Find or create the folder
+      let folder;
+      const folderIterator = DriveApp.getFoldersByName(folderName);
+      
+      if (folderIterator.hasNext()) {
+        folder = folderIterator.next();
+        Logger.log(`Found existing folder: ${folderName}`);
+      } else {
+        folder = DriveApp.createFolder(folderName);
+        Logger.log(`Created new folder: ${folderName}`);
+      }
+      
+      // Create or update the file
+      let file;
+      const fileIterator = folder.getFilesByName(fileName);
+      
+      if (fileIterator.hasNext()) {
+        file = fileIterator.next();
+        Logger.log(`Found existing file: ${fileName}`);
+        file.setContent(htmlContent);
+      } else {
+        file = folder.createFile(fileName, htmlContent);
+        Logger.log(`Created new file: ${fileName}`);
+      }
+      
+      // Publish to Ghost
+      try {
+        const ghostResult = publishToGhost(file.getId(), folder.getId(), fileName);
+      } catch (error) {
+        Logger.log("Error publishing to Ghost:", error.toString());
+        throw error;
+      }
+      
+      Logger.log("Email content saved successfully to Google Drive and published to Ghost");
+    } catch (error) {
+      Logger.log("Error saving HTML to Google Drive:", error.toString());
+      throw error;
+    }
+    
+    // Get the final recipients from Config.gs
+    const recipients = getEmailRecipients();
+    
+    // Send the email to each recipient
+    let allSuccessful = true;
+    for (const recipient of recipients) {
+        const success = sendTradingAnalysisEmail(recipient, analysisJson, false);
+        if (!success) {
+          allSuccessful = false;
+          Logger.log(`Failed to send email to recipient: ${recipient}`);
+        }
+    }
+    Logger.log("Trade decision email process completed.");
+    return allSuccessful;
+  } catch (error) {
+    Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
+    sendErrorEmail("Trade Decision Email Error", error.toString());
+    return false;
+  }
+}
+
+/**
+ * Publishes the HTML content to Ghost CMS
+ * 
+ * @param {string} fileId - The ID of the HTML file in Google Drive
+ * @param {string} folderId - The ID of the folder containing the HTML file
+ * @param {string} fileName - The name of the HTML file
+ * @return {Object} The result of the Ghost publishing operation
+ */
+function publishToGhost(fileId, folderId, fileName) {
+  try {
+    Logger.log("Publishing to Ghost...");
+    const ghostResult = GhostPublisher.runGhostPublisher({
+      fileId: fileId,
+      folderId: folderId,
+      fileName: fileName
+    });
+    Logger.log("Ghost publishing result:", JSON.stringify(ghostResult, null, 2));
+    return ghostResult;
+  } catch (error) {
+    Logger.log("Error publishing to Ghost:", error.toString());
+    throw error;
+  }
+}
+
+/**
  * Sends an email with the generated OpenAI prompt
  * 
  * @param {string} prompt - The prompt that will be sent to OpenAI
  */
 function sendPromptEmail(prompt) {
   try {
+    const props = PropertiesService.getScriptProperties();
     const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+    const formattedDate = Utilities.formatDate(currentDate, props.getProperty('TIME_ZONE'), "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
     // Create HTML email template
     const htmlBody = `
@@ -91,7 +198,7 @@ ${prompt}
     </div>
     
     <div class="footer">
-      <p>${NEWSLETTER_NAME}</p>
+      <p>${props.getProperty('NEWSLETTER_NAME')}</p>
       <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>
@@ -102,7 +209,7 @@ ${prompt}
     const subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, false); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, props.getProperty('TEST_EMAIL'), false); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send prompt email: ${emailResult.error}`);
@@ -124,8 +231,9 @@ ${prompt}
  */
 function sendErrorEmail(subject, errorMessage) {
   try {
+    const props = PropertiesService.getScriptProperties();
     const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
+    const formattedDate = Utilities.formatDate(currentDate, props.getProperty('TIME_ZONE'), "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
     // Create HTML email template
     const htmlBody = `
@@ -134,7 +242,7 @@ function sendErrorEmail(subject, errorMessage) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${NEWSLETTER_NAME} - Error</title>
+  <title>${props.getProperty('NEWSLETTER_NAME')} - Error</title>
   <style>
     body {
       font-family: 'Segoe UI', Arial, sans-serif;
@@ -222,7 +330,7 @@ ${errorMessage}
     </div>
     
     <div class="footer">
-      <p>  ${NEWSLETTER_NAME}</p>
+      <p>  ${props.getProperty('NEWSLETTER_NAME')}</p>
       <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>
@@ -231,7 +339,7 @@ ${errorMessage}
     `;
     
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, true); // Always send as test email
+    const emailResult = sendEmail(subject, htmlBody, props.getProperty('TEST_EMAIL'), true); // Always send as test email
     
     if (!emailResult.success) {
       throw new Error(`Failed to send error email: ${emailResult.error}`);
@@ -255,26 +363,22 @@ ${errorMessage}
  * 
  * @param {string} subject - The email subject
  * @param {string} htmlBody - The HTML body of the email
+ * @param {string} recipient - The email address of the recipient
  * @param {boolean} isTest - Whether this is a test email
  * @return {Object} - The result of the email sending operation
  */
-function sendEmail(subject, htmlBody, isTest = false) {
+function sendEmail(subject, htmlBody, recipient, isTest = false) {
   try {
-    // Get user email from script properties
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const userEmail = scriptProperties.getProperty('USER_EMAIL') || Session.getEffectiveUser().getEmail();
-    
-    // Check if DEBUG_MODE is enabled
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-    
+    const props = PropertiesService.getScriptProperties();
     // Get the test email address and validate it
-    const testEmail = TEST_EMAIL || userEmail;
+    const testEmail = props.getProperty('TEST_EMAIL');
     if (!testEmail || !testEmail.includes('@')) {
       throw new Error('Invalid test email address configured');
     }
     
-    // Determine the recipient based on debug mode
-    const recipient = debugMode ? testEmail : userEmail;
+    // Determine the recipient based on test mode
+    const finalRecipient = isTest ? testEmail : recipient;
+    Logger.log(`Sending email to ${finalRecipient}`);
     
     // Add test prefix if needed
     if (isTest) {
@@ -288,9 +392,9 @@ function sendEmail(subject, htmlBody, isTest = false) {
     
     while (retryCount < maxRetries) {
       try {
-        result = GmailApp.sendEmail(recipient, subject, '', {
+        result = GmailApp.sendEmail(finalRecipient, subject, '', {
           htmlBody: htmlBody,
-          name: NEWSLETTER_NAME,
+          name: props.getProperty('NEWSLETTER_NAME'),
           replyTo: Session.getEffectiveUser().getEmail()
         });
         break;
@@ -299,30 +403,30 @@ function sendEmail(subject, htmlBody, isTest = false) {
         if (retryCount >= maxRetries) {
           throw sendError;
         }
-        Logger.log(`Email send attempt ${retryCount} failed for ${recipient}: ${sendError}. Retrying...`);
+        Logger.log(`Email send attempt ${retryCount} failed for ${finalRecipient}: ${sendError}. Retrying...`);
         Utilities.sleep(5000); // Wait 5 seconds between retries
       }
     }
     
-    Logger.log(`Email sent successfully to ${recipient}`);
+    Logger.log(`Email sent successfully to ${finalRecipient}`);
     return {
       success: true,
       result: result,
-      recipient: recipient
+      recipient: finalRecipient
     };
   } catch (error) {
     const errorMessage = `Failed to send email to ${recipient}: ${error}`;
     Logger.log(errorMessage);
     
     // Try to send the error to the test email as a fallback
-    if (recipient !== testEmail) {
+    if (recipient !== props.getProperty('TEST_EMAIL')) {
       try {
-        GmailApp.sendEmail(testEmail, `Email Sending Failed - ${subject}`, 
+        GmailApp.sendEmail(props.getProperty('TEST_EMAIL'), `Email Sending Failed - ${subject}`, 
           `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`, {
             htmlBody: `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`,
-            name: NEWSLETTER_NAME
+            name: props.getProperty('NEWSLETTER_NAME')
           });
-        Logger.log(`Error notification sent to test email ${testEmail}`);
+        Logger.log(`Error notification sent to test email ${props.getProperty('TEST_EMAIL')}`);
       } catch (fallbackError) {
         Logger.log(`Failed to send error notification to test email: ${fallbackError}`);
       }
@@ -361,6 +465,8 @@ function generateHtmlFromAnalysisJson(analysisJson, nextScheduledTime, isTest = 
  */
 function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest = false) {
   try {
+    Logger.log(`Sending trading analysis email to: ${recipient}`);
+    
     // Extract data from analysis result
     const decision = analysisJson.decision || 'No Decision';
     const analysis = analysisJson.analysis || {};
@@ -376,7 +482,7 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
     const htmlBody = generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
 
     // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, isTest);
+    const emailResult = sendEmail(subject, htmlBody, recipient, isTest);
     
     if (!emailResult.success) {
       throw new Error(`Failed to send trading analysis email: ${emailResult.error}`);
@@ -397,6 +503,7 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
  */
 function sendTestTradingAnalysisEmail(analysisJson) {
   try {
+    const props = PropertiesService.getScriptProperties();
     const userEmail = Session.getEffectiveUser().getEmail();
     const nextScheduledTime = new Date();
     nextScheduledTime.setDate(nextScheduledTime.getDate() + 1); // Next day
@@ -417,113 +524,25 @@ function sendTestTradingAnalysisEmail(analysisJson) {
  * @return {String} HTML email content
  */
 function formatAndSendAnalysisEmail(analysisJson, nextScheduledTime, isTest = false) {
-  // Get user email from script properties
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const userEmail = scriptProperties.getProperty('USER_EMAIL') || Session.getEffectiveUser().getEmail();
-  
-  // Send the email
-  sendTradingAnalysisEmail(userEmail, analysisJson, nextScheduledTime, isTest);
-  
-  // Return the HTML content for logging or debugging
-  return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
-}
-
-/**
- * Sends the trade decision email and saves the HTML to Google Drive
- * 
- * @param {Object} analysisJson - The analysis result JSON object
- * @return {Boolean} Success status
- */
-function sendTradeDecisionEmail(analysisJson) {
   try {
-    Logger.log("Preparing to send trade decision email...");
-    
-    // Generate the HTML email content using the function from Utils.gs
-    const htmlContent = generateEmailTemplate(analysisJson, false);
-    
-    // Save the HTML to Google Drive
-    try {
-      Logger.log("Saving HTML email to Google Drive...");
-      
-      // Use a generic filename that will be overwritten each time
-      const fileName = "Latest_Trading_Analysis.html";
-      
-      // Find or create the "Trading Analysis Emails" folder
-      let folder;
-      const folderName = "Trading Analysis Emails";
-      const folderIterator = DriveApp.getFoldersByName(folderName);
-      
-      if (folderIterator.hasNext()) {
-        folder = folderIterator.next();
-        Logger.log(`Found existing folder: ${folderName}`);
-      } else {
-        folder = DriveApp.createFolder(folderName);
-        Logger.log(`Created new folder: ${folderName}`);
-      }
-      
-      // Check if the file already exists and delete it
-      const existingFiles = folder.getFilesByName(fileName);
-      if (existingFiles.hasNext()) {
-        existingFiles.next().setTrashed(true);
-        Logger.log(`Deleted existing file: ${fileName}`);
-      }
-      
-      // Create the file in the folder
-      const file = folder.createFile(fileName, htmlContent, MimeType.HTML);
-      Logger.log(`HTML email saved to Google Drive: ${fileName}`);
-    } catch (driveError) {
-      Logger.log(`Error saving HTML to Google Drive: ${driveError}`);
-      // Continue with sending emails even if Drive save fails
-    }
-    
-    // Get the final recipients from script properties
-    const recipients = RECIPIENT_EMAILS || [Session.getEffectiveUser().getEmail()];
-    
-    // Check if DEBUG_MODE is enabled
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+    // Get the recipients
+    const recipients = getEmailRecipients();
+    Logger.log(`Sending trading analysis email to ${recipients.length} recipients: ${recipients.join(', ')}`);
     
     // Send the email to each recipient
-    let allSuccessful = true;
-    if (debugMode) {
-      Logger.log("Debug mode enabled - skipping email sending for trade decision email");
-    } else {
-      for (const recipient of recipients) {
-        const success = sendTradingAnalysisEmail(recipient, analysisJson, false);
-        if (!success) {
-          allSuccessful = false;
-          Logger.log(`Failed to send email to recipient: ${recipient}`);
-        }
+    for (const recipient of recipients) {
+      const success = sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest);
+      if (!success) {
+        Logger.log(`Failed to send email to recipient: ${recipient}`);
+      } else {
+        Logger.log(`Successfully sent email to: ${recipient}`);
       }
-      Logger.log("Trade decision email process completed.");
-    }
-  return allSuccessful;
-  } catch (error) {
-    Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
-    sendErrorEmail("Trade Decision Email Error", error.toString());
-    return false;
-  }
-}
-
-/**
- * Gets the email recipient address from script properties
- * Falls back to the default email if not set
- * 
- * @return {string} The email address to send to
- */
-function getEmailRecipient() {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const emailAddress = scriptProperties.getProperty("EMAIL_RECIPIENT");
-    
-    // If the email address is not set, use the default
-    if (!emailAddress) {
-      return PROMPT_ERROR_EMAIL;
     }
     
-    return emailAddress;
+    // Return the HTML content for logging or debugging
+    return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
   } catch (error) {
-    Logger.log(`Error getting email recipient: ${error}`);
-    return PROMPT_ERROR_EMAIL;
+    Logger.log(`Error in formatAndSendAnalysisEmail: ${error}`);
+    throw error;
   }
 }

@@ -131,19 +131,17 @@ function getOpenAITradingAnalysis() {
     
     // Send the prompt to OpenAI
     Logger.log("Sending prompt to OpenAI...");
-    //// temporary code start
-      // Check if DEBUG_MODE is enabled
+    
+    // Check if DEBUG_MODE is enabled
     const scriptProperties = PropertiesService.getScriptProperties();
     const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
     
     if (debugMode) {
-      Logger.log("Debug mode enabled - skipping OpenAI call");
-      return {
-        success: true,
-        analysis: "This is a debug response"
-      };
+      Logger.log("Debug mode enabled - using generateDebugOpenAIResponse");
+      const debugResponse = generateDebugOpenAIResponse();
+      return debugResponse;
     }
-    //// temporary code end
+    
     const response = sendPromptToOpenAI(fullPrompt, apiKey);
     const content = extractContentFromResponse(response);
     Logger.log("Received response from OpenAI");
@@ -866,24 +864,44 @@ function getOrCreateFolder(folderName) {
  */
 function sendTradeDecisionEmail(analysisJson) {
   try {
-    // Generate the email template
-    const emailTemplate = generateEmailTemplate(analysisJson);
+    Logger.log("Preparing to send trade decision email...");
     
-    // Send the email
-    GmailApp.sendEmail(
-      EMAIL_RECIPIENT,
-      EMAIL_SUBJECT,
-      'Please view this email in a HTML-capable email client.',
-      {
-        htmlBody: emailTemplate,
-        noReply: true
-      }
+    // Retrieve key market indicators data
+    const keyMarketIndicators = retrieveKeyMarketIndicators();
+    
+    // Get the next scheduled time for the next analysis
+    const scheduleConfig = getScheduleConfig();
+    const nextScheduledTime = getNextScheduledTime(scheduleConfig);
+    
+    // Generate HTML content
+    const htmlContent = generateHtmlFromAnalysisJson(analysisJson, nextScheduledTime);
+    
+    // Save HTML to Google Drive
+    const driveResult = saveHtmlToGoogleDrive(htmlContent);
+    
+    // Publish to Ghost
+    const ghostResult = GhostPublisher.publishToGhost(
+      driveResult.fileId,
+      driveResult.folderId,
+      driveResult.fileName
     );
     
-    Logger.log('Trading decision email sent successfully');
-    return 'Email sent successfully';
+    // Send email
+    const emailResult = sendEmail(
+      "Trading Analysis - " + Utilities.formatDate(new Date(), "America/New_York", "MMM dd, yyyy"),
+      htmlContent,
+      props.getProperty('RECIPIENT_EMAILS'),
+      false
+    );
+    
+    return {
+      success: true,
+      driveResult: driveResult,
+      ghostResult: ghostResult,
+      emailResult: emailResult
+    };
   } catch (error) {
-    Logger.log('Error sending trading decision email: ' + error.message);
+    Logger.log("Error in sendTradeDecisionEmail: " + error);
     throw error;
   }
 }

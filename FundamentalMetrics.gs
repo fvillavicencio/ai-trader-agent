@@ -473,6 +473,11 @@ function fetchYahooFinanceData(symbol) {
     const response = UrlFetchApp.fetch(url, options);
     const data = JSON.parse(response.getContentText());
 
+    // Log response details for debugging
+    Logger.log(`Yahoo Finance API Response for ${symbol}:`);
+    Logger.log(`Status: ${response.getResponseCode()}`);
+    Logger.log(`Response: ${JSON.stringify(data, null, 2)}`);
+
     // Cache the data for 1 hour
     CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
     PropertiesService.getScriptProperties().setProperty(`yahoo_last_call_${symbol}`, new Date().toISOString());
@@ -480,6 +485,7 @@ function fetchYahooFinanceData(symbol) {
     return data;
   } catch (error) {
     Logger.log(`Error in fetchYahooFinanceData for ${symbol}: ${error}`);
+    Logger.log(`Error details: ${error.stack}`);
     return null;
   }
 }
@@ -505,7 +511,7 @@ function fetchTradierData(symbol) {
     }
 
     // Fetch data from Tradier
-    const url = `https://api.tradier.com/v1/markets/quotes?symbols=${symbol}`;
+    const url = `https://api.tradier.com/v2/markets/quotes?symbols=${symbol}`;
     const options = {
       method: 'GET',
       headers: {
@@ -517,12 +523,18 @@ function fetchTradierData(symbol) {
     const response = UrlFetchApp.fetch(url, options);
     const data = JSON.parse(response.getContentText());
 
+    // Log response details for debugging
+    Logger.log(`Tradier API Response for ${symbol}:`);
+    Logger.log(`Status: ${response.getResponseCode()}`);
+    Logger.log(`Response: ${JSON.stringify(data, null, 2)}`);
+
     // Cache the data for 1 hour
     CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
 
     return data;
   } catch (error) {
     Logger.log(`Error in fetchTradierData for ${symbol}: ${error}`);
+    Logger.log(`Error details: ${error.stack}`);
     return null;
   }
 }
@@ -555,12 +567,48 @@ function fetchGoogleFinanceData(symbol) {
     const response = UrlFetchApp.fetch(url, options);
     const data = JSON.parse(response.getContentText().replace(/\]/g, '').replace(/\[/g, ''));
 
+    // Log response details for debugging
+    Logger.log(`Google Finance API Response for ${symbol}:`);
+    Logger.log(`Status: ${response.getResponseCode()}`);
+    Logger.log(`Response: ${JSON.stringify(data, null, 2)}`);
+
     // Cache the data for 1 hour
     CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
 
     return data;
   } catch (error) {
     Logger.log(`Error in fetchGoogleFinanceData for ${symbol}: ${error}`);
+    Logger.log(`Error details: ${error.stack}`);
     return null;
+  }
+}
+
+/**
+ * Test function to debug API calls
+ * @param {String} symbol - The stock/ETF symbol to test
+ */
+function testApiCalls(symbol = 'AAPL') {
+  try {
+    Logger.log(`\n=== Testing API Calls for ${symbol} ===`);
+    
+    // Test Yahoo Finance
+    Logger.log('\nTesting Yahoo Finance...');
+    const yahooData = fetchYahooFinanceData(symbol);
+    Logger.log('Yahoo Finance Response:', JSON.stringify(yahooData, null, 2));
+    
+    // Test Tradier
+    Logger.log('\nTesting Tradier...');
+    const tradierData = fetchTradierData(symbol);
+    Logger.log('Tradier Response:', JSON.stringify(tradierData, null, 2));
+    
+    // Test Google Finance
+    Logger.log('\nTesting Google Finance...');
+    const googleData = fetchGoogleFinanceData(symbol);
+    Logger.log('Google Finance Response:', JSON.stringify(googleData, null, 2));
+    
+    Logger.log('\n=== API Testing Complete ===');
+  } catch (error) {
+    Logger.log(`Error in testApiCalls: ${error}`);
+    Logger.log(`Error details: ${error.stack}`);
   }
 }

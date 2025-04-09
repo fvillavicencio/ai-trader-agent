@@ -74,12 +74,12 @@ function fetchEconomicEvents() {
       return a.date - b.date;
     });
 
-    // Get the top 5 most important events
-    const topEvents = filteredEvents.slice(0, 5);
+    // Get the top 7 most important events
+    const topEvents = filteredEvents.slice(0, 7);
 
     // Format the events for output
     const formattedEvents = topEvents.map(event => {
-      const decryptedEventInfo = decryptEventInfo(event.name, event.source);
+      const decryptedEventInfo = decryptEventInfo(event.title, event.source);
       return {
         date: formatDate(event.date),
         time: formatTime(event.date),
@@ -171,76 +171,38 @@ function formatNumber(num, unit) {
  * @return {Boolean} True if event is significant
  */
 function isSignificantEvent(event) {
+  
+  // Check for important indicators
   const importantIndicators = [
+    'Retail Sales',
+    'Industrial Production',
+    'Capacity Utilization',
+    'Business Inventories',
+    'Consumer Confidence',
+    'Employment',
+    'Inflation',
+    'GDP',
+    'CPI',
+    'PPI',
+    'ISM',
+    'PMI',
+    'Jobless Claims',
+    'Housing Starts',
+    'Building Permits',
+    'New Home Sales',
+    'Existing Home Sales',
     'Consumer Spending',
     'Personal Income',
     'Trade Balance',
     'Fed Interest Rate',
-    'Fed',
+    'Fed Conf',
     'bls',
     'mba'
   ];
   
   return importantIndicators.some(indicator => 
-    event.name.toLowerCase().includes(indicator.toLowerCase())
+    event.source.toLowerCase().includes(indicator.toLowerCase())
   );
-}
-
-/**
- * Test function to run fetchEconomicEvents
- * @return {Object} Test results
- */
-function testFetchEconomicEvents() {
-  try {
-    const result = fetchEconomicEvents();
-    
-    if (result === null) {
-      throw new Error('Failed to fetch economic events');
-    }
-
-    Logger.log('Test Results:');
-    Logger.log('Total events: ' + result.length);
-    Logger.log('');
-    
-    // Log each event with a nice format
-    result.forEach((event, index) => {
-      Logger.log(`Event ${index + 1}:`);
-      Logger.log(`Date: ${event.date} ${event.time}`);
-      Logger.log(`Country: ${event.country}`);
-      Logger.log(`Event: ${event.event}`);
-      Logger.log(`Source: ${event.source}`);
-      Logger.log(`Actual: ${event.actual}`);
-      Logger.log(`Forecast: ${event.forecast}`);
-      Logger.log(`Previous: ${event.previous}`);
-      Logger.log('');
-    });
-    
-    return {
-      success: true,
-      message: 'Test completed successfully',
-      result: result
-    };
-  } catch (error) {
-    Logger.log('Test failed: ' + error);
-    return {
-      success: false,
-      message: 'Test failed: ' + error,
-      error: error
-    };
-  }
-}
-
-/**
- * Main function to run when the script is executed
- */
-function main() {
-  const testResult = testFetchEconomicEvents();
-  
-  if (testResult.success) {
-    Logger.log('Economic events fetch test passed!');
-  } else {
-    Logger.log('Economic events fetch test failed: ' + testResult.message);
-  }
 }
 
 /**
@@ -299,8 +261,12 @@ function decryptEventInfo(eventName, source) {
       source: 'U.S. Department of Labor'
     },
     'EIA Wkly Crude Stk': {
-      name: 'EIA Weekly Crude Oil Stocks',
+      name: 'Weekly Crude Oil Stocks',
       source: 'U.S. Energy Information Administration'
+    },
+    'PPI exFood/Energy MM': {
+      name: 'Producer Price Index excluding Food & Energy MoM',
+      source: 'U.S. Bureau of Labor Statistics'
     }
   };
 
@@ -314,4 +280,61 @@ function decryptEventInfo(eventName, source) {
     name: decrypted.name,
     source: decrypted.source
   };
+}
+
+/**
+ * Test function to run fetchEconomicEvents
+ * @return {Object} Test results
+ */
+function testFetchEconomicEvents() {
+  try {
+    const result = fetchEconomicEvents();
+    
+    if (result === null) {
+      throw new Error('Failed to fetch economic events');
+    }
+
+    Logger.log('Test Results:');
+    Logger.log('Total events: ' + result.length);
+    Logger.log('');
+    
+    // Log each event with a nice format
+    result.forEach((event, index) => {
+      Logger.log(`Event ${index + 1}:`);
+      Logger.log(`Date: ${event.date} ${event.time}`);
+      Logger.log(`Country: ${event.country}`);
+      Logger.log(`Event: ${event.event}`);
+      Logger.log(`Source: ${event.source}`);
+      Logger.log(`Actual: ${event.actual}`);
+      Logger.log(`Forecast: ${event.forecast}`);
+      Logger.log(`Previous: ${event.previous}`);
+      Logger.log('');
+    });
+    
+    return {
+      success: true,
+      message: 'Test completed successfully',
+      result: result
+    };
+  } catch (error) {
+    Logger.log('Test failed: ' + error);
+    return {
+      success: false,
+      message: 'Test failed: ' + error,
+      error: error
+    };
+  }
+}
+
+/**
+ * Main function to run when the script is executed
+ */
+function main() {
+  const testResult = testFetchEconomicEvents();
+  
+  if (testResult.success) {
+    Logger.log('Economic events fetch test passed!');
+  } else {
+    Logger.log('Economic events fetch test failed: ' + testResult.message);
+  }
 }

@@ -1,4 +1,10 @@
 /**
+ * Key Market Indicators Module
+ * Handles retrieval of key market indicators including major indices, sector performance, 
+ * volatility indices, and upcoming economic events
+ */
+
+/**
  * Retrieves key market indicators data
  * @return {Object} Key market indicators data
  */
@@ -1374,17 +1380,16 @@ function retrieveUpcomingEconomicEvents() {
       time: event.time || "All Day",
       country: event.country,
       event: event.event,
+      source: event.source,
+      period: event.period || "",
       actual: event.actual || "N/A",
       forecast: event.forecast || "N/A",
-      previous: event.previous || "N/A",
-      source: event.source
+      previous: event.previous || "N/A"
     }));
     
     // Create the result object
     const result = {
       events: formattedEvents,
-      //source: "RapidAPI Economic Calendar",
-      //sourceUrl: "https://rapidapi.com/", // Link to RapidAPI marketplace
       timestamp: new Date(),
       error: false
     };

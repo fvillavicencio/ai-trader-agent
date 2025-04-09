@@ -548,27 +548,25 @@ function generateMarketIndicatorsSection(analysis) {
     let indicesHtml = '';
     if (indicators.majorIndices && Array.isArray(indicators.majorIndices)) {
       indicesHtml = `
-      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Major Indices</div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${indicators.majorIndices.map(index => {
-            const price = index.price || 'N/A';
-            const change = index.change || 0;
-            const percentChange = index.percentChange || 0;
-            const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
-            const changeIcon = percentChange >= 0 ? '↑' : '↓';
-            
-            return `
-            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
-              <div style="font-weight: bold; width: 200px;">${index.name}</div>
-              <div style="flex: 1; text-align: right;">${price}</div>
-              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${change.toFixed(2)} (${percentChange.toFixed(1)}%)</div>
+      <div style="margin-bottom: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Major Indices</div>
+        <div style="display: flex; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+          ${indicators.majorIndices.map(index => `
+            <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${index.name}</div>
+              <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${formatValue(index.price)}%</div>
+              <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
             </div>
-            `;
-          }).join('')}
+          `).join('')}
         </div>
+        
+        <div style="margin-top: 15px; padding-left: 15px; border-left: 4px solid #FFA500;">
+          <div style="font-weight: bold; margin-bottom: 5px;">Yield Curve: ${indicators.majorIndices[0]?.yieldCurve?.status || 'N/A'}</div>
+          <div style="color: #555; font-size: 14px;">${indicators.majorIndices[0]?.yieldCurve?.analysis || 'N/A'}</div>
+        </div>
+
         <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.majorIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
+          Source: ${indicators.majorIndices[0]?.source || 'N/A'} (${indicators.majorIndices[0]?.sourceUrl || 'N/A'}), as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -578,24 +576,19 @@ function generateMarketIndicatorsSection(analysis) {
     let sectorsHtml = '';
     if (indicators.sectorPerformance && Array.isArray(indicators.sectorPerformance)) {
       sectorsHtml = `
-      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Sector Performance</div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${indicators.sectorPerformance.map(sector => {
-            const percentChange = sector.percentChange || 0;
-            const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
-            const changeIcon = percentChange >= 0 ? '↑' : '↓';
-            
-            return `
-            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
-              <div style="font-weight: bold; width: 200px;">${sector.name}</div>
-              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${percentChange.toFixed(1)}%</div>
+      <div style="margin-bottom: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Sector Performance</div>
+        <div style="display: flex; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+          ${indicators.sectorPerformance.map(sector => `
+            <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${sector.name}</div>
+              <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${formatValue(sector.percentChange)}%</div>
+              <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
             </div>
-            `;
-          }).join('')}
+          `).join('')}
         </div>
         <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.sectorPerformance[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.sectorPerformance[0]?.timestamp)}
+          Source: ${indicators.sectorPerformance[0]?.source || 'N/A'} (${indicators.sectorPerformance[0]?.sourceUrl || 'N/A'}), as of ${formatDate(indicators.sectorPerformance[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -652,30 +645,16 @@ function generateMarketIndicatorsSection(analysis) {
     let vixHtml = '';
     if (indicators.volatilityIndices && Array.isArray(indicators.volatilityIndices)) {
       vixHtml = `
-      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Volatility Indices</div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${indicators.volatilityIndices.map(vix => {
-            const vixValue = vix.value || 'N/A';
-            const vixTrend = vix.trend || 'Stable';
-            const vixColor = vixValue >= 30 ? '#f44336' : 
-                           vixValue >= 20 ? '#ff9800' : 
-                           '#4caf50';
-            
-            const trendIcon = vixTrend.toLowerCase().includes('rising') ? '↑' :
-                            vixTrend.toLowerCase().includes('falling') ? '↓' : '→';
-            
-            const trendColor = vixTrend.toLowerCase().includes('rising') ? '#f44336' :
-                            vixTrend.toLowerCase().includes('falling') ? '#4caf50' : '#757575';
-            
-            return `
-            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${vixColor};">
-              <div style="font-weight: bold; width: 200px;">${vix.name}</div>
-              <div style="flex: 1; text-align: right;">${vixValue}</div>
-              <div style="color: ${trendColor}; font-weight: bold; margin-left: 10px;">${trendIcon} ${vixTrend}</div>
+      <div style="margin-bottom: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Volatility Indices</div>
+        <div style="display: flex; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+          ${indicators.volatilityIndices.map(vix => `
+            <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${vix.name}</div>
+              <div style="color: ${vix.value >= 30 ? '#f44336' : vix.value >= 20 ? '#ff9800' : '#4caf50'}; font-weight: bold; font-size: 20px;">${formatValue(vix.value)}%</div>
+              <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: ${vix.value >= 30 ? '#f44336' : vix.value >= 20 ? '#ff9800' : '#4caf50'};"></div>
             </div>
-            `;
-          }).join('')}
+          `).join('')}
         </div>
         <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
           Source: ${indicators.volatilityIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.volatilityIndices[0]?.timestamp)}
@@ -699,35 +678,19 @@ function generateMarketIndicatorsSection(analysis) {
       });
 
       eventsHtml = `
-      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Upcoming Events</div>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-          ${sortedEvents.map(event => {
-            const actual = (event.actual && event.actual !== 'N/A') ? `Actual: ${event.actual}` : '';
-            const forecast = (event.forecast && event.forecast !== 'N/A') ? `Forecast: ${event.forecast}` : '';
-            const previous = (event.previous && event.previous !== 'N/A') ? `Previous: ${event.previous}` : '';
-            const period = event.period ? `${event.period} ` : '';
-            const values = [actual, forecast, previous].filter(Boolean).join(', ');
-            
-            // Use the separate event and source fields
-            const eventName = event.event;
-            const eventSource = event.source;
-            
-            return `
-            <div style="display: flex; align-items: center; padding: 10px; background-color: #ffffff; border-radius: 4px; border: 1px solid #e0e0e0;">
-              <div style="min-width: 150px;">
-                <div style="font-weight: bold; color: #2196f3;">${event.date}</div>
-              </div>
-              <div style="flex: 1; margin: 0 15px;">
-                <div style="font-weight: bold; margin-bottom: 2px;">${eventName}</div>
-                <div style="font-size: 12px; color: #666;">${eventSource}</div>
-              </div>
-              <div style="min-width: 200px; text-align: right; color: #555; font-size: 13px;">
-                ${values}
-              </div>
+      <div style="margin-bottom: 15px;">
+        <div style="font-weight: bold; margin-bottom: 10px;">Upcoming Events</div>
+        <div style="display: flex; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+          ${sortedEvents.map(event => `
+            <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+              <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${event.date}</div>
+              <div style="color: #333; font-weight: bold; font-size: 20px;">${event.event}</div>
+              <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #333;"></div>
             </div>
-            `;
-          }).join('')}
+          `).join('')}
+        </div>
+        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+          Source: ${indicators.upcomingEconomicEvents[0]?.source || 'N/A'} (${indicators.upcomingEconomicEvents[0]?.sourceUrl || 'N/A'}), as of ${formatDate(indicators.upcomingEconomicEvents[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -992,13 +955,13 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="color: #f44336; font-size: 14px;">
-                  <span style="font-size: 1.5em;">↑</span> ${macro.fedPolicy.nextMeeting.probabilityOfHike}%
+                  <span style="font-size: 1.5em;">↑</span> <span style="font-size: 2.5em;">${macro.fedPolicy.nextMeeting.probabilityOfHike}%</span>
                 </div>
                 <div style="color: #757575; font-size: 14px;">
-                  <span style="font-size: 1.5em;">→</span> ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%
+                  <span style="font-size: 1.5em;">→</span> <span style="font-size: 2.5em;">${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%</span>
                 </div>
                 <div style="color: #4CAF50; font-size: 14px;">
-                  <span style="font-size: 1.5em;">↓</span> ${macro.fedPolicy.nextMeeting.probabilityOfCut}%
+                  <span style="font-size: 1.5em;">↓</span> <span style="font-size: 2.5em;">${macro.fedPolicy.nextMeeting.probabilityOfCut}%</span>
                 </div>
               </div>
             </div>
