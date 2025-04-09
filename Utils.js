@@ -430,7 +430,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
         <!-- Footer -->
         <div style="background-color: #1a365d; padding: 20px; text-align: center; color: white; border-radius: 6px;">
           <p style="margin: 0; font-size: 14px;">${NEWSLETTER_NAME} - Professional Trading Insights</p>
-          <p style="margin: 5px 0 0 0; font-size: 12px;">© ${new Date().getFullYear()} ${NEWSLETTER_NAME}. All rights reserved.</p>
+          <p style="margin: 5px 0 0 0; font-size: 12px;">&copy; ${new Date().getFullYear()} ${NEWSLETTER_NAME}. All rights reserved.</p>
           <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaaaaa;">
             Disclaimer: The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.
           </p>
@@ -714,17 +714,16 @@ function generateMarketIndicatorsSection(analysis) {
             const eventSource = event.source;
             
             return `
-            <div style="display: flex; margin-bottom: 15px;">
-              <div style="flex: 1; margin-right: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-                <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #2196f3; color: white; line-height: 1.2;">${event.date}</div>
-                <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #2196f3; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
-                  <div style="font-weight: bold;">${eventName}</div>
-                  <div style="font-size: 12px; color: #666;">${eventSource}</div>
-                </div>
+            <div style="display: flex; align-items: center; padding: 10px; background-color: #ffffff; border-radius: 4px; border: 1px solid #e0e0e0;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3;">${event.date}</div>
               </div>
-              <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px; margin-right: 10px;">
-                <div style="font-weight: bold; margin-bottom: 5px;">${period}Values</div>
-                <div style="color: #555; font-size: 14px;">${values}</div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">${eventName}</div>
+                <div style="font-size: 12px; color: #666;">${eventSource}</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 13px;">
+                ${values}
               </div>
             </div>
             `;
