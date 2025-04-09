@@ -430,10 +430,9 @@ function generateEmailTemplate(analysisResult, isTest = false) {
         <!-- Footer -->
         <div style="background-color: #1a365d; padding: 20px; text-align: center; color: white; border-radius: 6px;">
           <p style="margin: 0; font-size: 14px;">${NEWSLETTER_NAME} - Professional Trading Insights</p>
-          <p style="margin: 5px 0 0 0; font-size: 12px;">${new Date().getFullYear()} ${NEWSLETTER_NAME}</p>
+          <p style="margin: 5px 0 0 0; font-size: 12px;">© ${new Date().getFullYear()} ${NEWSLETTER_NAME}. All rights reserved.</p>
           <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaaaaa;">
-            This document contains information based on market data and analysis algorithms. 
-            It is not financial advice. Always conduct your own research before making investment decisions.
+            Disclaimer: The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.
           </p>
         </div>
       </div>

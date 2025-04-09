@@ -216,6 +216,29 @@ function publishToGhost(fileId, folderId, fileName) {
      * Formats the content for Ghost.
      */
     function formatContentForGhost(html) {
+      // Add CSS styles to reduce font sizes
+      const styles = `
+        <style>
+          /* Reduce font size by 20% for Upcoming Events */
+          .upcoming-events h2, .upcoming-events h3, .upcoming-events .event-name, .upcoming-events .event-date {
+            font-size: 0.8em !important;
+          }
+          
+          /* Reduce font size by 20% for Market Sentiment */
+          .market-sentiment h2, .market-sentiment h3, .market-sentiment .sentiment-item {
+            font-size: 0.8em !important;
+          }
+          
+          /* Reduce font size by 20% for Geopolitical Risks */
+          .geopolitical-risks h2, .geopolitical-risks h3, .geopolitical-risks .risk-item {
+            font-size: 0.8em !important;
+          }
+        </style>
+      `;
+
+      // Wrap the content with our styles
+      const styledHtml = `${styles}${html}`;
+      
       // Convert HTML to Lexical format
       return {
         root: {
@@ -227,7 +250,7 @@ function publishToGhost(fileId, folderId, fileName) {
           children: [
             {
               type: 'html',
-              html: html,
+              html: styledHtml,
               version: 1
             }
           ]
