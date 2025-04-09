@@ -49,7 +49,7 @@ function publishToGhost(fileId, folderId, fileName) {
         const title = `Market Pulse Daily: ${Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "EEEE, MMMM d, yyyy")}`;
         const postPayload = {
           title: title,
-          html: formattedContent,
+          lexical: JSON.stringify(formattedContent),
           status: "published",
           tags: ["Market Analysis", "Daily Update"]
         };
@@ -213,21 +213,26 @@ function publishToGhost(fileId, folderId, fileName) {
     }
 
     /**
-     * Extracts the content from within the <body> tag.
-     */
-    function extractBody(html) {
-      var regex = /<body[^>]*>([\s\S]*?)<\/body>/i;
-      var match = html.match(regex);
-      return match ? match[1] : html;
-    }
-
-    /**
      * Formats the content for Ghost.
      */
     function formatContentForGhost(html) {
-      const bodyContent = extractBody(html);
-      const formattedContent = '<div class="market-pulse-content">' + bodyContent + '</div>';
-      return formattedContent;
+      // Convert HTML to Lexical format
+      return {
+        root: {
+          type: 'root',
+          version: 1,
+          indent: 0,
+          format: '',
+          direction: null,
+          children: [
+            {
+              type: 'html',
+              html: html,
+              version: 1
+            }
+          ]
+        }
+      };
     }
 
     /**
