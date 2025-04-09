@@ -216,9 +216,11 @@ function publishToGhost(fileId, folderId, fileName) {
      * Formats the content for Ghost.
      */
     function formatContentForGhost(html) {
-      // Remove the title from the content
+      // Remove the title and timestamp from the content
       const titleRegex = /<h1[^>]*>Market Pulse Daily[^<]*<\/h1>/i;
+      const timestampRegex = /<p[^>]*>As of[^<]*<\/p>/i;
       let contentWithoutTitle = html.replace(titleRegex, '');
+      contentWithoutTitle = contentWithoutTitle.replace(timestampRegex, '');
       
       // Add CSS styles to reduce font sizes
       const styles = `
