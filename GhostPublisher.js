@@ -13,17 +13,25 @@ function publishToGhost(fileId, folderId, fileName) {
         const ghostApiUrl = props.getProperty('GHOST_API_URL') || 'https://market-pulse-daily.ghost.io';
         const ghostAdminApiKey = props.getProperty('GHOST_ADMIN_API_KEY') || '67f553a7f41c9900013e1fbe:36fe3da206f1ebb61643868fffca951da8ce9571521c1e8f853aadffe2f56e2e';
         const ghostAuthorId = props.getProperty('GHOST_AUTHOR_ID') || null;
+        const isDebugMode = props.getProperty('DEBUG_MODE') === 'true';
+
+        // Get current time in ET
+        const now = new Date();
+        const timeInET = Utilities.formatDate(now, TIME_ZONE, 'HH:mm');
+        const [hour, minute] = timeInET.split(':');
+        const currentHour = parseInt(hour);
+        const currentMinute = parseInt(minute);
+
+        // Determine content type based on time
+        const isPremiumContent = currentHour < 16 || (currentHour === 16 && currentMinute < 30);
 
         // Log configuration
         Logger.log('Ghost API Configuration:');
         Logger.log('Raw API URL: ' + ghostApiUrl);
         Logger.log('Raw Admin API Key: ' + ghostAdminApiKey);
         Logger.log('Raw Author ID: ' + ghostAuthorId);
-
-        // Validate required configurations
-        if (!ghostApiUrl || !ghostAdminApiKey) {
-          throw new Error('Both Ghost API URL and Admin API Key must be configured');
-        }
+        Logger.log('Content Type: ' + (isPremiumContent ? 'Premium (Paid-members only)' : 'Standard (Members only)'));
+        Logger.log('Debug Mode: ' + isDebugMode);
 
         // Set configuration
         const config = {
@@ -32,12 +40,6 @@ function publishToGhost(fileId, folderId, fileName) {
           authorId: ghostAuthorId
         };
 
-        // Log the final configuration being used
-        Logger.log('Final Configuration:');
-        Logger.log('Final API URL: ' + config.apiUrl);
-        Logger.log('Final API Key: ' + config.apiKey);
-        Logger.log('Final Author ID: ' + config.authorId);
-
         // Get the HTML content from the file
         const file = DriveApp.getFileById(fileId);
         const htmlContent = file.getBlob().getDataAsString();
@@ -45,13 +47,20 @@ function publishToGhost(fileId, folderId, fileName) {
         // Format the content for Ghost
         const formattedContent = formatContentForGhost(htmlContent);
         
+        // Generate title and tags
+        const { title, tags } = generateEngagingTitle();
+        
+        // Extract the Justification section for the excerpt
+        const excerpt = extractJustificationExcerpt(htmlContent);
+        
         // Build the post payload
-        const title = generateEngagingTitle();
         const postPayload = {
           title: title,
           lexical: JSON.stringify(formattedContent),
-          status: "published",
-          tags: [NEWSLETTER_NAME, "Market Insights", "Daily Update", "Market Pulse"]
+          status: isDebugMode ? "draft" : "published",
+          tags: tags,
+          visibility: isPremiumContent ? "paid" : "members",
+          excerpt: excerpt
         };
 
         if (config.authorId) {
@@ -67,92 +76,84 @@ function publishToGhost(fileId, folderId, fileName) {
 
         // Set up the request options
         const options = {
-          method: "post",
-          contentType: "application/json",
+          method: 'post',
           headers: {
-            "Authorization": `Ghost ${token}`,
-            "Accept-Version": "v5.0",
-            "Accept": "application/json",
-            "Content-Type": "application/json"
+            'Authorization': 'Ghost ' + token,
+            'Content-Type': 'application/json'
           },
-          muteHttpExceptions: true
+          payload: JSON.stringify({ posts: [postPayload] })
         };
 
-        // First, check if a post with this title already exists
-        const searchOptions = {
-          method: "get",
+        // In debug mode, create a draft in Ghost admin interface
+        if (isDebugMode) {
+          Logger.log('Debug mode enabled - creating draft post');
+          const draftUrl = config.apiUrl + '/ghost/api/admin/posts/';
+          const draftResponse = UrlFetchApp.fetch(draftUrl, options);
+          Logger.log('Draft response status code: ' + draftResponse.getResponseCode());
+          const draftResult = JSON.parse(draftResponse.getContentText());
+          Logger.log('Draft result: ' + JSON.stringify(draftResult, null, 2));
+          return {
+            status: 'draft',
+            message: 'Draft post created in Ghost admin interface',
+            draftId: draftResult.posts[0]?.id
+          };
+        }
+
+        // Continue with regular publishing
+        // Search for existing post with the same title
+        const searchUrl = config.apiUrl + '/ghost/api/admin/posts/';
+        const searchResponse = UrlFetchApp.fetch(searchUrl, {
           headers: {
-            "Authorization": `Ghost ${token}`,
-            "Accept-Version": "v5.0",
-            "Accept": "application/json"
-          },
-          muteHttpExceptions: true
-        };
-
-        const searchResponse = UrlFetchApp.fetch(
-          `${config.apiUrl}/ghost/api/admin/posts/?filter=title:${encodeURIComponent(title)}`,
-          searchOptions
-        );
-
-        const searchResult = JSON.parse(searchResponse.getContentText());
-        Logger.log('Search response: ' + JSON.stringify(searchResult, null, 2));
-
-        if (searchResult.posts && searchResult.posts.length > 0) {
-          // Post exists, update it
-          const existingPost = searchResult.posts[0];
-          const postId = existingPost.id;
-          
-          // Add the updated_at field from the existing post
-          postPayload.updated_at = existingPost.updated_at;
-          
-          // Wrap the payload
-          const updatePayload = { posts: [postPayload] };
-          options.method = "put";
-          options.payload = JSON.stringify(updatePayload);
-          
-          // Update the post
-          Logger.log('Updating existing post: ' + postId);
-          const updateResponse = UrlFetchApp.fetch(
-            `${config.apiUrl}/ghost/api/admin/posts/${postId}/`,
-            options
-          );
-
-          const updateResult = updateResponse.getContentText();
-          Logger.log("Update response from Ghost: " + updateResult);
-          Logger.log('Update response status code: ' + updateResponse.getResponseCode());
-          
-          try {
-            return JSON.parse(updateResult);
-          } catch (e) {
-            Logger.log('Error parsing update response: ' + e.toString());
-            Logger.log('Response text: ' + updateResult);
-            throw new Error('Failed to parse update response: ' + e.toString());
+            'Authorization': 'Ghost ' + token
           }
-        } else {
-          // No existing post, create a new one
-          // Wrap the payload in a "posts" property
-          const fullPostPayload = { posts: [postPayload] };
-          options.payload = JSON.stringify(fullPostPayload);
-          
-          // Create the post
-          Logger.log('Creating new post at: ' + `${config.apiUrl}/ghost/api/admin/posts/`);
-          const createResponse = UrlFetchApp.fetch(
-            `${config.apiUrl}/ghost/api/admin/posts/`,
-            options
-          );
+        });
 
-          const createResult = createResponse.getContentText();
-          Logger.log("Create response from Ghost: " + createResult);
-          Logger.log('Create response status code: ' + createResponse.getResponseCode());
-          
-          try {
-            return JSON.parse(createResult);
-          } catch (e) {
-            Logger.log('Error parsing create response: ' + e.toString());
-            Logger.log('Response text: ' + createResult);
-            throw new Error('Failed to parse create response: ' + e.toString());
+        let existingPostId = null;
+        if (searchResponse.getResponseCode() === 200) {
+          const searchResult = JSON.parse(searchResponse.getContentText());
+          if (searchResult.posts) {
+            existingPostId = searchResult.posts.find(post => post.title === title)?.id;
+            if (existingPostId) {
+              Logger.log('Found existing post with ID: ' + existingPostId);
+            }
           }
         }
+
+        if (existingPostId) {
+          // Update existing post
+          const updateUrl = config.apiUrl + '/ghost/api/admin/posts/' + existingPostId;
+          const updateResponse = UrlFetchApp.fetch(updateUrl, {
+            method: 'put',
+            headers: {
+              'Authorization': 'Ghost ' + token,
+              'Content-Type': 'application/json'
+            },
+            payload: JSON.stringify({ posts: [postPayload] })
+          });
+
+          Logger.log('Update response status code: ' + updateResponse.getResponseCode());
+          const updateResult = JSON.parse(updateResponse.getContentText());
+          Logger.log('Update result: ' + JSON.stringify(updateResult, null, 2));
+
+          return {
+            status: 'updated',
+            message: 'Post updated successfully',
+            postId: existingPostId
+          };
+        }
+
+        // Create new post
+        const createUrl = config.apiUrl + '/ghost/api/admin/posts/';
+        const createResponse = UrlFetchApp.fetch(createUrl, options);
+        Logger.log('Create response status code: ' + createResponse.getResponseCode());
+        const createResult = JSON.parse(createResponse.getContentText());
+        Logger.log('Create result: ' + JSON.stringify(createResult, null, 2));
+
+        return {
+          status: 'published',
+          message: 'Post created successfully',
+          postId: createResult.posts[0]?.id
+        };
       } catch (error) {
         Logger.log('Error in publishToGhost: ' + error.toString());
         throw error;
@@ -216,9 +217,11 @@ function publishToGhost(fileId, folderId, fileName) {
      * Formats the content for Ghost.
      */
     function formatContentForGhost(html) {
-      // Remove the title from the content
+      // Remove the title and timestamp from the content
       const titleRegex = /<h1[^>]*>Market Pulse Daily[^<]*<\/h1>/i;
+      const timestampRegex = /<p[^>]*>As of[^<]*<\/p>/i;
       let contentWithoutTitle = html.replace(titleRegex, '');
+      contentWithoutTitle = contentWithoutTitle.replace(timestampRegex, '');
       
       // Add CSS styles to reduce font sizes
       const styles = `
@@ -293,7 +296,48 @@ function publishToGhost(fileId, folderId, fileName) {
       const emoji = emojis[Math.floor(Math.random() * emojis.length)];
       
       // Format the title with emoji after the name
-      return `${phrase} ${emoji} - ${date} ${time}`;
+      return {
+        title: `${phrase} ${emoji} - ${date} ${time}`,
+        tags: ["Market Insights", "Daily Update", "Market Pulse"]
+      };
+    }
+
+    /**
+     * Extracts the Justification section from the HTML content to use as the excerpt
+     * @param {string} htmlContent - The HTML content to extract from
+     * @returns {string} - The extracted justification text
+     */
+    function extractJustificationExcerpt(htmlContent) {
+      try {
+        // Find the Justification section using string manipulation
+        const startMarker = '<div class="section"><h2>Justification</h2>';
+        const endMarker = '</div>';
+        
+        const startIndex = htmlContent.indexOf(startMarker);
+        if (startIndex === -1) {
+          return '';
+        }
+        
+        const contentStart = startIndex + startMarker.length;
+        const contentEnd = htmlContent.indexOf(endMarker, contentStart);
+        
+        if (contentEnd === -1) {
+          return '';
+        }
+        
+        // Extract and clean the content
+        let content = htmlContent.substring(contentStart, contentEnd);
+        
+        // Remove HTML tags and extra whitespace
+        content = content.replace(/<[^>]+>/g, ''); // Remove HTML tags
+        content = content.replace(/\s+/g, ' ').trim(); // Normalize whitespace
+        
+        // Limit to 300 characters
+        return content.substring(0, 300) + (content.length > 300 ? '...' : '');
+      } catch (e) {
+        Logger.log('Error extracting justification excerpt: ' + e.message);
+        return '';
+      }
     }
 
     /**

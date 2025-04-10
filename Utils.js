@@ -714,15 +714,15 @@ function generateMarketIndicatorsSection(analysis) {
             const eventSource = event.source;
             
             return `
-            <div style="display: flex; align-items: center; padding: 10px; background-color: #ffffff; border-radius: 4px; border: 1px solid #e0e0e0;">
+            <div style="display: flex; margin-bottom: 15px;">
               <div style="min-width: 150px;">
-                <div style="font-weight: bold; color: #2196f3;">${event.date}</div>
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">${event.date}</div>
               </div>
               <div style="flex: 1; margin: 0 15px;">
-                <div style="font-weight: bold; margin-bottom: 2px;">${eventName}</div>
+                <div style="font-weight: bold; margin-bottom: 2px; font-size: 13px;">${eventName}</div>
                 <div style="font-size: 12px; color: #666;">${eventSource}</div>
               </div>
-              <div style="min-width: 200px; text-align: right; color: #555; font-size: 13px;">
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
                 ${values}
               </div>
             </div>
@@ -1336,30 +1336,34 @@ function formatNumberWithSuffix(value, suffix = '') {
  */
 function parseEconomicEventDate(dateString) {
   try {
-    // Remove timezone (EDT) as it's not needed for sorting
-    const dateStr = dateString.replace(/ EDT$/, '');
+    // Extract components using regex
+    const match = dateString.match(/^(\w{3})\s+(\d{1,2}),\s+(\d{4}),\s+(\d{1,2}):(\d{2})\s+(\w{2})\s+(\w{3})$/);
+    if (!match) {
+      Logger.log(`Invalid date format: ${dateString}`);
+      return null;
+    }
+
+    const [, month, day, year, hour, minute, ampm, tz] = match;
+    const monthNum = monthToNum[month];
     
-    // Extract date parts
-    const parts = dateStr.split(',');
-    const datePart = parts[0].trim();
-    const timePart = parts[1].trim();
-    
-    // Extract month, day, and year
-    const [month, day, year] = datePart.split(' ').filter(Boolean);
-    
-    // Create date string in ISO format
-    const dateStrIso = `${year}-${monthToNum[month]}-${day}T${timePart}:00-04:00`;
+    // Convert 12-hour time to 24-hour time
+    let hour24 = parseInt(hour);
+    if (ampm === 'PM' && hour24 < 12) hour24 += 12;
+    if (ampm === 'AM' && hour24 === 12) hour24 = 0;
+
+    // Create ISO string
+    const dateStrIso = `${year}-${monthNum.toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}T${hour24.toString().padStart(2, '0')}:${minute}:00-04:00`;
     
     // Parse the date
     const date = new Date(dateStrIso);
     
     // Log for debugging
-    Logger.log(`Parsed date: ${dateStr} -> ${date.toISOString()}`);
+    Logger.log(`Parsed date: ${dateString} -> ${date.toISOString()}`);
     
     return date;
   } catch (e) {
     Logger.log(`Error parsing date: ${dateString}, error: ${e}`);
-    return new Date();
+    return null;
   }
 }
 

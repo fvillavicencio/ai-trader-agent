@@ -34,7 +34,11 @@ function retrieveStockMetrics(symbol) {
         
         if (cacheAgeMinutes < CACHE_DURATION) {
           Logger.log(`Using cached stock metrics for ${symbol} (less than ${CACHE_DURATION} minutes old)`);
-          return { ...parsedData, fromCache: true };
+          // Return the exact same structure as when we stored it
+          return {
+            ...parsedData,
+            fromCache: true
+          };
         } else {
           Logger.log(`Cached stock metrics for ${symbol} is more than ${CACHE_DURATION} minutes old`);
         }
@@ -93,6 +97,7 @@ function retrieveStockMetrics(symbol) {
       
       // Try other APIs only if Yahoo Finance failed
       const apis = [
+        { name: 'RapidAPI', fetch: fetchRapidAPIStockData },
         { name: 'Tradier', fetch: fetchTradierData },
         { name: 'Google Finance', fetch: fetchGoogleFinanceData },
         { name: 'FMP', fetch: fetchFMPData },
@@ -122,11 +127,20 @@ function retrieveStockMetrics(symbol) {
       Logger.log(`Calculated changesPercentage for ${symbol}: ${metrics.changesPercentage}%`);
     }
     
+    // Ensure dataSource is an array
+    if (!Array.isArray(metrics.dataSource)) {
+      metrics.dataSource = [];
+    }
+    
     const cacheData = {
       ...metrics,
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString(),
+      fromCache: false
     };
-    scriptCache.put(cacheKey, JSON.stringify(cacheData), CACHE_DURATION * 60); // Convert minutes to seconds
+    
+    // Store the data in cache with proper JSON stringification
+    const cacheString = JSON.stringify(cacheData);
+    scriptCache.put(cacheKey, cacheString, CACHE_DURATION * 60); // Convert minutes to seconds
     
     const executionTime = (new Date().getTime() - startTime) / 1000;
     Logger.log(`Retrieved stock metrics for ${symbol} in ${executionTime} seconds`);
@@ -163,6 +177,183 @@ function updateMetrics(metrics, newData, source) {
   }
   
   metrics.sources.push(source);
+}
+
+/**
+ * Global Tradier API token from property store
+ */
+const TRADIER_API_TOKEN = PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY');
+
+/**
+ * Fetches quote information from Tradier for a given stock symbol.
+ * @param {string} symbol - The stock symbol to query.
+ * @return {Object|null} - An object with quote data or null if unsuccessful.
+ */
+function fetchTradierQuote(symbol) {
+  if (!symbol) {
+    throw new Error("No symbol provided for fetchTradierQuote");
+  }
+  
+  const url = `https://api.tradier.com/v1/markets/quotes?symbols=${encodeURIComponent(symbol)}&includeTags=true`;
+  
+  const options = {
+    method: 'get',
+    headers: {
+      'Authorization': `Bearer ${TRADIER_API_TOKEN}`,
+      'Accept': 'application/json'
+    },
+    muteHttpExceptions: true
+  };
+  
+  try {
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode !== 200) {
+      throw new Error(`HTTP Error: ${responseCode} for quote data of symbol: ${symbol}`);
+    }
+    
+    const json = JSON.parse(response.getContentText());
+    
+    if (!json.quotes || !json.quotes.quote) {
+      throw new Error(`No quote data returned for symbol: ${symbol}`);
+    }
+    
+    const quote = json.quotes.quote;
+    return {
+      price: parseFloat(quote.last),
+      priceChange: parseFloat(quote.change),
+      changesPercentage: parseFloat(quote.change_percent),
+      volume: parseFloat(quote.volume),
+      marketCap: parseFloat(quote.market_cap),
+      company: quote.description,
+      industry: quote.industry,
+      sector: quote.sector,
+      beta: parseFloat(quote.beta),
+      fiftyTwoWeekHigh: parseFloat(quote.high_52),
+      fiftyTwoWeekLow: parseFloat(quote.low_52),
+      dayHigh: parseFloat(quote.high),
+      dayLow: parseFloat(quote.low),
+      open: parseFloat(quote.open),
+      close: parseFloat(quote.prevclose)
+    };
+  } catch (e) {
+    Logger.log(`Error in fetchTradierQuote for ${symbol}: ${e.message}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches fundamentals from Tradier for a given stock symbol.
+ * @param {string} symbol - The stock symbol to query.
+ * @return {Object|null} - An object with fundamental data or null if unavailable.
+ */
+function fetchTradierFundamentals(symbol) {
+  if (!symbol) {
+    throw new Error("No symbol provided for fetchTradierFundamentals");
+  }
+  
+  // First try company profile
+  const profileUrl = `https://api.tradier.com/v1/markets/fundamentals/company?symbols=${encodeURIComponent(symbol)}`;
+  const ratiosUrl = `https://api.tradier.com/v1/markets/fundamentals/ratios?symbols=${encodeURIComponent(symbol)}`;
+  
+  const options = {
+    method: 'get',
+    headers: {
+      'Authorization': `Bearer ${TRADIER_API_TOKEN}`,
+      'Accept': 'application/json'
+    },
+    muteHttpExceptions: true
+  };
+  
+  try {
+    // Fetch company profile
+    const profileResponse = UrlFetchApp.fetch(profileUrl, options);
+    const profileJson = JSON.parse(profileResponse.getContentText());
+    
+    // Fetch financial ratios
+    const ratiosResponse = UrlFetchApp.fetch(ratiosUrl, options);
+    const ratiosJson = JSON.parse(ratiosResponse.getContentText());
+    
+    // Process profile data
+    let companyData = null;
+    if (profileJson.length > 0 && profileJson[0].results) {
+      companyData = profileJson[0].results.find(result => result.type === "Company");
+    }
+    
+    // Process ratios data
+    let ratiosData = null;
+    if (ratiosJson.length > 0 && ratiosJson[0].results) {
+      ratiosData = ratiosJson[0].results.find(result => result.type === "Company");
+    }
+    
+    // Combine all data
+    return {
+      company: companyData?.tables?.company_profile?.company_name,
+      industry: companyData?.tables?.company_profile?.industry,
+      sector: companyData?.tables?.company_profile?.sector,
+      marketCap: companyData?.tables?.market_cap?.[0]?.value,
+      volume: companyData?.tables?.volume?.[0]?.value,
+      returnOnEquity: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.r_o_e,
+      returnOnAssets: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.r_o_a,
+      profitMargin: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.net_margin,
+      debtToEquity: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.financial_leverage ? 
+        parseFloat(ratiosData.tables.operation_ratios_restate[0].period_1y.financial_leverage) - 1 : null,
+      pegRatio: null,  // Not available in Tradier API
+      forwardPE: null, // Not available in Tradier API
+      priceToBook: null, // Not available in Tradier API
+      priceToSales: null, // Not available in Tradier API
+      dividendYield: null, // Not available in Tradier API
+      expenseRatio: null, // Not available in Tradier API
+      beta: null // Fallback to quote data
+    };
+  } catch (e) {
+    Logger.log(`Error in fetchTradierFundamentals for ${symbol}: ${e.message}`);
+    return null;
+  }
+}
+
+/**
+ * Retrieves combined stock data from Tradier for a given symbol.
+ * @param {string} symbol - The stock symbol to fetch data for.
+ * @return {Object|null} - An object containing merged stock data or null if no valid data.
+ */
+function fetchTradierData(symbol) {
+  if (!symbol) {
+    throw new Error("No symbol provided for fetchTradierData");
+  }
+  
+  if (!TRADIER_API_TOKEN) {
+    Logger.log('Tradier API key not configured');
+    return null;
+  }
+
+  // Fetch quote information
+  const quoteData = fetchTradierQuote(symbol);
+  
+  // Fetch fundamentals
+  const fundamentalsData = fetchTradierFundamentals(symbol);
+  
+  // If both data calls fail, return null
+  if (!quoteData && !fundamentalsData) {
+    Logger.log(`No valid data available for symbol: ${symbol}`);
+    return null;
+  }
+  
+  // Merge data from both responses
+  const combinedData = {
+    symbol: symbol,
+    ...quoteData,
+    ...fundamentalsData
+  };
+
+  // Validate required fields
+  if (combinedData.price === null || combinedData.volume === null) {
+    Logger.log('Missing required fields in Tradier response');
+    return null;
+  }
+
+  return combinedData;
 }
 
 /**
@@ -215,136 +406,7 @@ function makeTradierApiRequest(url, maxRetries = 3) {
 }
 
 /**
- * Fetches data from Tradier API for a specific symbol
- * @param {string} symbol - Stock symbol
- * @return {Object} Metrics object or null
- */
-function fetchTradierData(symbol) {
-  try {
-    console.log(`Fetching Tradier data for ${symbol}`);
-    
-    // Initialize metrics object with null values
-    const metrics = {
-      pegRatio: null,
-      forwardPE: null,
-      priceToBook: null,
-      priceToSales: null,
-      debtToEquity: null,
-      returnOnEquity: null,
-      returnOnAssets: null,
-      profitMargin: null,
-      dividendYield: null,
-      beta: null,
-      expenseRatio: null,
-      company: null,
-      industry: null,
-      sector: null,
-      price: null,
-      priceChange: null,
-      changesPercentage: null,
-      volume: null,
-      marketCap: null,
-      fiftyTwoWeekHigh: null,
-      fiftyTwoWeekLow: null,
-      dayHigh: null,
-      dayLow: null,
-      open: null,
-      close: null
-    };
-
-    // Check API key
-    const tradierApiKey = PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY');
-    if (!tradierApiKey) {
-      console.error('Tradier API key not configured');
-      return null;
-    }
-
-    // Fetch quotes data
-    const quotesUrl = `https://api.tradier.com/v1/markets/quotes?symbols=${symbol}&includeTags=true`;
-    const quotesData = makeTradierApiRequest(quotesUrl);
-    
-    if (quotesData && quotesData.quotes && quotesData.quotes.quote) {
-      const quote = quotesData.quotes.quote;
-      metrics.price = parseFloat(quote.last);
-      metrics.priceChange = parseFloat(quote.change);
-      metrics.changesPercentage = parseFloat(quote.change_percent);
-      metrics.volume = parseFloat(quote.volume);
-      metrics.marketCap = parseFloat(quote.market_cap);
-      metrics.company = quote.description;
-      metrics.industry = quote.industry;
-      metrics.sector = quote.sector;
-      metrics.beta = parseFloat(quote.beta);
-      metrics.fiftyTwoWeekHigh = parseFloat(quote.high_52);
-      metrics.fiftyTwoWeekLow = parseFloat(quote.low_52);
-      metrics.dayHigh = parseFloat(quote.high);
-      metrics.dayLow = parseFloat(quote.low);
-      metrics.open = parseFloat(quote.open);
-      metrics.close = parseFloat(quote.prevclose);
-    }
-
-    // Fetch company profile
-    const profileUrl = `https://api.tradier.com/v1/markets/fundamentals/company?symbols=${symbol}`;
-    const profileData = makeTradierApiRequest(profileUrl);
-    
-    if (profileData && profileData.length > 0 && profileData[0].results) {
-      const results = profileData[0].results;
-      const companyData = results.find(result => result.type === "Company");
-      
-      if (companyData && companyData.tables) {
-        if (companyData.tables.company_profile) {
-          const profile = companyData.tables.company_profile;
-          metrics.company = profile.company_name;
-          metrics.industry = profile.industry;
-          metrics.sector = profile.sector;
-        }
-        
-        if (companyData.tables.market_cap) {
-          metrics.marketCap = companyData.tables.market_cap[0].value;
-        }
-        
-        if (companyData.tables.volume) {
-          metrics.volume = companyData.tables.volume[0].value;
-        }
-      }
-    }
-
-    // Fetch financial ratios
-    const ratiosUrl = `https://api.tradier.com/v1/markets/fundamentals/ratios?symbols=${symbol}`;
-    const ratiosData = makeTradierApiRequest(ratiosUrl);
-    
-    if (ratiosData && ratiosData.length > 0 && ratiosData[0].results) {
-      const results = ratiosData[0].results;
-      const companyData = results.find(result => result.type === "Company");
-      
-      if (companyData && companyData.tables) {
-        if (companyData.tables.operation_ratios_restate && companyData.tables.operation_ratios_restate.length > 0) {
-          const ratios = companyData.tables.operation_ratios_restate[0].period_1y;
-          
-          if (ratios) {
-            metrics.returnOnEquity = parseFloat(ratios.r_o_e);
-            metrics.returnOnAssets = parseFloat(ratios.r_o_a);
-            metrics.profitMargin = parseFloat(ratios.net_margin);
-            metrics.debtToEquity = parseFloat(ratios.financial_leverage) - 1;
-          }
-        }
-      }
-    }
-
-    // Validate required fields
-    if (metrics.price === null || metrics.volume === null) {
-      console.error('Missing required fields in Tradier response');
-      return null;
-    }
-
-    return metrics;
-  } catch (error) {
-    console.error(`Error fetching Tradier data for ${symbol}: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Fetch data from FMP API
+ * Fetches data from FMP API
  * @param {string} symbol - Stock symbol
  * @return {Object} Metrics object or null
  */
@@ -1166,70 +1228,97 @@ function displayMetrics(metrics, outputRange = 'A1') {
  * 4. Compare execution times and verify data consistency
  */
 function testStockMetricsCaching() {
-  try {
-    Logger.log('Testing stock metrics caching...');
+  Logger.log('Testing stock metrics caching...');
+  
+  // Clear cache first
+  Logger.log('Clearing stock metrics cache for AAPL...');
+  const clearResult = clearStockMetricsCacheForSymbol('AAPL');
+  Logger.log(`Cache cleared: ${clearResult.success}`);
+  
+  // First call (should be cache miss)
+  Logger.log('\nFirst call for AAPL (should be cache miss):');
+  const startTime = new Date().getTime();
+  const firstMetrics = retrieveStockMetrics('AAPL');
+  const firstExecutionTime = (new Date().getTime() - startTime) / 1000;
+  
+  if (firstMetrics) {
+    Logger.log('First call execution time: ' + firstExecutionTime + ' seconds');
+    Logger.log('From cache: ' + firstMetrics.fromCache);
     
-    // Test with a single symbol
-    const testSymbol = 'AAPL';
-    
-    // Clear cache for test symbol
-    clearStockMetricsCacheForSymbol(testSymbol);
-    Logger.log(`Cleared cache for ${testSymbol}`);
-    
-    // First call - should be a cache miss
-    Logger.log(`\nFirst call for ${testSymbol} (should be cache miss):`);
-    const startTime1 = new Date().getTime();
-    const metrics1 = retrieveStockMetrics(testSymbol);
-    const executionTime1 = (new Date().getTime() - startTime1) / 1000;
-    
-    Logger.log(`First call execution time: ${executionTime1.toFixed(2)} seconds`);
-    Logger.log(`From cache: ${metrics1.fromCache ? 'Yes' : 'No'}`);
-    
-    // Second call - should be a cache hit
-    Logger.log(`\nSecond call for ${testSymbol} (should be cache hit):`);
-    const startTime2 = new Date().getTime();
-    const metrics2 = retrieveStockMetrics(testSymbol);
-    const executionTime2 = (new Date().getTime() - startTime2) / 1000;
-    
-    Logger.log(`Second call execution time: ${executionTime2.toFixed(2)} seconds`);
-    Logger.log(`From cache: ${metrics2.fromCache ? 'Yes' : 'No'}`);
-    
-    // Calculate performance improvement
-    const performanceImprovement = ((executionTime1 - executionTime2) / executionTime1) * 100;
-    Logger.log(`Performance improvement: ${performanceImprovement.toFixed(2)}%`);
+    // Log detailed metrics values
+    Logger.log('\nDetailed metrics values:');
+    Logger.log('Price: ' + firstMetrics.price);
+    Logger.log('Volume: ' + firstMetrics.volume);
+    Logger.log('Market Cap: ' + firstMetrics.marketCap);
+    Logger.log('Company: ' + firstMetrics.company);
+    Logger.log('Industry: ' + firstMetrics.industry);
+    Logger.log('Sector: ' + firstMetrics.sector);
+    Logger.log('Beta: ' + firstMetrics.beta);
+    Logger.log('Peg Ratio: ' + firstMetrics.pegRatio);
+    Logger.log('Forward PE: ' + firstMetrics.forwardPE);
+    Logger.log('Dividend Yield: ' + firstMetrics.dividendYield);
+    Logger.log('52 Week High: ' + firstMetrics.fiftyTwoWeekHigh);
+    Logger.log('52 Week Low: ' + firstMetrics.fiftyTwoWeekLow);
+    Logger.log('Day High: ' + firstMetrics.dayHigh);
+    Logger.log('Day Low: ' + firstMetrics.dayLow);
+    Logger.log('Open: ' + firstMetrics.open);
+    Logger.log('Close: ' + firstMetrics.close);
+    Logger.log('Data Sources: ' + (firstMetrics.dataSource ? firstMetrics.dataSource.join(', ') : 'None'));
+  }
+  
+  // Second call (should be cache hit)
+  Logger.log('\nSecond call for AAPL (should be cache hit):');
+  const startTime2 = new Date().getTime();
+  const secondMetrics = retrieveStockMetrics('AAPL');
+  const secondExecutionTime = (new Date().getTime() - startTime2) / 1000;
+  
+  let isConsistent = false;
+  
+  if (secondMetrics) {
+    Logger.log('Second call execution time: ' + secondExecutionTime + ' seconds');
+    Logger.log('From cache: ' + secondMetrics.fromCache);
     
     // Verify data consistency
-    const consistentKeys = ['price', 'company', 'marketCap', 'volume', 'industry', 'sector'];
-    let dataConsistent = true;
+    isConsistent = JSON.stringify(firstMetrics) === JSON.stringify(secondMetrics);
+    Logger.log('Data consistency: ' + (isConsistent ? 'Passed' : 'Failed'));
     
-    for (const key of consistentKeys) {
-      if (metrics1[key] !== metrics2[key]) {
-        Logger.log(`Data inconsistency found for ${key}: ${metrics1[key]} vs ${metrics2[key]}`);
-        dataConsistent = false;
-      }
-    }
-    
-    if (dataConsistent) {
-      Logger.log('Data consistency check passed - cached data matches original data');
-    }
-    
-    // Display summary
-    Logger.log('\nCaching Test Summary:');
-    Logger.log(`First call (fresh data): ${executionTime1.toFixed(2)} seconds`);
-    Logger.log(`Second call (cached data): ${executionTime2.toFixed(2)} seconds`);
-    Logger.log(`Performance improvement: ${performanceImprovement.toFixed(2)}%`);
-    Logger.log(`Data consistency: ${dataConsistent ? 'Passed' : 'Failed'}`);
-    
-    return {
-      firstCallTime: executionTime1,
-      secondCallTime: executionTime2,
-      performanceImprovement: performanceImprovement,
-      dataConsistent: dataConsistent
-    };
-  } catch (error) {
-    Logger.log(`Error in testStockMetricsCaching: ${error}`);
-    throw error;
+    // Log detailed metrics values for comparison
+    Logger.log('\nCached metrics values:');
+    Logger.log('Price: ' + secondMetrics.price);
+    Logger.log('Volume: ' + secondMetrics.volume);
+    Logger.log('Market Cap: ' + secondMetrics.marketCap);
+    Logger.log('Company: ' + secondMetrics.company);
+    Logger.log('Industry: ' + secondMetrics.industry);
+    Logger.log('Sector: ' + secondMetrics.sector);
+    Logger.log('Beta: ' + secondMetrics.beta);
+    Logger.log('Peg Ratio: ' + secondMetrics.pegRatio);
+    Logger.log('Forward PE: ' + secondMetrics.forwardPE);
+    Logger.log('Dividend Yield: ' + secondMetrics.dividendYield);
+    Logger.log('52 Week High: ' + secondMetrics.fiftyTwoWeekHigh);
+    Logger.log('52 Week Low: ' + secondMetrics.fiftyTwoWeekLow);
+    Logger.log('Day High: ' + secondMetrics.dayHigh);
+    Logger.log('Day Low: ' + secondMetrics.dayLow);
+    Logger.log('Open: ' + secondMetrics.open);
+    Logger.log('Close: ' + secondMetrics.close);
+    Logger.log('Data Sources: ' + (secondMetrics.dataSource ? secondMetrics.dataSource.join(', ') : 'None'));
   }
+  
+  // Calculate performance improvement
+  const improvement = ((firstExecutionTime - secondExecutionTime) / firstExecutionTime * 100).toFixed(2);
+  
+  // Summary
+  Logger.log('\nCaching Test Summary:');
+  Logger.log('First call (fresh data): ' + firstExecutionTime + ' seconds');
+  Logger.log('Second call (cached data): ' + secondExecutionTime + ' seconds');
+  Logger.log('Performance improvement: ' + improvement + '%');
+  Logger.log('Data consistency: ' + (isConsistent ? 'Passed' : 'Failed'));
+  
+  return {
+    firstExecutionTime: firstExecutionTime,
+    secondExecutionTime: secondExecutionTime,
+    improvement: improvement,
+    isConsistent: isConsistent
+  };
 }
 
 /**
@@ -1510,5 +1599,95 @@ function getCompanyName(symbol) {
       sector: null,
       industry: null
     };
+  }
+}
+
+/**
+ * Fetches data from RapidAPI stock overview endpoint
+ * @param {string} symbol - Stock symbol
+ * @return {Object} Metrics object or null
+ */
+function fetchRapidAPIStockData(symbol) {
+  try {
+    const rapidApiKey = PropertiesService.getScriptProperties().getProperty('RAPID_API_KEY');
+    if (!rapidApiKey) {
+      Logger.log('No RapidAPI key found');
+      return null;
+    }
+
+    const url = `https://real-time-finance-data.p.rapidapi.com/stock-overview?symbol=${symbol}%3ANASDAQ&language=en`;
+    const response = UrlFetchApp.fetch(url, {
+      headers: {
+        'x-rapidapi-host': 'real-time-finance-data.p.rapidapi.com',
+        'x-rapidapi-key': rapidApiKey
+      },
+      muteHttpExceptions: true
+    });
+
+    if (response.getResponseCode() !== 200) {
+      Logger.log(`RapidAPI request failed with status ${response.getResponseCode()}`);
+      return null;
+    }
+
+    const data = JSON.parse(response.getContentText());
+    if (!data || !data.data) {
+      Logger.log('No valid data returned from RapidAPI');
+      return null;
+    }
+
+    const stockData = data.data;
+    
+    // Log detailed response values
+    Logger.log('\nRapidAPI Response Details:');
+    Logger.log('Symbol: ' + stockData.symbol);
+    Logger.log('Price: ' + stockData.price);
+    Logger.log('Change: ' + stockData.change);
+    Logger.log('Change %: ' + stockData.change_percent);
+    Logger.log('Volume: ' + stockData.volume);
+    Logger.log('Market Cap: ' + stockData.company_market_cap);
+    Logger.log('Company: ' + stockData.name);
+    Logger.log('Industry: ' + stockData.company_industry);
+    Logger.log('Sector: ' + stockData.company_sector);
+    Logger.log('P/E Ratio: ' + stockData.company_pe_ratio);
+    Logger.log('Dividend Yield: ' + stockData.company_dividend_yield);
+    Logger.log('52 Week High: ' + stockData.year_high);
+    Logger.log('52 Week Low: ' + stockData.year_low);
+    Logger.log('Day High: ' + stockData.high);
+    Logger.log('Day Low: ' + stockData.low);
+    Logger.log('Open: ' + stockData.open);
+    Logger.log('Previous Close: ' + stockData.previous_close);
+
+    return {
+      symbol: stockData.symbol,
+      price: stockData.price,
+      priceChange: stockData.change,
+      changesPercentage: stockData.change_percent,
+      volume: stockData.volume,
+      marketCap: stockData.company_market_cap,
+      company: stockData.name,
+      industry: stockData.company_industry,
+      sector: stockData.company_sector,
+      beta: null,
+      pegRatio: null,
+      forwardPE: stockData.company_pe_ratio,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: stockData.company_dividend_yield,
+      fiftyTwoWeekHigh: stockData.year_high,
+      fiftyTwoWeekLow: stockData.year_low,
+      dayHigh: stockData.high,
+      dayLow: stockData.low,
+      open: stockData.open,
+      close: stockData.previous_close,
+      fiftyTwoWeekAverage: null,
+      dataSource: ['RapidAPI']
+    };
+  } catch (error) {
+    Logger.log(`Error in fetchRapidAPIStockData: ${error}`);
+    return null;
   }
 }
