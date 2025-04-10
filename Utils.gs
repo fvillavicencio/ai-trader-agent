@@ -187,9 +187,10 @@ function generateEmailTemplate(analysisResult, isTest = false) {
     <html>
     <head>
       <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
       <title>${NEWSLETTER_NAME}</title>
       <style>
+        /* Base styles */
         body {
           font-family: 'Segoe UI', Arial, sans-serif;
           background-color: #f5f7fa;
@@ -197,21 +198,27 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           line-height: 1.5;
           margin: 0;
           padding: 0;
+          -webkit-text-size-adjust: 100%;
+          -ms-text-size-adjust: 100%;
         }
         
         .container {
           max-width: 800px;
           margin: 0 auto;
           padding: 20px;
+          width: 100%;
         }
         
         .header {
           text-align: center;
           margin-bottom: 30px;
+          padding: 0 10px;
         }
         
         .logo {
           margin-bottom: 15px;
+          max-width: 100%;
+          height: auto;
         }
         
         .title {
@@ -219,12 +226,14 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           font-weight: bold;
           color: #2c3e50;
           margin: 0;
+          line-height: 1.2;
         }
         
         .subtitle {
           font-size: 14px;
           color: #7f8c8d;
           margin: 5px 0 0;
+          line-height: 1.4;
         }
         
         .decision-banner {
@@ -234,12 +243,14 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           margin-bottom: 20px;
           text-align: center;
           box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          width: 100%;
         }
         
         .decision-text {
           font-size: 28px;
           font-weight: bold;
           margin: 0;
+          line-height: 1.2;
         }
         
         .section {
@@ -248,6 +259,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           padding: 20px;
           margin-bottom: 20px;
           box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          width: 100%;
         }
         
         .section h2 {
@@ -258,17 +270,24 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           margin-bottom: 15px;
           text-align: center;
           font-size: 18px;
+          line-height: 1.3;
         }
         
         .stock-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
           gap: 15px;
+          width: 100%;
         }
         
         .stock-card {
           display: flex;
           flex-direction: column;
+          background: #fff;
+          border-radius: 6px;
+          padding: 15px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          width: 100%;
         }
         
         .footer {
@@ -276,6 +295,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           font-size: 12px;
           color: #95a5a6;
           margin-top: 30px;
+          padding: 10px;
         }
         
         .disclaimer {
@@ -283,21 +303,13 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           color: #95a5a6;
           margin-top: 10px;
           text-align: center;
-        }
-        
-        @media (max-width: 600px) {
-          .container {
-            padding: 15px;
-          }
-          
-          .stock-grid {
-            grid-template-columns: 1fr;
-          }
+          line-height: 1.4;
         }
         
         /* Enhanced styles for fundamental metrics section */
         .subsection {
           margin-bottom: 20px;
+          width: 100%;
         }
         
         .stocks-grid {
@@ -305,145 +317,103 @@ function generateEmailTemplate(analysisResult, isTest = false) {
           grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
           gap: 15px;
           margin-top: 15px;
+          width: 100%;
         }
         
-        .stock-card {
-          background-color: #ffffff;
-          border-radius: 6px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          padding: 15px;
+        /* Mobile-specific styles */
+        @media (max-width: 600px) {
+          .container {
+            padding: 15px;
+            width: 100%;
+          }
+          
+          .stock-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          
+          .stocks-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          
+          .stock-card {
+            padding: 12px;
+          }
+          
+          .decision-banner {
+            padding: 15px;
+          }
+          
+          .decision-text {
+            font-size: 24px;
+          }
+          
+          .title {
+            font-size: 20px;
+          }
+          
+          .section {
+            padding: 15px;
+          }
+          
+          .section h2 {
+            font-size: 16px;
+          }
+          
+          .header {
+            padding: 0 5px;
+          }
         }
         
-        .stock-header {
-          display: flex;
-          align-items: center;
-          margin-bottom: 10px;
-          border-bottom: 1px solid #eee;
-          padding-bottom: 10px;
-        }
-        
-        .stock-symbol {
-          font-weight: bold;
-          font-size: 16px;
-          color: #2c3e50;
-          margin-right: 10px;
-        }
-        
-        .stock-name {
-          font-size: 14px;
-          color: #666;
-          margin-right: auto;
-        }
-        
-        .stock-price {
-          font-size: 16px;
-          font-weight: bold;
-          color: #2c3e50;
-        }
-        
-        .stock-metrics {
-          margin: 15px 0;
-        }
-        
-        .metric-group {
-          display: flex;
-          justify-content: space-between;
-          margin-bottom: 10px;
-        }
-        
-        .metric {
-          flex: 1;
-          min-width: 100px;
-        }
-        
-        .metric-label {
-          display: block;
-          font-size: 12px;
-          color: #666;
-          margin-bottom: 3px;
-        }
-        
-        .metric-value {
-          font-size: 14px;
-          font-weight: 500;
-        }
-        
-        .positive {
-          color: #4caf50;
-        }
-        
-        .negative {
-          color: #f44336;
-        }
-        
-        .stock-footer {
-          border-top: 1px solid #eee;
-          padding-top: 10px;
-          margin-top: 15px;
-          font-size: 12px;
-          color: #666;
-        }
-        
-        .last-updated {
-          display: block;
+        /* Print styles */
+        @media print {
+          .container {
+            max-width: 100%;
+            width: 100%;
+          }
+          
+          .section {
+            box-shadow: none;
+          }
+          
+          .decision-banner {
+            box-shadow: none;
+          }
         }
       </style>
     </head>
     <body>
       <div class="container">
-        <!-- Header -->
-        <div style="text-align: center; margin-bottom: 25px;">
-          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${NEWSLETTER_NAME}</h1>
-          <p style="color: #7f8c8d; margin: 5px 0 0;">As of ${formattedAnalysisTime}</p>
-          ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
+        <div class="header">
+          <h1 class="title">${NEWSLETTER_NAME}</h1>
+          <p class="subtitle">${formattedAnalysisTime}</p>
         </div>
         
-        <!-- Decision Box -->
-        <div style="padding: 20px; margin: 25px 0; border-radius: 8px; text-align: center; background-color: #FFF8E1; border-left: 5px solid ${decisionColor}; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
-          <div style="font-size: 28px; font-weight: bold; color: ${decisionColor}; margin: 0 0 10px;">
-            <span style="margin-right: 10px;">${decisionIcon}</span>${decision}
-          </div>
-          <p style="font-size: 16px; color: #555; margin: 0;">${analysisResult.summary || 'No summary available.'}</p>
+        <div class="decision-banner" style="background-color: ${decisionColor};">
+          <p class="decision-text">${decisionIcon} ${decision}</p>
         </div>
         
-        <!-- Justification Section -->
-        <div class="section">
-          <h2>Justification</h2>
-          <div style="line-height: 1.6; color: #444; font-size: 13px;">${analysisResult.justification || 'No justification provided.'}</div>
-        </div>
-        
-        <!-- Market Sentiment Section -->
         ${sentimentHtml}
-        
-        <!-- Market Indicators Section -->
         ${marketIndicatorsHtml}
-        
-        <!-- Fundamental Metrics Section -->
         ${fundamentalMetricsHtml}
-        
-        <!-- Macroeconomic Factors Section -->
         ${macroeconomicFactorsHtml}
-        
-        <!-- Geopolitical Risks Section -->
         ${geopoliticalRisksHtml}
         
-        <!-- Footer -->
-        <div style="background-color: #1a365d; padding: 20px; text-align: center; color: white; border-radius: 6px;">
-          <p style="margin: 0; font-size: 14px;">${NEWSLETTER_NAME} - Professional Trading Insights</p>
-          <p style="margin: 5px 0 0 0; font-size: 12px;">&copy; ${new Date().getFullYear()} ${NEWSLETTER_NAME}. All rights reserved.</p>
-          <p style="margin: 10px 0 0 0; font-size: 11px; color: #aaaaaa;">
-            Disclaimer: The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.
-          </p>
+        <div class="footer">
+          <p>  ${new Date().getFullYear()} ${NEWSLETTER_NAME}</p>
+          <div class="disclaimer">
+            This newsletter is for informational purposes only and should not be considered investment advice.
+          </div>
         </div>
       </div>
     </body>
     </html>`;
-    
-    Logger.log('Generated Email Template:\n');
+
     return html;
   } catch (error) {
-    Logger.log("Error generating email template: " + error);
-    return `<p>Error generating email template: ${error}</p>`;
+    Logger.log('Error in generateEmailTemplate: ' + error.toString());
+    throw error;
   }
 }
 
