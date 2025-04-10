@@ -1,4 +1,3 @@
-
 /**
 * The main prompt to ensure the sources consulted are relevant
 */
@@ -557,121 +556,6 @@ function getTreasurySymbol(term) {
   };
   
   return symbols[term] || "";
-}
-
-/**
- * Retrieves Fed policy data
- * @return {Object} Fed policy data
- */
-function retrieveFedPolicyData() {
-  try {
-    Logger.log("Retrieving Fed policy data...");
-    
-    // Check cache first (24-hour cache for Fed policy)
-    const scriptCache = CacheService.getScriptCache();
-    const cachedData = scriptCache.get('FED_POLICY_DATA');
-    
-    if (cachedData) {
-      const parsedData = JSON.parse(cachedData);
-      const cacheTime = new Date(parsedData.lastUpdated);
-      const currentTime = new Date();
-      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
-      
-      if (cacheAgeHours < 24) {
-        Logger.log("Using cached Fed policy data (less than 24 hours old)");
-        return parsedData;
-      } else {
-        Logger.log("Cached Fed policy data is more than 24 hours old");
-      }
-    }
-    
-    // Current date
-    const today = new Date();
-    
-    // Current Fed Funds Rate
-    const currentRate = {
-      rate: 5.375, // Current Fed Funds Rate (upper bound)
-      lowerBound: 5.25, // Lower bound
-      upperBound: 5.5, // Upper bound
-      effectiveRate: 5.33, // Effective rate
-      lastChange: new Date("2025-03-19"), // Date of last rate change
-      changeAmount: 0.0 // Amount of last change (0 for no change)
-    };
-    
-    // Define upcoming FOMC meetings for 2025
-    const fomcMeetings2025 = [
-      new Date("2025-01-29"),
-      new Date("2025-03-19"),
-      new Date("2025-04-30"),
-      new Date("2025-06-11"),
-      new Date("2025-07-30"),
-      new Date("2025-09-17"),
-      new Date("2025-11-05"),
-      new Date("2025-12-17")
-    ];
-    
-    // Find the last meeting and the next meeting
-    let lastMeeting = null;
-    let nextMeeting = null;
-    
-    for (const meeting of fomcMeetings2025) {
-      if (meeting <= today) {
-        lastMeeting = meeting;
-      } else {
-        nextMeeting = meeting;
-        break;
-      }
-    }
-    
-    // If we couldn't find a last meeting, use a reasonable fallback
-    if (!lastMeeting) {
-      lastMeeting = new Date("2025-03-19");
-    }
-    
-    // If we couldn't find a next meeting, use a reasonable fallback
-    if (!nextMeeting) {
-      nextMeeting = new Date("2025-04-30");
-    }
-    
-    // Market probabilities for the next meeting
-    const probabilityOfHike = 5.0; // 5% chance of a rate hike
-    const probabilityOfCut = 15.0; // 15% chance of a rate cut
-    const probabilityOfNoChange = 80.0; // 80% chance of no change
-    
-    // Forward guidance and commentary
-    const forwardGuidance = "The Federal Reserve remains committed to its dual mandate of maximum employment and price stability.";
-    const commentary = "Based on recent Fed communications, the Committee is focused on balancing inflation concerns with economic growth. The Fed remains data-dependent in its approach to future rate decisions.";
-    
-    const result = {
-      currentRate: currentRate,
-      lastMeeting: {
-        date: lastMeeting,
-        summary: "The Committee decided to maintain the target range for the federal funds rate."
-      },
-      nextMeeting: {
-        date: nextMeeting,
-        probabilityOfHike: probabilityOfHike,
-        probabilityOfCut: probabilityOfCut,
-        probabilityOfNoChange: probabilityOfNoChange
-      },
-      forwardGuidance: forwardGuidance,
-      commentary: commentary,
-      source: "Federal Reserve",
-      sourceUrl: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-      lastUpdated: new Date()
-    };
-    
-    // Store in cache for 24 hours (in seconds)
-    scriptCache.put('FED_POLICY_DATA', JSON.stringify(result), 24 * 60 * 60);
-    
-    return result;
-  } catch (error) {
-    Logger.log(`Error retrieving Fed policy data: ${error}`);
-    return {
-      error: true,
-      message: `Failed to retrieve Fed policy data: ${error}`
-    };
-  }
 }
 
 /**
@@ -2056,27 +1940,6 @@ function getBLSApiKey() {
     return apiKey;
   } catch (error) {
     Logger.log(`Error getting BLS API key: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Gets the FRED API key from script properties
- * @return {String} The FRED API key
- */
-function getFREDApiKey() {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const apiKey = scriptProperties.getProperty('FRED_API_KEY');
-    
-    if (!apiKey) {
-      Logger.log("FRED API key not found in script properties");
-      return null;
-    }
-    
-    return apiKey;
-  } catch (error) {
-    Logger.log(`Error getting FRED API key: ${error}`);
     return null;
   }
 }
