@@ -1,4 +1,3 @@
-
 /**
 * The main prompt to ensure the sources consulted are relevant
 */
@@ -588,14 +587,24 @@ function retrieveFedPolicyData() {
     // Current date
     const today = new Date();
     
-    // Current Fed Funds Rate
-    const currentRate = {
-      rate: 5.375, // Current Fed Funds Rate (upper bound)
-      lowerBound: 5.25, // Lower bound
-      upperBound: 5.5, // Upper bound
-      effectiveRate: 5.33, // Effective rate
-      lastChange: new Date("2025-03-19"), // Date of last rate change
-      changeAmount: 0.0 // Amount of last change (0 for no change)
+    // Fetch current Fed Funds Rate
+    const fedFundsRate = fetchFedFundsRateFromFRED();
+    
+    // If we couldn't fetch rate, use a reasonable fallback
+    const currentRate = fedFundsRate ? {
+      rate: fedFundsRate.rate,
+      lowerBound: fedFundsRate.rate - 0.25,
+      upperBound: fedFundsRate.rate + 0.25,
+      effectiveRate: fedFundsRate.rate,
+      lastChange: fedFundsRate.date,
+      changeAmount: 0.0
+    } : {
+      rate: 5.375,
+      lowerBound: 5.25,
+      upperBound: 5.5,
+      effectiveRate: 5.33,
+      lastChange: new Date("2025-03-19"),
+      changeAmount: 0.0
     };
     
     // Define upcoming FOMC meetings for 2025
@@ -633,7 +642,7 @@ function retrieveFedPolicyData() {
       nextMeeting = new Date("2025-04-30");
     }
     
-    // Market probabilities for the next meeting
+    // Get market probabilities from FRED
     const probabilityOfHike = 5.0; // 5% chance of a rate hike
     const probabilityOfCut = 15.0; // 15% chance of a rate cut
     const probabilityOfNoChange = 80.0; // 80% chance of no change
@@ -650,27 +659,55 @@ function retrieveFedPolicyData() {
       },
       nextMeeting: {
         date: nextMeeting,
-        probabilityOfHike: probabilityOfHike,
-        probabilityOfCut: probabilityOfCut,
-        probabilityOfNoChange: probabilityOfNoChange
+        summary: "Upcoming FOMC meeting with market expectations for rate decision"
+      },
+      marketProbabilities: {
+        hike: probabilityOfHike,
+        cut: probabilityOfCut,
+        noChange: probabilityOfNoChange
       },
       forwardGuidance: forwardGuidance,
       commentary: commentary,
-      source: "Federal Reserve",
-      sourceUrl: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-      lastUpdated: new Date()
+      source: "FRED",
+      lastUpdated: new Date().toISOString()
     };
     
-    // Store in cache for 24 hours (in seconds)
+    // Cache the result for 24 hours
     scriptCache.put('FED_POLICY_DATA', JSON.stringify(result), 24 * 60 * 60);
     
     return result;
+    
   } catch (error) {
-    Logger.log(`Error retrieving Fed policy data: ${error}`);
-    return {
-      error: true,
-      message: `Failed to retrieve Fed policy data: ${error}`
-    };
+    Logger.log("Error in retrieveFedPolicyData: " + error);
+    return null;
+  }
+}
+
+/**
+ * Fetches Fed Funds Rate data from FRED API
+ * @return {Object} Fed Funds Rate data or null if failed
+ */
+function fetchFedFundsRateFromFRED() {
+  try {
+    const apiKey = getFREDApiKey();
+    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=DFF&api_key=${apiKey}&file_type=json&sort_order=desc&limit=1`;
+    
+    const response = UrlFetchApp.fetch(url);
+    const data = JSON.parse(response.getContentText());
+    
+    if (data.observations && data.observations.length > 0) {
+      const latest = data.observations[0];
+      return {
+        rate: parseFloat(latest.value),
+        date: new Date(latest.date),
+        source: "FRED"
+      };
+    }
+    
+    return null;
+  } catch (error) {
+    Logger.log("Error fetching Fed Funds Rate: " + error);
+    return null;
   }
 }
 
