@@ -93,6 +93,7 @@ function retrieveStockMetrics(symbol) {
       
       // Try other APIs only if Yahoo Finance failed
       const apis = [
+        { name: 'RapidAPI', fetch: fetchRapidAPIStockData },
         { name: 'Tradier', fetch: fetchTradierData },
         { name: 'Google Finance', fetch: fetchGoogleFinanceData },
         { name: 'FMP', fetch: fetchFMPData },
@@ -1510,5 +1511,74 @@ function getCompanyName(symbol) {
       sector: null,
       industry: null
     };
+  }
+}
+
+/**
+ * Fetches data from RapidAPI stock overview endpoint
+ * @param {string} symbol - Stock symbol
+ * @return {Object} Metrics object or null
+ */
+function fetchRapidAPIStockData(symbol) {
+  try {
+    const rapidApiKey = PropertiesService.getScriptProperties().getProperty('RAPID_API_KEY');
+    if (!rapidApiKey) {
+      Logger.log('No RapidAPI key found');
+      return null;
+    }
+
+    const url = `https://real-time-finance-data.p.rapidapi.com/stock-overview?symbol=${symbol}%3ANASDAQ&language=en`;
+    const response = UrlFetchApp.fetch(url, {
+      headers: {
+        'x-rapidapi-host': 'real-time-finance-data.p.rapidapi.com',
+        'x-rapidapi-key': rapidApiKey
+      },
+      muteHttpExceptions: true
+    });
+
+    if (response.getResponseCode() !== 200) {
+      Logger.log(`RapidAPI request failed with status ${response.getResponseCode()}`);
+      return null;
+    }
+
+    const data = JSON.parse(response.getContentText());
+    if (!data || !data.data) {
+      Logger.log('No valid data returned from RapidAPI');
+      return null;
+    }
+
+    const stockData = data.data;
+    return {
+      symbol: stockData.symbol,
+      price: stockData.price,
+      priceChange: stockData.change,
+      changesPercentage: stockData.change_percent,
+      volume: stockData.volume,
+      marketCap: stockData.company_market_cap,
+      company: stockData.name,
+      industry: stockData.company_industry,
+      sector: stockData.company_sector,
+      beta: null,
+      pegRatio: null,
+      forwardPE: stockData.company_pe_ratio,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: stockData.company_dividend_yield,
+      fiftyTwoWeekHigh: stockData.year_high,
+      fiftyTwoWeekLow: stockData.year_low,
+      dayHigh: stockData.high,
+      dayLow: stockData.low,
+      open: stockData.open,
+      close: stockData.previous_close,
+      fiftyTwoWeekAverage: null,
+      dataSource: ['RapidAPI']
+    };
+  } catch (error) {
+    Logger.log(`Error in fetchRapidAPIStockData: ${error}`);
+    return null;
   }
 }
