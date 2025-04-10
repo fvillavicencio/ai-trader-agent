@@ -174,30 +174,18 @@ function isSignificantEvent(event) {
   
   // Check for important indicators
   const importantIndicators = [
-    'Retail Sales',
-    'Industrial Production',
-    'Capacity Utilization',
-    'Business Inventories',
-    'Consumer Confidence',
-    'Employment',
-    'Inflation',
     'GDP',
     'CPI',
     'PPI',
     'ISM',
     'PMI',
-    'Jobless Claims',
-    'Housing Starts',
-    'Building Permits',
-    'New Home Sales',
-    'Existing Home Sales',
-    'Consumer Spending',
-    'Personal Income',
-    'Trade Balance',
+    'fed',
     'Fed Interest Rate',
     'Fed Conf',
     'bls',
-    'mba'
+    'mba',
+    'FRB'
+
   ];
   
   return importantIndicators.some(indicator => 
