@@ -1,0 +1,435 @@
+// Stock Data Retriever - Google Apps Script implementation
+
+// Cache duration in minutes
+const CACHE_DURATION = 30;
+
+/**
+ * Main function to retrieve stock metrics
+ * @param {string} symbol - Stock symbol to retrieve metrics for
+ * @return {Object} Metrics object containing stock data
+ */
+function retrieveStockMetrics(symbol) {
+  try {
+    // Validate symbol and handle deprecated symbols
+    if (symbol === 'FB') {
+      throw new Error('FB is no longer a valid symbol. Facebook/Meta Platforms is now represented by META.');
+    } else if (symbol === 'TWTR') {
+      throw new Error('TWTR is no longer a valid symbol. Twitter/X is now represented by X.');
+    }
+
+    Logger.log(`\n=== Data Retrieval for ${symbol} ===`);
+    
+    // Check cache first (30-minute cache for stock metrics)
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKey = `STOCK_METRICS_${symbol}`;
+    
+        // Get cached data
+    const cachedData = scriptCache.get(cacheKey);
+    if (cachedData) {
+      try {
+        const parsedData = JSON.parse(cachedData);
+        const cacheTime = new Date(parsedData.lastUpdated);
+        const currentTime = new Date();
+        const cacheAgeMinutes = (currentTime - cacheTime) / (1000 * 60);
+        
+        if (cacheAgeMinutes < CACHE_DURATION) {
+          Logger.log(`Using cached stock metrics for ${symbol} (less than ${CACHE_DURATION} minutes old)`);
+          // Return exactly what we stored in cache
+          return {
+            ...parsedData,
+            fromCache: true
+          };
+        } else {
+          Logger.log(`Cached stock metrics for ${symbol} is more than ${CACHE_DURATION} minutes old`);
+        }
+      } catch (parseError) {
+        Logger.log(`Error parsing cached data for ${symbol}: ${parseError}`);
+        scriptCache.remove(cacheKey);
+      }
+    }
+    // Track execution time
+    const startTime = new Date().getTime();
+    
+    // First try Yahoo Finance API
+    Logger.log('Attempting Yahoo Finance API...');
+    const yahooMetrics = fetchYahooFinanceData(symbol);
+    
+    let metrics;
+    
+    if (yahooMetrics && yahooMetrics.price) {
+      // Yahoo Finance provided all necessary data
+      Logger.log('Yahoo Finance API provided all necessary data');
+      metrics = yahooMetrics;
+    } else {
+      // If Yahoo Finance failed or didn't provide price, try other APIs
+      Logger.log('Yahoo Finance API failed or incomplete, trying other APIs...');
+      
+      metrics = {
+        symbol: symbol,
+        price: null,
+        priceChange: null,
+        changesPercentage: null,
+        volume: null,
+        marketCap: null,
+        company: null,
+        industry: null,
+        sector: null,
+        beta: null,
+        pegRatio: null,
+        forwardPE: null,
+        priceToBook: null,
+        priceToSales: null,
+        debtToEquity: null,
+        returnOnEquity: null,
+        returnOnAssets: null,
+        profitMargin: null,
+        dividendYield: null,
+        fiftyTwoWeekHigh: null,
+        fiftyTwoWeekLow: null,
+        dayHigh: null,
+        dayLow: null,
+        open: null,
+        close: null,
+        fiftyTwoWeekAverage: null,
+        dataSource: []
+      };
+      
+      // Try other APIs only if Yahoo Finance failed
+      const apis = [
+        { name: 'Tradier', fetch: fetchTradierData },
+        {name: 'RapidAPI', fetch: fetchRapidAPIStockData },
+        {  name: 'Google Finance', fetch: fetchGoogleFinanceData },
+        { name: 'FMP', fetch: fetchFMPData },
+        { name: 'Yahoo Finance Web', fetch: fetchYahooFinanceWebData }
+      ];
+      
+      for (const { name, fetch } of apis) {
+        Logger.log(`Attempting ${name}...`);
+        const apiMetrics = fetch(symbol);
+        
+        if (apiMetrics) {
+          Logger.log(`${name} provided data: ${Object.keys(apiMetrics).join(', ')}`);
+          updateMetrics(metrics, apiMetrics, name);
+          
+          // If we have all required data, break early
+          if (metrics.price && metrics.marketCap && metrics.volume) {
+            break;
+          }
+        }
+      }
+    }
+    
+        // Cache the data for 30 minutes
+    // First calculate percentage change if we have price and price change but no percentage change
+    if (metrics.price !== null && metrics.priceChange !== null && metrics.changesPercentage === null) {
+      metrics.changesPercentage = (metrics.priceChange / metrics.price) * 100;
+      Logger.log(`Calculated changesPercentage for ${symbol}: ${metrics.changesPercentage}%`);
+    }
+    
+    // Ensure dataSource is an array
+    if (!Array.isArray(metrics.dataSource)) {
+      metrics.dataSource = [];
+    }
+    
+    const cacheData = {
+      ...metrics,
+      lastUpdated: new Date().toISOString(),
+      fromCache: false
+    };
+    
+    // Store the data in cache with proper JSON stringification
+    const cacheString = JSON.stringify(cacheData);
+    scriptCache.put(cacheKey, cacheString, CACHE_DURATION * 60); // Convert minutes to seconds
+    
+    const executionTime = (new Date().getTime() - startTime) / 1000;
+    Logger.log(`Retrieved stock metrics for ${symbol} in ${executionTime} seconds`);
+    
+    // Return the exact same structure as what we stored in cache
+    return {
+      ...cacheData,
+      fromCache: false
+    };
+  } catch (error) {
+    Logger.log(`Error in retrieveStockMetrics: ${error}`);
+    throw error;
+  }
+}
+
+/**
+ * Helper function to update metrics with new data
+ * @param {Object} metrics - Current metrics object
+ * @param {Object} newData - New data to merge
+ * @param {string} source - Source of the data
+ */
+function updateMetrics(metrics, newData, source) {
+  if (!metrics.sources) {
+    metrics.sources = [];
+  }
+  
+  // Special handling for market cap from Google Finance
+  if (source === 'Google Finance' && newData.marketCap !== null && newData.marketCap !== undefined) {
+    metrics.marketCap = newData.marketCap;
+  }
+  
+  // Update other metrics
+  for (const [key, value] of Object.entries(newData)) {
+    if (value !== null && value !== undefined && metrics[key] === null) {
+      metrics[key] = value;
+    }
+  }
+  
+  metrics.sources.push(source);
+}
+
+/**
+ * Global configuration.
+ * For beta usage (as per the provided documentation sample), use:
+ *    "https://api.tradier.com/beta"
+ * For production, change this to:
+ *    "https://api.tradier.com/v1"
+ */
+/**
+ * Global Tradier API token from property store
+ */
+const TRADIER_API_TOKEN = PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY');
+
+/**
+ * Environment configuration.
+ * Set to 'beta' for beta endpoints or 'production' for production endpoints.
+ * Update this based on your Tradier account settings.
+ */
+const TRADIER_ENVIRONMENT = 'production'; // Changed from 'beta' to 'production'
+
+// Base URLs for different environments
+const TRADIER_BASE_URLS = {
+  beta: "https://api.tradier.com/beta",
+  production: "https://api.tradier.com/v1"
+};
+
+// Get the appropriate base URL based on environment
+var TRADIER_BASE_URL = TRADIER_BASE_URLS[TRADIER_ENVIRONMENT];
+
+/**
+ * Retrieves combined stock data from Tradier for a given symbol.
+ * Merges quote data, company fundamentals (company endpoint), and financial ratios.
+ *
+ * @param {string} symbol - The stock symbol to fetch data for.
+ * @return {Object} - Merged stock data.
+ */
+function fetchTradierData(symbol) {
+  if (!symbol) {
+    throw new Error("No symbol provided for fetchTradierData");
+  }
+  
+  // Log the environment being used for debugging
+  Logger.log(`Using Tradier environment: ${TRADIER_ENVIRONMENT}`);
+  
+  // Retrieve quote data.
+  var quoteData = fetchTradierQuote(symbol);
+  // Retrieve company fundamentals.
+  var companyData = fetchTradierCompany(symbol);
+  // Retrieve financial ratios.
+  var ratiosData = fetchTradierRatios(symbol);
+  
+  // Log the raw data we received for debugging
+  Logger.log(`Raw quote data: ${JSON.stringify(quoteData)}`);
+  Logger.log(`Raw company data: ${JSON.stringify(companyData)}`);
+  Logger.log(`Raw ratios data: ${JSON.stringify(ratiosData)}`);
+  
+  // Merge fundamentals from the company endpoint.
+  var fundamentals = {};
+  if (companyData) {
+    fundamentals.company = companyData.name || null;
+    fundamentals.industry = companyData.industry || null;
+    fundamentals.sector = companyData.sector || null;
+  }
+  
+  // Merge data from the ratios endpoint.
+  if (ratiosData) {
+    fundamentals.marketcap = ratiosData.market_cap || null;
+    fundamentals.beta = ratiosData.beta || null;
+    fundamentals.dividendYield = ratiosData.dividend_yield || null;
+    fundamentals.profitMargin = ratiosData.profit_margin || null;
+    fundamentals.returnOnEquity = ratiosData.return_on_equity || null;
+    fundamentals.returnOnAssets = ratiosData.return_on_assets || null;
+  }
+  
+  // Merge all data.
+  var combinedData = {
+    symbol: symbol,
+    price: quoteData ? quoteData.last : null,
+    volume: quoteData ? quoteData.volume : null,
+    open: quoteData ? quoteData.open : null,
+    high: quoteData ? quoteData.high : null,
+    low: quoteData ? quoteData.low : null,
+    close: quoteData ? quoteData.close : null,
+    priceChange: quoteData ? quoteData.change : null,
+    changesPercentage: quoteData ? quoteData.change_percentage : null,
+    company: fundamentals.company || null,
+    industry: fundamentals.industry || null,
+    sector: fundamentals.sector || null,
+    marketcap: fundamentals.marketcap || null,
+    beta: fundamentals.beta || null,
+    dividendYield: fundamentals.dividendYield || null,
+    profitMargin: fundamentals.profitMargin || null,
+    returnOnEquity: fundamentals.returnOnEquity || null,
+    returnOnAssets: fundamentals.returnOnAssets || null
+  };
+  
+  return combinedData;
+}
+
+/**
+ * Fetches quote information from Tradier for a given symbol.
+ */
+function fetchTradierQuote(symbol) {
+  var url = TRADIER_BASE_URL + "/markets/quotes?symbols=" + encodeURIComponent(symbol);
+  var headers = {
+    "Authorization": "Bearer " + TRADIER_API_TOKEN,
+    "Accept": "application/json"
+  };
+  var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
+  
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var content = response.getContentText();
+    var responseCode = response.getResponseCode();
+    
+    // Log the full response for debugging
+    Logger.log(`Quote endpoint response code: ${responseCode}`);
+    Logger.log(`Quote endpoint response content: ${content}`);
+    
+    if (responseCode !== 200) {
+      Logger.log("HTTP Error: " + responseCode + " for symbol: " + symbol + ". Raw response: " + content);
+      throw new Error("HTTP Error: " + responseCode + " for symbol: " + symbol);
+    }
+    
+    var json = JSON.parse(content);
+    if (!json.quotes || !json.quotes.quote) {
+      throw new Error("No quote data returned for symbol: " + symbol);
+    }
+    
+    var quote = json.quotes.quote;
+    return {
+      last: quote.last || null,
+      volume: quote.volume || null,
+      open: quote.open || null,
+      high: quote.high || null,
+      low: quote.low || null,
+      close: quote.close || null,
+      change: quote.change || null,
+      change_percentage: quote.change_percentage || null
+    };
+  } catch (e) {
+    Logger.log("Error in fetchTradierQuote for " + symbol + ": " + e.message);
+    return null;
+  }
+}
+
+/**
+ * Fetches company fundamentals from Tradier using the company endpoint.
+ */
+function fetchTradierCompany(symbol) {
+  var url = TRADIER_BASE_URL + "/markets/fundamentals/company?symbols=" + encodeURIComponent(symbol);
+  var headers = {
+    "Authorization": "Bearer " + TRADIER_API_TOKEN,
+    "Accept": "application/json"
+  };
+  var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
+  
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var content = response.getContentText();
+    var responseCode = response.getResponseCode();
+    
+    // Log the full response for debugging
+    Logger.log(`Company endpoint response code: ${responseCode}`);
+    Logger.log(`Company endpoint response content: ${content}`);
+    
+    if (responseCode !== 200) {
+      Logger.log("HTTP Error in fetchTradierCompany for " + symbol + ": " + responseCode + ". Raw response: " + content);
+      throw new Error("HTTP Error: " + responseCode);
+    }
+    
+    var json = JSON.parse(content);
+    if (!json.company) {
+      throw new Error("No company data returned for symbol: " + symbol);
+    }
+    
+    return json.company;
+  } catch (e) {
+    Logger.log("Error in fetchTradierCompany for " + symbol + ": " + e.message);
+    return null;
+  }
+}
+
+/**
+ * Fetches financial ratios from Tradier using the ratios endpoint.
+ */
+function fetchTradierRatios(symbol) {
+  var url = TRADIER_BASE_URL + "/markets/fundamentals/ratios?symbols=" + encodeURIComponent(symbol);
+  var headers = {
+    "Authorization": "Bearer " + TRADIER_API_TOKEN,
+    "Accept": "application/json"
+  };
+  var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
+  
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var content = response.getContentText();
+    var responseCode = response.getResponseCode();
+    
+    // Log the full response for debugging
+    Logger.log(`Ratios endpoint response code: ${responseCode}`);
+    Logger.log(`Ratios endpoint response content: ${content}`);
+    
+    if (responseCode !== 200) {
+      Logger.log("HTTP Error in fetchTradierRatios for " + symbol + ": " + responseCode + ". Raw response: " + content);
+      throw new Error("HTTP Error: " + responseCode);
+    }
+    
+    var json = JSON.parse(content);
+    if (!json.ratios) {
+      throw new Error("No ratios data returned for symbol: " + symbol);
+    }
+    
+    return json.ratios;
+  } catch (e) {
+    Logger.log("Error in fetchTradierRatios for " + symbol + ": " + e.message);
+    return null;
+  }
+}
+
+/**
+ * Test function to verify Tradier API integration
+ */
+function testTradierAPI() {
+  const stocks = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'META'];
+  const randomIndex = Math.floor(Math.random() * stocks.length);
+  const symbol = stocks[randomIndex];
+  
+  Logger.log(`Testing Tradier API for ${symbol}...`);
+  
+  const startTime = new Date().getTime();
+  const data = fetchTradierData(symbol);
+  const executionTime = (new Date().getTime() - startTime) / 1000;
+  
+  if (!data) {
+    Logger.log(`No data retrieved from Tradier for ${symbol}`);
+    return;
+  }
+  
+  Logger.log(`Execution time: ${executionTime.toFixed(2)} seconds`);
+  Logger.log(`Data retrieved for ${symbol}:`);
+  Logger.log(JSON.stringify(data, null, 2));
+  
+  // Check for specific fields
+  const requiredFields = ['price', 'volume', 'company', 'sector', 'industry'];
+  const missingFields = requiredFields.filter(field => data[field] === null || data[field] === undefined);
+  
+  if (missingFields.length > 0) {
+    Logger.log(`Missing required fields: ${missingFields.join(', ')}`);
+  } else {
+    Logger.log('All required fields present');
+  }
+}

@@ -267,6 +267,30 @@ function decryptEventInfo(eventName, source) {
     'PPI exFood/Energy MM': {
       name: 'Producer Price Index excluding Food & Energy MoM',
       source: 'U.S. Bureau of Labor Statistics'
+    },
+    'PPI Final Demand MM': {
+      name: 'Producer Price Index for Final Demand MoM',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'PPI Final Demand YY': {
+      name: 'Producer Price Index for Final Demand YoY',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'PPI ex Food/Energy/Tr MM': {
+      name: 'Producer Price Index excluding Food, Energy & Transportation MoM',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'PPI ex Food/Energy/Tr YY': {
+      name: 'Producer Price Index excluding Food, Energy & Transportation YoY',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Export Prices MM': {
+      name: 'Export Prices Index MoM',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Import Prices MM': {
+      name: 'Import Prices Index MoM',
+      source: 'U.S. Bureau of Labor Statistics'
     }
   };
 

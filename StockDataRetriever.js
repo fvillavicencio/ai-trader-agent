@@ -182,232 +182,6 @@ function updateMetrics(metrics, newData, source) {
 }
 
 /**
- * Global Tradier API token from property store
- */
-const TRADIER_API_TOKEN = PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY');
-
-/**
- * Fetches quote information from Tradier for a given stock symbol.
- * @param {string} symbol - The stock symbol to query.
- * @return {Object|null} - An object with quote data or null if unsuccessful.
- */
-function fetchTradierQuote(symbol) {
-  if (!symbol) {
-    throw new Error("No symbol provided for fetchTradierQuote");
-  }
-  
-  const url = `https://api.tradier.com/v1/markets/quotes?symbols=${encodeURIComponent(symbol)}&includeTags=true`;
-  
-  const options = {
-    method: 'get',
-    headers: {
-      'Authorization': `Bearer ${TRADIER_API_TOKEN}`,
-      'Accept': 'application/json'
-    },
-    muteHttpExceptions: true
-  };
-  
-  try {
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-    
-    if (responseCode !== 200) {
-      throw new Error(`HTTP Error: ${responseCode} for quote data of symbol: ${symbol}`);
-    }
-    
-    const json = JSON.parse(response.getContentText());
-    
-    if (!json.quotes || !json.quotes.quote) {
-      throw new Error(`No quote data returned for symbol: ${symbol}`);
-    }
-    
-    const quote = json.quotes.quote;
-    return {
-      price: parseFloat(quote.last),
-      priceChange: parseFloat(quote.change),
-      changesPercentage: parseFloat(quote.change_percent),
-      volume: parseFloat(quote.volume),
-      marketCap: parseFloat(quote.market_cap),
-      company: quote.description,
-      industry: quote.industry,
-      sector: quote.sector,
-      beta: parseFloat(quote.beta),
-      fiftyTwoWeekHigh: parseFloat(quote.high_52),
-      fiftyTwoWeekLow: parseFloat(quote.low_52),
-      dayHigh: parseFloat(quote.high),
-      dayLow: parseFloat(quote.low),
-      open: parseFloat(quote.open),
-      close: parseFloat(quote.prevclose)
-    };
-  } catch (e) {
-    Logger.log(`Error in fetchTradierQuote for ${symbol}: ${e.message}`);
-    return null;
-  }
-}
-
-/**
- * Fetches fundamentals from Tradier for a given stock symbol.
- * @param {string} symbol - The stock symbol to query.
- * @return {Object|null} - An object with fundamental data or null if unavailable.
- */
-function fetchTradierFundamentals(symbol) {
-  if (!symbol) {
-    throw new Error("No symbol provided for fetchTradierFundamentals");
-  }
-  
-  // First try company profile
-  const profileUrl = `https://api.tradier.com/v1/markets/fundamentals/company?symbols=${encodeURIComponent(symbol)}`;
-  const ratiosUrl = `https://api.tradier.com/v1/markets/fundamentals/ratios?symbols=${encodeURIComponent(symbol)}`;
-  
-  const options = {
-    method: 'get',
-    headers: {
-      'Authorization': `Bearer ${TRADIER_API_TOKEN}`,
-      'Accept': 'application/json'
-    },
-    muteHttpExceptions: true
-  };
-  
-  try {
-    // Fetch company profile
-    const profileResponse = UrlFetchApp.fetch(profileUrl, options);
-    const profileJson = JSON.parse(profileResponse.getContentText());
-    
-    // Fetch financial ratios
-    const ratiosResponse = UrlFetchApp.fetch(ratiosUrl, options);
-    const ratiosJson = JSON.parse(ratiosResponse.getContentText());
-    
-    // Process profile data
-    let companyData = null;
-    if (profileJson.length > 0 && profileJson[0].results) {
-      companyData = profileJson[0].results.find(result => result.type === "Company");
-    }
-    
-    // Process ratios data
-    let ratiosData = null;
-    if (ratiosJson.length > 0 && ratiosJson[0].results) {
-      ratiosData = ratiosJson[0].results.find(result => result.type === "Company");
-    }
-    
-    // Combine all data
-    return {
-      company: companyData?.tables?.company_profile?.company_name,
-      industry: companyData?.tables?.company_profile?.industry,
-      sector: companyData?.tables?.company_profile?.sector,
-      marketCap: companyData?.tables?.market_cap?.[0]?.value,
-      volume: companyData?.tables?.volume?.[0]?.value,
-      returnOnEquity: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.r_o_e,
-      returnOnAssets: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.r_o_a,
-      profitMargin: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.net_margin,
-      debtToEquity: ratiosData?.tables?.operation_ratios_restate?.[0]?.period_1y?.financial_leverage ? 
-        parseFloat(ratiosData.tables.operation_ratios_restate[0].period_1y.financial_leverage) - 1 : null,
-      pegRatio: null,  // Not available in Tradier API
-      forwardPE: null, // Not available in Tradier API
-      priceToBook: null, // Not available in Tradier API
-      priceToSales: null, // Not available in Tradier API
-      dividendYield: null, // Not available in Tradier API
-      expenseRatio: null, // Not available in Tradier API
-      beta: null // Fallback to quote data
-    };
-  } catch (e) {
-    Logger.log(`Error in fetchTradierFundamentals for ${symbol}: ${e.message}`);
-    return null;
-  }
-}
-
-/**
- * Retrieves combined stock data from Tradier for a given symbol.
- * @param {string} symbol - The stock symbol to fetch data for.
- * @return {Object|null} - An object containing merged stock data or null if no valid data.
- */
-function fetchTradierData(symbol) {
-  if (!symbol) {
-    throw new Error("No symbol provided for fetchTradierData");
-  }
-  
-  if (!TRADIER_API_TOKEN) {
-    Logger.log('Tradier API key not configured');
-    return null;
-  }
-
-  // Fetch quote information
-  const quoteData = fetchTradierQuote(symbol);
-  
-  // Fetch fundamentals
-  const fundamentalsData = fetchTradierFundamentals(symbol);
-  
-  // If both data calls fail, return null
-  if (!quoteData && !fundamentalsData) {
-    Logger.log(`No valid data available for symbol: ${symbol}`);
-    return null;
-  }
-  
-  // Merge data from both responses
-  const combinedData = {
-    symbol: symbol,
-    ...quoteData,
-    ...fundamentalsData
-  };
-
-  // Validate required fields
-  if (combinedData.price === null || combinedData.volume === null) {
-    Logger.log('Missing required fields in Tradier response');
-    return null;
-  }
-
-  return combinedData;
-}
-
-/**
- * Helper function to make API requests with retry logic
- * @param {string} url - API endpoint URL
- * @param {number} maxRetries - Maximum number of retries
- * @return {Object|null} API response or null on failure
- */
-function makeTradierApiRequest(url, maxRetries = 3) {
-  let retries = 0;
-  let response;
-  
-  while (retries < maxRetries) {
-    try {
-      response = UrlFetchApp.fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY')}`,
-          'Accept': 'application/json'
-        },
-        muteHttpExceptions: true
-      });
-      
-      // If successful, return the response
-      if (response.getResponseCode() === 200) {
-        return JSON.parse(response.getContentText());
-      }
-      
-      // If rate limited, wait and retry
-      if (response.getResponseCode() === 429) {
-        console.log(`Rate limited. Retrying in ${Math.pow(2, retries)} seconds...`);
-        Utilities.sleep(Math.pow(2, retries) * 1000);
-        retries++;
-        continue;
-      }
-      
-      // If other error, log and return null
-      console.error(`API error: ${response.getResponseCode()} - ${response.getContentText()}`);
-      return null;
-    } catch (error) {
-      console.error(`API request error: ${error}. Retry ${retries + 1}/${maxRetries}`);
-      retries++;
-      
-      if (retries < maxRetries) {
-        Utilities.sleep(Math.pow(2, retries) * 1000);
-      }
-    }
-  }
-  
-  return null;
-}
-
-/**
  * Fetches data from FMP API
  * @param {string} symbol - Stock symbol
  * @return {Object} Metrics object or null
@@ -1700,5 +1474,258 @@ function fetchRapidAPIStockData(symbol) {
   } catch (error) {
     Logger.log(`Error in fetchRapidAPIStockData: ${error}`);
     return null;
+  }
+}
+
+/**
+ * Global configuration.
+ * For beta usage (as per the provided documentation sample), use:
+ *    "https://api.tradier.com/beta"
+ * For production, change this to:
+ *    "https://api.tradier.com/v1"
+ */
+/**
+ * Global Tradier API token from property store
+ */
+const TRADIER_API_TOKEN = PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY');
+
+/**
+ * Environment configuration.
+ * Set to 'beta' for beta endpoints or 'production' for production endpoints.
+ * Update this based on your Tradier account settings.
+ */
+const TRADIER_ENVIRONMENT = 'production'; // Changed from 'beta' to 'production'
+
+// Base URLs for different environments
+const TRADIER_BASE_URLS = {
+  beta: "https://api.tradier.com/beta",
+  production: "https://api.tradier.com/v1"
+};
+
+// Get the appropriate base URL based on environment
+var TRADIER_BASE_URL = TRADIER_BASE_URLS[TRADIER_ENVIRONMENT];
+
+/**
+ * Retrieves combined stock data from Tradier for a given symbol.
+ * Merges quote data, company fundamentals (company endpoint), and financial ratios.
+ *
+ * @param {string} symbol - The stock symbol to fetch data for.
+ * @return {Object} - Merged stock data.
+ */
+function fetchTradierData(symbol) {
+  if (!symbol) {
+    throw new Error("No symbol provided for fetchTradierData");
+  }
+  
+  // Log the environment being used for debugging
+  Logger.log(`Using Tradier environment: ${TRADIER_ENVIRONMENT}`);
+  
+  // Retrieve quote data.
+  var quoteData = fetchTradierQuote(symbol);
+  // Retrieve company fundamentals.
+  var companyData = fetchTradierCompany(symbol);
+  // Retrieve financial ratios.
+  var ratiosData = fetchTradierRatios(symbol);
+  
+  // Log the raw data we received for debugging
+  Logger.log(`Raw quote data: ${JSON.stringify(quoteData)}`);
+  Logger.log(`Raw company data: ${JSON.stringify(companyData)}`);
+  Logger.log(`Raw ratios data: ${JSON.stringify(ratiosData)}`);
+  
+  // Merge fundamentals from the company endpoint.
+  var fundamentals = {};
+  if (companyData) {
+    fundamentals.company = companyData.name || null;
+    fundamentals.industry = companyData.industry || null;
+    fundamentals.sector = companyData.sector || null;
+  }
+  
+  // Merge data from the ratios endpoint.
+  if (ratiosData) {
+    fundamentals.marketcap = ratiosData.market_cap || null;
+    fundamentals.beta = ratiosData.beta || null;
+    fundamentals.dividendYield = ratiosData.dividend_yield || null;
+    fundamentals.profitMargin = ratiosData.profit_margin || null;
+    fundamentals.returnOnEquity = ratiosData.return_on_equity || null;
+    fundamentals.returnOnAssets = ratiosData.return_on_assets || null;
+  }
+  
+  // Merge all data.
+  var combinedData = {
+    symbol: symbol,
+    price: quoteData ? quoteData.last : null,
+    volume: quoteData ? quoteData.volume : null,
+    open: quoteData ? quoteData.open : null,
+    high: quoteData ? quoteData.high : null,
+    low: quoteData ? quoteData.low : null,
+    close: quoteData ? quoteData.close : null,
+    priceChange: quoteData ? quoteData.change : null,
+    changesPercentage: quoteData ? quoteData.change_percentage : null,
+    company: fundamentals.company || null,
+    industry: fundamentals.industry || null,
+    sector: fundamentals.sector || null,
+    marketcap: fundamentals.marketcap || null,
+    beta: fundamentals.beta || null,
+    dividendYield: fundamentals.dividendYield || null,
+    profitMargin: fundamentals.profitMargin || null,
+    returnOnEquity: fundamentals.returnOnEquity || null,
+    returnOnAssets: fundamentals.returnOnAssets || null
+  };
+  
+  return combinedData;
+}
+
+/**
+ * Fetches quote information from Tradier for a given symbol.
+ */
+function fetchTradierQuote(symbol) {
+  var url = TRADIER_BASE_URL + "/markets/quotes?symbols=" + encodeURIComponent(symbol);
+  var headers = {
+    "Authorization": "Bearer " + TRADIER_API_TOKEN,
+    "Accept": "application/json"
+  };
+  var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
+  
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var content = response.getContentText();
+    var responseCode = response.getResponseCode();
+    
+    // Log the full response for debugging
+    Logger.log(`Quote endpoint response code: ${responseCode}`);
+    Logger.log(`Quote endpoint response content: ${content}`);
+    
+    if (responseCode !== 200) {
+      Logger.log("HTTP Error: " + responseCode + " for symbol: " + symbol + ". Raw response: " + content);
+      throw new Error("HTTP Error: " + responseCode + " for symbol: " + symbol);
+    }
+    
+    var json = JSON.parse(content);
+    if (!json.quotes || !json.quotes.quote) {
+      throw new Error("No quote data returned for symbol: " + symbol);
+    }
+    
+    var quote = json.quotes.quote;
+    return {
+      last: quote.last || null,
+      volume: quote.volume || null,
+      open: quote.open || null,
+      high: quote.high || null,
+      low: quote.low || null,
+      close: quote.close || null,
+      change: quote.change || null,
+      change_percentage: quote.change_percentage || null
+    };
+  } catch (e) {
+    Logger.log("Error in fetchTradierQuote for " + symbol + ": " + e.message);
+    return null;
+  }
+}
+
+/**
+ * Fetches company fundamentals from Tradier using the company endpoint.
+ */
+function fetchTradierCompany(symbol) {
+  var url = TRADIER_BASE_URL + "/markets/fundamentals/company?symbols=" + encodeURIComponent(symbol);
+  var headers = {
+    "Authorization": "Bearer " + TRADIER_API_TOKEN,
+    "Accept": "application/json"
+  };
+  var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
+  
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var content = response.getContentText();
+    var responseCode = response.getResponseCode();
+    
+    // Log the full response for debugging
+    Logger.log(`Company endpoint response code: ${responseCode}`);
+    Logger.log(`Company endpoint response content: ${content}`);
+    
+    if (responseCode !== 200) {
+      Logger.log("HTTP Error in fetchTradierCompany for " + symbol + ": " + responseCode + ". Raw response: " + content);
+      throw new Error("HTTP Error: " + responseCode);
+    }
+    
+    var json = JSON.parse(content);
+    if (!json.company) {
+      throw new Error("No company data returned for symbol: " + symbol);
+    }
+    
+    return json.company;
+  } catch (e) {
+    Logger.log("Error in fetchTradierCompany for " + symbol + ": " + e.message);
+    return null;
+  }
+}
+
+/**
+ * Fetches financial ratios from Tradier using the ratios endpoint.
+ */
+function fetchTradierRatios(symbol) {
+  var url = TRADIER_BASE_URL + "/markets/fundamentals/ratios?symbols=" + encodeURIComponent(symbol);
+  var headers = {
+    "Authorization": "Bearer " + TRADIER_API_TOKEN,
+    "Accept": "application/json"
+  };
+  var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
+  
+  try {
+    var response = UrlFetchApp.fetch(url, options);
+    var content = response.getContentText();
+    var responseCode = response.getResponseCode();
+    
+    // Log the full response for debugging
+    Logger.log(`Ratios endpoint response code: ${responseCode}`);
+    Logger.log(`Ratios endpoint response content: ${content}`);
+    
+    if (responseCode !== 200) {
+      Logger.log("HTTP Error in fetchTradierRatios for " + symbol + ": " + responseCode + ". Raw response: " + content);
+      throw new Error("HTTP Error: " + responseCode);
+    }
+    
+    var json = JSON.parse(content);
+    if (!json.ratios) {
+      throw new Error("No ratios data returned for symbol: " + symbol);
+    }
+    
+    return json.ratios;
+  } catch (e) {
+    Logger.log("Error in fetchTradierRatios for " + symbol + ": " + e.message);
+    return null;
+  }
+}
+
+/**
+ * Test function to verify Tradier API integration
+ */
+function testTradierAPI() {
+  const stocks = ['AAPL', 'GOOGL', 'MSFT', 'AMZN', 'META'];
+  const randomIndex = Math.floor(Math.random() * stocks.length);
+  const symbol = stocks[randomIndex];
+  
+  Logger.log(`Testing Tradier API for ${symbol}...`);
+  
+  const startTime = new Date().getTime();
+  const data = fetchTradierData(symbol);
+  const executionTime = (new Date().getTime() - startTime) / 1000;
+  
+  if (!data) {
+    Logger.log(`No data retrieved from Tradier for ${symbol}`);
+    return;
+  }
+  
+  Logger.log(`Execution time: ${executionTime.toFixed(2)} seconds`);
+  Logger.log(`Data retrieved for ${symbol}:`);
+  Logger.log(JSON.stringify(data, null, 2));
+  
+  // Check for specific fields
+  const requiredFields = ['price', 'volume', 'company', 'sector', 'industry'];
+  const missingFields = requiredFields.filter(field => data[field] === null || data[field] === undefined);
+  
+  if (missingFields.length > 0) {
+    Logger.log(`Missing required fields: ${missingFields.join(', ')}`);
+  } else {
+    Logger.log('All required fields present');
   }
 }
