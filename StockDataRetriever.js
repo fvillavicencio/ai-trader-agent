@@ -23,7 +23,7 @@ function retrieveStockMetrics(symbol) {
     const scriptCache = CacheService.getScriptCache();
     const cacheKey = `STOCK_METRICS_${symbol}`;
     
-    // Get cached data
+        // Get cached data
     const cachedData = scriptCache.get(cacheKey);
     if (cachedData) {
       try {
@@ -34,7 +34,7 @@ function retrieveStockMetrics(symbol) {
         
         if (cacheAgeMinutes < CACHE_DURATION) {
           Logger.log(`Using cached stock metrics for ${symbol} (less than ${CACHE_DURATION} minutes old)`);
-          // Return the exact same structure as when we stored it
+          // Return exactly what we stored in cache
           return {
             ...parsedData,
             fromCache: true
@@ -47,7 +47,6 @@ function retrieveStockMetrics(symbol) {
         scriptCache.remove(cacheKey);
       }
     }
-    
     // Track execution time
     const startTime = new Date().getTime();
     
@@ -97,9 +96,9 @@ function retrieveStockMetrics(symbol) {
       
       // Try other APIs only if Yahoo Finance failed
       const apis = [
-        { name: 'RapidAPI', fetch: fetchRapidAPIStockData },
         { name: 'Tradier', fetch: fetchTradierData },
-        { name: 'Google Finance', fetch: fetchGoogleFinanceData },
+        {name: 'RapidAPI', fetch: fetchRapidAPIStockData },
+        {  name: 'Google Finance', fetch: fetchGoogleFinanceData },
         { name: 'FMP', fetch: fetchFMPData },
         { name: 'Yahoo Finance Web', fetch: fetchYahooFinanceWebData }
       ];
@@ -120,7 +119,7 @@ function retrieveStockMetrics(symbol) {
       }
     }
     
-    // Cache the data for 30 minutes
+        // Cache the data for 30 minutes
     // First calculate percentage change if we have price and price change but no percentage change
     if (metrics.price !== null && metrics.priceChange !== null && metrics.changesPercentage === null) {
       metrics.changesPercentage = (metrics.priceChange / metrics.price) * 100;
@@ -145,8 +144,11 @@ function retrieveStockMetrics(symbol) {
     const executionTime = (new Date().getTime() - startTime) / 1000;
     Logger.log(`Retrieved stock metrics for ${symbol} in ${executionTime} seconds`);
     
-    return { ...metrics, fromCache: false };
-    
+    // Return the exact same structure as what we stored in cache
+    return {
+      ...cacheData,
+      fromCache: false
+    };
   } catch (error) {
     Logger.log(`Error in retrieveStockMetrics: ${error}`);
     throw error;
@@ -1278,8 +1280,17 @@ function testStockMetricsCaching() {
     Logger.log('Second call execution time: ' + secondExecutionTime + ' seconds');
     Logger.log('From cache: ' + secondMetrics.fromCache);
     
+    // Create copies of the metrics objects without lastUpdated and fromCache for comparison
+    const firstMetricsCopy = JSON.parse(JSON.stringify(firstMetrics));
+    const secondMetricsCopy = JSON.parse(JSON.stringify(secondMetrics));
+    
+    delete firstMetricsCopy.lastUpdated;
+    delete secondMetricsCopy.lastUpdated;
+    delete firstMetricsCopy.fromCache;
+    delete secondMetricsCopy.fromCache;
+    
     // Verify data consistency
-    isConsistent = JSON.stringify(firstMetrics) === JSON.stringify(secondMetrics);
+    isConsistent = JSON.stringify(firstMetricsCopy) === JSON.stringify(secondMetricsCopy);
     Logger.log('Data consistency: ' + (isConsistent ? 'Passed' : 'Failed'));
     
     // Log detailed metrics values for comparison
