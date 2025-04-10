@@ -146,18 +146,18 @@ function generateEmailTemplate(analysisResult, isTest = false) {
     
     // Define colors based on decision
     let decisionColor = '#757575'; // Default gray
-    let decisionIcon = '⚠️'; // Default warning icon
+    let decisionIcon = ''; // Default warning icon
     
     // Set colors and icon based on decision
     if (decision.toLowerCase().includes('buy')) {
       decisionColor = '#4caf50'; // Green
-      decisionIcon = '🔼';
+      decisionIcon = '&#8593;'; // Up arrow using HTML entity
     } else if (decision.toLowerCase().includes('sell')) {
       decisionColor = '#f44336'; // Red
-      decisionIcon = '🔽';
+      decisionIcon = '&#8595;'; // Down arrow using HTML entity
     } else if (decision.toLowerCase().includes('hold')) {
       decisionColor = '#ff9800'; // Orange
-      decisionIcon = '⏸️';
+      decisionIcon = '&#8594;'; // Right arrow using HTML entity
     } else if (decision.toLowerCase().includes('watch')) {
       decisionColor = '#FFA500'; // Orange/Amber
       decisionIcon = '⚠️';
@@ -385,13 +385,25 @@ function generateEmailTemplate(analysisResult, isTest = false) {
     </head>
     <body>
       <div class="container">
-        <div class="header">
-          <h1 class="title">${NEWSLETTER_NAME}</h1>
-          <p class="subtitle">${formattedAnalysisTime}</p>
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 25px;">
+          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${NEWSLETTER_NAME}</h1>
+          <p style="color: #7f8c8d; margin: 5px 0 0;">As of ${formattedAnalysisTime}</p>
+          ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
         </div>
         
-        <div class="decision-banner" style="background-color: ${decisionColor};">
-          <p class="decision-text">${decisionIcon} ${decision}</p>
+        <!-- Decision Box -->
+        <div style="padding: 20px; margin: 25px 0; border-radius: 8px; text-align: center; background-color: #FFF8E1; border-left: 5px solid ${decisionColor}; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
+          <div style="font-size: 28px; font-weight: bold; color: ${decisionColor}; margin: 0 0 10px;">
+            <span style="margin-right: 10px;">${decisionIcon}</span>${decision}
+          </div>
+          <p style="font-size: 16px; color: #555; margin: 0;">${analysisResult.summary || 'No summary available.'}</p>
+        </div>
+        
+        <!-- Justification Section -->
+        <div class="section">
+          <h2>Justification</h2>
+          <div style="line-height: 1.6; color: #444; font-size: 13px;">${analysisResult.justification || 'No justification provided.'}</div>
         </div>
         
         ${sentimentHtml}
@@ -526,7 +538,7 @@ function generateMarketIndicatorsSection(analysis) {
             const change = index.change || 0;
             const percentChange = index.percentChange || 0;
             const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
-            const changeIcon = percentChange >= 0 ? '↑' : '↓';
+            const changeIcon = percentChange >= 0 ? '&#8593;' : '&#8595;';
             
             return `
             <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
@@ -554,7 +566,7 @@ function generateMarketIndicatorsSection(analysis) {
           ${indicators.sectorPerformance.map(sector => {
             const percentChange = sector.percentChange || 0;
             const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
-            const changeIcon = percentChange >= 0 ? '↑' : '↓';
+            const changeIcon = percentChange >= 0 ? '&#8593;' : '&#8595;';
             
             return `
             <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
@@ -632,8 +644,8 @@ function generateMarketIndicatorsSection(analysis) {
                            vixValue >= 20 ? '#ff9800' : 
                            '#4caf50';
             
-            const trendIcon = vixTrend.toLowerCase().includes('rising') ? '↑' :
-                            vixTrend.toLowerCase().includes('falling') ? '↓' : '→';
+            const trendIcon = vixTrend.toLowerCase().includes('rising') ? '&#8593;' :
+                            vixTrend.toLowerCase().includes('falling') ? '&#8595;' : '&#8594;';
             
             const trendColor = vixTrend.toLowerCase().includes('rising') ? '#f44336' :
                             vixTrend.toLowerCase().includes('falling') ? '#4caf50' : '#757575';
@@ -816,7 +828,7 @@ function generateFundamentalMetricsSection(analysis) {
                       <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
                         <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$${formatNumberWithSuffix(stock.price, '')}</div>
                         <div style="color: ${getColor(stock.priceChange)}; font-weight: bold;">
-                          <span style="margin-right: 3px;">${stock.priceChange >= 0 ? '↑' : '↓'}</span>
+                          <span style="margin-right: 3px;">${stock.priceChange >= 0 ? '&#8593;' : '&#8595;'}</span>
                           ${typeof stock.priceChange === 'number' ? (stock.priceChange >= 0 ? '+' : '') + stock.priceChange.toFixed(2) + '%' : stock.priceChange || 'N/A'}
                         </div>
                       </div>
@@ -962,13 +974,13 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="color: #f44336; font-size: 14px;">
-                  <span style="font-size: 1.5em;">↑</span> ${macro.fedPolicy.nextMeeting.probabilityOfHike}%
+                  <span style="font-size: 1.5em;">&#8593;</span> ${macro.fedPolicy.nextMeeting.probabilityOfHike}%
                 </div>
                 <div style="color: #757575; font-size: 14px;">
-                  <span style="font-size: 1.5em;">→</span> ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%
+                  <span style="font-size: 1.5em;">&#8594;</span> ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%
                 </div>
                 <div style="color: #4CAF50; font-size: 14px;">
-                  <span style="font-size: 1.5em;">↓</span> ${macro.fedPolicy.nextMeeting.probabilityOfCut}%
+                  <span style="font-size: 1.5em;">&#8595;</span> ${macro.fedPolicy.nextMeeting.probabilityOfCut}%
                 </div>
               </div>
             </div>
