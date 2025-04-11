@@ -290,8 +290,8 @@ function parseFedMeetingsFromHTML(htmlContent) {
       
       // Extract and parse dates
       const dateParts = dateText.split('-');
-      const startDate = parseFOMCDate(month, dateParts[0].trim());
-      const endDate = dateParts.length > 1 ? parseFOMCDate(month, dateParts[1].trim()) : new Date(startDate);
+      const startDate = parseFOMCDate(month, dateParts[0].trim(), parseInt(year));
+      const endDate = dateParts.length > 1 ? parseFOMCDate(month, dateParts[1].trim(), parseInt(year)) : new Date(startDate);
       
       // Set time to 2pm ET (18:00 UTC)
       startDate.setHours(18, 0, 0, 0);
@@ -326,9 +326,10 @@ function parseFedMeetingsFromHTML(htmlContent) {
  * Parse a FOMC meeting date string into a Date object
  * @param {string} month - The month of the meeting
  * @param {string} dateStr - The date string (e.g., "28", "28 (unscheduled)")
+ * @param {number} year - The year of the meeting
  * @returns {Date} The parsed date
  */
-function parseFOMCDate(month, dateStr) {
+function parseFOMCDate(month, dateStr, year) {
   // Remove any extra text in parentheses
   const cleanDate = dateStr.replace(/\([^)]*\)/, '').trim();
   
@@ -336,9 +337,6 @@ function parseFOMCDate(month, dateStr) {
   if (cleanDate.includes('notation vote')) {
     return new Date(); // Return current date for notation votes
   }
-  
-  // Get the year from the current context
-  const year = getCurrentYear();
   
   // Create date object
   const date = new Date(year, getMonthNumber(month), parseInt(cleanDate));
