@@ -25,22 +25,24 @@ function retrieveFedPolicyData() {
     const meetings = fetchFOMCMeetings();
     if (debugMode) {
       Logger.log("----------------------------------------");
-      Logger.log("Meetings retrieved:", meetings.length);
+      Logger.log("Meetings retrieved:", meetings.meetings.length);
       Logger.log("----------------------------------------");
     }
     
     const today = new Date();
-    const pastMeetings = meetings.meetings.filter(m => new Date(m.date) <= today).sort((a, b) => new Date(b.date) - new Date(a.date));
-    const futureMeetings = meetings.meetings.filter(m => new Date(m.date) > today).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const pastMeetings = meetings.meetings.filter(m => new Date(m.endDate) <= today).sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
+    const futureMeetings = meetings.meetings.filter(m => new Date(m.startDate) > today).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
     
     const lastMeeting = pastMeetings[0] || {
-      date: "No meetings found",
+      startDate: "No meetings found",
+      endDate: "No meetings found",
       type: "",
       time: "",
       timezone: ""
     };
     const nextMeeting = futureMeetings[0] || {
-      date: "No upcoming meetings",
+      startDate: "No upcoming meetings",
+      endDate: "No upcoming meetings",
       type: "",
       time: "",
       timezone: ""
@@ -95,13 +97,15 @@ function retrieveFedPolicyData() {
     return {
       currentRate: null,
       lastMeeting: {
-        date: "Error retrieving meetings",
+        startDate: "Error retrieving meetings",
+        endDate: "Error retrieving meetings",
         type: "",
         time: "",
         timezone: ""
       },
       nextMeeting: {
-        date: "Error retrieving meetings",
+        startDate: "Error retrieving meetings",
+        endDate: "Error retrieving meetings",
         type: "",
         time: "",
         timezone: ""
@@ -316,7 +320,7 @@ function fetchFOMCMeetings() {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
       }
     });
-    
+
     if (response.getResponseCode() !== 200) {
       throw new Error(`Failed to fetch FOMC calendar: ${response.getResponseCode()}`);
     }
@@ -329,17 +333,30 @@ function fetchFOMCMeetings() {
     Object.entries(rawMeetings).forEach(([year, yearMeetings]) => {
       yearMeetings.forEach(meeting => {
         const dateRange = meeting.date;
-        const dayMatch = dateRange.match(/^\s*(\d{1,2})/);
+        const dayMatch = dateRange.match(/^\s*(\d{1,2})-?(\d{1,2})?/);
         if (!dayMatch) return;
         
-        const day = dayMatch[1];
-        const meetingDateStr = `${meeting.month} ${day}, ${year} 14:00 EDT`;
-        const meetingDate = new Date(meetingDateStr);
+        const startDay = dayMatch[1];
+        const endDay = dayMatch[2] || startDay;
         
-        if (isNaN(meetingDate.getTime())) return;
+        // Handle cases where meeting spans months
+        const monthMatch = meeting.month.match(/^(\w+)\/?(\w+)?/);
+        const startMonth = monthMatch[1];
+        const endMonth = monthMatch[2] || startMonth;
+        
+        // Create start date
+        const startDateStr = `${startMonth} ${startDay}, ${year} 14:00 EDT`;
+        const startDate = new Date(startDateStr);
+        
+        // Create end date
+        const endDateStr = `${endMonth} ${endDay}, ${year} 14:00 EDT`;
+        const endDate = new Date(endDateStr);
+        
+        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) return;
 
         meetings.push({
-          date: meetingDate.toISOString(),
+          startDate: startDate.toISOString(),
+          endDate: endDate.toISOString(),
           type: "FOMC Meeting",
           time: "14:00",
           timezone: "EDT",
@@ -348,36 +365,72 @@ function fetchFOMCMeetings() {
       });
     });
 
-    // Sort meetings by date (newest first)
-    meetings.sort((a, b) => new Date(b.date) - new Date(a.date));
+    // Sort meetings by start date (oldest first)
+    meetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+    // Get current time
+    const now = new Date();
+    
+    // Find last meeting (most recent meeting that has already happened)
+    let lastMeeting = null;
+    for (let i = meetings.length - 1; i >= 0; i--) {
+      const meetingEndDate = new Date(meetings[i].endDate);
+      if (meetingEndDate <= now) {
+        lastMeeting = meetings[i];
+        break;
+      }
+    }
+    
+    // Find next meeting (first meeting that hasn't started yet)
+    let nextMeeting = null;
+    for (let i = 0; i < meetings.length; i++) {
+      const meetingStartDate = new Date(meetings[i].startDate);
+      if (meetingStartDate > now) {
+        nextMeeting = meetings[i];
+        break;
+      }
+    }
+
+    // If no meetings were found, return default values
+    if (!lastMeeting) {
+      lastMeeting = {
+        startDate: "No meetings found",
+        endDate: "No meetings found",
+        type: "",
+        time: "",
+        timezone: ""
+      };
+    }
+
+    if (!nextMeeting) {
+      nextMeeting = {
+        startDate: "No upcoming meetings",
+        endDate: "No upcoming meetings",
+        type: "",
+        time: "",
+        timezone: ""
+      };
+    }
 
     return {
       meetings: meetings,
-      lastMeeting: meetings.length > 0 ? meetings[0] : {
-        date: "No meetings found",
-        type: "",
-        time: "",
-        timezone: ""
-      },
-      nextMeeting: meetings.length > 0 ? meetings[meetings.length - 1] : {
-        date: "No upcoming meetings",
-        type: "",
-        time: "",
-        timezone: ""
-      }
+      lastMeeting: lastMeeting,
+      nextMeeting: nextMeeting
     };
   } catch (error) {
     Logger.log('Error in fetchFOMCMeetings: ' + error);
     return {
       meetings: [],
       lastMeeting: {
-        date: "No meetings found",
+        startDate: "No meetings found",
+        endDate: "No meetings found",
         type: "",
         time: "",
         timezone: ""
       },
       nextMeeting: {
-        date: "No upcoming meetings",
+        startDate: "No upcoming meetings",
+        endDate: "No upcoming meetings",
         type: "",
         time: "",
         timezone: ""
@@ -399,8 +452,8 @@ function fetchForwardGuidance() {
 
     // Sort meetings by date (newest first)
     meetings.sort((a, b) => {
-      const dateA = new Date(a.date);
-      const dateB = new Date(b.date);
+      const dateA = new Date(a.startDate);
+      const dateB = new Date(b.startDate);
       return dateB - dateA;
     });
 
@@ -431,7 +484,7 @@ function fetchForwardGuidance() {
       const guidance = guidanceMatch[0].replace(/<.*?>/g, '').trim();
       return {
         forwardGuidance: guidance,
-        commentary: `Forward guidance from FOMC minutes (${latestMeeting.date})`
+        commentary: `Forward guidance from FOMC minutes (${latestMeeting.startDate})`
       };
     }
 
@@ -664,8 +717,22 @@ function parseMeetingDate(rawDate) {
   try {
     const dateParts = rawDate.split("-");
     const endDate = dateParts[1] ? dateParts[1] : dateParts[0];
-    const fullDate = endDate.trim().match(/\w+ \d{1,2}, \d{4}/)[0];
-    const dateObj = new Date(fullDate + " 14:00 EDT");
+    const dateStr = endDate.trim();
+    
+    // Extract month, day, and year
+    const monthDayMatch = dateStr.match(/(\w+)\s+(\d{1,2})/);
+    if (!monthDayMatch) return null;
+    
+    const month = monthDayMatch[1];
+    const day = monthDayMatch[2];
+    const yearMatch = dateStr.match(/\s+(\d{4})$/);
+    const year = yearMatch ? yearMatch[1] : '';
+    
+    // Convert month name to number
+    const monthNum = parseMonth(month);
+    
+    // Create date string in ISO format
+    const dateObj = new Date(`${year}-${monthNum}-${day}T14:00:00-04:00`);
     return isNaN(dateObj) ? null : dateObj.toISOString();
   } catch (error) {
     Logger.log("Error parsing meeting date:", error);
@@ -776,13 +843,13 @@ function testFedPolicyData() {
       "Fed Policy": {
         "Current Rate": `${fedPolicy.currentRate}%`,
         "Last Meeting": {
-          "Date": fedPolicy.lastMeeting.date,
+          "Date": formatMeetingDate(fedPolicy.lastMeeting.startDate),
           "Type": fedPolicy.lastMeeting.type,
           "Time": fedPolicy.lastMeeting.time,
           "Timezone": fedPolicy.lastMeeting.timezone
         },
         "Next Meeting": {
-          "Date": fedPolicy.nextMeeting.date,
+          "Date": formatMeetingDate(fedPolicy.nextMeeting.startDate),
           "Type": fedPolicy.nextMeeting.type,
           "Time": fedPolicy.nextMeeting.time,
           "Timezone": fedPolicy.nextMeeting.timezone
@@ -842,11 +909,49 @@ function checkCachedFedPolicyData() {
  * Test function to verify FOMC meetings retrieval
  */
 function testFetchFOMCMeetings() {
-  const meetings = fetchFOMCMeetings();
-  Logger.log("Found " + meetings.length + " FOMC meetings:");
-  meetings.forEach((meeting, index) => {
-    Logger.log((index + 1) + ". " + meeting.date + " - " + meeting.type);
-  });
+  try {
+    const result = fetchFOMCMeetings();
+    const meetings = result.meetings;
+    
+    Logger.log("----------------------------------------");
+    Logger.log("FOMC Meetings Data:");
+    Logger.log("----------------------------------------");
+    
+    // Log parsed meetings
+    Logger.log("Parsed Meetings:");
+    Logger.log(JSON.stringify(meetings, null, 2));
+    
+    // Log last and next meetings
+    Logger.log("\nLast Meeting:");
+    Logger.log(JSON.stringify(result.lastMeeting, null, 2));
+    
+    Logger.log("\nNext Meeting:");
+    Logger.log(JSON.stringify(result.nextMeeting, null, 2));
+    
+    // Log source information
+    Logger.log("\nSource Information:");
+    Logger.log("URL:", result.source?.url || "N/A");
+    Logger.log("Timestamp:", result.source?.timestamp || "N/A");
+    
+    Logger.log("----------------------------------------");
+    Logger.log("Test completed successfully");
+    Logger.log("----------------------------------------");
+    
+    return result;
+    
+  } catch (error) {
+    Logger.log("----------------------------------------");
+    Logger.log("Error in testFetchFOMCMeetings:");
+    Logger.log("Error Type:", error.constructor.name);
+    Logger.log("Error Message:", error.message);
+    Logger.log("Stack Trace:", error.stack);
+    Logger.log("----------------------------------------");
+    
+    return {
+      error: error.message,
+      timestamp: new Date().toISOString()
+    };
+  }
 }
 
 /**
@@ -872,11 +977,11 @@ function getNextMeeting(meetings) {
   const gracePeriod = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
   
   // Sort meetings by date in ascending order
-  const sortedMeetings = meetings.sort((a, b) => new Date(a.date) - new Date(b.date));
+  const sortedMeetings = meetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
   
   // Find the first meeting that is after today or within grace period
   for (let i = 0; i < sortedMeetings.length; i++) {
-    const meetingDate = new Date(sortedMeetings[i].date);
+    const meetingDate = new Date(sortedMeetings[i].startDate);
     if (meetingDate - today <= gracePeriod) {
       return sortedMeetings[i];
     }
@@ -888,7 +993,8 @@ function getNextMeeting(meetings) {
   }
   
   return {
-    date: "No upcoming meetings",
+    startDate: "No upcoming meetings",
+    endDate: "No upcoming meetings",
     type: "",
     time: "",
     timezone: ""
