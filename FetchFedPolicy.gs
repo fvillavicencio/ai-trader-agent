@@ -330,24 +330,29 @@ function parseFedMeetingsFromHTML(htmlContent) {
  * @param {boolean} isEndDate - Whether this is the end date of a range
  * @returns {Date} The parsed date
  */
-function parseFOMCDate(month, dateStr, year, isEndDate) {
+function parseFOMCDate(month, dateStr, year, isEndDate = false) {
   // Remove any extra text in parentheses
   const cleanDate = dateStr.replace(/\([^)]*\)/, '').trim();
   
   // Handle special cases
   if (cleanDate.includes('notation vote')) {
-    return new Date(); // Return current date for notation votes
+    return new Date(year, getMonthNumber(month), 1); // Return first day of month for notation votes
   }
   
   // Create date object
   const date = new Date(year, getMonthNumber(month), parseInt(cleanDate));
   
   // Handle month transitions (e.g., "31-1")
-  if (date.getDate() !== parseInt(cleanDate)) {
-    // If the date rolled over to next month, adjust accordingly
+  const originalDay = parseInt(cleanDate);
+  const currentDay = date.getDate();
+  
+  if (currentDay !== originalDay) {
+    // If the date rolled over to next month
     if (isEndDate) {
-      date.setMonth(date.getMonth() + 1);
+      // For end date, keep the month as is (it's already rolled over)
+      date.setMonth(date.getMonth());
     } else {
+      // For start date, go back to previous month
       date.setMonth(date.getMonth() - 1);
     }
   }
