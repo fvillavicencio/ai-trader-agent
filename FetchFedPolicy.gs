@@ -286,8 +286,7 @@ function parseFedMeetingsFromHTML(htmlContent) {
       
       meetings.push({
         month: month,
-        date: dateRange,
-        hasProjection: dateRange.includes('(projection)'),
+        date: dateRange.replace(/\*$/, ''), // Remove trailing asterisk if present
         startDate: dateRangeObj.startDate,
         endDate: dateRangeObj.endDate,
         minutesUrl: minutesUrl
