@@ -25,31 +25,13 @@ function retrieveFedPolicyData() {
     const meetings = fetchFOMCMeetings();
     if (debugMode) {
       Logger.log("----------------------------------------");
-      Logger.log("Meetings retrieved:", meetings.length);
+      Logger.log("Meetings retrieved:", meetings.meetings.length);
       Logger.log("----------------------------------------");
     }
     
-    const today = new Date();
-    const pastMeetings = meetings.meetings.filter(m => new Date(m.startDate) <= today).sort((a, b) => new Date(b.startDate) - new Date(a.startDate));
-    const futureMeetings = meetings.meetings.filter(m => new Date(m.startDate) > today).sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+    // Compute last and next meetings
+    const computed = computeLastAndNextMeetings(meetings.meetings);
     
-    const lastMeeting = pastMeetings[0] || {
-      date: "No meetings found",
-      type: "",
-      time: "",
-      timezone: "",
-      startDate: new Date(),
-      endDate: new Date()
-    };
-    const nextMeeting = futureMeetings[0] || {
-      date: "No upcoming meetings",
-      type: "",
-      time: "",
-      timezone: "",
-      startDate: new Date(),
-      endDate: new Date()
-    };
-
     // Fetch forward guidance and commentary
     const guidance = fetchForwardGuidance();
     if (debugMode) {
@@ -61,8 +43,8 @@ function retrieveFedPolicyData() {
     // Create the data structure
     const fedPolicy = {
       currentRate: fedFundsRate,
-      lastMeeting: lastMeeting,
-      nextMeeting: nextMeeting,
+      lastMeeting: computed.lastMeeting,
+      nextMeeting: computed.nextMeeting,
       meetings: meetings.meetings,
       forwardGuidance: guidance.forwardGuidance,
       commentary: guidance.commentary,
@@ -284,30 +266,31 @@ function parseFedMeetingsFromHTML(htmlContent) {
       const month = monthMatch ? monthMatch[1].trim() : '';
       
       // Extract date and check for projection
-      const dateMatch = meetingHtml.match(/<div class="fomc-meeting__date[^>]*>([\s\S]*?)<\/div>/);
-      const dateText = dateMatch ? dateMatch[1].trim() : '';
-      const hasProjection = dateText.includes('(projection)');
+      const dateRangeMatch = meetingHtml.match(/<div class="fomc-meeting__date[^"]*">.*?<\/div>/);
+      const dateRange = dateRangeMatch ? dateRangeMatch[0].replace(/<.*?>/g, '').trim() : '';
       
-      // Extract and parse dates
-      const dateParts = dateText.split('-');
-      const startDate = parseFOMCDate(month, dateParts[0].trim(), parseInt(year));
-      const endDate = dateParts.length > 1 ? parseFOMCDate(month, dateParts[1].trim(), parseInt(year)) : new Date(startDate);
+      // Parse date range
+      const dateRangeObj = parseDateRange(dateRange, parseInt(year), convertMonth(month), "14:00");
+      if (!dateRangeObj) continue;
       
-      // Check if end date is numerically smaller than start date, indicating a month transition
-      if (endDate < startDate) {
-        endDate.setMonth(endDate.getMonth() + 1);
-      }
+      // Extract URLs for minutes
+      const minutesHtmlMatch = meetingHtml.match(/<a[^>]*href=["']\/monetarypolicy\/fomcminutes[\d]+[.]htm["'][^>]*>HTML<\/a>/);
+      const minutesPdfMatch = meetingHtml.match(/<a[^>]*href=["']\/monetarypolicy\/files\/fomcminutes[\d]+[.]pdf["'][^>]*>PDF<\/a>/);
       
-      // Set time to 2pm ET (18:00 UTC)
-      startDate.setHours(18, 0, 0, 0);
-      endDate.setHours(18, 0, 0, 0);
+      // Get the HTML version if available, otherwise fall back to PDF
+      const minutesUrl = minutesHtmlMatch 
+        ? `https://www.federalreserve.gov${minutesHtmlMatch[0].match(/href=["']([^"']+)["']/)[1]}`
+        : minutesPdfMatch 
+          ? `https://www.federalreserve.gov${minutesPdfMatch[0].match(/href=["']([^"']+)["']/)[1]}`
+          : null;
       
       meetings.push({
         month: month,
-        date: dateText,
-        hasProjection: hasProjection,
-        startDate: startDate,
-        endDate: endDate
+        date: dateRange,
+        hasProjection: dateRange.includes('(projection)'),
+        startDate: dateRangeObj.startDate,
+        endDate: dateRangeObj.endDate,
+        minutesUrl: minutesUrl
       });
     }
     
@@ -328,65 +311,108 @@ function parseFedMeetingsFromHTML(htmlContent) {
 }
 
 /**
- * Parse a FOMC meeting date string into a Date object
- * @param {string} month - The month of the meeting
- * @param {string} dateStr - The date string (e.g., "28", "28 (unscheduled)")
- * @param {number} year - The year of the meeting
- * @returns {Date} The parsed date
+ * Parse a date-range string such as "31-1" or "28-29" given the meeting year, a starting month index, and a meeting time.
+ * If the end day is numerically lower than the start day, it will assume the meeting spans into the next month.
+ * It also strips any non-digit characters from the range.
  */
-function parseFOMCDate(month, dateStr, year) {
-  // Remove any extra text in parentheses
-  const cleanDate = dateStr.replace(/\([^)]*\)/, '').trim();
-  
-  // Handle special cases
-  if (cleanDate.includes('notation vote')) {
-    return new Date(year, getMonthNumber(month), 1); // Return first day of month for notation votes
+function parseDateRange(dateRange, year, monthIndex, meetingTime) {
+  // Use a regex to extract two digit groups
+  const rangeMatch = dateRange.match(/(\d+)\s*-\s*(\d+)/);
+  if (!rangeMatch) {
+    // If no dash is found, try a single day
+    const dayMatch = dateRange.match(/(\d+)/);
+    if (dayMatch) {
+      const day = parseInt(dayMatch[1], 10);
+      const d = new Date(Date.UTC(year, monthIndex, day, 14, 0));
+      return { startDate: d, endDate: d };
+    }
+    return { startDate: null, endDate: null };
   }
   
-  // Create date object using UTC to ensure consistent ISO string
-  const date = new Date(Date.UTC(year, getMonthNumber(month), parseInt(cleanDate), 18, 0));
-  
-  return date;
+  const startDay = parseInt(rangeMatch[1], 10);
+  const endDay = parseInt(rangeMatch[2], 10);
+
+  // Parse meetingTime assumed in "HH:mm" format
+  const timeParts = meetingTime.split(":");
+  const hours = parseInt(timeParts[0], 10);
+  const minutes = parseInt(timeParts[1], 10);
+
+  // Build start date using the provided year, month, and start day
+  const startDate = new Date(Date.UTC(year, monthIndex, startDay, hours, minutes));
+
+  let endMonth = monthIndex;
+  let endYear = year;
+  // If the end day is numerically lower than the start day then assume the event spans into the next month.
+  if (endDay < startDay) {
+    endMonth++;
+    if (endMonth > 11) {
+      endMonth = 0;
+      endYear++;
+    }
+  }
+
+  const endDate = new Date(Date.UTC(endYear, endMonth, endDay, hours, minutes));
+  return { startDate: startDate, endDate: endDate };
 }
 
 /**
- * Get the current year from the context
- * @returns {number} The current year
+ * Convert a month string to a numeric month index (0-based).
+ * If the string includes a '/' (e.g. "Jan/Feb" or "Oct/Nov"), it uses the first part.
  */
-function getCurrentYear() {
-  // This should be implemented based on your specific context
-  // For example, you might get it from a configuration or context object
-  return new Date().getFullYear();
-}
-
-/**
- * Convert month name to month number (0-11)
- * @param {string} monthName - The month name (e.g., "January", "Jan/Feb")
- * @returns {number} The month number (0-11)
- */
-function getMonthNumber(monthName) {
-  const monthMap = {
-    'January': 0, 'Jan': 0,
-    'February': 1, 'Feb': 1,
-    'March': 2, 'Mar': 2,
-    'April': 3, 'Apr': 3,
-    'May': 4,
-    'June': 5, 'Jun': 5,
-    'July': 6, 'Jul': 6,
-    'August': 7, 'Aug': 7,
-    'September': 8, 'Sep': 8,
-    'October': 9, 'Oct': 9,
-    'November': 10, 'Nov': 10,
-    'December': 11, 'Dec': 11
+function convertMonth(monthStr) {
+  if (monthStr.indexOf("/") !== -1) {
+    monthStr = monthStr.split("/")[0];
+  }
+  monthStr = monthStr.toLowerCase();
+  const months = { 
+    "jan": 0, "feb": 1, "mar": 2, "apr": 3, "may": 4, "jun": 5, 
+    "jul": 6, "aug": 7, "sep": 8, "oct": 9, "nov": 10, "dec": 11 
   };
-  
-  // Handle special cases like "Jan/Feb"
-  const monthParts = monthName.split('/');
-  if (monthParts.length > 1) {
-    return monthMap[monthParts[0]];
+  for (const key in months) {
+    if (monthStr.indexOf(key) !== -1) return months[key];
   }
+  return 0;  // default to January if nothing matches
+}
+
+/**
+ * Flattens the meetings from all years into a single array,
+ * sorts them by startDate, and returns the last meeting (before now)
+ * and the next meeting (after now). If no meeting qualifies, returns null.
+ */
+function computeLastAndNextMeetings(meetingsByYear) {
+  const now = new Date();
+  const allMeetings = [];
   
-  return monthMap[monthName] || 0;
+  // Flatten the object by iterating through each year
+  for (const year in meetingsByYear) {
+    allMeetings.push(...meetingsByYear[year]);
+  }
+
+  // Sort the array by startDate ascending
+  allMeetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+
+  let lastMeeting = null;
+  let nextMeeting = null;
+  
+  for (let i = 0; i < allMeetings.length; i++) {
+    const meeting = allMeetings[i];
+    if (new Date(meeting.startDate) <= now) {
+      lastMeeting = meeting;
+    } else {
+      nextMeeting = meeting;
+      break;
+    }
+  }
+
+  // If no meeting is found before now, you might choose to return a message
+  if (!lastMeeting) {
+    lastMeeting = { message: "No past meetings found" };
+  }
+  if (!nextMeeting) {
+    nextMeeting = { message: "No upcoming meetings" };
+  }
+
+  return { lastMeeting, nextMeeting };
 }
 
 /**
@@ -421,7 +447,8 @@ function fetchFOMCMeetings() {
           timezone: "EDT",
           fullText: `FOMC Meeting - ${meeting.month} ${meeting.date} ${year}`,
           startDate: meeting.startDate,
-          endDate: meeting.endDate
+          endDate: meeting.endDate,
+          minutesUrl: meeting.minutesUrl
         });
       });
     });
@@ -431,22 +458,8 @@ function fetchFOMCMeetings() {
 
     return {
       meetings: meetings,
-      lastMeeting: meetings.length > 0 ? meetings[0] : {
-        date: "No meetings found",
-        type: "",
-        time: "",
-        timezone: "",
-        startDate: new Date(),
-        endDate: new Date()
-      },
-      nextMeeting: meetings.length > 0 ? meetings[meetings.length - 1] : {
-        date: "No upcoming meetings",
-        type: "",
-        time: "",
-        timezone: "",
-        startDate: new Date(),
-        endDate: new Date()
-      }
+      lastMeeting: computeLastAndNextMeetings(rawMeetings).lastMeeting,
+      nextMeeting: computeLastAndNextMeetings(rawMeetings).nextMeeting
     };
   } catch (error) {
     Logger.log('Error in fetchFOMCMeetings: ' + error);
