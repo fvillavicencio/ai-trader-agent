@@ -290,8 +290,13 @@ function parseFedMeetingsFromHTML(htmlContent) {
       
       // Extract and parse dates
       const dateParts = dateText.split('-');
-      const startDate = parseFOMCDate(month, dateParts[0].trim(), parseInt(year), false);
-      const endDate = dateParts.length > 1 ? parseFOMCDate(month, dateParts[1].trim(), parseInt(year), true) : new Date(startDate);
+      const startDate = parseFOMCDate(month, dateParts[0].trim(), parseInt(year));
+      const endDate = dateParts.length > 1 ? parseFOMCDate(month, dateParts[1].trim(), parseInt(year)) : new Date(startDate);
+      
+      // Check if end date is numerically smaller than start date, indicating a month transition
+      if (endDate < startDate) {
+        endDate.setMonth(endDate.getMonth() + 1);
+      }
       
       // Set time to 2pm ET (18:00 UTC)
       startDate.setHours(18, 0, 0, 0);
@@ -327,10 +332,9 @@ function parseFedMeetingsFromHTML(htmlContent) {
  * @param {string} month - The month of the meeting
  * @param {string} dateStr - The date string (e.g., "28", "28 (unscheduled)")
  * @param {number} year - The year of the meeting
- * @param {boolean} isEndDate - Whether this is the end date of a range
  * @returns {Date} The parsed date
  */
-function parseFOMCDate(month, dateStr, year, isEndDate = false) {
+function parseFOMCDate(month, dateStr, year) {
   // Remove any extra text in parentheses
   const cleanDate = dateStr.replace(/\([^)]*\)/, '').trim();
   
@@ -339,23 +343,8 @@ function parseFOMCDate(month, dateStr, year, isEndDate = false) {
     return new Date(year, getMonthNumber(month), 1); // Return first day of month for notation votes
   }
   
-  // Create date object
-  const date = new Date(year, getMonthNumber(month), parseInt(cleanDate));
-  
-  // Handle month transitions (e.g., "31-1")
-  const originalDay = parseInt(cleanDate);
-  const currentDay = date.getDate();
-  
-  if (currentDay !== originalDay) {
-    // If the date rolled over to next month
-    if (isEndDate) {
-      // For end date, keep the month as is (it's already rolled over)
-      date.setMonth(date.getMonth());
-    } else {
-      // For start date, go back to previous month
-      date.setMonth(date.getMonth() - 1);
-    }
-  }
+  // Create date object using UTC to ensure consistent ISO string
+  const date = new Date(Date.UTC(year, getMonthNumber(month), parseInt(cleanDate), 18, 0));
   
   return date;
 }
