@@ -290,8 +290,8 @@ function parseFedMeetingsFromHTML(htmlContent) {
       
       // Extract and parse dates
       const dateParts = dateText.split('-');
-      const startDate = parseFOMCDate(month, dateParts[0].trim(), parseInt(year));
-      const endDate = dateParts.length > 1 ? parseFOMCDate(month, dateParts[1].trim(), parseInt(year)) : new Date(startDate);
+      const startDate = parseFOMCDate(month, dateParts[0].trim(), parseInt(year), false);
+      const endDate = dateParts.length > 1 ? parseFOMCDate(month, dateParts[1].trim(), parseInt(year), true) : new Date(startDate);
       
       // Set time to 2pm ET (18:00 UTC)
       startDate.setHours(18, 0, 0, 0);
@@ -327,9 +327,10 @@ function parseFedMeetingsFromHTML(htmlContent) {
  * @param {string} month - The month of the meeting
  * @param {string} dateStr - The date string (e.g., "28", "28 (unscheduled)")
  * @param {number} year - The year of the meeting
+ * @param {boolean} isEndDate - Whether this is the end date of a range
  * @returns {Date} The parsed date
  */
-function parseFOMCDate(month, dateStr, year) {
+function parseFOMCDate(month, dateStr, year, isEndDate) {
   // Remove any extra text in parentheses
   const cleanDate = dateStr.replace(/\([^)]*\)/, '').trim();
   
@@ -344,7 +345,11 @@ function parseFOMCDate(month, dateStr, year) {
   // Handle month transitions (e.g., "31-1")
   if (date.getDate() !== parseInt(cleanDate)) {
     // If the date rolled over to next month, adjust accordingly
-    date.setMonth(date.getMonth() - 1);
+    if (isEndDate) {
+      date.setMonth(date.getMonth() + 1);
+    } else {
+      date.setMonth(date.getMonth() - 1);
+    }
   }
   
   return date;
