@@ -1,9 +1,10 @@
+const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
+
 /**
  * Retrieves Fed policy data including current rate and upcoming meetings
  * @return {Object} Fed policy data
  */
 function retrieveFedPolicyData() {
-  const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
   
   try {
     if (debugMode) {
@@ -12,41 +13,58 @@ function retrieveFedPolicyData() {
       Logger.log("----------------------------------------");
     }
     
-    Logger.log("Retrieving Fed policy data...");
-    
     // Fetch current Fed Funds Rate
     const fedFundsRate = fetchFedFundsRateFromFRED();
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Fed Funds Rate retrieved:", fedFundsRate);
+      Logger.log("----------------------------------------");
+    }
     
     // Fetch FOMC meeting schedule
     const meetings = fetchFOMCMeetings();
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Meetings retrieved:", meetings.length);
+      Logger.log("----------------------------------------");
+    }
     
-    // Get the next meeting
-    const nextMeeting = meetings.find(meeting => new Date(meeting.date) > new Date()) || {
+    const today = new Date();
+    const pastMeetings = meetings.meetings.filter(m => new Date(m.date) <= today).sort((a, b) => new Date(b.date) - new Date(a.date));
+    const futureMeetings = meetings.meetings.filter(m => new Date(m.date) > today).sort((a, b) => new Date(a.date) - new Date(b.date));
+    
+    const lastMeeting = pastMeetings[0] || {
+      date: "No meetings found",
+      type: "",
+      time: "",
+      timezone: ""
+    };
+    const nextMeeting = futureMeetings[0] || {
       date: "No upcoming meetings",
       type: "",
       time: "",
       timezone: ""
     };
-    
+
     // Fetch forward guidance and commentary
     const guidance = fetchForwardGuidance();
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Forward guidance retrieved:", guidance.forwardGuidance);
+      Logger.log("----------------------------------------");
+    }
     
     // Create the data structure
     const fedPolicy = {
       currentRate: fedFundsRate,
-      lastMeeting: meetings[0] || {
-        date: "No meetings found",
-        type: "",
-        time: "",
-        timezone: ""
-      },
+      lastMeeting: lastMeeting,
       nextMeeting: nextMeeting,
-      meetings: meetings,
+      meetings: meetings.meetings,
       forwardGuidance: guidance.forwardGuidance,
       commentary: guidance.commentary,
       source: {
-        url: guidance.source.url,
-        timestamp: guidance.source.timestamp
+        url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
+        timestamp: new Date().toISOString()
       }
     };
     
@@ -72,99 +90,25 @@ function retrieveFedPolicyData() {
       Logger.log("Stack Trace:", error.stack);
       Logger.log("----------------------------------------");
     }
-    return null;
-  }
-}
-
-/**
- * Fetches forward guidance and commentary from the latest Fed press release
- * @return {Object} Forward guidance and commentary
- */
-function fetchForwardGuidance() {
-  const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
-  
-  try {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Starting fetchForwardGuidance");
-      Logger.log("----------------------------------------");
-    }
     
-    // Fetch the latest FOMC press release using the Federal Reserve's API
-    const pressReleaseUrl = 'https://www.federalreserve.gov/api/press-releases/monetary.json';
-    const response = UrlFetchApp.fetch(pressReleaseUrl, {
-      timeout: 30000 // 30 second timeout
-    });
-    
-    if (debugMode) {
-      Logger.log("Press Release Response Status:", response.getResponseCode());
-      Logger.log("Press Release Response Content Length:", response.getContentText().length);
-    }
-    
-    // Parse the JSON response
-    const pressReleases = JSON.parse(response.getContentText());
-    if (!pressReleases || !Array.isArray(pressReleases)) {
-      throw new Error("Invalid press releases data format");
-    }
-    
-    // Find the latest FOMC statement
-    const latestRelease = pressReleases.find(release => {
-      return release.title.toLowerCase().includes('fomc statement');
-    });
-    
-    if (!latestRelease) {
-      throw new Error("Could not find latest FOMC press release");
-    }
-    
-    // Fetch the full press release content
-    const releaseUrl = `https://www.federalreserve.gov${latestRelease.url}`;
-    const releaseResponse = UrlFetchApp.fetch(releaseUrl, {
-      timeout: 30000 // 30 second timeout
-    });
-    
-    if (debugMode) {
-      Logger.log("Press Release Content Length:", releaseResponse.getContentText().length);
-    }
-    
-    // Extract forward guidance and commentary
-    // Look for specific phrases in the content
-    const guidancePattern = /The Federal Reserve remains committed to its dual mandate of maximum employment and price stability\./i;
-    const commentaryPattern = /Based on recent Fed communications, the Committee is focused on balancing inflation concerns with economic growth\. The Fed remains data-dependent in its approach to future rate decisions\./i;
-    
-    const forwardGuidance = releaseResponse.getContentText().match(guidancePattern)?.[0] || 
-      "The Federal Reserve remains committed to its dual mandate of maximum employment and price stability.";
-    
-    const commentary = releaseResponse.getContentText().match(commentaryPattern)?.[0] || 
-      "Based on recent Fed communications, the Committee is focused on balancing inflation concerns with economic growth. The Fed remains data-dependent in its approach to future rate decisions.";
-    
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Forward Guidance:", forwardGuidance);
-      Logger.log("Commentary:", commentary);
-      Logger.log("----------------------------------------");
-    }
-    
+    // Return a fallback structure with error information
     return {
-      forwardGuidance: forwardGuidance,
-      commentary: commentary,
-      source: {
-        url: releaseUrl,
-        timestamp: new Date().toISOString()
-      }
-    };
-    
-  } catch (error) {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Error in fetchForwardGuidance:");
-      Logger.log("Error Type:", error.constructor.name);
-      Logger.log("Error Message:", error.message);
-      Logger.log("Stack Trace:", error.stack);
-      Logger.log("----------------------------------------");
-    }
-    return {
-      forwardGuidance: "The Federal Reserve remains committed to its dual mandate of maximum employment and price stability.",
-      commentary: "Based on recent Fed communications, the Committee is focused on balancing inflation concerns with economic growth. The Fed remains data-dependent in its approach to future rate decisions.",
+      currentRate: null,
+      lastMeeting: {
+        date: "Error retrieving meetings",
+        type: "",
+        time: "",
+        timezone: ""
+      },
+      nextMeeting: {
+        date: "Error retrieving meetings",
+        type: "",
+        time: "",
+        timezone: ""
+      },
+      meetings: [],
+      forwardGuidance: "Error retrieving forward guidance",
+      commentary: "Error occurred while retrieving Fed policy data",
       source: {
         url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
         timestamp: new Date().toISOString()
@@ -175,78 +119,53 @@ function fetchForwardGuidance() {
 
 /**
  * Fetches current Fed Funds Rate from FRED API
- * @return {number} Current Fed Funds Rate
+ * @return {Object} Current Fed Funds Rate with range
  */
 function fetchFedFundsRateFromFRED() {
+  const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
+  
   try {
-    const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
-    
     if (debugMode) {
       Logger.log("----------------------------------------");
       Logger.log("Starting fetchFedFundsRateFromFRED");
       Logger.log("----------------------------------------");
     }
     
-    const fredApiKey = getFREDApiKey();
-    if (!fredApiKey) {
-      throw new Error("FRED API key is not set");
+    const apiKey = getFREDApiKey();
+    if (!apiKey) {
+      throw new Error('FRED_API_KEY not found in script properties');
     }
     
-    // Get today's date and 3 months ago
-    const today = new Date();
-    const threeMonthsAgo = new Date();
-    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
-    
-    if (debugMode) {
-      Logger.log("Fetching data from:", threeMonthsAgo.toISOString().split('T')[0], "to:", today.toISOString().split('T')[0]);
-    }
-    
-    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=DFF&api_key=${fredApiKey}&file_type=json&observation_start=${threeMonthsAgo.toISOString().split('T')[0]}&observation_end=${today.toISOString().split('T')[0]}`;
-    
-    if (debugMode) {
-      Logger.log("FRED API URL:", url);
-    }
-    
-    const startTime = new Date();
+    const url = `https://api.stlouisfed.org/fred/series/observations?series_id=FEDFUNDS&api_key=${apiKey}&file_type=json&sort_order=desc&limit=1`;
     const response = UrlFetchApp.fetch(url, {
-      timeout: 30000 // 30 second timeout
+      muteHttpExceptions: true
     });
-    const endTime = new Date();
     
     if (debugMode) {
       Logger.log("FRED API Response Status:", response.getResponseCode());
-      Logger.log("FRED API Response Time:", endTime - startTime, "ms");
       Logger.log("FRED API Response Content Length:", response.getContentText().length);
     }
+
+    const json = JSON.parse(response.getContentText());
+    const observations = json.observations;
     
-    const data = JSON.parse(response.getContentText());
-    
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("FRED API Response Data:");
-      Logger.log(JSON.stringify(data, null, 2));
-      Logger.log("----------------------------------------");
+    if (observations && observations.length > 0) {
+      const latestValue = parseFloat(observations[0].value);
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Latest Fed Funds Rate Observation:");
+        Logger.log(JSON.stringify(observations[0], null, 2));
+        Logger.log("----------------------------------------");
+      }
+      
+      return {
+        currentRate: latestValue.toFixed(2),
+        rangeLow: (Math.floor(latestValue * 4) / 4).toFixed(2),
+        rangeHigh: (Math.ceil(latestValue * 4) / 4).toFixed(2)
+      };
     }
     
-    // Get the most recent observation
-    const latestObservation = data.observations[data.observations.length - 1];
-    
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Latest Fed Funds Rate Observation:");
-      Logger.log(JSON.stringify(latestObservation, null, 2));
-      Logger.log("----------------------------------------");
-    }
-    
-    const rate = parseFloat(latestObservation.value);
-    
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Parsed Fed Funds Rate:", rate);
-      Logger.log("----------------------------------------");
-    }
-    
-    return rate;
+    throw new Error('No observations found in FRED API response');
     
   } catch (error) {
     if (debugMode) {
@@ -257,109 +176,620 @@ function fetchFedFundsRateFromFRED() {
       Logger.log("Stack Trace:", error.stack);
       Logger.log("----------------------------------------");
     }
-    return 0; // Return 0 as fallback
+    return null;
   }
 }
 
 /**
- * Fetches FOMC meeting schedule
- * @return {Array} Array of meeting objects
+ * Gets elements by class name using XmlService.
+ * @param {XmlService.Element} element The element to search within.
+ * @param {string} className The class name to search for.
+ * @param {XmlService.Namespace} ns The XML namespace.
+ * @return {Array<XmlService.Element>} Array of matching elements.
  */
-function fetchFOMCMeetings() {
-  const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
-  
+function getElementsByClassName(element, className, ns) {
+  let elements = [];
+
+  const classAttr = element.getAttribute('class', ns);
+  if (classAttr && classAttr.getValue().split(' ').includes(className)) {
+    elements.push(element);
+  }
+
+  const children = element.getChildren(ns);
+  children.forEach(child => {
+    elements = elements.concat(getElementsByClassName(child, className, ns));
+  });
+
+  return elements;
+}
+
+/**
+ * Preprocesses HTML to make it well-formed for XML parsing.
+ * @param {string} html The HTML content to preprocess.
+ * @return {string} The preprocessed HTML content.
+ */
+function preprocessHTML(html) {
   try {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Starting fetchFOMCMeetings");
-      Logger.log("----------------------------------------");
+    // Remove the DOCTYPE declaration and any leading whitespace
+    html = html.replace(/^.*\n/, '');
+    
+    // Remove any BOM characters
+    html = html.replace(/\ufeff/g, '');
+    
+    // Add proper XML declaration with quoted version
+    html = '<?xml version="1.0" encoding="UTF-8"?>\n' + html;
+    
+    // Add proper namespace declaration
+    if (!html.includes('xmlns="http://www.w3.org/1999/xhtml"')) {
+      html = html.replace(/<html[^>]*>/i, '<html xmlns="http://www.w3.org/1999/xhtml">');
     }
     
-    const url = 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm';
-    const response = UrlFetchApp.fetch(url, {
-      timeout: 30000 // 30 second timeout
-    });
-    const content = response.getContentText();
+    // Clean up any malformed attributes
+    html = html.replace(/\s+/g, ' ');
+    html = html.replace(/\s*=[\s"]+/g, '=');
     
-    if (debugMode) {
-      Logger.log("FOMC Calendar Response Status:", response.getResponseCode());
-      Logger.log("FOMC Calendar Response Content Length:", content.length);
-    }
+    // Remove any invalid characters
+    html = html.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
     
-    // Find all meeting dates using a more specific pattern
-    const meetingPattern = /<div class="calendar-meeting">\s*(\d{1,2}\s+\w+\s+\d{4})\s*<\/div>/g;
+    // Remove any remaining DOCTYPE declarations
+    html = html.replace(/<!DOCTYPE[^>]*>/gi, '');
+    
+    // Remove any script tags that might cause parsing issues
+    html = html.replace(/<script[^>]*>.*?<\/script>/gi, '');
+    
+    return html;
+  } catch (error) {
+    Logger.log('Error in preprocessHTML: ' + error);
+    return html;
+  }
+}
+
+/**
+ * Parses FOMC meeting data from HTML content using regex.
+ * @param {string} htmlContent The HTML content to parse.
+ * @return {Object} A structured object containing FOMC meeting information.
+ */
+function parseFedMeetingsFromHTML(htmlContent) {
+  const years = [];
+  
+  // Extract panels for each year
+  const panelRegex = /<div class="panel panel-default">([\s\S]*?)<div class="panel-footer">/g;
+  let panelMatch;
+  
+  while ((panelMatch = panelRegex.exec(htmlContent)) !== null) {
+    const panelContent = panelMatch[1];
+    const yearMatch = panelContent.match(/<h4><a[^>]*>(\d{4}) FOMC Meetings<\/a><\/h4>/);
+    if (!yearMatch) continue;
+    
+    const year = yearMatch[1];
     const meetings = [];
     
-    let match;
-    while ((match = meetingPattern.exec(content)) !== null) {
-      const dateStr = match[1];
-      const date = new Date(dateStr);
+    // Extract individual meetings
+    const meetingRegex = /<div class="row fomc-meeting[\s\S]*?<\/div>\s*<\/div>/g;
+    let meetingMatch;
+    
+    while ((meetingMatch = meetingRegex.exec(panelContent)) !== null) {
+      const meetingHtml = meetingMatch[0];
       
-      if (!isNaN(date)) {
-        // Add a default time of 8:00 PM for FOMC meetings
-        const meetingTime = new Date(date);
-        meetingTime.setHours(20, 0, 0, 0); // 8:00 PM
-        
+      // Log the raw meeting HTML
+      if (debugMode) {
+        Logger.log(`\nProcessing meeting HTML for year ${year}:`);
+        Logger.log(meetingHtml);
+      }
+      
+      // Extract month
+      const monthMatch = meetingHtml.match(/<div class="fomc-meeting__month[^>]*>.*?<strong>([^<]+)<\/strong>/);
+      const month = monthMatch ? monthMatch[1].trim() : '';
+      
+      // Extract date and check for projection
+      const dateMatch = meetingHtml.match(/<div class="fomc-meeting__date[^>]*>([\s\S]*?)<\/div>/);
+      if (debugMode) {
+        Logger.log("Date Match:", dateMatch);
+        if (dateMatch) {
+          Logger.log("Raw date string before cleaning:", dateMatch[1]);
+          Logger.log("Raw date string:", dateMatch[1]);
+        }
+      } 
+      
+      let date = dateMatch ? dateMatch[1].trim() : '';
+      const hasProjection = dateMatch ? dateMatch[1].includes('*') : false;
+      
+      // Remove asterisk and trim whitespace
+      date = date.replace(/\*+/g, '').trim();
+      
+      meetings.push({
+        month: month,
+        date: date,
+        year: year,
+        hasProjection: hasProjection
+      });
+    }
+    
+    years.push({
+      year: year,
+      meetings: meetings
+    });
+  }
+  
+  // Convert to our desired format
+  const meetingsByYear = {};
+  years.forEach(yearObj => {
+    meetingsByYear[yearObj.year] = yearObj.meetings;
+  });
+  
+  if (debugMode) {
+    Logger.log("\nFinal parsed meetings:");
+    Logger.log(JSON.stringify(meetingsByYear, null, 2));
+  }
+  
+  return meetingsByYear;
+}
+
+/**
+ * Fetches FOMC meeting information from the Federal Reserve website.
+ * @return {Object} FOMC meeting data including last and next meetings, and all meetings.
+ */
+function fetchFOMCMeetings() {
+  try {
+    const url = "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm";
+    const response = UrlFetchApp.fetch(url, {
+      muteHttpExceptions: true,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    if (response.getResponseCode() !== 200) {
+      throw new Error(`Failed to fetch FOMC calendar: ${response.getResponseCode()}`);
+    }
+
+    const html = response.getContentText();
+    const rawMeetings = parseFedMeetingsFromHTML(html);
+    
+    // Sort meetings by date
+    const allMeetings = [];
+    Object.entries(rawMeetings).forEach(([year, yearMeetings]) => {
+      yearMeetings.forEach(meeting => {
+        const date = parseMeetingDate(meeting.date, meeting.month, year);
+        if (date) {
+          allMeetings.push({
+            ...meeting,
+            date: date.startDate,
+            endDate: date.endDate
+          });
+        }
+      });
+    });
+
+    // Sort all meetings chronologically by start date
+    allMeetings.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    // Find previous and next meetings
+    const today = new Date();
+    let lastMeeting = null;
+    let nextMeeting = null;
+
+    for (let i = 0; i < allMeetings.length; i++) {
+      const meetingDate = new Date(allMeetings[i].date);
+      if (meetingDate <= today) {
+        lastMeeting = allMeetings[i];
+      } else {
+        nextMeeting = allMeetings[i];
+        break;
+      }
+    }
+
+    // Format the meetings
+    const formattedMeetings = allMeetings.map(meeting => ({
+      date: meeting.date,
+      endDate: meeting.endDate,
+      type: "FOMC Meeting",
+      time: "14:00",
+      timezone: "EDT",
+      fullText: `FOMC Meeting - ${meeting.month} ${meeting.date} ${meeting.year}`
+    }));
+
+    return {
+      meetings: formattedMeetings,
+      lastMeeting: lastMeeting ? {
+        date: lastMeeting.date,
+        endDate: lastMeeting.endDate,
+        type: "FOMC Meeting",
+        time: "14:00",
+        timezone: "EDT",
+        fullText: `FOMC Meeting - ${lastMeeting.month} ${lastMeeting.date} ${lastMeeting.year}`
+      } : null,
+      nextMeeting: nextMeeting ? {
+        date: nextMeeting.date,
+        endDate: nextMeeting.endDate,
+        type: "FOMC Meeting",
+        time: "14:00",
+        timezone: "EDT",
+        fullText: `FOMC Meeting - ${nextMeeting.month} ${nextMeeting.date} ${nextMeeting.year}`
+      } : null,
+      source: {
+        url: url,
+        timestamp: new Date().toISOString()
+      }
+    };
+
+  } catch (error) {
+    Logger.log("Error in fetchFOMCMeetings: " + error);
+    return {
+      meetings: [],
+      lastMeeting: null,
+      nextMeeting: null,
+      source: {
+        url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+        timestamp: new Date().toISOString()
+      }
+    };
+  }
+}
+
+/**
+ * Fetches forward guidance and commentary from the latest Fed press release
+ * @return {Object} Forward guidance and commentary
+ */
+function fetchForwardGuidance() {
+  try {
+    const meetings = fetchFOMCMeetings();
+    if (meetings.length === 0) {
+      throw new Error("No meetings found");
+    }
+
+    // Sort meetings by date (newest first)
+    meetings.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB - dateA;
+    });
+
+    const latestMeeting = meetings[0];
+    if (!latestMeeting.minutesUrl) {
+      throw new Error("Latest meeting has no minutes URL");
+    }
+
+    // Fetch the minutes page
+    const minutesResponse = UrlFetchApp.fetch(latestMeeting.minutesUrl, {
+      muteHttpExceptions: true,
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+
+    if (minutesResponse.getResponseCode() !== 200) {
+      throw new Error(`Failed to fetch minutes: ${minutesResponse.getResponseCode()}`);
+    }
+
+    const minutesHtml = minutesResponse.getContentText();
+
+    // Look for the forward guidance section
+    const guidanceRegex = /<p>.*?The Committee expects.*?to maintain this target range.*?until.*?it is confident.*?that the economy has.*?achieved its maximum employment and price stability goals.*?<\/p>/i;
+    const guidanceMatch = minutesHtml.match(guidanceRegex);
+
+    if (guidanceMatch) {
+      const guidance = guidanceMatch[0].replace(/<.*?>/g, '').trim();
+      return {
+        forwardGuidance: guidance,
+        commentary: `Forward guidance from FOMC minutes (${latestMeeting.date})`
+      };
+    }
+
+    // Fallback to default guidance if not found
+    return {
+      forwardGuidance: "Based on recent Fed communications, the Committee is focused on balancing inflation concerns with economic growth. The Fed remains data-dependent in its approach to future rate decisions.",
+      commentary: "Default forward guidance (forward guidance not found in minutes)"
+    };
+
+  } catch (error) {
+    Logger.log("Error in fetchForwardGuidance:", error);
+    return {
+      forwardGuidance: "Error retrieving forward guidance",
+      commentary: `Error occurred while fetching forward guidance: ${error.message}`
+    };
+  }
+}
+
+/**
+ * Cleans up HTML by removing invalid characters and making it well-formed.
+ * @param {string} htmlString The HTML string to clean.
+ * @return {string} Cleaned HTML string.
+ */
+function cleanHtml(htmlString) {
+  // Remove any BOM characters
+  htmlString = htmlString.replace(/\ufeff/g, '');
+  
+  // Replace invalid characters
+  htmlString = htmlString.replace(/[\x00-\x08\x0B\x0C\x0E-\x1F]/g, '');
+  
+  // Add missing HTML tags if needed
+  if (!htmlString.match(/<html/i)) {
+    htmlString = '<html>' + htmlString + '</html>';
+  }
+  if (!htmlString.match(/<body/i)) {
+    htmlString = htmlString.replace(/<html>/i, '<html><body>');
+    htmlString = htmlString.replace(/<\/html>/i, '</body></html>');
+  }
+  
+  return htmlString;
+}
+
+/**
+ * Recursively converts an XML element (using XmlService) into a JSON object.
+ * @param {XmlService.Element|XmlService.Text} xml The XML object to convert.
+ * @return {Object|string} The JSON representation.
+ */
+function xmlToJson(xml) {
+  try {
+    if (!xml) return null;
+    
+    // If the node has no children, return its text content.
+    if (!xml.hasChildNodes()) {
+      return xml.getText();
+    }
+    
+    var obj = {};
+    var children = xml.getChildNodes();
+    for (var i = 0; i < children.length; i++) {
+      var child = children[i];
+      var nodeType = child.getType();
+      if (nodeType === XmlService.ContentTypes.TEXT) {
+        // Ignore whitespace; if needed, you can trim it.
+        var text = child.getText().trim();
+        if (text) {
+          return text;
+        }
+      } else if (nodeType === XmlService.ContentTypes.ELEMENT) {
+        var nodeName = child.getName();
+        var childJson = xmlToJson(child);
+        if (obj[nodeName] === undefined) {
+          obj[nodeName] = childJson;
+        } else {
+          // If there are multiple children with the same name, accumulate them into an array.
+          if (!Array.isArray(obj[nodeName])) {
+            obj[nodeName] = [obj[nodeName]];
+          }
+          obj[nodeName].push(childJson);
+        }
+      }
+    }
+    return obj;
+  } catch (e) {
+    Logger.log("Error in xmlToJson: " + e);
+    return null;
+  }
+}
+
+/**
+ * Parses HTML (or well-formed XML) into a JSON object.
+ * @param {string} htmlString The HTML string to parse.
+ * @return {Object} The JSON object representation.
+ */
+function convertHtmlToJson(htmlString) {
+  try {
+    // Clean the HTML first
+    htmlString = cleanHtml(htmlString);
+    
+    // Parse the HTML using XmlService
+    var document = XmlService.parse(htmlString);
+    var root = document.getRootElement();
+    return xmlToJson(root);
+  } catch (e) {
+    Logger.log("Error parsing HTML: " + e);
+    // Try to extract useful information even if parsing fails
+    var tempObj = {
+      rawHtml: htmlString,
+      error: e.toString()
+    };
+    return tempObj;
+  }
+}
+
+/**
+ * Safely accesses nested properties in an object.
+ * @param {Object} obj The object to access.
+ * @param {string[]} path Array of property names to access.
+ * @param {*} defaultValue Default value to return if property doesn't exist.
+ * @return {*} The value at the specified path or the default value.
+ */
+function safeGet(obj, path, defaultValue = null) {
+  try {
+    return path.reduce((acc, key) => (acc && acc[key] !== undefined ? acc[key] : defaultValue), obj);
+  } catch (e) {
+    return defaultValue;
+  }
+}
+
+/**
+ * Parses FOMC meeting data from the Federal Reserve calendar page.
+ * @param {string} htmlString The HTML string containing the FOMC calendar.
+ * @return {Object} A structured object containing FOMC meeting information.
+ */
+function parseFOMCCalendar(htmlString) {
+  var meetings = [];
+  
+  try {
+    // First, find all panels containing FOMC meeting information
+    const panelRegex = /<div class="panel panel-default">([\s\S]*?)<\/div>\s*<\/div>/gs;
+    let panelMatch;
+    while ((panelMatch = panelRegex.exec(htmlString)) !== null) {
+      const panelBlock = panelMatch[1];
+
+      // Extract the year from the panel heading
+      const yearRegex = /<h4>\s*<a [^>]+>(\d{4})\s+FOMC Meetings<\/a>/i;
+      const yearMatch = yearRegex.exec(panelBlock);
+      if (!yearMatch) continue;
+      const panelYear = yearMatch[1];
+
+      // Now extract each meeting row within this panel
+      const rowRegex = /<div class="[^"]*\brow\b[^"]*\bfomc-meeting(?:--shaded)?\b[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/gis;
+      let meetingMatch;
+      while ((meetingMatch = rowRegex.exec(panelBlock)) !== null) {
+        const rowHtml = meetingMatch[1];
+
+        // Extract the month from the cell with class "fomc-meeting__month"
+        const monthRegex = /<div class="fomc-meeting__month[^"]*"><strong>([^<]+)<\/strong><\/div>/i;
+        const monthMatch = monthRegex.exec(rowHtml);
+        if (!monthMatch) continue;
+        const month = monthMatch[1].trim();
+
+        // Extract the date range from the cell with class "fomc-meeting__date"
+        const dateRangeRegex = /<div class="fomc-meeting__date[^"]*">([^<]+)<\/div>/i;
+        const dateRangeMatch = dateRangeRegex.exec(rowHtml);
+        if (!dateRangeMatch) continue;
+        const dateRange = dateRangeMatch[1].trim(); // e.g., "6-7" or "28-29"
+
+        // Get the first (starting) day from the date range.
+        const dayRegex = /^(\d{1,2})/;
+        const dayMatch = dayRegex.exec(dateRange);
+        if (!dayMatch) continue;
+        const day = dayMatch[1];
+
+        // Build the meeting date string (assume meeting starts at 14:00 EDT).
+        const meetingDateStr = `${month} ${day}, ${panelYear} 14:00 EDT`;
+        const meetingDate = new Date(meetingDateStr);
+        if (isNaN(meetingDate.getTime())) continue;
+
         meetings.push({
-          date: dateStr,
+          date: meetingDate.toISOString(),
           type: "FOMC Meeting",
-          time: meetingTime.toISOString(),
-          timezone: "EDT"
+          time: "14:00",
+          timezone: "EDT",
+          fullText: `FOMC Meeting - ${month} ${dateRange} ${panelYear}`
         });
       }
     }
-    
-    // Sort meetings by date
-    meetings.sort((a, b) => new Date(a.date) - new Date(b.date));
-    
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Parsed FOMC Meetings:");
-      Logger.log(JSON.stringify(meetings, null, 2));
-      Logger.log("----------------------------------------");
-    }
-    
+  
+    Logger.log("Meetings parsed: " + JSON.stringify(meetings, null, 2));
     return meetings;
-    
   } catch (error) {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Error in fetchFOMCMeetings:");
-      Logger.log("Error Type:", error.constructor.name);
-      Logger.log("Error Message:", error.message);
-      Logger.log("Stack Trace:", error.stack);
-      Logger.log("----------------------------------------");
-    }
-    return [];
+    Logger.log("Error parsing FOMC calendar: " + error);
+    return {
+      meetings: [],
+      lastMeeting: null,
+      nextMeeting: null
+    };
   }
 }
 
 /**
- * Fetches market probabilities for rate changes
- * @return {Object} Market probabilities
+ * Helper function to convert month names to numbers
+ * @param {string} monthName Month name (e.g., "January", "Jan/Feb")
+ * @return {string} Month number (01-12)
  */
-function fetchMarketProbabilities() {
+function parseMonth(monthName) {
+  const monthMap = {
+    'January': '01', 'Jan/Feb': '01',
+    'February': '02',
+    'March': '03',
+    'April': '04',
+    'May': '05',
+    'June': '06',
+    'July': '07',
+    'August': '08',
+    'September': '09',
+    'October': '10',
+    'November': '11',
+    'December': '12'
+  };
+  return monthMap[monthName] || '01';
+}
+
+/**
+ * Parses dates from the Fed's website
+ * @param {string} rawDate Raw date string from the website
+ * @param {string} month Month name from the website
+ * @param {string} year Year from the website
+ * @return {Object} Object containing ISO-formatted start and end date strings or null if invalid
+ */
+function parseMeetingDate(rawDate, month, year) {
   try {
-    const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
+    // Remove any asterisks and trim whitespace
+    const cleanedDate = rawDate.replace(/\*+/g, '').trim();
     
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Starting fetchMarketProbabilities");
-      Logger.log("----------------------------------------");
+    // Split the date range into start and end dates
+    const [startDate, endDate] = cleanedDate.split('-');
+    if (!startDate || !endDate) {
+      Logger.log(`Invalid date format: ${cleanedDate}`);
+      return null;
     }
     
-    // TODO: Implement CME Group data retrieval when needed
-    return null;
+    // Convert month name to month number
+    const monthNum = parseMonth(month);
+    if (!monthNum) {
+      Logger.log(`Invalid month: ${month}`);
+      return null;
+    }
     
+    // Parse the start date
+    const startDay = parseInt(startDate.trim());
+    if (isNaN(startDay)) {
+      Logger.log(`Invalid start date: ${startDate}`);
+      return null;
+    }
+    
+    const startDateObj = new Date(`${year}-${monthNum}-${startDay.toString().padStart(2, '0')}`);
+    if (isNaN(startDateObj.getTime())) {
+      Logger.log(`Invalid start date: ${startDate}`);
+      return null;
+    }
+    
+    // Parse the end date - it might be in the next month
+    const endDay = parseInt(endDate.trim());
+    if (isNaN(endDay)) {
+      Logger.log(`Invalid end date: ${endDate}`);
+      return null;
+    }
+    
+    let endDateObj;
+    
+    // If the end date is less than start date, it's in the next month
+    if (endDay < startDay) {
+      endDateObj = new Date(`${year}-${parseInt(monthNum) + 1}-${endDay.toString().padStart(2, '0')}`);
+    } else {
+      endDateObj = new Date(`${year}-${monthNum}-${endDay.toString().padStart(2, '0')}`);
+    }
+    
+    if (isNaN(endDateObj.getTime())) {
+      Logger.log(`Invalid end date: ${endDate}`);
+      return null;
+    }
+    
+    return {
+      startDate: startDateObj.toISOString(),
+      endDate: endDateObj.toISOString()
+    };
   } catch (error) {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Error in fetchMarketProbabilities:");
-      Logger.log("Error Type:", error.constructor.name);
-      Logger.log("Error Message:", error.message);
-      Logger.log("----------------------------------------");
-    }
+    Logger.log(`Error parsing meeting date (${rawDate}): ${error}`);
     return null;
+  }
+}
+
+/**
+ * Formats date to readable format
+ * @param {string} dateStr Date string to format
+ * @return {string} Formatted date string
+ */
+function formatMeetingDate(dateStr) {
+  if (dateStr === "No meetings found" || dateStr === "No upcoming meetings") {
+    return dateStr;
+  }
+  
+  try {
+    const date = new Date(dateStr);
+    const options = {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    };
+    return date.toLocaleDateString('en-US', options);
+  } catch (error) {
+    Logger.log("Error formatting meeting date:", error);
+    return "Invalid date format";
   }
 }
 
@@ -368,7 +798,6 @@ function fetchMarketProbabilities() {
  * @return {Object} Formatted Fed policy data
  */
 function testFedPolicyData() {
-  const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
   
   try {
     if (debugMode) {
@@ -465,53 +894,122 @@ function testFedPolicyData() {
  * @return {Object} Cached Fed policy data
  */
 function checkCachedFedPolicyData() {
+  const scriptCache = CacheService.getScriptCache();
+  const cachedData = scriptCache.get('fedPolicyData');
+  
+  if (cachedData) {
+    Logger.log("Found cached Fed policy data");
+    return JSON.parse(cachedData);
+  } else {
+    Logger.log("No cached Fed policy data found");
+    return null;
+  }
+}
+
+/**
+ * Test function to verify FOMC meetings retrieval
+ */
+function testFetchFOMCMeetings() {
   try {
-    const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
+    const result = fetchFOMCMeetings();
+    const meetings = result.meetings;
     
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Starting checkCachedFedPolicyData");
-      Logger.log("----------------------------------------");
+    Logger.log("----------------------------------------");
+    Logger.log("FOMC Meetings Data:");
+    Logger.log("----------------------------------------");
+    
+    // Log parsed meetings
+    Logger.log("Parsed Meetings:");
+    // Flatten the meetings array from the object
+    const allMeetings = Object.values(meetings).flat();
+    
+    if (allMeetings && Array.isArray(allMeetings)) {
+      allMeetings.forEach((meeting, index) => {
+        Logger.log(`Meeting ${index + 1}:`);
+        Logger.log(`Month: ${meeting.month}`);
+        Logger.log(`Date: ${meeting.date}`);
+        Logger.log(`Year: ${meeting.year}`);
+        Logger.log("-----------------");
+      });
+    } else {
+      Logger.log("No meetings array found in response");
     }
     
-    const scriptCache = CacheService.getScriptCache();
-    const cachedData = scriptCache.get('fedPolicyData');
+    // Log last and next meetings
+    Logger.log("\nLast Meeting:");
+    Logger.log(JSON.stringify(result.lastMeeting, null, 2));
     
-    if (!cachedData) {
-      return {
-        success: false,
-        message: "No cached data found",
-        timestamp: new Date().toISOString()
-      };
-    }
+    Logger.log("\nNext Meeting:");
+    Logger.log(JSON.stringify(result.nextMeeting, null, 2));
     
-    const parsedData = JSON.parse(cachedData);
+    // Log source information
+    Logger.log("\nSource Information:");
+    Logger.log("URL:", result.source.url);
+    Logger.log("Timestamp:", result.source.timestamp);
     
-    // Log the structure of the cached data
-    Logger.log("Cached data structure:");
-    Logger.log("Type of parsedData: " + typeof parsedData);
-    Logger.log("Keys in parsedData:", Object.keys(parsedData).join(", "));
+    Logger.log("----------------------------------------");
+    Logger.log("Test completed successfully");
+    Logger.log("----------------------------------------");
     
-    return {
-      success: true,
-      message: "Cached data found",
-      data: parsedData,
-      timestamp: new Date().toISOString()
-    };
+    return result;
     
   } catch (error) {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Error checking cached data:");
-      Logger.log("Error Type:", error.constructor.name);
-      Logger.log("Error Message:", error.message);
-      Logger.log("Stack Trace:", error.stack);
-      Logger.log("----------------------------------------");
-    }
+    Logger.log("----------------------------------------");
+    Logger.log("Error in testFetchFOMCMeetings:");
+    Logger.log("Error Type:", error.constructor.name);
+    Logger.log("Error Message:", error.message);
+    Logger.log("Stack Trace:", error.stack);
+    Logger.log("----------------------------------------");
+    
     return {
-      success: false,
-      message: "Error checking cached data: " + error.message,
+      error: error.message,
       timestamp: new Date().toISOString()
     };
   }
+}
+
+/**
+ * Fetches market probabilities for rate changes
+ * @return {Object} Market probabilities
+ */
+function fetchMarketProbabilities() {
+  // Static probabilities for demonstration
+  return {
+    increase: "5%",
+    hold: "80%",
+    decrease: "15%"
+  };
+}
+
+/**
+ * Gets the next scheduled FOMC meeting from the meetings array
+ * @param {Array} meetings Array of meeting objects
+ * @return {Object} Next meeting information
+ */
+function getNextMeeting(meetings) {
+  const today = new Date();
+  const gracePeriod = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+  
+  // Sort meetings by date in ascending order
+  const sortedMeetings = meetings.sort((a, b) => new Date(a.date) - new Date(b.date));
+  
+  // Find the first meeting that is after today or within grace period
+  for (let i = 0; i < sortedMeetings.length; i++) {
+    const meetingDate = new Date(sortedMeetings[i].date);
+    if (meetingDate - today <= gracePeriod) {
+      return sortedMeetings[i];
+    }
+  }
+  
+  // If no upcoming meeting found within grace period, return the first future meeting
+  if (sortedMeetings.length > 0) {
+    return sortedMeetings[0];
+  }
+  
+  return {
+    date: "No upcoming meetings",
+    type: "",
+    time: "",
+    timezone: ""
+  };
 }

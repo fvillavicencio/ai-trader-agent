@@ -265,14 +265,14 @@ function parseFedMeetingsFromHTML(htmlContent) {
     const meetings = [];
     
     // Extract individual meetings
-    const meetingRegex = /<div class="row fomc-meeting[\s\S]*?<\/div>\s*<\/div>/g;
+    const meetingRegex = /<div class="[^"]*\brow\b[^"]*\bfomc-meeting(?:--shaded)?\b[^"]*"[^>]*>([\s\S]*?)<\/div>\s*<\/div>/gis;
     let meetingMatch;
     
     while ((meetingMatch = meetingRegex.exec(panelContent)) !== null) {
       const meetingHtml = meetingMatch[0];
       
       // Extract month
-      const monthMatch = meetingHtml.match(/<div class="fomc-meeting__month[^>]*>.*?<strong>([^<]+)<\/strong>/);
+      const monthMatch = meetingHtml.match(/<div class="[^"']*\bfomc-meeting__month\b[^"']*">.*?<strong>([^<]+)<\/strong>/i);
       const month = monthMatch ? monthMatch[1].trim() : '';
       
       // Extract date and check for projection
