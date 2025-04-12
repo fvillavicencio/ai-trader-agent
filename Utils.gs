@@ -373,7 +373,7 @@ function generateMarketIndicatorsSection(analysis) {
         </div>
         
         <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-          Source: CNN [https://www.cnn.com/markets/fear-and-greed], as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
+          Source: <a href="https://www.cnn.com/markets/fear-and-greed">CNN</a>, as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
         </div>
       </div>
       `;
@@ -705,8 +705,8 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-size: 16px; color: #333; line-height: 1.6;">${macro.fedPolicy.forwardGuidance || 'N/A'}</div>
               <!-- Source Information -->
-              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy?.source?.forwardGuidance?.url || 'N/A'}, as of ${formatDate(macro.fedPolicy?.source?.forwardGuidance?.timestamp || 'N/A')}
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.source.components.forwardGuidance.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.forwardGuidance.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -714,11 +714,11 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #4CAF50; font-size: 1.2em; font-weight: bold;">${formatValue(macro.fedPolicy?.currentRate?.currentRate)}%</div>
-                <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy?.currentRate?.rangeLow)}% - ${formatValue(macro.fedPolicy?.currentRate?.rangeHigh)}%</div>
+                <div style="color: #4CAF50; font-size: 1.2em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.currentRate)}%</div>
+                <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.rangeLow)}% - ${formatValue(macro.fedPolicy.currentRate.rangeHigh)}%</div>
               </div>
-              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy?.currentRate?.source?.url || 'N/A'}, as of ${formatDate(macro.fedPolicy?.currentRate?.source?.timestamp || 'N/A')}
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.source.components.fedFundsRate.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.fedFundsRate.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -727,27 +727,27 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="font-weight: bold; margin-bottom: 5px;">Federal Funds Futures Data</div>
               <div style="display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
-                  <div style="color: #666; font-size: 14px;">Current Price: ${macro.fedPolicy?.futures?.currentPrice || 'N/A'}</div>
-                  <div style="color: #666; font-size: 14px;">Implied Rate: ${macro.fedPolicy?.futures?.impliedRate || 'N/A'}%</div>
+                  <div style="color: #666; font-size: 14px;">Current Price: ${macro.fedPolicy.futures.currentPrice || 'N/A'}</div>
+                  <div style="color: #666; font-size: 14px;">Implied Rate: ${macro.fedPolicy.futures.impliedRate || 'N/A'}%</div>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div style="display: flex; align-items: center; gap: 5px;">
                     <span style="color: #4CAF50; font-size: 1.5em;">&#8595;</span>
-                    <div style="color: #4CAF50; font-size: 14px;">${macro.fedPolicy?.futures?.probabilities?.cut || 'N/A'}%</div>
+                    <div style="color: #4CAF50; font-size: 14px;">${macro.fedPolicy.futures.probabilities.cut || 'N/A'}%</div>
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
                     <span style="color: #757575; font-size: 1.5em;">&#8594;</span>
-                    <div style="color: #757575; font-size: 14px;">${macro.fedPolicy?.futures?.probabilities?.hold || 'N/A'}%</div>
+                    <div style="color: #757575; font-size: 14px;">${macro.fedPolicy.futures.probabilities.hold || 'N/A'}%</div>
                   </div>
                   <div style="display: flex; align-items: center; gap: 5px;">
                     <span style="color: #f44336; font-size: 1.5em;">&#8593;</span>
-                    <div style="color: #f44336; font-size: 14px;">${macro.fedPolicy?.futures?.probabilities?.hike || 'N/A'}%</div>
+                    <div style="color: #f44336; font-size: 14px;">${macro.fedPolicy.futures.probabilities.hike || 'N/A'}%</div>
                   </div>
                 </div>
               </div>
                <!-- Source Information -->
-              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy?.source?.futures?.url || 'N/A'}, as of ${formatDate(macro.fedPolicy?.source?.futures?.timestamp || 'N/A')}
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.source.components.futures.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.futures.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -755,11 +755,11 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Meeting Schedule</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #666; font-size: 14px;">Last ${macro.fedPolicy?.lastMeeting?.fullText}</div>
-                <div style="color: #666; font-size: 14px;">Next ${macro.fedPolicy?.nextMeeting?.fullText}</div>
+                <div style="color: #666; font-size: 14px;">Last ${macro.fedPolicy.lastMeeting.fullText}</div>
+                <div style="color: #666; font-size: 14px;">Next ${macro.fedPolicy.nextMeeting.fullText}</div>
               </div>
-              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy?.source?.meetings?.url || 'N/A'}, as of ${formatDate(macro.fedPolicy?.source?.meetings?.timestamp || 'N/A')}
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.source.components.meetings.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.meetings.timestamp || 'N/A')}
               </div>
             </div>
             
