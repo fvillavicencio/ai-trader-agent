@@ -45,12 +45,16 @@ function retrieveFedPolicyData() {
       currentRate: fedFundsRate,
       lastMeeting: computed.lastMeeting,
       nextMeeting: computed.nextMeeting,
-      meetings: meetings.meetings,
       forwardGuidance: guidance.forwardGuidance,
       commentary: guidance.commentary,
       source: {
         url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        components: {
+          fedFundsRate: fedFundsRate.source,
+          meetings: meetings.source,
+          forwardGuidance: guidance.source
+        }
       }
     };
     
@@ -112,7 +116,6 @@ function retrieveFedPolicyData() {
  * @return {Object} Current Fed Funds Rate with range
  */
 function fetchFedFundsRateFromFRED() {
-  const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
   
   try {
     if (debugMode) {
@@ -152,7 +155,11 @@ function fetchFedFundsRateFromFRED() {
       return {
         currentRate: latestValue.toFixed(2),
         rangeLow: (Math.floor(latestValue * 4) / 4).toFixed(2),
-        rangeHigh: (Math.ceil(latestValue * 4) / 4).toFixed(2)
+        rangeHigh: (Math.ceil(latestValue * 4) / 4).toFixed(2),
+        source: {
+          url: "https://fred.stlouisfed.org/series/FEDFUNDS",
+          timestamp: new Date().toISOString()
+        }
       };
     }
     
@@ -379,40 +386,39 @@ function convertMonth(monthStr) {
  * sorts them by startDate, and returns the last meeting (before now)
  * and the next meeting (after now). If no meeting qualifies, returns null.
  */
-function computeLastAndNextMeetings(meetingsByYear) {
+function computeLastAndNextMeetings(meetings) {
   const now = new Date();
-  const allMeetings = [];
   
-  // Flatten the object by iterating through each year
-  for (const year in meetingsByYear) {
-    allMeetings.push(...meetingsByYear[year]);
-  }
-
   // Sort the array by startDate ascending
-  allMeetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  if (Array.isArray(meetings) && meetings.length > 0) {
+    meetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
 
-  let lastMeeting = null;
-  let nextMeeting = null;
-  
-  for (let i = 0; i < allMeetings.length; i++) {
-    const meeting = allMeetings[i];
-    if (new Date(meeting.startDate) <= now) {
-      lastMeeting = meeting;
-    } else {
-      nextMeeting = meeting;
-      break;
+    let lastMeeting = null;
+    let nextMeeting = null;
+    
+    for (let i = 0; i < meetings.length; i++) {
+      const meeting = meetings[i];
+      if (new Date(meeting.startDate) <= now) {
+        lastMeeting = meeting;
+      } else {
+        nextMeeting = meeting;
+        break; // No need to continue once we find the next meeting
+      }
     }
+
+    return {
+      lastMeeting,
+      nextMeeting,
+      allMeetings: meetings
+    };
   }
 
-  // If no meeting is found before now, you might choose to return a message
-  if (!lastMeeting) {
-    lastMeeting = { message: "No past meetings found" };
-  }
-  if (!nextMeeting) {
-    nextMeeting = { message: "No upcoming meetings" };
-  }
-
-  return { lastMeeting, nextMeeting };
+  // Return empty objects if no meetings were found
+  return {
+    lastMeeting: null,
+    nextMeeting: null,
+    allMeetings: []
+  };
 }
 
 /**
@@ -458,8 +464,12 @@ function fetchFOMCMeetings() {
 
     return {
       meetings: meetings,
-      lastMeeting: computeLastAndNextMeetings(rawMeetings).lastMeeting,
-      nextMeeting: computeLastAndNextMeetings(rawMeetings).nextMeeting
+      lastMeeting: computeLastAndNextMeetings(meetings).lastMeeting,
+      nextMeeting: computeLastAndNextMeetings(meetings).nextMeeting,
+      source: {
+        url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+        timestamp: new Date().toISOString()
+      }
     };
   } catch (error) {
     Logger.log('Error in fetchFOMCMeetings: ' + error);
@@ -662,78 +672,6 @@ function extractArticleContent(html) {
   
   // If none of the patterns match, return null.
   return null;
-}
-
-/**
- * Legacy fallback method from original implementation
- */
-function fetchForwardGuidanceEnhanced_Legacy() {
-  // Keep previous implementation as fallback
-  const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
-  
-  try {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Starting fetchForwardGuidanceEnhanced_Legacy");
-      Logger.log("----------------------------------------");
-    }
-    
-    const url = "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm";
-    const response = UrlFetchApp.fetch(url, {
-      headers: { 'User-Agent': 'Mozilla/5.0' },
-      muteHttpExceptions: true
-    });
-    
-    if (debugMode) {
-      Logger.log("Legacy method response status:", response.getResponseCode());
-      Logger.log("Legacy method response length:", response.getContentText().length);
-      Logger.log("Legacy method response headers:", JSON.stringify(response.getHeaders()));
-    }
-    
-    const html = response.getContentText();
-    const guidance = html.match(/(forward\s+guidance)[:\s]*(.*?)(?=\s*<\/div>|\s*<br>|\s*<p>|\s*<\/p>|$)/im);
-    
-    if (debugMode) {
-      Logger.log("Legacy method regex match:\n" + (guidance ? "Found" : "Not found"));
-      if (guidance) {
-        Logger.log("Legacy method found guidance:", guidance[2].trim());
-      } else {
-        Logger.log("First 1000 chars of legacy page:\n" + html.substring(0, 1000));
-      }
-    }
-    
-    if (guidance && guidance[2]) {
-      return {
-        forwardGuidance: guidance[2].trim(),
-        commentary: "Forward guidance extracted from FOMC press release",
-        source: {
-          url: url,
-          timestamp: new Date().toISOString()
-        }
-      };
-    }
-    
-    throw new Error("No forward guidance found in legacy method. First 1000 chars of page: " + html.substring(0, 1000));
-    
-  } catch (error) {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Error in fetchForwardGuidanceEnhanced_Legacy:");
-      Logger.log("Error Type:", error.constructor.name);
-      Logger.log("Error Message:", error.message);
-      Logger.log("Stack Trace:", error.stack);
-      Logger.log("----------------------------------------");
-    }
-    
-    return {
-      forwardGuidance: "The Federal Reserve remains committed to achieving maximum employment and inflation at the rate of 2 percent over the longer run. Policy decisions will remain data-dependent.",
-      commentary: "Error retrieving guidance: Using default statement",
-      source: {
-        url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
-        timestamp: new Date().toISOString()
-      }
-    };
-  }
 }
 
 /**
@@ -1007,10 +945,26 @@ function getFREDApiKey() {
  * One-time setup: Securely store FRED API Key (run manually once)
  */
 function setFredApiKey() {
-  const apiKey = 'YOUR_API_KEY_HERE'; // Replace with your actual FRED API key
-  const scriptProperties = PropertiesService.getScriptProperties();
-  scriptProperties.setProperty('FRED_API_KEY', apiKey);
-  Logger.log('FRED API key stored securely.');
+  const apiKey = PropertiesService.getScriptProperties().getProperty('FRED_API_KEY');
+  
+  if (apiKey) {
+    Logger.log('FRED API key already set.');
+    return;
+  }
+  
+  const userInput = ScriptApp.getUi().prompt(
+    'Enter FRED API Key',
+    'Please enter your FRED API key:',
+    ScriptApp.getUi().ButtonSet.OK_CANCEL
+  );
+  
+  if (userInput.getResponseText() && userInput.getSelectedButton() === ScriptApp.getUi().Button.OK) {
+    const scriptProperties = PropertiesService.getScriptProperties();
+    scriptProperties.setProperty('FRED_API_KEY', userInput.getResponseText());
+    Logger.log('FRED API key stored securely.');
+  } else {
+    Logger.log('FRED API key setup cancelled.');
+  }
 }
 
 /**
@@ -1021,7 +975,20 @@ function getFedFundsFuturesPrice() {
   const url = "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F";
   
   try {
-    const response = UrlFetchApp.fetch(url);
+    const response = UrlFetchApp.fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+      }
+    });
+    
+    if (response.getResponseCode() !== 200) {
+      throw new Error(`HTTP error: ${response.getResponseCode()}`);
+    }
+    
+    if (debugMode) {
+      Logger.log('Raw API response:', JSON.stringify(response, null, 2));
+    }
+    
     const data = JSON.parse(response.getContentText());
     const result = data.chart.result[0];
     
@@ -1072,6 +1039,69 @@ function getFedFundsFuturesPrice() {
     Logger.log('Response code:', response ? response.getResponseCode() : 'N/A');
     Logger.log('Response content:', response ? response.getContentText().substring(0, 1000) : 'N/A');
     return null;
+  }
+}
+
+/**
+ * Fetches market probabilities from Fed Funds Futures
+ * @return {Object} Market probabilities
+ */
+function fetchFedFundsFuturesProbabilities(currentRate) {
+  try {
+   
+    // Fetch fresh data
+    const futuresPrice = getFedFundsFuturesPrice();
+    
+    if (futuresPrice === null) {
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Error fetching futures price");
+        Logger.log("----------------------------------------");
+      }
+      // Try to fetch market probabilities from alternative source
+      const marketProbabilities = fetchMarketProbabilities();
+      return {
+        impliedRate: "N/A",
+        currentRate: (currentRate !== undefined && currentRate !== null) ? currentRate.toFixed(2) : "N/A",
+        futuresPrice: (futuresPrice !== undefined && futuresPrice !== null) ? futuresPrice.price.toFixed(2) : "N/A",
+        probabilityUp: marketProbabilities.increase,
+        probabilityHold: marketProbabilities.hold,
+        probabilityDown: marketProbabilities.decrease,
+        source: {
+          url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+          timestamp: new Date().toISOString(),
+          note: "Futures price unavailable, using market probabilities"
+        }
+      };
+    }
+    
+    const probabilities = calculateFedFundsProbabilities(currentRate, parseFloat(futuresPrice.price));
+     
+    return probabilities;
+    
+  } catch (error) {
+    if (debugMode) {
+      Logger.log("Error in fetchFedFundsFuturesProbabilities:");
+      Logger.log("Error Type:", error.constructor.name);
+      Logger.log("Error Message:", error.message);
+      Logger.log("Stack Trace:", error.stack);
+    }
+    
+    // Try to fetch market probabilities from alternative source
+    const marketProbabilities = fetchMarketProbabilities();
+    return {
+      impliedRate: "N/A",
+      currentRate: currentRate.toFixed(2),
+      futuresPrice: "N/A",
+      probabilityUp: marketProbabilities.increase,
+      probabilityHold: marketProbabilities.hold,
+      probabilityDown: marketProbabilities.decrease,
+      source: {
+        url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+        timestamp: new Date().toISOString(),
+        note: "Error occurred while fetching futures data, using market probabilities"
+      }
+    };
   }
 }
 
@@ -1118,115 +1148,188 @@ function calculateFedFundsProbabilities(currentRate, futuresPrice) {
 }
 
 /**
- * Fetches market probabilities from Fed Funds Futures
- * @param {number} currentRate Current Fed Funds rate
- * @return {Object} Market probabilities
- */
-function fetchFedFundsFuturesProbabilities(currentRate) {
-  try {
-    // First try to get cached data
-    /**
-    const scriptCache = CacheService.getScriptCache();
-    const cachedData = scriptCache.get('fedFundsFuturesProbabilities');
-    if (cachedData) {
-      const cachedObj = JSON.parse(cachedData);
-      const cacheAge = (new Date() - new Date(cachedObj.source.timestamp)) / 1000;
-      
-      // Use cached data if it's less than 1 hour old
-      if (cacheAge < 3600) {
-        return cachedObj;
-      }
-    }
-    */
-
-    // Fetch fresh data
-    const futuresPrice = getFedFundsFuturesPrice();
-    if (futuresPrice === null) {
-      // Try to fetch market probabilities from alternative source
-      const marketProbabilities = fetchMarketProbabilities();
-      return {
-        impliedRate: "N/A",
-        currentRate: currentRate.toFixed(2),
-        futuresPrice: "N/A",
-        probabilityUp: marketProbabilities.increase,
-        probabilityHold: marketProbabilities.hold,
-        probabilityDown: marketProbabilities.decrease,
-        source: {
-          url: "https://finance.yahoo.com/quote/ZQ%3DF/",
-          timestamp: new Date().toISOString(),
-          note: "Futures price unavailable, using market probabilities"
-        }
-      };
-    }
-    
-    const probabilities = calculateFedFundsProbabilities(currentRate, futuresPrice);
-    
-    // Cache the result for 1 hour
-    scriptCache.put('fedFundsFuturesProbabilities', JSON.stringify(probabilities), 3600);
-    
-    return probabilities;
-    
-  } catch (error) {
-    Logger.log("Error in fetchFedFundsFuturesProbabilities:");
-    Logger.log("Error Type:", error.constructor.name);
-    Logger.log("Error Message:", error.message);
-    Logger.log("Stack Trace:", error.stack);
-    
-    // Try to fetch market probabilities from alternative source
-    const marketProbabilities = fetchMarketProbabilities();
-    return {
-      impliedRate: "N/A",
-      currentRate: currentRate.toFixed(2),
-      futuresPrice: "N/A",
-      probabilityUp: marketProbabilities.increase,
-      probabilityHold: marketProbabilities.hold,
-      probabilityDown: marketProbabilities.decrease,
-      source: {
-        url: "https://finance.yahoo.com/quote/ZQ%3DF/",
-        timestamp: new Date().toISOString(),
-        note: "Error occurred while fetching futures data, using market probabilities"
-      }
-    };
-  }
-}
-
-/**
  * Retrieves complete Fed policy data including futures probabilities
  * @return {Object} Complete Fed policy data
  */
 function retrieveCompleteFedPolicyData() {
   try {
+    
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Starting retrieveCompleteFedPolicyData");
+      Logger.log("----------------------------------------");
+    }
+    
     // Check cache first
     const scriptCache = CacheService.getScriptCache();
     const cachedData = scriptCache.get('completeFedPolicyData');
     
     if (cachedData) {
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Using cached Fed policy data");
+        Logger.log("Cache hit - returning cached data");
+        Logger.log("----------------------------------------");
+      }
       return JSON.parse(cachedData);
     }
     
-    // Fetch all components
-    const fedFundsRate = fetchFedFundsRateFromFRED();
-    const meetings = fetchFOMCMeetings();
-    const guidance = fetchForwardGuidanceEnhanced();
-    const probabilities = fetchFedFundsFuturesProbabilities(parseFloat(fedFundsRate.currentRate));
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("No cache hit - fetching fresh data");
+      Logger.log("----------------------------------------");
+    }
+    
+    let fedFundsRate, meetings, guidance, probabilities;
+    
+    try {
+      fedFundsRate = fetchFedFundsRateFromFRED();
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Fed Funds Rate retrieved successfully");
+        Logger.log("Fed Funds Rate data:\n" + JSON.stringify(fedFundsRate, null, 2));
+        Logger.log("----------------------------------------");
+      }
+    } catch (rateError) {
+      const errorMessage = `Error fetching Fed Funds rate: ${rateError.message}`;
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Error fetching Fed Funds rate:");
+        Logger.log("Error Type:", rateError.constructor.name);
+        Logger.log("Error Message:", errorMessage);
+        Logger.log("Stack Trace:", rateError.stack);
+        Logger.log("----------------------------------------");
+      }
+      throw new Error(errorMessage);
+    }
+    
+    try {
+      meetings = fetchFOMCMeetings();
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Meetings retrieved successfully");
+        Logger.log("Meetings array length:\n" + meetings.meetings.length);
+        Logger.log("First meeting data:\n" + JSON.stringify(meetings.meetings[0], null, 2));
+        Logger.log("Last meeting data:\n" + JSON.stringify(meetings.meetings[meetings.meetings.length - 1], null, 2));
+        Logger.log("----------------------------------------");
+      }
+    } catch (meetingsError) {
+      const errorMessage = `Error fetching FOMC meetings: ${meetingsError.message}`;
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Error fetching FOMC meetings:");
+        Logger.log("Error Type:", meetingsError.constructor.name);
+        Logger.log("Error Message:", errorMessage);
+        Logger.log("Stack Trace:", meetingsError.stack);
+        Logger.log("----------------------------------------");
+      }
+      throw new Error(errorMessage);
+    }
+    
+    try {
+      guidance = fetchForwardGuidanceEnhanced();
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Forward guidance retrieved successfully");
+        Logger.log("Forward guidance:\n" + JSON.stringify(guidance.forwardGuidance, null, 2));
+        Logger.log("Commentary:\n" + JSON.stringify(guidance.commentary, null, 2));
+        Logger.log("----------------------------------------");
+      }
+    } catch (guidanceError) {
+      const errorMessage = `Error fetching forward guidance: ${guidanceError.message}`;
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Error fetching forward guidance:");
+        Logger.log("Error Type:", guidanceError.constructor.name);
+        Logger.log("Error Message:", errorMessage);
+        Logger.log("Stack Trace:", guidanceError.stack);
+        Logger.log("----------------------------------------");
+      }
+      throw new Error(errorMessage);
+    }
+    
+    try {
+      probabilities = fetchFedFundsFuturesProbabilities(parseFloat(fedFundsRate.currentRate));
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Market probabilities retrieved successfully");
+        Logger.log("Probabilities data:", JSON.stringify(probabilities, null, 2));
+        Logger.log("----------------------------------------");
+      }
+    } catch (probabilitiesError) {
+      const errorMessage = `Error fetching market probabilities: ${probabilitiesError.message}`;
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Error fetching market probabilities:");
+        Logger.log("Error Type:", probabilitiesError.constructor.name);
+        Logger.log("Error Message:", errorMessage);
+        Logger.log("Stack Trace:", probabilitiesError.stack);
+        Logger.log("----------------------------------------");
+      }
+      throw new Error(errorMessage);
+    }
+    
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Computing last and next meetings");
+      Logger.log("Input meetings array length:\n" + meetings.meetings.length);
+      Logger.log("First meeting date:\n" + meetings.meetings[0].startDate);
+      Logger.log("Last meeting date:\n" + meetings.meetings[meetings.meetings.length - 1].startDate);
+      Logger.log("----------------------------------------");
+    }
     
     // Compute last and next meetings
     const computed = computeLastAndNextMeetings(meetings.meetings);
+    
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Meetings computation complete");
+      Logger.log("Last meeting date:\n" + (computed.lastMeeting ? computed.lastMeeting.startDate : "none"));
+      Logger.log("Next meeting date:\n" + (computed.nextMeeting ? computed.nextMeeting.startDate : "none"));
+      Logger.log("All meetings count:\n" + computed.allMeetings.length);
+      Logger.log("----------------------------------------");
+    }
     
     // Create complete data structure
     const fedPolicy = {
       currentRate: fedFundsRate,
       lastMeeting: computed.lastMeeting,
       nextMeeting: computed.nextMeeting,
-      meetings: meetings.meetings,
       forwardGuidance: guidance.forwardGuidance,
       commentary: guidance.commentary,
       marketProbabilities: probabilities,
+      futuresData: {
+        currentRate: fedFundsRate.currentRate,
+        impliedRate: probabilities.impliedRate,
+        futuresPrice: probabilities.futuresPrice,
+        probabilityUp: probabilities.probabilityUp,
+        probabilityHold: probabilities.probabilityHold,
+        probabilityDown: probabilities.probabilityDown,
+        source: probabilities.source
+      },
       source: {
-        url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
-        timestamp: new Date().toISOString()
+        url: "https://www.federalreserve.gov/",
+        timestamp: new Date().toISOString(),
+        components: {
+          fedFundsRate: fedFundsRate.source,
+          meetings: meetings.source,
+          forwardGuidance: guidance.source,
+          marketProbabilities: probabilities.source
+        }
       }
     };
+    
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Final Fed policy data structure created");
+      Logger.log("JSON fedPolicy structure:\n" + JSON.stringify(fedPolicy, null, 2));
+      Logger.log("Fed Funds Rate:\n " + JSON.stringify(fedPolicy.currentRate, null, 2));
+      Logger.log("Last Meeting Date:\n" + (fedPolicy.lastMeeting ? fedPolicy.lastMeeting.startDate : "none"));
+      Logger.log("Next Meeting Date:\n" + (fedPolicy.nextMeeting ? fedPolicy.nextMeeting.startDate : "none"));
+      Logger.log("Forward Guidance:\n" + fedPolicy.forwardGuidance);
+      Logger.log("Market Probabilities:\n" + JSON.stringify(fedPolicy.marketProbabilities, null, 2));
+      Logger.log("----------------------------------------");
+    }
     
     // Cache the data for 1 hour
     scriptCache.put('completeFedPolicyData', JSON.stringify(fedPolicy), 3600);
@@ -1234,8 +1337,14 @@ function retrieveCompleteFedPolicyData() {
     return fedPolicy;
     
   } catch (error) {
+    const errorMessage = `Error in retrieveCompleteFedPolicyData: ${error.message}`;
     if (debugMode) {
-      Logger.log("Error in retrieveCompleteFedPolicyData:", error.message);
+      Logger.log("----------------------------------------");
+      Logger.log("Error in retrieveCompleteFedPolicyData:");
+      Logger.log("Error Type:\n" + error.constructor.name);
+      Logger.log("Error Message:\n" + errorMessage);
+      Logger.log("Stack Trace:\n" + error.stack);
+      Logger.log("----------------------------------------");
     }
     return {
       currentRate: null,
@@ -1265,399 +1374,16 @@ function retrieveCompleteFedPolicyData() {
         impliedRate: "N/A"
       },
       source: {
-        url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
+        url: "https://www.federalreserve.gov/",
         timestamp: new Date().toISOString()
+      },
+      error: {
+        message: errorMessage,
+        type: error.constructor.name,
+        stack: error.stack
       }
     };
   }
-}
-
-/**
- * Retrieves Fed Funds futures price from Yahoo Finance API
- * @return {Object|null} Object containing futures data or null if not found
- */
-function getFedFundsFuturesPrice() {
-  const url = "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F";
-  
-  try {
-    const response = UrlFetchApp.fetch(url);
-    const data = JSON.parse(response.getContentText());
-    const result = data.chart.result[0];
-    
-    // Log the raw API response for debugging
-    Logger.log('Raw API response:', JSON.stringify(data, null, 2));
-    Logger.log('Available meta fields:', Object.keys(result.meta));
-    
-    // Extract the price
-    const price = result.meta.regularMarketPrice;
-    
-    if (price !== undefined && !isNaN(price)) {
-      // Try different fields for price change
-      let changeValue = result.meta.regularMarketChange;
-      let changePercent = result.meta.regularMarketChangePercent;
-      
-      // If not found, try alternative fields
-      if (changeValue === undefined || isNaN(changeValue)) {
-        changeValue = result.meta.regularMarketChangeAmount;
-      }
-      
-      if (changePercent === undefined || isNaN(changePercent)) {
-        changePercent = result.meta.regularMarketChangePercentRaw;
-      }
-      
-      // Format the output object
-      const output = {
-        name: result.meta.symbolName || "30-Day Federal Funds",
-        price: price.toString(),
-        priceChange: {
-          value: changeValue?.toString() || "0",
-          percent: changePercent?.toString() || "0%"
-        },
-        currency: result.meta.currency || "USD",
-        lastUpdated: result.meta.regularMarketTime ? 
-          new Date(result.meta.regularMarketTime * 1000).toISOString() : 
-          new Date().toISOString(),
-        source: url
-      };
-      
-      Logger.log(`Successfully parsed futures data: ${JSON.stringify(output, null, 2)}`);
-      return output;
-    }
-
-    throw new Error('Could not find valid price in JSON data');
-
-  } catch (error) {
-    Logger.log('Error fetching Fed Funds futures price: ' + error.message);
-    Logger.log('Response code:', response ? response.getResponseCode() : 'N/A');
-    Logger.log('Response content:', response ? response.getContentText().substring(0, 1000) : 'N/A');
-    return null;
-  }
-}
-
-/**
- * Retrieves Fed Funds futures price from Yahoo Finance API
- * @return {Object|null} Object containing futures data or null if not found
- */
-function getFedFundsFuturesPrice() {
-  const url = "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F";
-  
-  try {
-    const response = UrlFetchApp.fetch(url);
-    const data = JSON.parse(response.getContentText());
-    const result = data.chart.result[0];
-    
-    // Log the raw API response for debugging
-    Logger.log('Raw API response:', JSON.stringify(data, null, 2));
-    Logger.log('Available meta fields:', Object.keys(result.meta));
-    
-    // Extract the price
-    const price = result.meta.regularMarketPrice;
-    
-    if (price !== undefined && !isNaN(price)) {
-      // Try different fields for price change
-      let changeValue = result.meta.regularMarketChange;
-      let changePercent = result.meta.regularMarketChangePercent;
-      
-      // If not found, try alternative fields
-      if (changeValue === undefined || isNaN(changeValue)) {
-        changeValue = result.meta.regularMarketChangeAmount;
-      }
-      
-      if (changePercent === undefined || isNaN(changePercent)) {
-        changePercent = result.meta.regularMarketChangePercentRaw;
-      }
-      
-      // Format the output object
-      const output = {
-        name: result.meta.symbolName || "30-Day Federal Funds",
-        price: price.toString(),
-        priceChange: {
-          value: changeValue?.toString() || "0",
-          percent: changePercent?.toString() || "0%"
-        },
-        currency: result.meta.currency || "USD",
-        lastUpdated: result.meta.regularMarketTime ? 
-          new Date(result.meta.regularMarketTime * 1000).toISOString() : 
-          new Date().toISOString(),
-        source: url
-      };
-      
-      Logger.log(`Successfully parsed futures data: ${JSON.stringify(output, null, 2)}`);
-      return output;
-    }
-
-    throw new Error('Could not find valid price in JSON data');
-
-  } catch (error) {
-    Logger.log('Error fetching Fed Funds futures price: ' + error.message);
-    Logger.log('Response code:', response ? response.getResponseCode() : 'N/A');
-    Logger.log('Response content:', response ? response.getContentText().substring(0, 1000) : 'N/A');
-    return null;
-  }
-}
-
-/**
- * Test function to verify Yahoo Finance futures data retrieval
- */
-function testYahooFinanceFutures() {
-  try {
-    const data = getFedFundsFuturesPrice();
-    if (data !== null) {
-      Logger.log(`Fed Funds futures price: ${data.price}`);
-      Logger.log(`Change: ${data.priceChange.value} (${data.priceChange.percent})`);
-      Logger.log(`Last updated: ${data.lastUpdated}`);
-      Logger.log(`Source: ${data.source}`);
-    } else {
-      Logger.log('Failed to retrieve futures price');
-    }
-  } catch (error) {
-    Logger.log('Error in test function:', error.message);
-  }
-}
-
-/**
- * Gets the next scheduled FOMC meeting from the meetings array
- * @param {Array} meetings Array of meeting objects
- * @return {Object} Next meeting information
- */
-function getNextMeeting(meetings) {
-  const today = new Date();
-  const gracePeriod = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
-  
-  // Sort meetings by date in ascending order
-  const sortedMeetings = meetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-  
-  // Find the first meeting that is after today or within grace period
-  for (let i = 0; i < sortedMeetings.length; i++) {
-    const meetingDate = new Date(sortedMeetings[i].startDate);
-    if (meetingDate - today <= gracePeriod) {
-      return sortedMeetings[i];
-    }
-  }
-  
-  // If no upcoming meeting found within grace period, return the first future meeting
-  if (sortedMeetings.length > 0) {
-    return sortedMeetings[0];
-  }
-  
-  return {
-    date: "No upcoming meetings",
-    type: "",
-    time: "",
-    timezone: "",
-    startDate: new Date(),
-    endDate: new Date()
-  };
-}
-
-/**
- * Fetches market probabilities for rate changes
- * @return {Object} Market probabilities
- */
-function fetchMarketProbabilities() {
-  // Static probabilities for demonstration
-  return {
-    increase: "5%",
-    hold: "80%",
-    decrease: "15%"
-  };
-}
-
-/**
- * Retrieves Fed Funds futures price from Yahoo Finance API
- * @return {Object|null} Object containing futures data or null if not found
- */
-function getFedFundsFuturesPrice() {
-  const url = "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F";
-  
-  try {
-    const response = UrlFetchApp.fetch(url);
-    const data = JSON.parse(response.getContentText());
-    const result = data.chart.result[0];
-    
-    // Log the raw API response for debugging
-    Logger.log('Raw API response:', JSON.stringify(data, null, 2));
-    Logger.log('Available meta fields:', Object.keys(result.meta));
-    
-    // Extract the price
-    const price = result.meta.regularMarketPrice;
-    
-    if (price !== undefined && !isNaN(price)) {
-      // Try different fields for price change
-      let changeValue = result.meta.regularMarketChange;
-      let changePercent = result.meta.regularMarketChangePercent;
-      
-      // If not found, try alternative fields
-      if (changeValue === undefined || isNaN(changeValue)) {
-        changeValue = result.meta.regularMarketChangeAmount;
-      }
-      
-      if (changePercent === undefined || isNaN(changePercent)) {
-        changePercent = result.meta.regularMarketChangePercentRaw;
-      }
-      
-      // Format the output object
-      const output = {
-        name: result.meta.symbolName || "30-Day Federal Funds",
-        price: price.toString(),
-        priceChange: {
-          value: changeValue?.toString() || "0",
-          percent: changePercent?.toString() || "0%"
-        },
-        currency: result.meta.currency || "USD",
-        lastUpdated: result.meta.regularMarketTime ? 
-          new Date(result.meta.regularMarketTime * 1000).toISOString() : 
-          new Date().toISOString(),
-        source: url
-      };
-      
-      Logger.log(`Successfully parsed futures data: ${JSON.stringify(output, null, 2)}`);
-      return output;
-    }
-
-    throw new Error('Could not find valid price in JSON data');
-
-  } catch (error) {
-    Logger.log('Error fetching Fed Funds futures price: ' + error.message);
-    Logger.log('Response code:', response ? response.getResponseCode() : 'N/A');
-    Logger.log('Response content:', response ? response.getContentText().substring(0, 1000) : 'N/A');
-    return null;
-  }
-}
-
-/**
- * Retrieves Fed Funds futures price from Yahoo Finance API
- * @return {Object|null} Object containing futures data or null if not found
- */
-function getFedFundsFuturesPrice() {
-  const url = "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F";
-  
-  try {
-    const response = UrlFetchApp.fetch(url);
-    const data = JSON.parse(response.getContentText());
-    const result = data.chart.result[0];
-    
-    // Log the raw API response for debugging
-    Logger.log('Raw API response:', JSON.stringify(data, null, 2));
-    Logger.log('Available meta fields:', Object.keys(result.meta));
-    
-    // Extract the price
-    const price = result.meta.regularMarketPrice;
-    
-    if (price !== undefined && !isNaN(price)) {
-      // Try different fields for price change
-      let changeValue = result.meta.regularMarketChange;
-      let changePercent = result.meta.regularMarketChangePercent;
-      
-      // If not found, try alternative fields
-      if (changeValue === undefined || isNaN(changeValue)) {
-        changeValue = result.meta.regularMarketChangeAmount;
-      }
-      
-      if (changePercent === undefined || isNaN(changePercent)) {
-        changePercent = result.meta.regularMarketChangePercentRaw;
-      }
-      
-      // Format the output object
-      const output = {
-        name: result.meta.symbolName || "30-Day Federal Funds",
-        price: price.toString(),
-        priceChange: {
-          value: changeValue?.toString() || "0",
-          percent: changePercent?.toString() || "0%"
-        },
-        currency: result.meta.currency || "USD",
-        lastUpdated: result.meta.regularMarketTime ? 
-          new Date(result.meta.regularMarketTime * 1000).toISOString() : 
-          new Date().toISOString(),
-        source: url
-      };
-      
-      Logger.log(`Successfully parsed futures data: ${JSON.stringify(output, null, 2)}`);
-      return output;
-    }
-
-    throw new Error('Could not find valid price in JSON data');
-
-  } catch (error) {
-    Logger.log('Error fetching Fed Funds futures price: ' + error.message);
-    Logger.log('Response code:', response ? response.getResponseCode() : 'N/A');
-    Logger.log('Response content:', response ? response.getContentText().substring(0, 1000) : 'N/A');
-    return null;
-  }
-}
-
-/**
- * Test function to verify Yahoo Finance futures data retrieval
- */
-function testYahooFinanceFutures() {
-  try {
-    const data = getFedFundsFuturesPrice();
-    if (data !== null) {
-      Logger.log(`Fed Funds futures price: ${data.price}`);
-      Logger.log(`Change: ${data.priceChange.value} (${data.priceChange.percent})`);
-      Logger.log(`Last updated: ${data.lastUpdated}`);
-      Logger.log(`Source: ${data.source}`);
-    } else {
-      Logger.log('Failed to retrieve futures price');
-    }
-  } catch (error) {
-    Logger.log('Error in test function:', error.message);
-  }
-}
-
-/**
- * Test function to verify Yahoo Finance futures data retrieval
- */
-function testYahooFinanceFutures() {
-  try {
-    const data = getFedFundsFuturesPrice();
-    if (data !== null) {
-      Logger.log(`Fed Funds futures price: ${data.price}`);
-      Logger.log(`Change: ${data.priceChange.value} (${data.priceChange.percent})`);
-      Logger.log(`Last updated: ${data.lastUpdated}`);
-      Logger.log(`Source: ${data.source}`);
-    } else {
-      Logger.log('Failed to retrieve futures price');
-    }
-  } catch (error) {
-    Logger.log('Error in test function:', error.message);
-  }
-}
-
-/**
- * Gets the next scheduled FOMC meeting from the meetings array
- * @param {Array} meetings Array of meeting objects
- * @return {Object} Next meeting information
- */
-function getNextMeeting(meetings) {
-  const today = new Date();
-  const gracePeriod = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
-  
-  // Sort meetings by date in ascending order
-  const sortedMeetings = meetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
-  
-  // Find the first meeting that is after today or within grace period
-  for (let i = 0; i < sortedMeetings.length; i++) {
-    const meetingDate = new Date(sortedMeetings[i].startDate);
-    if (meetingDate - today <= gracePeriod) {
-      return sortedMeetings[i];
-    }
-  }
-  
-  // If no upcoming meeting found within grace period, return the first future meeting
-  if (sortedMeetings.length > 0) {
-    return sortedMeetings[0];
-  }
-  
-  return {
-    date: "No upcoming meetings",
-    type: "",
-    time: "",
-    timezone: "",
-    startDate: new Date(),
-    endDate: new Date()
-  };
 }
 
 /**
@@ -1665,97 +1391,96 @@ function getNextMeeting(meetings) {
  * @return {Object} Formatted Fed policy data
  */
 function testFedPolicyData() {
-  
   try {
-    const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
+    Logger.log("Testing Fed policy data retrieval...");
+    
+    // Clear Fed policy cache
+    const cache = CacheService.getScriptCache();
+    cache.remove('completeFedPolicyData');
     
     if (debugMode) {
       Logger.log("----------------------------------------");
-      Logger.log("Starting testFedPolicyData");
+      Logger.log("Cleared Fed policy cache");
+      Logger.log("Cache cleared successfully");
       Logger.log("----------------------------------------");
     }
     
-    // Clear any existing cache
-    const scriptCache = CacheService.getScriptCache();
-    scriptCache.remove('completeFedPolicyData');
-    Logger.log("Cleared Fed policy cache");
-    
-    // Retrieve Fed policy data using the new complete function
-    const fedPolicy = retrieveCompleteFedPolicyData();
-    
-    if (!fedPolicy) {
-      Logger.log("Failed to retrieve Fed policy data");
-      return {
-        success: false,
-        message: "Failed to retrieve Fed policy data",
-        timestamp: new Date().toISOString()
-      };
-    }
-    
-    Logger.log("Fed policy data retrieved successfully");
-    
-    // Log data structure information
-    if (debugMode) {
-      Logger.log("Fed policy data structure:");
-      Logger.log("Type of fedPolicy:", typeof fedPolicy);
-      Logger.log("Type of currentRate:", typeof fedPolicy.currentRate);
-      Logger.log("Type of lastMeeting:", typeof fedPolicy.lastMeeting);
-      Logger.log("Type of nextMeeting:", typeof fedPolicy.nextMeeting);
-      Logger.log("Type of meetings:", typeof fedPolicy.meetings);
-      Logger.log("Type of marketProbabilities:", typeof fedPolicy.marketProbabilities);
-      
-      // Log object properties
-      if (fedPolicy.lastMeeting) {
-        Logger.log("Last Meeting has properties:", Object.keys(fedPolicy.lastMeeting).join(", "));
+    // Retrieve Fed policy data
+    let fedPolicyData;
+    try {
+      fedPolicyData = retrieveCompleteFedPolicyData();
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Fed policy data retrieved successfully");
+        Logger.log("Fed policy data structure:");
+        Logger.log(JSON.stringify(fedPolicyData, null, 2));
+        
+        // Log types of all properties
+        Logger.log("Type of fedPolicyData:", typeof fedPolicyData);
+        if (fedPolicyData) {
+          Logger.log("Type of currentRate:", typeof fedPolicyData.currentRate);
+          Logger.log("Type of lastMeeting:", typeof fedPolicyData.lastMeeting);
+          Logger.log("Type of nextMeeting:", typeof fedPolicyData.nextMeeting);
+          Logger.log("Type of meetings:", typeof fedPolicyData.meetings);
+          Logger.log("Type of marketProbabilities:", typeof fedPolicyData.marketProbabilities);
+          
+          // Log object properties
+          if (fedPolicyData.lastMeeting) {
+            Logger.log("Last Meeting has properties:", Object.keys(fedPolicyData.lastMeeting).join(", "));
+          }
+          if (fedPolicyData.nextMeeting) {
+            Logger.log("Next Meeting has properties:", Object.keys(fedPolicyData.nextMeeting).join(", "));
+          }
+          if (fedPolicyData.marketProbabilities) {
+            Logger.log("Market Probabilities has properties:", Object.keys(fedPolicyData.marketProbabilities).join(", "));
+          }
+        }
+        Logger.log("----------------------------------------");
       }
-      if (fedPolicy.nextMeeting) {
-        Logger.log("Next Meeting has properties:", Object.keys(fedPolicy.nextMeeting).join(", "));
+    } catch (error) {
+      const errorMessage = `Error retrieving Fed policy data: ${error.message}`;
+      if (debugMode) {
+        Logger.log("----------------------------------------");
+        Logger.log("Error retrieving Fed policy data:");
+        Logger.log("Error Type:", error.constructor.name);
+        Logger.log("Error Message:", errorMessage);
+        Logger.log("Stack Trace:", error.stack);
+        Logger.log("----------------------------------------");
       }
-      if (fedPolicy.marketProbabilities) {
-        Logger.log("Market Probabilities has properties:", Object.keys(fedPolicy.marketProbabilities).join(", "));
-      }
+      throw new Error(errorMessage);
     }
     
     // Format the data for retrieveMacroeconomicFactors
     const formattedData = {
       "Fed Policy": {
-        "Forward Guidance": fedPolicy.forwardGuidance || "No forward guidance available",
+        "Forward Guidance": fedPolicyData.forwardGuidance || "No forward guidance available",
         "Current Rate": {
-          "Value": fedPolicy.currentRate.value,
-          "Date": fedPolicy.currentRate.date,
-          "Source": fedPolicy.source.url
+          "Value": fedPolicyData.currentRate?.currentRate || "N/A",
+          "Range": `${fedPolicyData.currentRate?.rangeLow || "N/A"}% - ${fedPolicyData.currentRate?.rangeHigh || "N/A"}%`,
+          "Date": fedPolicyData.currentRate?.date || "N/A",
+          "Source": fedPolicyData.source?.components?.fedFundsRate?.url || "N/A"
         },
-        "Previous Rate": {
-          "Value": fedPolicy.previousRate.value,
-          "Date": fedPolicy.previousRate.date
-        },
-        "Fed Funds Futures": {
-          "Price": fedPolicy.futuresPrice,
-          "Change": fedPolicy.futuresPriceChange,
-          "Last Updated": fedPolicy.futuresLastUpdated
+        "Futures Data": {
+          "Implied Rate": fedPolicyData.futuresData?.impliedRate || "N/A",
+          "Price": fedPolicyData.futuresData?.futuresPrice || "N/A",
+          "Probability Up": fedPolicyData.futuresData?.probabilityUp || "N/A",
+          "Probability Hold": fedPolicyData.futuresData?.probabilityHold || "N/A",
+          "Probability Down": fedPolicyData.futuresData?.probabilityDown || "N/A",
+          "Source": fedPolicyData.futuresData?.source?.url || "N/A"
         },
         "Last Meeting": {
-          "Date": fedPolicy.lastMeeting.date,
-          "Type": fedPolicy.lastMeeting.type,
-          "Time": fedPolicy.lastMeeting.time,
-          "Timezone": fedPolicy.lastMeeting.timezone,
-          "Minutes URL": fedPolicy.lastMeeting.minutesUrl
+          "Date": fedPolicyData.lastMeeting?.startDate || "N/A",
+          "Time": fedPolicyData.lastMeeting?.time || "N/A",
+          "Minutes URL": fedPolicyData.lastMeeting?.minutesUrl || "N/A"
         },
         "Next Meeting": {
-          "Date": fedPolicy.nextMeeting.date,
-          "Type": fedPolicy.nextMeeting.type,
-          "Time": fedPolicy.nextMeeting.time,
-          "Timezone": fedPolicy.nextMeeting.timezone
-        },
-        "Market Probabilities": {
-          "Up": `${fedPolicy.marketProbabilities.up}%`,
-          "Same": `${fedPolicy.marketProbabilities.same}%`,
-          "Down": `${fedPolicy.marketProbabilities.down}%`,
-          "Implied Rate": `${fedPolicy.marketProbabilities.impliedRate}%`
+          "Date": fedPolicyData.nextMeeting?.startDate || "N/A",
+          "Time": fedPolicyData.nextMeeting?.time || "N/A"
         },
         "Source": {
-          "URL": fedPolicy.source.url,
-          "Timestamp": fedPolicy.source.timestamp
+          "URL": fedPolicyData.source?.url || "N/A",
+          "Timestamp": fedPolicyData.source?.timestamp || "N/A",
+          "Components": fedPolicyData.source?.components || "N/A"
         }
       }
     };
@@ -1768,17 +1493,16 @@ function testFedPolicyData() {
     };
     
   } catch (error) {
-    if (debugMode) {
-      Logger.log("----------------------------------------");
-      Logger.log("Error in testFedPolicyData:");
-      Logger.log("Error Type:", error.constructor.name);
-      Logger.log("Error Message:", error.message);
-      Logger.log("Stack Trace:", error.stack);
-      Logger.log("----------------------------------------");
-    }
+    const errorMessage = `Error in testFedPolicyData: ${error.message}`;
+    Logger.log("----------------------------------------");
+    Logger.log("Error in testFedPolicyData:");
+    Logger.log("Error Type:", error.constructor.name);
+    Logger.log("Error Message:", errorMessage);
+    Logger.log("Stack Trace:", error.stack);
+    Logger.log("----------------------------------------");
     return {
       success: false,
-      message: "Error testing Fed policy data: " + error.message,
+      message: errorMessage,
       timestamp: new Date().toISOString()
     };
   }
@@ -1795,4 +1519,157 @@ function fetchMarketProbabilities() {
     hold: "80%",
     decrease: "15%"
   };
+}
+
+/**
+ * Gets the next scheduled FOMC meeting from the meetings array
+ * @param {Array} meetings Array of meeting objects
+ * @return {Object} Next meeting information
+ */
+function getNextMeeting(meetings) {
+  const today = new Date();
+  const gracePeriod = 3 * 24 * 60 * 60 * 1000; // 3 days in milliseconds
+  
+  // Sort meetings by date in ascending order
+  const sortedMeetings = meetings.sort((a, b) => new Date(a.startDate) - new Date(b.startDate));
+  
+  // Find the first meeting that is after today or within grace period
+  for (let i = 0; i < sortedMeetings.length; i++) {
+    const meetingDate = new Date(sortedMeetings[i].startDate);
+    if (meetingDate - today <= gracePeriod) {
+      return sortedMeetings[i];
+    }
+  }
+  
+  // If no upcoming meeting found within grace period, return the first future meeting
+  if (sortedMeetings.length > 0) {
+    return sortedMeetings[0];
+  }
+  
+  return {
+    date: "No upcoming meetings",
+    type: "",
+    time: "",
+    timezone: "",
+    startDate: new Date(),
+    endDate: new Date()
+  };
+}
+
+/**
+ * Helper function to parse yield term to months
+ * @param {string} term - The yield term (e.g., "3-month", "1-year")
+ * @return {number} Number of months
+ */
+function parseTermToMonths(term) {
+  if (!term) return 0;
+  
+  term = term.toLowerCase();
+  
+  // Handle common terms
+  if (term.includes('month')) {
+    const months = parseInt(term.replace(/[^\d]/g, ''));
+    return months || 0;
+  }
+  
+  if (term.includes('year')) {
+    const years = parseInt(term.replace(/[\d]/g, ''));
+    return (years || 0) * 12;
+  }
+  
+  // Handle specific terms
+  if (term.includes('30-day')) return 1;
+  if (term.includes('90-day')) return 3;
+  if (term.includes('180-day')) return 6;
+  
+  return 0;
+}
+
+/**
+ * Helper function to format a value with optional fixed decimals
+ * @param {number|string} value - The value to format
+ * @param {boolean} fixedDecimals - Whether to use fixed decimals
+ * @param {number} decimals - Number of decimal places
+ * @return {string} Formatted value
+ */
+function formatValue(value, fixedDecimals = false, decimals = 2) {
+  if (value === undefined || value === null) {
+    return "N/A";
+  }
+  
+  // Handle string values that might contain numbers
+  if (typeof value === 'string') {
+    // Try to parse as number if it looks like one
+    const numValue = parseFloat(value);
+    if (!isNaN(numValue)) {
+      value = numValue;
+    }
+  }
+  
+  // Handle numeric values
+  if (typeof value === 'number' || !isNaN(value)) {
+    const numValue = parseFloat(value);
+    if (fixedDecimals) {
+      return numValue.toFixed(decimals);
+    }
+    return numValue.toString();
+  }
+  
+  // Return string values as is
+  return value.toString();
+}
+
+/**
+ * Formats Fed policy data
+ * @param {Object} fedPolicyData - Fed policy data
+ * @return {string} Formatted Fed policy data
+ */
+function formatFedPolicyData(fedPolicyData) {
+  try {
+    Logger.log("Formatting Fed policy data...");
+    
+    let formattedText = "**Federal Reserve Policy:**\n";
+    
+    if (fedPolicyData) {
+      // Handle null currentRate gracefully
+      const currentRate = fedPolicyData.currentRate || {
+        currentRate: "N/A",
+        rangeLow: "N/A",
+        rangeHigh: "N/A"
+      };
+      
+      // Access the numeric values before formatting
+      formattedText += `- Current Rate: ${currentRate.currentRate}%\n`;
+      formattedText += `- Rate Range: ${currentRate.rangeLow}% - ${currentRate.rangeHigh}%\n`;
+      
+      if (fedPolicyData.nextMeeting) {
+        formattedText += `- Next Meeting: ${fedPolicyData.nextMeeting.date}\n`;
+        formattedText += `- Meeting Time: ${fedPolicyData.nextMeeting.time} ${fedPolicyData.nextMeeting.timezone}\n`;
+      } else {
+        formattedText += `- Next Meeting: No upcoming meetings\n`;
+      }
+      
+      formattedText += `- Forward Guidance: ${formatValue(fedPolicyData.forwardGuidance)}\n`;
+      formattedText += `- Commentary: ${formatValue(fedPolicyData.commentary)}\n`;
+      
+      if (fedPolicyData.marketProbabilities) {
+        formattedText += `\n**Market Probabilities:**\n`;
+        formattedText += `- Rate Cut: ${formatValue(fedPolicyData.marketProbabilities.probabilityDown)}%\n`;
+        formattedText += `- Rate Hold: ${formatValue(fedPolicyData.marketProbabilities.probabilityHold)}%\n`;
+        formattedText += `- Rate Hike: ${formatValue(fedPolicyData.marketProbabilities.probabilityUp)}%\n`;
+        formattedText += `- Implied Rate: ${formatValue(fedPolicyData.marketProbabilities.impliedRate)}%\n`;
+      }
+      
+      formattedText += `\n**Source:**\n`;
+      formattedText += `- URL: ${formatValue(fedPolicyData.source.url)}\n`;
+      formattedText += `- Timestamp: ${formatValue(fedPolicyData.source.timestamp)}\n`;
+    } else {
+      formattedText += "- Error retrieving Fed policy data\n";
+    }
+    
+    return formattedText;
+  } catch (error) {
+    Logger.log(`Error formatting Fed policy data: ${error}`);
+    throw error;
+  }
 }

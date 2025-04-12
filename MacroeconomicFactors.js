@@ -204,17 +204,43 @@ function formatMacroeconomicFactorsData(macroData) {
   // Format Fed policy data
   if (fedPolicy && !fedPolicy.error) {
     formattedData += "Federal Reserve Policy:\n";
-    
-    if (fedPolicy.currentRate && fedPolicy.currentRate.rate !== undefined) {
-      formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.rate)}%\n`;
+    const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Fed Policy Data:");
+      Logger.log(JSON.stringify(fedPolicy, null, 2));
+      Logger.log("----------------------------------------");
     }
     
-    if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.date) {
-      formattedData += `  - Last FOMC Meeting: ${new Date(fedPolicy.lastMeeting.date).toLocaleDateString()}\n`;
+    if (fedPolicy.currentRate && fedPolicy.currentRate.currentRate !== undefined) {
+      formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.currentRate)}% - Range: ${formatValue(fedPolicy.currentRate.rangeLow)}% - ${formatValue(fedPolicy.currentRate.rangeHigh)}%\n`;
+    }
+
+    if (fedPolicy.futuresData && fedPolicy.futuresData.impliedRate !== undefined && fedPolicy.futuresData.impliedRate !== "N/A") {
+      formattedData += `  - Implied Rate from Futures: ${formatValue(fedPolicy.futuresData.impliedRate)}%\n`;
+    }
+
+    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityUp !== undefined && fedPolicy.futuresData.probabilityUp !== "N/A") {
+      formattedData += `  - Probability of Rate Increase: ${formatValue(fedPolicy.futuresData.probabilityUp)}%\n`;
+    }
+
+    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityHold !== undefined && fedPolicy.futuresData.probabilityHold !== "N/A") {
+      formattedData += `  - Probability of Rate Hold: ${formatValue(fedPolicy.futuresData.probabilityHold)}%\n`;
+    }
+    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityDown !== undefined && fedPolicy.futuresData.probabilityDown !== "N/A") {
+      formattedData += `  - Probability of Rate Decrease: ${formatValue(fedPolicy.futuresData.probabilityDown)}%\n`;
+    }
+
+    if (fedPolicy.futuresData && fedPolicy.futuresData.futuresPrice !== undefined && fedPolicy.futuresData.futuresPrice !== "N/A") {
+      formattedData += `  - Federal Funds Futures Price: ${formatValue(fedPolicy.futuresData.futuresPrice)}\n`;
     }
     
-    if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.date) {
-      formattedData += `  - Next FOMC Meeting: ${new Date(fedPolicy.nextMeeting.date).toLocaleDateString()}\n`;
+    if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.startDate) {
+      formattedData += `  - Last ${fedPolicy.lastMeeting.fullText()}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
+    }
+    
+    if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.startDate) {
+      formattedData += `  - Next ${fedPolicy.nextMeeting.fullText()}\n`;
     }
     
     if (fedPolicy.forwardGuidance) {
@@ -226,9 +252,20 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     // Add source information
-    if (fedPolicy.source && fedPolicy.lastUpdated) {
-      const timestamp = new Date(fedPolicy.lastUpdated);
-      formattedData += `  - Source: ${fedPolicy.source} (${fedPolicy.sourceUrl}), as of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
+    if (fedPolicy.source) {
+      const timestamp = new Date(fedPolicy.source.timestamp);
+      formattedData += `  - Source: ${fedPolicy.source.url}\n`;
+      formattedData += `  - Last Updated: ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
+      
+      // Add component sources if available
+      if (fedPolicy.source.components) {
+        formattedData += `  - Components:\n`;
+        for (const [component, info] of Object.entries(fedPolicy.source.components)) {
+          if (info && info.url) {
+            formattedData += `    - ${component}: ${info.url}\n`;
+          }
+        }
+      }
     }
     
     formattedData += "\n";
@@ -638,8 +675,6 @@ function retrieveCPIData() {
     
     // Try to get data from BLS API
     const cpiData = fetchCPIDataFromBLS();
-    
-    // If we got valid data, return it
     if (cpiData && cpiData.yearOverYearChange !== undefined) {
       return cpiData;
     }
@@ -999,15 +1034,16 @@ function fetchPCEDataFromBEA() {
     // Current date
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
+    const previousYear = currentYear - 1;
     
     // Request parameters - using quarterly data which is more reliable
     const params = {
       "UserID": apiKey,
       "method": "GetData",
       "datasetname": "NIPA",
-      "TableName": "T20804",
+      "TableName": "T20204", // Corrected table identifier for PCE
       "Frequency": "Q",
-      "Year": `${currentYear-1},${currentYear}`,
+      "Year": `${previousYear},${currentYear}`,
       "ResultFormat": "JSON"
     };
     
@@ -1033,7 +1069,7 @@ function fetchPCEDataFromBEA() {
     const data = JSON.parse(responseText);
     
     // Log the response structure for debugging
-    Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
+    Logger.log("BEA API response structure: " + JSON.stringify(data));
     
     // Check if the response contains the expected data
     if (!data || data.BEAAPI === undefined || data.BEAAPI.Results === undefined || data.BEAAPI.Results.Data === undefined || !Array.isArray(data.BEAAPI.Results.Data)) {
@@ -1042,6 +1078,12 @@ function fetchPCEDataFromBEA() {
       // Check if there's an error message
       if (data && data.BEAAPI && data.BEAAPI.Error) {
         Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
+        
+        // If the error is 201 (data not available yet), return null to fall back to FRED
+        if (data.BEAAPI.Error.APIErrorCode === "201") {
+          Logger.log("BEA API: Data not available yet, falling back to FRED");
+          return null;
+        }
       }
       
       return null;
@@ -1637,9 +1679,24 @@ function retrieveTreasuryYieldsFromAlphaVantage() {
  * @return {String} Formatted value
  */
 function formatValue(value, decimals = 2) {
+  // Handle undefined, null, or NaN values
   if (value === undefined || value === null || isNaN(value)) {
     return "N/A";
   }
+  
+  // Convert to number if it's not already
+  if (typeof value !== 'number') {
+    // Try to parse as number if it's a string
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      if (!isNaN(parsed)) {
+        return parsed.toFixed(decimals);
+      }
+    }
+    // For other non-number types, return N/A
+    return "N/A";
+  }
+  
   return value.toFixed(decimals);
 }
 
@@ -1736,15 +1793,16 @@ function testPCEData() {
   // Current date
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
+  const previousYear = currentDate.getFullYear() - 1;
   
   // Request parameters - using quarterly data which is more reliable
   const params = {
     "UserID": apiKey,
     "method": "GetData",
     "datasetname": "NIPA",
-    "TableName": "T20804",
+    "TableName": "T20204", // Corrected table identifier for PCE
     "Frequency": "Q",
-    "Year": `${currentYear-1},${currentYear}`,
+    "Year": `${previousYear},${currentYear}`,
     "ResultFormat": "JSON"
   };
   
@@ -1940,27 +1998,6 @@ function getBLSApiKey() {
     return apiKey;
   } catch (error) {
     Logger.log(`Error getting BLS API key: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Gets the BEA API key from script properties
- * @return {String} The BEA API key
- */
-function getBEAApiKey() {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const apiKey = scriptProperties.getProperty('BEA_API_KEY');
-    
-    if (!apiKey) {
-      Logger.log("BEA API key not found in script properties");
-      return null;
-    }
-    
-    return apiKey;
-  } catch (error) {
-    Logger.log(`Error getting BEA API key: ${error}`);
     return null;
   }
 }

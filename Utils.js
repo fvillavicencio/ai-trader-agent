@@ -1249,30 +1249,25 @@ function saveToGoogleDrive(filename, content) {
  * @return {String} Formatted value
  */
 function formatValue(value, decimals = 2) {
+  // Handle undefined, null, or NaN values
   if (value === undefined || value === null || isNaN(value)) {
     return "N/A";
   }
-  return value.toFixed(decimals);
-}
-
-/**
- * Helper function to format large numbers with suffixes (T, B, M)
- * @param {Number} value - The number to format
- * @return {String} Formatted number with suffix
- */
-function formatLargeNumber(value) {
-  if (!value || value === 'N/A') return 'N/A';
   
-  if (typeof value === 'string') {
-    value = parseFloat(value.replace(/[^\d.-]+/g, ''));
+  // Convert to number if it's not already
+  if (typeof value !== 'number') {
+    // Try to parse as number if it's a string
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      if (!isNaN(parsed)) {
+        return parsed.toFixed(decimals);
+      }
+    }
+    // For other non-number types, return N/A
+    return "N/A";
   }
   
-  if (isNaN(value)) return 'N/A';
-  
-  if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
-  if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
-  if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
-  return value.toFixed(2);
+  return value.toFixed(decimals);
 }
 
 /**
@@ -1363,3 +1358,23 @@ const monthToNum = {
   'Nov': 11,
   'Dec': 12
 };
+
+/**
+ * Helper function to format large numbers with suffixes (T, B, M)
+ * @param {Number} value - The number to format
+ * @return {String} Formatted number with suffix
+ */
+function formatLargeNumber(value) {
+  if (!value || value === 'N/A') return 'N/A';
+  
+  if (typeof value === 'string') {
+    value = parseFloat(value.replace(/[^\d.-]+/g, ''));
+  }
+  
+  if (isNaN(value)) return 'N/A';
+  
+  if (value >= 1e12) return (value / 1e12).toFixed(2) + 'T';
+  if (value >= 1e9) return (value / 1e9).toFixed(2) + 'B';
+  if (value >= 1e6) return (value / 1e6).toFixed(2) + 'M';
+  return value.toFixed(2);
+}

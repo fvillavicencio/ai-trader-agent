@@ -208,6 +208,18 @@ function decryptEventInfo(eventName, source) {
   
   // Map of event names to their decrypted versions
   const eventDecryption = {
+    'Philly Fed 6M Index': {
+      name: 'Philadelphia Fed Business Outlook Survey 6-Month Index',
+      source: 'Federal Reserve Bank of Philadelphia'
+    },
+    'NY Fed Manufacturing': {
+      name: 'New York Fed Manufacturing Report',
+      source: 'Federal Reserve Bank of New York'
+    },
+    'Philly Fed Employment': {
+      name: 'Philadelphia Fed Business Outlook Survey Employment Index',
+      source: 'Federal Reserve Bank of Philadelphia'
+    },
     'Real Weekly Earnings MM': {
       name: 'Average weekly earnings adjusted for inflation MoM',
       source: 'U.S. Bureau of Labor Statistics'

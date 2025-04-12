@@ -372,16 +372,19 @@ function formatValue(value, fixedDecimals = false, decimals = 2) {
     return "N/A";
   }
   
-  if (isNaN(value)) {
+  if (typeof value === 'string' && !isNaN(value)) {
+    value = parseFloat(value);
+  }
+  
+  if (typeof value !== 'number') {
     return value.toString();
   }
   
-  const numValue = parseFloat(value);
   if (fixedDecimals) {
-    return numValue.toFixed(decimals);
+    return value.toFixed(decimals);
   }
   
-  return numValue.toString();
+  return value.toString();
 }
 
 /**
@@ -410,10 +413,11 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     // Format Fed policy
-    if (macroData.fedPolicy) {
+    if (macroData.fedPolicy && !macroData.fedPolicy.error) {
       formattedText += "**Federal Reserve Policy:**\n";
-      formattedText += `- Current Rate: ${formatValue(macroData.fedPolicy.federalFundsRate)}%\n`;
-      formattedText += `- Next Meeting: ${formatValue(macroData.fedPolicy.nextMeetingDate) || 'N/A'}\n`;
+      Logger.log("Fed policy data: " + JSON.stringify(macroData.fedPolicy));
+      formattedText += `- Current Rate: ${formatValue(macroData.fedPolicy.currentRate)}%\n`;
+      formattedText += `- Next Meeting: ${formatValue(macroData.fedPolicy.nextMeeting.startDate) || 'N/A'}\n`;
       formattedText += `- Forward Guidance: ${formatValue(macroData.fedPolicy.forwardGuidance) || 'N/A'}\n`;
       formattedText += `- Source: ${formatValue(macroData.fedPolicy.source) || 'N/A'} (${formatValue(macroData.fedPolicy.sourceUrl) || 'N/A'})\n`;
       formattedText += `- Last Updated: ${formatValue(macroData.fedPolicy.timestamp) || 'N/A'}\n\n`;
@@ -624,15 +628,19 @@ function formatValue(value, fixedDecimals = false, decimals = 2) {
     return "N/A";
   }
   
-  if (isNaN(value)) {
+  if (typeof value === 'string' && !isNaN(value)) {
+    value = parseFloat(value);
+  }
+  
+  if (typeof value !== 'number') {
     return value.toString();
   }
   
   if (fixedDecimals) {
-    return parseFloat(value).toFixed(decimals);
+    return value.toFixed(decimals);
   }
   
-  return parseFloat(value).toString();
+  return value.toString();
 }
 
 /**

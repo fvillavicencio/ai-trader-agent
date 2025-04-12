@@ -272,9 +272,8 @@ function formatKeyMarketIndicatorsData(data) {
         return new Date(a.date) - new Date(b.date);
       });
       
-      // Add each event (limit to 3 events)
-      const eventsToShow = sortedEvents.slice(0, 3);
-      for (const event of eventsToShow) {
+      // Add each event
+      for (const event of sortedEvents) {
         // Format the date as ISO string for consistency
         const dateObj = new Date(event.date);
         const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
@@ -1569,6 +1568,24 @@ function testClearAndRetrieveKeyMarketIndicators() {
       Logger.log(`Upcoming Economic Events: Retrieved ${keyMarketIndicators.upcomingEconomicEvents.length} events`);
       Logger.log(`Source: ${keyMarketIndicators.upcomingEconomicEvents.source}`);
       Logger.log(`Is Stale Data: ${keyMarketIndicators.upcomingEconomicEvents.isStaleData ? "Yes" : "No"}`);
+      
+      // Log details of each event
+      keyMarketIndicators.upcomingEconomicEvents.forEach((event, index) => {
+        Logger.log(`Event ${index + 1}:`);
+        Logger.log(`  Date: ${event.date}`);
+        Logger.log(`  Name: ${event.name}`);
+        Logger.log(`  Country: ${event.country}`);
+        Logger.log(`  Source: ${event.source}`);
+        if (event.actual !== undefined) {
+          Logger.log(`  Actual: ${event.actual}`);
+        }
+        if (event.forecast !== undefined) {
+          Logger.log(`  Forecast: ${event.forecast}`);
+        }
+        if (event.previous !== undefined) {
+          Logger.log(`  Previous: ${event.previous}`);
+        }
+      });
     } else {
       Logger.log("Upcoming Economic Events: Not found");
     }
@@ -1648,7 +1665,26 @@ function testImprovedDataRetrieval() {
     // Check Upcoming Economic Events
     if (keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0) {
       Logger.log(`Upcoming Economic Events: Retrieved ${keyMarketIndicators.upcomingEconomicEvents.length} events`);
-      Logger.log(`First event: ${keyMarketIndicators.upcomingEconomicEvents[0].event} (${keyMarketIndicators.upcomingEconomicEvents[0].country}) on ${keyMarketIndicators.upcomingEconomicEvents[0].date}`);
+      Logger.log(`Source: ${keyMarketIndicators.upcomingEconomicEvents.source}`);
+      Logger.log(`Is Stale Data: ${keyMarketIndicators.upcomingEconomicEvents.isStaleData ? "Yes" : "No"}`);
+      
+      // Log details of each event
+      keyMarketIndicators.upcomingEconomicEvents.forEach((event, index) => {
+        Logger.log(`Event ${index + 1}:`);
+        Logger.log(`  Date: ${event.date}`);
+        Logger.log(`  Name: ${event.name}`);
+        Logger.log(`  Country: ${event.country}`);
+        Logger.log(`  Source: ${event.source}`);
+        if (event.actual !== undefined) {
+          Logger.log(`  Actual: ${event.actual}`);
+        }
+        if (event.forecast !== undefined) {
+          Logger.log(`  Forecast: ${event.forecast}`);
+        }
+        if (event.previous !== undefined) {
+          Logger.log(`  Previous: ${event.previous}`);
+        }
+      });
     } else {
       Logger.log("Upcoming Economic Events: Not found");
     }
