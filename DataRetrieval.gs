@@ -430,6 +430,17 @@ function formatMacroeconomicFactorsData(macroData) {
       formattedText += `- CPI Core: ${formatValue(macroData.inflation.cpi.core)}%\n`;
       formattedText += `- PCE Headline: ${formatValue(macroData.inflation.pce.headline)}%\n`;
       formattedText += `- PCE Core: ${formatValue(macroData.inflation.pce.core)}%\n`;
+      
+      // Add inflation expectations if available
+      if (macroData.inflation.expectations) {
+        formattedText += `\n**Inflation Expectations:**\n`;
+        formattedText += `- 1-Year: ${formatValue(macroData.inflation.expectations.oneYear)}%\n`;
+        formattedText += `- 5-Year: ${formatValue(macroData.inflation.expectations.fiveYear)}%\n`;
+        formattedText += `- 10-Year: ${formatValue(macroData.inflation.expectations.tenYear)}%\n`;
+        formattedText += `- Source: ${formatValue(macroData.inflation.expectations.source) || 'N/A'} (${formatValue(macroData.inflation.expectations.sourceUrl) || 'N/A'})\n`;
+        formattedText += `- Last Updated: ${formatValue(macroData.inflation.expectations.timestamp) || 'N/A'}\n\n`;
+      }
+      
       formattedText += `- Source: ${formatValue(macroData.inflation.source) || 'N/A'} (${formatValue(macroData.inflation.sourceUrl) || 'N/A'})\n`;
       formattedText += `- Last Updated: ${formatValue(macroData.inflation.timestamp) || 'N/A'}\n\n`;
     }

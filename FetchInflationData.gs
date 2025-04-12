@@ -663,7 +663,13 @@ function retrieveInflationData() {
     const result = {
       cpi: cpiData,
       pce: pceData,
-      expectations: expectationsData,
+      expectations: {
+        oneYear: expectationsData?.oneYear,
+        fiveYear: expectationsData?.fiveYear,
+        tenYear: expectationsData?.tenYear,
+        source: expectationsData?.source || 'St. Louis Fed (FRED API)',
+        lastUpdated: expectationsData?.lastUpdated || new Date()
+      },
       analysis: analysis,
       source: "Bureau of Labor Statistics, Federal Reserve",
       sourceUrl: "https://www.bls.gov/cpi/",
