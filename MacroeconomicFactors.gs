@@ -150,7 +150,7 @@ function formatMacroeconomicFactorsData(macroData) {
   const fedPolicy = macroData.fedPolicy;
   const inflation = macroData.inflation;
   const geopoliticalRisks = macroData.geopoliticalRisks;
-  
+
   // Format treasury yields data
   if (treasuryYields && !treasuryYields.error) {
     formattedData += "Treasury Yields:\n";
@@ -201,7 +201,7 @@ function formatMacroeconomicFactorsData(macroData) {
     formattedData += "\n";
   }
   
-  // Format Fed policy data
+// Format Fed policy data
   if (fedPolicy && !fedPolicy.error) {
     formattedData += "Federal Reserve Policy:\n";
     const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
@@ -216,25 +216,22 @@ function formatMacroeconomicFactorsData(macroData) {
       formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.currentRate)}% - Range: ${formatValue(fedPolicy.currentRate.rangeLow)}% - ${formatValue(fedPolicy.currentRate.rangeHigh)}%\n`;
     }
 
-    if (fedPolicy.futuresData && fedPolicy.futuresData.impliedRate !== undefined && fedPolicy.futuresData.impliedRate !== "N/A") {
-      formattedData += `  - Implied Rate from Futures: ${formatValue(fedPolicy.futuresData.impliedRate)}%\n`;
+    // Format futures data if available
+    if (fedPolicy.futures) {
+      formattedData += `  - Federal Funds Futures Data:\n`;
+      if (fedPolicy.futures.currentPrice !== undefined && fedPolicy.futures.currentPrice !== null) {
+        formattedData += `    - Current Price: ${formatValue(fedPolicy.futures.currentPrice)}\n`;
+      }
+      if (fedPolicy.futures.impliedRate !== undefined && fedPolicy.futures.impliedRate !== null) {
+        formattedData += `    - Implied Rate: ${formatValue(fedPolicy.futures.impliedRate)}%\n`;
+      }
+      if (fedPolicy.futures.probabilities) {
+        formattedData += `    - Probability of Rate Cut: ${formatValue(fedPolicy.futures.probabilities.cut)}%\n`;
+        formattedData += `    - Probability of Rate Hold: ${formatValue(fedPolicy.futures.probabilities.hold)}%\n`;
+        formattedData += `    - Probability of Rate Hike: ${formatValue(fedPolicy.futures.probabilities.hike)}%\n`;
+      }
     }
 
-    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityUp !== undefined && fedPolicy.futuresData.probabilityUp !== "N/A") {
-      formattedData += `  - Probability of Rate Increase: ${formatValue(fedPolicy.futuresData.probabilityUp)}%\n`;
-    }
-
-    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityHold !== undefined && fedPolicy.futuresData.probabilityHold !== "N/A") {
-      formattedData += `  - Probability of Rate Hold: ${formatValue(fedPolicy.futuresData.probabilityHold)}%\n`;
-    }
-    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityDown !== undefined && fedPolicy.futuresData.probabilityDown !== "N/A") {
-      formattedData += `  - Probability of Rate Decrease: ${formatValue(fedPolicy.futuresData.probabilityDown)}%\n`;
-    }
-
-    if (fedPolicy.futuresData && fedPolicy.futuresData.futuresPrice !== undefined && fedPolicy.futuresData.futuresPrice !== "N/A") {
-      formattedData += `  - Federal Funds Futures Price: ${formatValue(fedPolicy.futuresData.futuresPrice)}\n`;
-    }
-    
     if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.startDate) {
       formattedData += `  - Last ${fedPolicy.lastMeeting.fullText}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
     }
@@ -309,7 +306,7 @@ function formatMacroeconomicFactorsData(macroData) {
     if (inflation.expectations && inflation.expectations.fiveYear !== undefined) {
       formattedData += `  - University of Michigan 5-Year Inflation Expectation: ${formatValue(inflation.expectations.fiveYear.value)}% (Last Updated: ${new Date(inflation.expectations.fiveYear.lastUpdated).toLocaleDateString()})\n`;
     }
-
+    
     if (inflation.expectations && inflation.expectations.tenYear !== undefined) {
       formattedData += `  - University of Michigan 10-Year Inflation Expectation: ${formatValue(inflation.expectations.tenYear.value)}% (Last Updated: ${new Date(inflation.expectations.tenYear.lastUpdated).toLocaleDateString()})\n`;
     }
