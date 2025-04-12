@@ -1049,8 +1049,8 @@ function fetchFedFundsFuturesProbabilities(currentRate) {
       const marketProbabilities = fetchMarketProbabilities();
       return {
         impliedRate: "N/A",
-        currentRate: currentRate.toFixed(2),
-        futuresPrice: "N/A",
+        currentRate: (currentRate !== undefined && currentRate !== null) ? currentRate.toFixed(2) : "N/A",
+        futuresPrice: (futuresPrice !== undefined && futuresPrice !== null) ? futuresPrice.price.toFixed(2) : "N/A",
         probabilityUp: marketProbabilities.increase,
         probabilityHold: marketProbabilities.hold,
         probabilityDown: marketProbabilities.decrease,

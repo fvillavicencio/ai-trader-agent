@@ -208,6 +208,21 @@ function formatMacroeconomicFactorsData(macroData) {
     if (fedPolicy.currentRate && fedPolicy.currentRate.currentRate !== undefined) {
       formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.currentRate)}% - Range: ${formatValue(fedPolicy.currentRate.rangeLow)}% - ${formatValue(fedPolicy.currentRate.rangeHigh)}%\n`;
     }
+
+    if (fedPolicy.probabilityUp && fedPolicy.probabilityUp !== undefined && fedPolicy.probabilityUp !== "N/A") {
+      formattedData += `  - Probability of Rate Increase: ${formatValue(fedPolicy.probabilityUp)}%\n`;
+    }
+
+    if (fedPolicy.probabilityHold && fedPolicy.probabilityHold !== undefined && fedPolicy.probabilityHold !== "N/A") {
+      formattedData += `  - Probability of Rate Hold: ${formatValue(fedPolicy.probabilityHold)}%\n`;
+    }
+    if (fedPolicy.probabilityDown && fedPolicy.probabilityDown !== undefined && fedPolicy.probabilityDown !== "N/A") {
+      formattedData += `  - Probability of Rate Decrease: ${formatValue(fedPolicy.probabilityDown)}%\n`;
+    }
+
+    if (fedPolicy.futuresPrice && fedPolicy.futuresPrice !== undefined && fedPolicy.futuresPrice !== "N/A") {
+      formattedData += `  - Federal Funds Futures Price: ${formatValue(fedPolicy.futuresPrice)}\n`;
+    }
     
     if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.date) {
       formattedData += `  - Last FOMC Meeting: ${fedPolicy.lastMeeting.fullText}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
@@ -1005,7 +1020,7 @@ function fetchPCEDataFromBEA() {
       "datasetname": "NIPA",
       "TableName": "T20804",
       "Frequency": "Q",
-      "Year": `${currentYear-1},${currentYear}`,
+      "Year": `${currentYear}`,
       "ResultFormat": "JSON"
     };
     
@@ -1041,19 +1056,10 @@ function fetchPCEDataFromBEA() {
       if (data && data.BEAAPI && data.BEAAPI.Error) {
         Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
         
-        // If the error is about data not being available, return a fallback message
-        if (data.BEAAPI.Error.APIErrorDescription && 
-            data.BEAAPI.Error.APIErrorDescription.includes("Data for this table and frequency are not currently available")) {
-          return {
-            success: false,
-            error: "Data not available",
-            message: "PCE data is not currently available. Please check BEA's release schedule for more information.",
-            lastUpdated: new Date().toISOString(),
-            source: {
-              url: "https://www.bea.gov/data/gdp/personal-consumption-expenditures-pce",
-              timestamp: new Date().toISOString()
-            }
-          };
+        // If the error is 201 (data not available yet), return null to fall back to FRED
+        if (data.BEAAPI.Error.APIErrorCode === "201") {
+          Logger.log("BEA API: Data not available yet, falling back to FRED");
+          return null;
         }
       }
       

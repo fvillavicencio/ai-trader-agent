@@ -413,7 +413,7 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     // Format Fed policy
-    if (macroData.fedPolicy) {
+    if (macroData.fedPolicy && !macroData.fedPolicy.error) {
       formattedText += "**Federal Reserve Policy:**\n";
       Logger.log("Fed policy data: " + JSON.stringify(macroData.fedPolicy));
       formattedText += `- Current Rate: ${formatValue(macroData.fedPolicy.currentRate)}%\n`;
