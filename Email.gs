@@ -338,7 +338,7 @@ ${errorMessage}
     </div>
     
     <div class="footer">
-      <p>  ${props.getProperty('NEWSLETTER_NAME')}</p>
+      <p> ${props.getProperty('NEWSLETTER_NAME')}</p>
       <p>This is an automated message. Please do not reply.</p>
     </div>
   </div>

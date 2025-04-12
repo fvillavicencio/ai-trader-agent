@@ -236,11 +236,11 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.startDate) {
-      formattedData += `  - Last ${fedPolicy.lastMeeting.fullText()}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
+      formattedData += `  - Last ${fedPolicy.lastMeeting.fullText}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
     }
     
     if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.startDate) {
-      formattedData += `  - Next ${fedPolicy.nextMeeting.fullText()}\n`;
+      formattedData += `  - Next ${fedPolicy.nextMeeting.fullText}\n`;
     }
     
     if (fedPolicy.forwardGuidance) {
@@ -289,6 +289,20 @@ function formatMacroeconomicFactorsData(macroData) {
     
     if (inflation.pce && inflation.pce.coreRate !== undefined) {
       formattedData += `  - Core PCE (Year-over-Year): ${formatValue(inflation.pce.coreRate)}%\n`;
+    }
+    
+    // Add University of Michigan inflation expectations
+    if (inflation.expectations && inflation.expectations.oneYear !== undefined) {
+      formattedData += `  - University of Michigan 1-Year Inflation Expectation: ${formatValue(inflation.expectations.oneYear)}%\n`;
+    }
+    
+    // Add Fed futures data
+    if (fedPolicy && fedPolicy.futuresData) {
+      formattedData += `  - Federal Funds Futures Price: ${formatValue(fedPolicy.futuresData.futuresPrice)}\n`;
+      formattedData += `  - Implied Rate from Futures: ${formatValue(fedPolicy.futuresData.impliedRate)}%\n`;
+      formattedData += `  - Probability of Rate Increase: ${formatValue(fedPolicy.futuresData.probabilityUp)}%\n`;
+      formattedData += `  - Probability of Rate Hold: ${formatValue(fedPolicy.futuresData.probabilityHold)}%\n`;
+      formattedData += `  - Probability of Rate Decrease: ${formatValue(fedPolicy.futuresData.probabilityDown)}%\n`;
     }
     
     if (inflation.analysis) {
