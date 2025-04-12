@@ -204,6 +204,13 @@ function formatMacroeconomicFactorsData(macroData) {
   // Format Fed policy data
   if (fedPolicy && !fedPolicy.error) {
     formattedData += "Federal Reserve Policy:\n";
+    const debugMode = PropertiesService.getScriptProperties().getProperty('DEBUG_MODE') === 'true';
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Fed Policy Data:");
+      Logger.log(JSON.stringify(fedPolicy, null, 2));
+      Logger.log("----------------------------------------");
+    }
     
     if (fedPolicy.currentRate && fedPolicy.currentRate.currentRate !== undefined) {
       formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.currentRate)}% - Range: ${formatValue(fedPolicy.currentRate.rangeLow)}% - ${formatValue(fedPolicy.currentRate.rangeHigh)}%\n`;
@@ -229,11 +236,13 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.startDate) {
-      formattedData += `  - Last FOMC Meeting: ${fedPolicy.lastMeeting.startDate}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
+      const date = new Date(fedPolicy.lastMeeting.startDate);
+      formattedData += `  - Last FOMC Meeting: ${date.toLocaleDateString()}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
     }
     
     if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.startDate) {
-      formattedData += `  - Next FOMC Meeting: ${fedPolicy.nextMeeting.startDate}\n`;
+      const date = new Date(fedPolicy.nextMeeting.startDate);
+      formattedData += `  - Next FOMC Meeting: ${date.toLocaleDateString()}\n`;
     }
     
     if (fedPolicy.forwardGuidance) {
