@@ -275,6 +275,7 @@ function formatMacroeconomicFactorsData(macroData) {
   if (inflation && !inflation.error) {
     formattedData += "Inflation Data:\n";
     
+    // Add CPI metrics
     if (inflation.cpi && inflation.cpi.yearOverYearChange !== undefined) {
       formattedData += `  - CPI (Year-over-Year): ${formatValue(inflation.cpi.yearOverYearChange)}%\n`;
     }
@@ -283,6 +284,11 @@ function formatMacroeconomicFactorsData(macroData) {
       formattedData += `  - Core CPI (Year-over-Year): ${formatValue(inflation.cpi.coreRate)}%\n`;
     }
     
+    if (inflation.cpi && inflation.cpi.monthOverMonthChange !== undefined) {
+      formattedData += `  - CPI (Month-over-Month): ${formatValue(inflation.cpi.monthOverMonthChange)}%\n`;
+    }
+    
+    // Add PCE metrics
     if (inflation.pce && inflation.pce.yearOverYearChange !== undefined) {
       formattedData += `  - PCE (Year-over-Year): ${formatValue(inflation.pce.yearOverYearChange)}%\n`;
     }
@@ -291,20 +297,33 @@ function formatMacroeconomicFactorsData(macroData) {
       formattedData += `  - Core PCE (Year-over-Year): ${formatValue(inflation.pce.coreRate)}%\n`;
     }
     
-    // Add University of Michigan inflation expectations
+    if (inflation.pce && inflation.pce.monthOverMonthChange !== undefined) {
+      formattedData += `  - PCE (Month-over-Month): ${formatValue(inflation.pce.monthOverMonthChange)}%\n`;
+    }
+    
+    // Add inflation expectations
     if (inflation.expectations && inflation.expectations.oneYear !== undefined) {
       formattedData += `  - University of Michigan 1-Year Inflation Expectation: ${formatValue(inflation.expectations.oneYear)}%\n`;
     }
     
-    // Add Fed futures data
-    if (fedPolicy && fedPolicy.futuresData) {
-      formattedData += `  - Federal Funds Futures Price: ${formatValue(fedPolicy.futuresData.futuresPrice)}\n`;
-      formattedData += `  - Implied Rate from Futures: ${formatValue(fedPolicy.futuresData.impliedRate)}%\n`;
-      formattedData += `  - Probability of Rate Increase: ${formatValue(fedPolicy.futuresData.probabilityUp)}%\n`;
-      formattedData += `  - Probability of Rate Hold: ${formatValue(fedPolicy.futuresData.probabilityHold)}%\n`;
-      formattedData += `  - Probability of Rate Decrease: ${formatValue(fedPolicy.futuresData.probabilityDown)}%\n`;
+    if (inflation.expectations && inflation.expectations.fiveYear !== undefined) {
+      formattedData += `  - University of Michigan 5-Year Inflation Expectation: ${formatValue(inflation.expectations.fiveYear)}%\n`;
     }
     
+    // Add additional inflation metrics
+    if (inflation.additionalMetrics && inflation.additionalMetrics.consumption !== undefined) {
+      formattedData += `  - Personal Consumption Expenditures: ${formatValue(inflation.additionalMetrics.consumption)}%\n`;
+    }
+    
+    if (inflation.additionalMetrics && inflation.additionalMetrics.income !== undefined) {
+      formattedData += `  - Personal Income: ${formatValue(inflation.additionalMetrics.income)}%\n`;
+    }
+    
+    if (inflation.additionalMetrics && inflation.additionalMetrics.savingsRate !== undefined) {
+      formattedData += `  - Personal Savings Rate: ${formatValue(inflation.additionalMetrics.savingsRate)}%\n`;
+    }
+    
+    // Add analysis
     if (inflation.analysis) {
       formattedData += `  - Analysis: ${inflation.analysis}\n`;
     }
