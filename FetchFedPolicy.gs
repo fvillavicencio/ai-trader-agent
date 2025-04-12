@@ -49,7 +49,12 @@ function retrieveFedPolicyData() {
       commentary: guidance.commentary,
       source: {
         url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        components: {
+          fedFundsRate: fedFundsRate.source,
+          meetings: meetings.source,
+          forwardGuidance: guidance.source
+        }
       }
     };
     
@@ -150,7 +155,11 @@ function fetchFedFundsRateFromFRED() {
       return {
         currentRate: latestValue.toFixed(2),
         rangeLow: (Math.floor(latestValue * 4) / 4).toFixed(2),
-        rangeHigh: (Math.ceil(latestValue * 4) / 4).toFixed(2)
+        rangeHigh: (Math.ceil(latestValue * 4) / 4).toFixed(2),
+        source: {
+          url: "https://fred.stlouisfed.org/series/FEDFUNDS",
+          timestamp: new Date().toISOString()
+        }
       };
     }
     
@@ -456,7 +465,11 @@ function fetchFOMCMeetings() {
     return {
       meetings: meetings,
       lastMeeting: computeLastAndNextMeetings(meetings).lastMeeting,
-      nextMeeting: computeLastAndNextMeetings(meetings).nextMeeting
+      nextMeeting: computeLastAndNextMeetings(meetings).nextMeeting,
+      source: {
+        url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+        timestamp: new Date().toISOString()
+      }
     };
   } catch (error) {
     Logger.log('Error in fetchFOMCMeetings: ' + error);
@@ -1285,9 +1298,24 @@ function retrieveCompleteFedPolicyData() {
       forwardGuidance: guidance.forwardGuidance,
       commentary: guidance.commentary,
       marketProbabilities: probabilities,
+      futuresData: {
+        currentRate: fedFundsRate.currentRate,
+        impliedRate: probabilities.impliedRate,
+        futuresPrice: probabilities.futuresPrice,
+        probabilityUp: probabilities.probabilityUp,
+        probabilityHold: probabilities.probabilityHold,
+        probabilityDown: probabilities.probabilityDown,
+        source: probabilities.source
+      },
       source: {
         url: "https://www.federalreserve.gov/",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        components: {
+          fedFundsRate: fedFundsRate.source,
+          meetings: meetings.source,
+          forwardGuidance: guidance.source,
+          marketProbabilities: probabilities.source
+        }
       }
     };
     
@@ -1428,40 +1456,31 @@ function testFedPolicyData() {
         "Forward Guidance": fedPolicyData.forwardGuidance || "No forward guidance available",
         "Current Rate": {
           "Value": fedPolicyData.currentRate?.currentRate || "N/A",
+          "Range": `${fedPolicyData.currentRate?.rangeLow || "N/A"}% - ${fedPolicyData.currentRate?.rangeHigh || "N/A"}%`,
           "Date": fedPolicyData.currentRate?.date || "N/A",
-          "Source": fedPolicyData.source?.url || "N/A"
+          "Source": fedPolicyData.source?.components?.fedFundsRate?.url || "N/A"
         },
-        "Previous Rate": {
-          "Value": fedPolicyData.previousRate?.value || "N/A",
-          "Date": fedPolicyData.previousRate?.date || "N/A"
-        },
-        "Fed Funds Futures": {
-          "Price": fedPolicyData.futuresPrice || "N/A",
-          "Change": fedPolicyData.futuresPriceChange || "N/A",
-          "Last Updated": fedPolicyData.futuresLastUpdated || "N/A"
+        "Futures Data": {
+          "Implied Rate": fedPolicyData.futuresData?.impliedRate || "N/A",
+          "Price": fedPolicyData.futuresData?.futuresPrice || "N/A",
+          "Probability Up": fedPolicyData.futuresData?.probabilityUp || "N/A",
+          "Probability Hold": fedPolicyData.futuresData?.probabilityHold || "N/A",
+          "Probability Down": fedPolicyData.futuresData?.probabilityDown || "N/A",
+          "Source": fedPolicyData.futuresData?.source?.url || "N/A"
         },
         "Last Meeting": {
-          "Date": fedPolicyData.lastMeeting?.date || "N/A",
-          "Type": fedPolicyData.lastMeeting?.type || "N/A",
+          "Date": fedPolicyData.lastMeeting?.startDate || "N/A",
           "Time": fedPolicyData.lastMeeting?.time || "N/A",
-          "Timezone": fedPolicyData.lastMeeting?.timezone || "N/A",
           "Minutes URL": fedPolicyData.lastMeeting?.minutesUrl || "N/A"
         },
         "Next Meeting": {
-          "Date": fedPolicyData.nextMeeting?.date || "N/A",
-          "Type": fedPolicyData.nextMeeting?.type || "N/A",
-          "Time": fedPolicyData.nextMeeting?.time || "N/A",
-          "Timezone": fedPolicyData.nextMeeting?.timezone || "N/A"
-        },
-        "Market Probabilities": {
-          "Up": fedPolicyData.marketProbabilities?.probabilityUp || "N/A",
-          "Same": fedPolicyData.marketProbabilities?.probabilityHold || "N/A",
-          "Down": fedPolicyData.marketProbabilities?.probabilityDown || "N/A",
-          "Implied Rate": fedPolicyData.marketProbabilities?.impliedRate || "N/A"
+          "Date": fedPolicyData.nextMeeting?.startDate || "N/A",
+          "Time": fedPolicyData.nextMeeting?.time || "N/A"
         },
         "Source": {
           "URL": fedPolicyData.source?.url || "N/A",
-          "Timestamp": fedPolicyData.source?.timestamp || "N/A"
+          "Timestamp": fedPolicyData.source?.timestamp || "N/A",
+          "Components": fedPolicyData.source?.components || "N/A"
         }
       }
     };
