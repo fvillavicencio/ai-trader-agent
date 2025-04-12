@@ -205,16 +205,16 @@ function formatMacroeconomicFactorsData(macroData) {
   if (fedPolicy && !fedPolicy.error) {
     formattedData += "Federal Reserve Policy:\n";
     
-    if (fedPolicy.currentRate && fedPolicy.currentRate.rate !== undefined) {
-      formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.rate)}%\n`;
+    if (fedPolicy.currentRate && fedPolicy.currentRate.currentRate !== undefined) {
+      formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.currentRate)}% - Range: ${formatValue(fedPolicy.currentRate.rangeLow)}% - ${formatValue(fedPolicy.currentRate.rangeHigh)}%\n`;
     }
     
     if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.date) {
-      formattedData += `  - Last FOMC Meeting: ${new Date(fedPolicy.lastMeeting.date).toLocaleDateString()}\n`;
+      formattedData += `  - Last FOMC Meeting: ${fedPolicy.lastMeeting.fullText}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
     }
     
     if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.date) {
-      formattedData += `  - Next FOMC Meeting: ${new Date(fedPolicy.nextMeeting.date).toLocaleDateString()}\n`;
+      formattedData += `  - Next FOMC Meeting: ${fedPolicy.nextMeeting.fullText}${fedPolicy.nextMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.nextMeeting.minutesUrl})` : ""}\n`;
     }
     
     if (fedPolicy.forwardGuidance) {
@@ -226,9 +226,9 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     // Add source information
-    if (fedPolicy.source && fedPolicy.lastUpdated) {
-      const timestamp = new Date(fedPolicy.lastUpdated);
-      formattedData += `  - Source: ${fedPolicy.source} (${fedPolicy.sourceUrl}), as of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
+    if (fedPolicy.source && fedPolicy.source.timestamp) {
+      const timestamp = new Date(fedPolicy.source.timestamp);
+      formattedData += `  - Source: ${fedPolicy.source.url}. As of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
     }
     
     formattedData += "\n";
@@ -638,8 +638,6 @@ function retrieveCPIData() {
     
     // Try to get data from BLS API
     const cpiData = fetchCPIDataFromBLS();
-    
-    // If we got valid data, return it
     if (cpiData && cpiData.yearOverYearChange !== undefined) {
       return cpiData;
     }
@@ -1033,7 +1031,7 @@ function fetchPCEDataFromBEA() {
     const data = JSON.parse(responseText);
     
     // Log the response structure for debugging
-    Logger.log("BEA API response structure: " + JSON.stringify(Object.keys(data)));
+    Logger.log("BEA API response structure: " + JSON.stringify(data));
     
     // Check if the response contains the expected data
     if (!data || data.BEAAPI === undefined || data.BEAAPI.Results === undefined || data.BEAAPI.Results.Data === undefined || !Array.isArray(data.BEAAPI.Results.Data)) {
@@ -1042,6 +1040,21 @@ function fetchPCEDataFromBEA() {
       // Check if there's an error message
       if (data && data.BEAAPI && data.BEAAPI.Error) {
         Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
+        
+        // If the error is about data not being available, return a fallback message
+        if (data.BEAAPI.Error.APIErrorDescription && 
+            data.BEAAPI.Error.APIErrorDescription.includes("Data for this table and frequency are not currently available")) {
+          return {
+            success: false,
+            error: "Data not available",
+            message: "PCE data is not currently available. Please check BEA's release schedule for more information.",
+            lastUpdated: new Date().toISOString(),
+            source: {
+              url: "https://www.bea.gov/data/gdp/personal-consumption-expenditures-pce",
+              timestamp: new Date().toISOString()
+            }
+          };
+        }
       }
       
       return null;
@@ -1637,9 +1650,24 @@ function retrieveTreasuryYieldsFromAlphaVantage() {
  * @return {String} Formatted value
  */
 function formatValue(value, decimals = 2) {
+  // Handle undefined, null, or NaN values
   if (value === undefined || value === null || isNaN(value)) {
     return "N/A";
   }
+  
+  // Convert to number if it's not already
+  if (typeof value !== 'number') {
+    // Try to parse as number if it's a string
+    if (typeof value === 'string') {
+      const parsed = parseFloat(value);
+      if (!isNaN(parsed)) {
+        return parsed.toFixed(decimals);
+      }
+    }
+    // For other non-number types, return N/A
+    return "N/A";
+  }
+  
   return value.toFixed(decimals);
 }
 
@@ -1940,27 +1968,6 @@ function getBLSApiKey() {
     return apiKey;
   } catch (error) {
     Logger.log(`Error getting BLS API key: ${error}`);
-    return null;
-  }
-}
-
-/**
- * Gets the BEA API key from script properties
- * @return {String} The BEA API key
- */
-function getBEAApiKey() {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const apiKey = scriptProperties.getProperty('BEA_API_KEY');
-    
-    if (!apiKey) {
-      Logger.log("BEA API key not found in script properties");
-      return null;
-    }
-    
-    return apiKey;
-  } catch (error) {
-    Logger.log(`Error getting BEA API key: ${error}`);
     return null;
   }
 }

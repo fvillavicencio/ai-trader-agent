@@ -403,7 +403,7 @@ function sendEmail(subject, htmlBody, recipient, isTest = false) {
         result = GmailApp.sendEmail(finalRecipient, subject, '', {
           htmlBody: htmlBody,
           name: props.getProperty('NEWSLETTER_NAME'),
-          replyTo: Session.getEffectiveUser().getEmail()
+          replyTo: 'noreply@marketpulsedaily.com'
         });
         break;
       } catch (sendError) {
