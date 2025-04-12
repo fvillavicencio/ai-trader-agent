@@ -140,6 +140,7 @@ function testEnhancedJsonParsing() {
 function generateEmailTemplate(analysisResult, isTest = false) {
   try {
     // Extract data from analysis result
+    const props = PropertiesService.getScriptProperties();
     const decision = analysisResult.decision || 'No Decision';
     const analysis = analysisResult.analysis || {};
     const analysisTime = analysisResult.timestamp ? new Date(analysisResult.timestamp) : new Date();
@@ -188,7 +189,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>${NEWSLETTER_NAME}</title>
+      <title>${props.getProperty('NEWSLETTER_NAME')}</title>
       <style>
         /* Base styles */
         body {
@@ -387,7 +388,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
       <div class="container">
         <!-- Header -->
         <div style="text-align: center; margin-bottom: 25px;">
-          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${NEWSLETTER_NAME}</h1>
+          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${props.getProperty('NEWSLETTER_NAME')}</h1>
           <p style="color: #7f8c8d; margin: 5px 0 0;">As of ${formattedAnalysisTime}</p>
           ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
         </div>
@@ -413,7 +414,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
         ${geopoliticalRisksHtml}
         
         <div class="footer">
-          <p>  ${new Date().getFullYear()} ${NEWSLETTER_NAME}</p>
+          <p>  ${new Date().getFullYear()} ${props.getProperty('NEWSLETTER_NAME')}</p>
           <div class="disclaimer">
             This newsletter is for informational purposes only and should not be considered investment advice.
           </div>
