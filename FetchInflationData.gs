@@ -24,10 +24,11 @@ function fetchPCEDataFromBEA() {
       "UserID": apiKey,
       "method": "GetData",
       "datasetname": "NIPA",
-      "TableName": "T20204", // Corrected table identifier for PCE
+      "TableName": "T20805", // Updated table identifier for Personal Consumption Expenditures
       "Frequency": "Q",
       "Year": `${previousYear},${currentYear}`,
-      "ResultFormat": "JSON"
+      "ResultFormat": "JSON",
+      "ShowMillions": "N"
     };
     
     // Build the query string
@@ -330,31 +331,49 @@ function fetchPCEDataFromFRED() {
  * @return {Object} Inflation expectations data
  */
 function retrieveInflationExpectations() {
+  // Get FRED API key
+  const apiKey = getFREDApiKey();
+  if (!apiKey) {
+    Logger.log("FRED API key not found");
+    return null;
+  }
+  
+  const baseUrl = "https://api.stlouisfed.org/fred/series/observations";
+  
+  // FRED Series IDs
+  const series = {
+    oneYear: "MICH",        // 1-year expectation (median from U. Michigan)
+    fiveYear: "T5YIE",      // 5-year breakeven inflation
+    tenYear: "T10YIE"       // 10-year breakeven inflation
+  };
+
   try {
-    // Use Fed data or survey data to get inflation expectations
-    // For now, using static recent data as fallback
-    
-    // 1-year inflation expectations
-    const oneYearExpectation = 2.9;
-    
-    // 5-year inflation expectations
-    const fiveYearExpectation = 2.5;
-    
-    // 10-year inflation expectations
-    const tenYearExpectation = 2.3;
-    
+    const results = {};
+    for (const [key, seriesId] of Object.entries(series)) {
+      const url = `${baseUrl}?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=1`;
+      const response = UrlFetchApp.fetch(url);
+      const data = JSON.parse(response.getContentText());
+
+      if (data.observations && data.observations.length > 0) {
+        results[key] = parseFloat(data.observations[0].value);
+      } else {
+        results[key] = null;
+      }
+    }
+
     return {
-      oneYear: oneYearExpectation,
-      fiveYear: fiveYearExpectation,
-      tenYear: tenYearExpectation,
-      source: "University of Michigan Survey of Consumers",
-      lastUpdated: new Date()
+      oneYear: results.oneYear,
+      fiveYear: results.fiveYear,
+      tenYear: results.tenYear,
+      source: "St. Louis Fed (FRED API)",
+      lastUpdated: new Date().toISOString()
     };
   } catch (error) {
     Logger.log(`Error retrieving inflation expectations data: ${error}`);
     return null;
   }
 }
+
 
 /**
  * Generates an analysis of inflation data
@@ -527,10 +546,11 @@ function testPCEData() {
     "UserID": apiKey,
     "method": "GetData",
     "datasetname": "NIPA",
-    "TableName": "T20204", // Corrected table identifier for PCE
+    "TableName": "T20805", // Updated table identifier for Personal Consumption Expenditures
     "Frequency": "Q",
     "Year": `${previousYear},${currentYear}`,
-    "ResultFormat": "JSON"
+    "ResultFormat": "JSON",
+    "ShowMillions": "N"
   };
   
   // Build the query string
