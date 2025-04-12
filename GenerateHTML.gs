@@ -1,5 +1,16 @@
-// Generate the HTML
-function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml, fundamentalMetricsHtml, macroeconomicFactorsHtml, geopoliticalRisksHtml, analysisResult) {
+/**
+ * Generates HTML formatted content
+ * @param {string} formattedAnalysisTime - Formatted analysis time
+ * @param {string} sentimentHtml - HTML for sentiment section
+ * @param {string} marketIndicatorsHtml - HTML for market indicators section
+ * @param {string} fundamentalMetricsHtml - HTML for fundamental metrics section
+ * @param {string} macroeconomicFactorsHtml - HTML for macroeconomic factors section
+ * @param {string} geopoliticalRisksHtml - HTML for geopolitical risks section
+ * @param {Object} analysisResult - The analysis result object
+ * @param {boolean} isTest - Whether this is a test email
+ * @return {string} Complete HTML content
+ */
+function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml, fundamentalMetricsHtml, macroeconomicFactorsHtml, geopoliticalRisksHtml, analysisResult, isTest = false) {
   try {
     // Extract data from analysis result
     const props = PropertiesService.getScriptProperties();
@@ -32,7 +43,7 @@ function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>${props.getProperty('NEWSLETTER_NAME')}</title>
+      <title>${props.getProperty('NEWSLETTER_NAME')} - ${isTest ? 'Test' : 'Analysis'}</title>
       <style>
         /* Base styles */
         body {
@@ -233,7 +244,7 @@ function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml
       <div class="container">
         <!-- Header -->
         <div style="text-align: center; margin-bottom: 25px;">
-          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${props.getProperty('NEWSLETTER_NAME')}</h1>
+          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${props.getProperty('NEWSLETTER_NAME')} - ${isTest ? 'Test Analysis' : 'Analysis'}</h1>
           <p style="color: #7f8c8d; margin: 5px 0 0;">As of ${formattedAnalysisTime}</p>
           ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
         </div>
@@ -259,7 +270,7 @@ function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml
         ${geopoliticalRisksHtml}
         
         <div class="footer">
-          <div style="font-size: 14px; margin-bottom: 10px;">${props.getProperty('NEWSLETTER_NAME')} - Professional Trading Insights</div>
+          <div style="font-size: 14px; margin-bottom: 10px;">${isTest ? 'This is a test email. ' : ''}${props.getProperty('NEWSLETTER_NAME')} - Professional Trading Insights</div>
           <div style="font-size: 12px; margin-bottom: 20px;">&copy; ${new Date().getFullYear()} ${props.getProperty('NEWSLETTER_NAME')}. All rights reserved.</div>
           <div class="disclaimer" style="font-size: 12px; color: rgba(255,255,255,0.9);">
             The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.

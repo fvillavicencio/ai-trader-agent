@@ -139,8 +139,9 @@ function testEnhancedJsonParsing() {
  */
 function generateEmailTemplate(analysisResult, isTest = false) {
   try {
-    
-    // Format the analysis time
+    // Extract data from analysis result
+    const analysis = analysisResult.analysis || {};
+    const analysisTime = analysisResult.timestamp ? new Date(analysisResult.timestamp) : new Date();
     const formattedAnalysisTime = formatDate(analysisTime);
     
     // Generate the sentiment section HTML
@@ -158,7 +159,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
     // Generate the geopolitical risks section HTML
     const geopoliticalRisksHtml = generateGeopoliticalRisksSection(analysis);
     
-    return generateHTML(formattedAnalysisTime,sentimentHtml,marketIndicatorsHtml,fundamentalMetricsHtml,macroeconomicFactorsHtml,geopoliticalRisksHtml,analysisResult);
+    return generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml, fundamentalMetricsHtml, macroeconomicFactorsHtml, geopoliticalRisksHtml, analysisResult, isTest);
   } catch (error) {
     Logger.log('Error in generateEmailTemplate: ' + error.toString());
     throw error;
@@ -364,28 +365,18 @@ function generateMarketIndicatorsSection(analysis) {
         
         <div style="font-size: 14px; color: #555; margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid ${fgColor};">
           <span style="font-weight: bold;">${fgInterpretation}:</span> <span>${indicators.fearAndGreedIndex.analysis || 'Market sentiment indicator based on various market factors.'}</span>
-        </div>
-        
-        <div style="margin-top: 15px;">
-          <div style="font-size: 13px; font-weight: bold; margin-bottom: 5px;">Historical Values</div>
-            <div style="display: flex; flex-direction: column; gap: 5px;">
-            <div style="display: flex; justify-content: space-between; padding: 4px 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #757575;">
-              <div>One Week Ago</div>
-              <div style="font-weight: bold;">${previousValues.oneWeekAgo}</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 4px 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #757575;">
-              <div>One Month Ago</div>
-              <div style="font-weight: bold;">${previousValues.oneMonthAgo}</div>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 4px 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #757575;">
-              <div>One Year Ago</div>
-              <div style="font-weight: bold;">${previousValues.oneYearAgo}</div>
-            </div>
-          </div>
+          <span style="margin-left: 50px; font-size: 12px; color: #888;">
+            ${Object.entries(previousValues)
+              .filter(([_, value]) => value && value !== 'N/A')
+              .map(([key, value]) => {
+                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                return ` ${label}: ${value}`;
+              }).join(' | ')}
+          </span>
         </div>
         
         <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-          Source: ${indicators.fearAndGreedIndex.source || 'CNN'} (${indicators.fearAndGreedIndex.sourceUrl || 'N/A'}), as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
+          Source: CNN [https://www.cnn.com/markets/fear-and-greed], as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
         </div>
       </div>
       `;
@@ -462,7 +453,7 @@ function generateMarketIndicatorsSection(analysis) {
                 <div style="font-weight: bold; color: #2196f3; font-size: 13px;">${event.date}</div>
               </div>
               <div style="flex: 1; margin: 0 15px;">
-                <div style="font-weight: bold; margin-bottom: 2px; font-size: 13px;">${eventName}</div>
+                <div style="font-weight: bold; margin-bottom: 2px;">${eventName}</div>
                 <div style="font-size: 12px; color: #666;">${eventSource}</div>
               </div>
               <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
@@ -471,6 +462,9 @@ function generateMarketIndicatorsSection(analysis) {
             </div>
             `;
           }).join('')}
+        </div>
+        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+          Source: ${indicators.upcomingEconomicEvents[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.upcomingEconomicEvents[0]?.timestamp)}
         </div>
       </div>
       `;
