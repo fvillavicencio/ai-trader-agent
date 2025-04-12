@@ -169,7 +169,9 @@ function testInflationData() {
       Logger.log("Inflation Expectations:");
       Logger.log(`  1-Year: ${inflation.expectations.oneYear.value}% (Last Updated: ${inflation.expectations.oneYear.lastUpdated})`);
       Logger.log(`  5-Year: ${inflation.expectations.fiveYear.value}% (Last Updated: ${inflation.expectations.fiveYear.lastUpdated})`);
-      Logger.log(`  10-Year: ${inflation.expectations.tenYear}%`);
+      if (inflation.expectations.tenYear) {
+        Logger.log(`  10-Year: ${inflation.expectations.tenYear.value}% (Last Updated: ${inflation.expectations.tenYear.lastUpdated})`);
+      }
       Logger.log(`  Source: ${inflation.expectations.source}`);
       Logger.log(`  Last Updated: ${new Date(inflation.expectations.lastUpdated).toLocaleString()}`);
     } else {
