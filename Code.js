@@ -38,19 +38,37 @@ function getOpenAITradingAnalysis() {
     
     // Filter out deprecated symbols from fundamental metrics
     if (allData.fundamentalMetrics && allData.fundamentalMetrics.metrics) {
-      // List of deprecated symbols
-      const deprecatedSymbols = ['FB'];
+      // List of deprecated symbols and their replacements
+      const deprecatedSymbols = {
+        'FB': 'META',  // Facebook/Meta Platforms
+        'TWTR': 'X',   // Twitter/X
+        'VIX': 'VIX.X', // CBOE Volatility Index
+        'GOOG': 'GOOGL', // Google Class A shares
+        'BAC': 'BAC.PA', // Bank of America
+        'GE': 'GE.N',    // General Electric
+        'GM': 'GM.N',    // General Motors
+        'T': 'T.N',     // AT&T
+        'F': 'F.N',     // Ford Motor Company
+        'INTC': 'INTC.N', // Intel Corporation
+        'CSCO': 'CSCO.N', // Cisco Systems
+        'ORCL': 'ORCL.N', // Oracle Corporation
+        'AMZN': 'AMZN.N', // Amazon.com
+        'NFLX': 'NFLX.N', // Netflix
+        'AAPL': 'AAPL.N', // Apple Inc.
+        'MSFT': 'MSFT.N', // Microsoft Corporation
+        'GOOGL': 'GOOGL.N' // Google Class C shares
+      };
       
       // Process each symbol and mark deprecated ones
       allData.fundamentalMetrics.metrics = Object.fromEntries(
         Object.entries(allData.fundamentalMetrics.metrics).map(([symbol, metrics]) => {
-          if (deprecatedSymbols.includes(symbol)) {
+          if (deprecatedSymbols[symbol]) {
             return [
               symbol,
               {
                 ...metrics,
-                isDeprecated: true,
-                note: `This symbol has been deprecated and replaced by META. The data shown here may not reflect current market conditions.`
+                message: `Note: ${symbol} is deprecated. Please use ${deprecatedSymbols[symbol]} instead.`,
+                success: false
               }
             ];
           }

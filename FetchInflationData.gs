@@ -726,3 +726,331 @@ function retrievePCEData() {
     return null;
   }
 }
+
+/**
+ * Fetches PCE data from BEA API
+ * @return {Object} PCE data or null if failed
+ */
+function fetchPCEDataFromBEA() {
+  try {
+    // Get BEA API key
+    const apiKey = getBEAApiKey();
+    if (!apiKey) {
+      Logger.log("BEA API key not found");
+      return null;
+    }
+    
+    // Set up the request
+    const url = "https://apps.bea.gov/api/data";
+    
+    // Current date
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const previousYear = currentDate.getFullYear() - 1;
+    
+    // Request parameters - using quarterly data which is more reliable
+    const params = {
+      "UserID": apiKey,
+      "method": "GetData",
+      "datasetname": "NIPA",
+      "TableName": "T20805", // Updated table identifier for Personal Consumption Expenditures
+      "Frequency": "Q",
+      "Year": `${previousYear},${currentYear}`,
+      "ResultFormat": "JSON",
+      "ShowMillions": "N"
+    };
+    
+    // Build the query string
+    const queryString = Object.keys(params)
+      .map(key => `${encodeURIComponent(key)}=${encodeURIComponent(params[key])}`)
+      .join("&");
+    
+    // Make the request
+    const response = UrlFetchApp.fetch(`${url}?${queryString}`, {
+      method: "get",
+      muteHttpExceptions: true
+    });
+    
+    // Check if the request was successful
+    if (response.getResponseCode() !== 200) {
+      Logger.log(`BEA API request failed with response code: ${response.getResponseCode()}`);
+      return null;
+    }
+    
+    // Parse the response
+    const responseText = response.getContentText();
+    const data = JSON.parse(responseText);
+    
+    // Log the response structure for debugging
+    Logger.log("BEA API response structure: " + JSON.stringify(data));
+    
+    // Check if the response contains the expected data
+    if (!data || data.BEAAPI === undefined || data.BEAAPI.Results === undefined || data.BEAAPI.Results.Data === undefined || !Array.isArray(data.BEAAPI.Results.Data)) {
+      Logger.log("BEA API response does not contain expected data structure");
+      
+      // Check if there's an error message
+      if (data && data.BEAAPI && data.BEAAPI.Error) {
+        Logger.log("BEA API error: " + JSON.stringify(data.BEAAPI.Error));
+        
+        // If the error is 201 (data not available yet), return null to fall back to FRED
+        if (data.BEAAPI.Error.APIErrorCode === "201") {
+          Logger.log("BEA API: Data not available yet, falling back to FRED");
+          return null;
+        }
+      }
+      
+      return null;
+    }
+    
+    // Extract the PCE data
+    // PCE (All Items)
+    const pceData = data.BEAAPI.Results.Data.filter(item => 
+      item.SeriesCode === "DPCERG" // PCE price index
+    );
+    
+    // Core PCE (All Items Less Food and Energy)
+    const corePceData = data.BEAAPI.Results.Data.filter(item => 
+      item.SeriesCode === "DPCCRG" // Core PCE price index
+    );
+    
+    if (pceData.length === 0 || corePceData.length === 0) {
+      Logger.log("BEA API response does not contain expected PCE data");
+      
+      // Log all available series codes for debugging
+      const seriesCodes = [...new Set(data.BEAAPI.Results.Data.map(item => item.SeriesCode))];
+      Logger.log("Available series codes: " + JSON.stringify(seriesCodes));
+      
+      return null;
+    }
+    
+    // Sort data by date (newest first)
+    pceData.sort((a, b) => {
+      if (a.year !== b.year) {
+        return parseInt(b.year) - parseInt(a.year);
+      }
+      return parseInt(b.period.substring(1)) - parseInt(a.period.substring(1));
+    });
+    
+    corePceData.sort((a, b) => {
+      if (a.year !== b.year) {
+        return parseInt(b.year) - parseInt(a.year);
+      }
+      return parseInt(b.period.substring(1)) - parseInt(a.period.substring(1));
+    });
+    
+    // Get the latest and previous quarter values
+    const latestPce = parseFloat(pceData[0].DataValue);
+    const previousPce = parseFloat(pceData[1].DataValue);
+    const latestCorePce = parseFloat(corePceData[0].DataValue);
+    const previousCorePce = parseFloat(corePceData[1].DataValue);
+    
+    // Calculate year-over-year change
+    // Find the same quarter from last year
+    const latestDate = new Date(pceData[0].TimePeriod);
+    const latestQuarter = pceData[0].TimePeriod.substring(pceData[0].TimePeriod.length - 2);
+    const latestYear = latestDate.getFullYear();
+    
+    const lastYearSameQuarterPce = pceData.find(item => {
+      return item.TimePeriod.endsWith(latestQuarter) && 
+             item.TimePeriod.startsWith((latestYear - 1).toString());
+    });
+    
+    const lastYearSameQuarterCorePce = corePceData.find(item => {
+      return item.TimePeriod.endsWith(latestQuarter) && 
+             item.TimePeriod.startsWith((latestYear - 1).toString());
+    });
+    
+    let yearOverYearChange = null;
+    let yearOverYearCoreChange = null;
+    
+    if (lastYearSameQuarterPce) {
+      const lastYearPce = parseFloat(lastYearSameQuarterPce.DataValue);
+      yearOverYearChange = ((latestPce - lastYearPce) / lastYearPce) * 100;
+    }
+    
+    if (lastYearSameQuarterCorePce) {
+      const lastYearCorePce = parseFloat(lastYearSameQuarterCorePce.DataValue);
+      yearOverYearCoreChange = ((latestCorePce - lastYearCorePce) / lastYearCorePce) * 100;
+    }
+    
+    // Calculate quarter-over-quarter percentage change
+    const quarterOverQuarterChange = ((latestPce - previousPce) / previousPce) * 100;
+    
+    // Validate the data - ensure values are within reasonable ranges for inflation
+    // Typical inflation rates are between -2% and 15%
+    if (yearOverYearChange !== null && (yearOverYearChange < -2 || yearOverYearChange > 15)) {
+      Logger.log(`Suspicious PCE year-over-year change value: ${yearOverYearChange}%. This is outside normal ranges.`);
+      // Use a calculated value based on quarter-over-quarter change
+      yearOverYearChange = quarterOverQuarterChange * 4;
+      
+      // Still validate the calculated value
+      if (yearOverYearChange < -2 || yearOverYearChange > 15) {
+        Logger.log(`Calculated PCE value still suspicious: ${yearOverYearChange}%. Returning null.`);
+        return null;
+      }
+    }
+    
+    if (yearOverYearCoreChange !== null && (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15)) {
+      Logger.log(`Suspicious Core PCE year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
+      // Use a calculated value based on quarter-over-quarter change
+      yearOverYearCoreChange = ((latestCorePce - previousCorePce) / previousCorePce) * 4;
+      
+      // Still validate the calculated value
+      if (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15) {
+        Logger.log(`Calculated Core PCE value still suspicious: ${yearOverYearCoreChange}%. Returning null.`);
+        return null;
+      }
+    }
+    
+    // Create the PCE data object
+    return {
+      currentRate: latestPce,
+      previousRate: previousPce,
+      change: quarterOverQuarterChange,
+      yearOverYearChange: yearOverYearChange !== null ? yearOverYearChange : quarterOverQuarterChange * 4, // Annualize if YoY not available
+      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : null, // Use the YoY change as the core rate
+      corePreviousRate: previousCorePce,
+      coreChange: ((latestCorePce - previousCorePce) / previousCorePce) * 100,
+      quarter: latestQuarter,
+      year: latestYear,
+      source: "Bureau of Economic Analysis",
+      sourceUrl: "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
+      lastUpdated: new Date()
+    };
+  } catch (error) {
+    Logger.log(`Error fetching PCE data from BEA: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Fetches PCE data from FRED API
+ * @return {Object} PCE data or null if failed
+ */
+function fetchPCEDataFromFRED() {
+  try {
+    // Get FRED API key
+    const apiKey = getFREDApiKey();
+    if (!apiKey) {
+      Logger.log("FRED API key not found");
+      return null;
+    }
+    
+    // Set up the request for PCE (All Items)
+    const pceUrl = `https://api.stlouisfed.org/fred/series/observations?series_id=PCEPI&api_key=${apiKey}&file_type=json&sort_order=desc&limit=13`;
+    
+    // Set up the request for Core PCE (All Items Less Food and Energy)
+    const corePceUrl = `https://api.stlouisfed.org/fred/series/observations?series_id=PCEPILFE&api_key=${apiKey}&file_type=json&sort_order=desc&limit=13`;
+    
+    // Make the requests
+    const options = {
+      method: "get",
+      muteHttpExceptions: true
+    };
+    
+    const pceResponse = UrlFetchApp.fetch(pceUrl, options);
+    const pceResponseCode = pceResponse.getResponseCode();
+    
+    const corePceResponse = UrlFetchApp.fetch(corePceUrl, options);
+    const corePceResponseCode = corePceResponse.getResponseCode();
+    
+    // Check if the requests were successful
+    if (pceResponseCode !== 200 || corePceResponseCode !== 200) {
+      Logger.log(`FRED API request failed with response codes: PCE=${pceResponseCode}, Core PCE=${corePceResponseCode}`);
+      return null;
+    }
+    
+    // Parse the responses
+    const pceData = JSON.parse(pceResponse.getContentText());
+    const corePceData = JSON.parse(corePceResponse.getContentText());
+    
+    // Check if the responses contain the expected data
+    if (!pceData || !pceData.observations || !Array.isArray(pceData.observations) || pceData.observations.length === 0 ||
+        !corePceData || !corePceData.observations || !Array.isArray(corePceData.observations) || corePceData.observations.length === 0) {
+      Logger.log("FRED API response does not contain expected PCE data");
+      return null;
+    }
+    
+    // Get the latest and previous month values
+    const latestPce = parseFloat(pceData.observations[0].value);
+    const previousPce = parseFloat(pceData.observations[1].value);
+    const latestCorePce = parseFloat(corePceData.observations[0].value);
+    const previousCorePce = parseFloat(corePceData.observations[1].value);
+    
+    // Get the same month from last year
+    const oneYearAgoIndex = pceData.observations.findIndex(obs => {
+      const obsDate = new Date(obs.date);
+      const latestDate = new Date(pceData.observations[0].date);
+      return obsDate.getMonth() === latestDate.getMonth() && obsDate.getFullYear() === latestDate.getFullYear() - 1;
+    });
+    
+    const oneYearAgoCorePceIndex = corePceData.observations.findIndex(obs => {
+      const obsDate = new Date(obs.date);
+      const latestDate = new Date(corePceData.observations[0].date);
+      return obsDate.getMonth() === latestDate.getMonth() && obsDate.getFullYear() === latestDate.getFullYear() - 1;
+    });
+    
+    // Calculate year-over-year changes
+    let yearOverYearChange = null;
+    let yearOverYearCoreChange = null;
+    
+    if (oneYearAgoIndex !== -1 && oneYearAgoIndex < pceData.observations.length) {
+      const oneYearAgoPce = parseFloat(pceData.observations[oneYearAgoIndex].value);
+      yearOverYearChange = ((latestPce - oneYearAgoPce) / oneYearAgoPce) * 100;
+    }
+    
+    if (oneYearAgoCorePceIndex !== -1 && oneYearAgoCorePceIndex < corePceData.observations.length) {
+      const oneYearAgoCorePce = parseFloat(corePceData.observations[oneYearAgoCorePceIndex].value);
+      yearOverYearCoreChange = ((latestCorePce - oneYearAgoCorePce) / oneYearAgoCorePce) * 100;
+    }
+    
+    // Calculate month-over-month percentage change
+    const monthOverMonthChange = ((latestPce - previousPce) / previousPce) * 100;
+    const coreMonthOverMonthChange = ((latestCorePce - previousCorePce) / previousCorePce) * 100;
+    
+    // Validate the data - ensure values are within reasonable ranges for inflation
+    // Typical inflation rates are between -2% and 15%
+    if (yearOverYearChange !== null && (yearOverYearChange < -2 || yearOverYearChange > 15)) {
+      Logger.log(`Suspicious PCE year-over-year change value: ${yearOverYearChange}%. This is outside normal ranges.`);
+      // Use a calculated value based on month-over-month change
+      yearOverYearChange = monthOverMonthChange * 12;
+      
+      // Still validate the calculated value
+      if (yearOverYearChange < -2 || yearOverYearChange > 15) {
+        Logger.log(`Calculated PCE value still suspicious: ${yearOverYearChange}%. Returning null.`);
+        return null;
+      }
+    }
+    
+    if (yearOverYearCoreChange !== null && (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15)) {
+      Logger.log(`Suspicious Core PCE year-over-year change value: ${yearOverYearCoreChange}%. This is outside normal ranges.`);
+      // Use a calculated value based on month-over-month change
+      yearOverYearCoreChange = coreMonthOverMonthChange * 12;
+      
+      // Still validate the calculated value
+      if (yearOverYearCoreChange < -2 || yearOverYearCoreChange > 15) {
+        Logger.log(`Calculated Core PCE value still suspicious: ${yearOverYearCoreChange}%. Returning null.`);
+        return null;
+      }
+    }
+    
+    // Create the PCE data object
+    return {
+      currentRate: latestPce,
+      previousRate: previousPce,
+      change: monthOverMonthChange,
+      yearOverYearChange: yearOverYearChange !== null ? yearOverYearChange : monthOverMonthChange * 12, // Annualize if YoY not available
+      coreRate: yearOverYearCoreChange !== null ? yearOverYearCoreChange : coreMonthOverMonthChange * 12, // Annualize if YoY not available
+      corePreviousRate: previousCorePce,
+      coreChange: coreMonthOverMonthChange,
+      month: new Date(pceData.observations[0].date).getMonth(),
+      year: new Date(pceData.observations[0].date).getFullYear(),
+      source: "Federal Reserve Economic Data (FRED)",
+      sourceUrl: "https://fred.stlouisfed.org/",
+      lastUpdated: new Date()
+    };
+  } catch (error) {
+    Logger.log(`Error fetching PCE data from FRED: ${error}`);
+    return null;
+  }
+}
