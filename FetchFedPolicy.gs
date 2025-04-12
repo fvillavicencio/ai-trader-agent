@@ -1152,37 +1152,39 @@ function fetchFedFundsFuturesProbabilities(currentRate) {
  * @return {Object} An object containing the implied rate and probabilities
  */
 function calculateFedFundsProbabilities(currentRate, futuresPrice) {
-  const impliedRate = 100 - futuresPrice;  // Converts the price to an implied rate
+  const impliedRate = 100 - futuresPrice;  // Convert futures price to implied rate
   const diff = impliedRate - currentRate;
-  const rateStep = 0.25;  // A typical increment for rate changes (25 basis points)
-  const hikes = Math.abs(diff) / rateStep;
   
-  let probabilityUp = 0, probabilityDown = 0, probabilityHold = 0;
-  
+  // Parameters for the logistic model:
+  const threshold = 0.25;  // When |diff| equals 0.25, assign ~50% probability for a move.
+  const k = 5;           // Sensitivity parameter; adjust k to calibrate the steepness.
+
+  // Logistic function to calculate weight based on the magnitude of diff relative to the threshold.
+  const weight = 1 / (1 + Math.exp(-k * (Math.abs(diff) - threshold)));
+
+  let probabilityHike = 0, probabilityCut = 0, probabilityHold = 0;
+
   if (diff > 0) {
-    probabilityUp = Math.min(hikes * 100, 100);  // scale to percentage and cap at 100%
-    probabilityHold = 100 - probabilityUp;
-    probabilityDown = 0;
+    probabilityHike = weight * 100;
+    probabilityHold = (1 - weight) * 100;
+    probabilityCut = 0;
   } else if (diff < 0) {
-    probabilityDown = Math.min(hikes * 100, 100);
-    probabilityHold = 100 - probabilityDown;
-    probabilityUp = 0;
-  } else {
-    probabilityUp = 0;
+    probabilityCut = weight * 100;
+    probabilityHold = (1 - weight) * 100;
+    probabilityHike = 0;
+  } else {  // diff === 0
     probabilityHold = 100;
-    probabilityDown = 0;
   }
   
   return {
     impliedRate: impliedRate.toFixed(2),
     probabilities: {
-      cut: probabilityDown.toFixed(1),
+      hike: probabilityHike.toFixed(1),
       hold: probabilityHold.toFixed(1),
-      hike: probabilityUp.toFixed(1)
+      cut: probabilityCut.toFixed(1)
     }
   };
 }
-
 /**
  * Retrieves complete Fed policy data including futures probabilities
  * @return {Object} Complete Fed policy data
