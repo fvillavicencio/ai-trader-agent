@@ -209,27 +209,31 @@ function formatMacroeconomicFactorsData(macroData) {
       formattedData += `  - Current Federal Funds Rate: ${formatValue(fedPolicy.currentRate.currentRate)}% - Range: ${formatValue(fedPolicy.currentRate.rangeLow)}% - ${formatValue(fedPolicy.currentRate.rangeHigh)}%\n`;
     }
 
-    if (fedPolicy.probabilityUp && fedPolicy.probabilityUp !== undefined && fedPolicy.probabilityUp !== "N/A") {
-      formattedData += `  - Probability of Rate Increase: ${formatValue(fedPolicy.probabilityUp)}%\n`;
+    if (fedPolicy.futuresData && fedPolicy.futuresData.impliedRate !== undefined && fedPolicy.futuresData.impliedRate !== "N/A") {
+      formattedData += `  - Implied Rate from Futures: ${formatValue(fedPolicy.futuresData.impliedRate)}%\n`;
     }
 
-    if (fedPolicy.probabilityHold && fedPolicy.probabilityHold !== undefined && fedPolicy.probabilityHold !== "N/A") {
-      formattedData += `  - Probability of Rate Hold: ${formatValue(fedPolicy.probabilityHold)}%\n`;
-    }
-    if (fedPolicy.probabilityDown && fedPolicy.probabilityDown !== undefined && fedPolicy.probabilityDown !== "N/A") {
-      formattedData += `  - Probability of Rate Decrease: ${formatValue(fedPolicy.probabilityDown)}%\n`;
+    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityUp !== undefined && fedPolicy.futuresData.probabilityUp !== "N/A") {
+      formattedData += `  - Probability of Rate Increase: ${formatValue(fedPolicy.futuresData.probabilityUp)}%\n`;
     }
 
-    if (fedPolicy.futuresPrice && fedPolicy.futuresPrice !== undefined && fedPolicy.futuresPrice !== "N/A") {
-      formattedData += `  - Federal Funds Futures Price: ${formatValue(fedPolicy.futuresPrice)}\n`;
+    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityHold !== undefined && fedPolicy.futuresData.probabilityHold !== "N/A") {
+      formattedData += `  - Probability of Rate Hold: ${formatValue(fedPolicy.futuresData.probabilityHold)}%\n`;
+    }
+    if (fedPolicy.futuresData && fedPolicy.futuresData.probabilityDown !== undefined && fedPolicy.futuresData.probabilityDown !== "N/A") {
+      formattedData += `  - Probability of Rate Decrease: ${formatValue(fedPolicy.futuresData.probabilityDown)}%\n`;
+    }
+
+    if (fedPolicy.futuresData && fedPolicy.futuresData.futuresPrice !== undefined && fedPolicy.futuresData.futuresPrice !== "N/A") {
+      formattedData += `  - Federal Funds Futures Price: ${formatValue(fedPolicy.futuresData.futuresPrice)}\n`;
     }
     
-    if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.date) {
-      formattedData += `  - Last FOMC Meeting: ${fedPolicy.lastMeeting.fullText}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
+    if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.startDate) {
+      formattedData += `  - Last FOMC Meeting: ${fedPolicy.lastMeeting.startDate}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
     }
     
-    if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.date) {
-      formattedData += `  - Next FOMC Meeting: ${fedPolicy.nextMeeting.fullText}${fedPolicy.nextMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.nextMeeting.minutesUrl})` : ""}\n`;
+    if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.startDate) {
+      formattedData += `  - Next FOMC Meeting: ${fedPolicy.nextMeeting.startDate}\n`;
     }
     
     if (fedPolicy.forwardGuidance) {
@@ -241,9 +245,20 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     // Add source information
-    if (fedPolicy.source && fedPolicy.source.timestamp) {
+    if (fedPolicy.source) {
       const timestamp = new Date(fedPolicy.source.timestamp);
-      formattedData += `  - Source: ${fedPolicy.source.url}. As of ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
+      formattedData += `  - Source: ${fedPolicy.source.url}\n`;
+      formattedData += `  - Last Updated: ${timestamp.toLocaleDateString()}, ${timestamp.toLocaleTimeString()}\n`;
+      
+      // Add component sources if available
+      if (fedPolicy.source.components) {
+        formattedData += `  - Components:\n`;
+        for (const [component, info] of Object.entries(fedPolicy.source.components)) {
+          if (info && info.url) {
+            formattedData += `    - ${component}: ${info.url}\n`;
+          }
+        }
+      }
     }
     
     formattedData += "\n";
