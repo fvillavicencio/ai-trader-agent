@@ -236,13 +236,11 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     if (fedPolicy.lastMeeting && fedPolicy.lastMeeting.startDate) {
-      const date = new Date(fedPolicy.lastMeeting.startDate);
-      formattedData += `  - Last FOMC Meeting: ${date.toLocaleDateString()}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
+      formattedData += `  - Last ${fedPolicy.lastMeeting.fullText()}${fedPolicy.lastMeeting.minutesUrl ? ` (Minutes: ${fedPolicy.lastMeeting.minutesUrl})` : ""}\n`;
     }
     
     if (fedPolicy.nextMeeting && fedPolicy.nextMeeting.startDate) {
-      const date = new Date(fedPolicy.nextMeeting.startDate);
-      formattedData += `  - Next FOMC Meeting: ${date.toLocaleDateString()}\n`;
+      formattedData += `  - Next ${fedPolicy.nextMeeting.fullText()}\n`;
     }
     
     if (fedPolicy.forwardGuidance) {
@@ -1036,6 +1034,7 @@ function fetchPCEDataFromBEA() {
     // Current date
     const currentDate = new Date();
     const currentYear = currentDate.getFullYear();
+    const previousYear = currentYear - 1;
     
     // Request parameters - using quarterly data which is more reliable
     const params = {
@@ -1044,7 +1043,7 @@ function fetchPCEDataFromBEA() {
       "datasetname": "NIPA",
       "TableName": "T20804",
       "Frequency": "Q",
-      "Year": `${currentYear}`,
+      "Year": `${previousYear},${currentYear}`,
       "ResultFormat": "JSON"
     };
     
@@ -1794,6 +1793,7 @@ function testPCEData() {
   // Current date
   const currentDate = new Date();
   const currentYear = currentDate.getFullYear();
+  const previousYear = currentDate.getFullYear() - 1;
   
   // Request parameters - using quarterly data which is more reliable
   const params = {
@@ -1802,7 +1802,7 @@ function testPCEData() {
     "datasetname": "NIPA",
     "TableName": "T20804",
     "Frequency": "Q",
-    "Year": `${currentYear-1},${currentYear}`,
+    "Year": `${previousYear},${currentYear}`,
     "ResultFormat": "JSON"
   };
   
