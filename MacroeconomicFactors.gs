@@ -1041,7 +1041,7 @@ function fetchPCEDataFromBEA() {
       "UserID": apiKey,
       "method": "GetData",
       "datasetname": "NIPA",
-      "TableName": "T20804",
+      "TableName": "T20204", // Corrected table identifier for PCE
       "Frequency": "Q",
       "Year": `${previousYear},${currentYear}`,
       "ResultFormat": "JSON"
@@ -1800,7 +1800,7 @@ function testPCEData() {
     "UserID": apiKey,
     "method": "GetData",
     "datasetname": "NIPA",
-    "TableName": "T20804",
+    "TableName": "T20204", // Corrected table identifier for PCE
     "Frequency": "Q",
     "Year": `${previousYear},${currentYear}`,
     "ResultFormat": "JSON"
