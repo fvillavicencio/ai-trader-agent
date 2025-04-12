@@ -255,10 +255,7 @@ function generateMarketIndicatorsSection(analysis) {
     if (!indicators || !indicators.success) {
       indicators = analysis.marketIndicators || {};
     }
-    
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-    
+      
     if (debugMode) {
       Logger.log("Debug mode enabled - got this indicators: " + JSON.stringify(indicators));
     }
@@ -694,6 +691,9 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     }
 
     // Fed Policy
+    if (debugMode) {
+      Logger.log("Fed Policy: " + JSON.stringify(macro.fedPolicy));
+    }
     let fedHtml = '';
     if (macro.fedPolicy) {
       fedHtml = `
@@ -701,17 +701,53 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
           <div style="font-weight: bold; margin-bottom: 15px; font-size: 1.2em;">Federal Reserve Policy</div>
           
           <div style="background-color: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <!-- Commentary Section -->
+            <!-- Forward Guidance Section -->
             <div style="margin-bottom: 15px;">
-              <div style="font-size: 16px; color: #333; line-height: 1.6;">${macro.fedPolicy.commentary || 'N/A'}</div>
+              <div style="font-size: 16px; color: #333; line-height: 1.6;">${macro.fedPolicy.forwardGuidance || 'N/A'}</div>
+              <!-- Source Information -->
+              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.source.forwardGuidance.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.forwardGuidance.timestamp)}
+              </div>
             </div>
             
             <!-- Current Rate Section -->
             <div style="margin-bottom: 15px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Current Rate</div>
+              <div style="font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #4CAF50; font-size: 1.2em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.rate)}%</div>
-                <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%</div>
+                <div style="color: #4CAF50; font-size: 1.2em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.currentRate)}%</div>
+                <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.rangeLow)}% - ${formatValue(macro.fedPolicy.currentRate.rangeHigh)}%</div>
+              </div>
+              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.currentRate.source.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.currentRate.source.timestamp)}
+              </div>
+            </div>
+            
+            <!-- Federal Funds Futures Section -->
+            <div style="margin-bottom: 15px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Federal Funds Futures Data</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="color: #666; font-size: 14px;">Current Price: ${macro.fedPolicy.futures?.currentPrice || 'N/A'}</div>
+                  <div style="color: #666; font-size: 14px;">Implied Rate: ${macro.fedPolicy.futures?.impliedRate || 'N/A'}%</div>
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #4CAF50; font-size: 1.5em;">&#8595;</span>
+                    <div style="color: #4CAF50; font-size: 14px;">${macro.fedPolicy.futures?.probabilities?.cut || 'N/A'}%</div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #757575; font-size: 1.5em;">&#8594;</span>
+                    <div style="color: #757575; font-size: 14px;">${macro.fedPolicy.futures?.probabilities?.hold || 'N/A'}%</div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #f44336; font-size: 1.5em;">&#8593;</span>
+                    <div style="color: #f44336; font-size: 14px;">${macro.fedPolicy.futures?.probabilities?.hike || 'N/A'}%</div>
+                  </div>
+                </div>
+              </div>
+               <!-- Source Information -->
+              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.source.futures.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.futures.timestamp)}
               </div>
             </div>
             
@@ -719,32 +755,16 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Meeting Schedule</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #666; font-size: 14px;">Last Meeting: ${formatDate(macro.fedPolicy.lastMeeting.date)}</div>
-                <div style="color: #666; font-size: 14px;">Next Meeting: ${formatDate(macro.fedPolicy.nextMeeting.date)}</div>
+                <div style="color: #666; font-size: 14px;">Last ${formatDate(new Date(macro.fedPolicy.lastMeeting.fullText))}</div>
+                <div style="color: #666; font-size: 14px;">Next ${formatDate(new Date(macro.fedPolicy.nextMeeting.fullText))}</div>
+              </div>
+              <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
+                Source: ${macro.fedPolicy.source.meetings.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.meetings.timestamp)}
               </div>
             </div>
             
-            <!-- Rate Change Probabilities Section -->
-            <div style="margin-bottom: 10px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #f44336; font-size: 14px;">
-                  <span style="font-size: 1.5em;">&#8593;</span> ${macro.fedPolicy.nextMeeting.probabilityOfHike}%
-                </div>
-                <div style="color: #757575; font-size: 14px;">
-                  <span style="font-size: 1.5em;">&#8594;</span> ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%
-                </div>
-                <div style="color: #4CAF50; font-size: 14px;">
-                  <span style="font-size: 1.5em;">&#8595;</span> ${macro.fedPolicy.nextMeeting.probabilityOfCut}%
-                </div>
-              </div>
-            </div>
           </div>
-
-          <!-- Source Information -->
-          <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-            Source: ${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${formatDate(macro.fedPolicy.lastUpdated)}
-          </div>
+   
         </div>
       `;
     }
