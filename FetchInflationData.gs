@@ -53,7 +53,7 @@ function retrieveInflationExpectations() {
 /**
  * Generates an analysis of inflation data
  * @param {Object} cpiData - CPI data
- * @param {Object} pceData - PCE data
+ * @param {Object} pceData - PCE data (optional)
  * @param {Object} expectationsData - Inflation expectations data
  * @return {String} Analysis of inflation data
  */
@@ -61,54 +61,65 @@ function generateInflationAnalysis(cpiData, pceData, expectationsData) {
   try {
     let analysis = "";
     
-    // Check if we have all the data
-    if (!cpiData || !pceData || !expectationsData) {
-      return "Insufficient data to generate inflation analysis.";
+    // Check if we have CPI data (required)
+    if (!cpiData) {
+      return "Insufficient data to generate inflation analysis (CPI data required).";
     }
     
-    // Get the headline CPI and PCE values
+    // Get the headline CPI values
     const cpiValue = cpiData.yearOverYearChange;
     const cpiChange = cpiData.change;
-    const pceValue = pceData.yearOverYearChange;
-    const pceChange = pceData.change;
-    
-    // Get the core CPI and PCE values
     const coreCpiValue = cpiData.coreRate;
     const coreCpiChange = cpiData.coreChange;
-    const corePceValue = pceData.coreRate;
-    const corePceChange = pceData.coreChange;
     
     // Get the inflation expectations
-    const oneYearExpectation = expectationsData.oneYear;
-    const fiveYearExpectation = expectationsData.fiveYear;
+    const oneYearExpectation = expectationsData?.oneYear;
+    const fiveYearExpectation = expectationsData?.fiveYear;
     
     // Determine the trend
     const cpiTrend = cpiChange < 0 ? "decreasing" : cpiChange > 0 ? "increasing" : "stable";
-    const pceTrend = pceChange < 0 ? "decreasing" : pceChange > 0 ? "increasing" : "stable";
     const coreCpiTrend = coreCpiChange < 0 ? "decreasing" : coreCpiChange > 0 ? "increasing" : "stable";
-    const corePceTrend = corePceChange < 0 ? "decreasing" : corePceChange > 0 ? "increasing" : "stable";
     
     // Generate the analysis
     analysis += `Headline CPI is currently at ${formatValue(cpiValue)}% (${cpiTrend}), while Core CPI (excluding food and energy) is at ${formatValue(coreCpiValue)}% (${coreCpiTrend}). `;
-    analysis += `The Fed's preferred inflation measure, PCE, is at ${formatValue(pceValue)}% (${pceTrend}), with Core PCE at ${formatValue(corePceValue)}% (${corePceTrend}). `;
     
-    // Compare to Fed target
-    const fedTarget = 2.0;
-    if (corePceValue > fedTarget + 0.5) {
-      analysis += `Core PCE remains above the Fed's ${fedTarget}% target, which may influence monetary policy decisions. `;
-    } else if (corePceValue < fedTarget - 0.5) {
-      analysis += `Core PCE is below the Fed's ${fedTarget}% target, which may influence monetary policy decisions. `;
+    // Add PCE data if available
+    if (pceData) {
+      const pceValue = pceData.yearOverYearChange;
+      const pceChange = pceData.change;
+      const corePceValue = pceData.coreRate;
+      const corePceChange = pceData.coreChange;
+      const pceTrend = pceChange < 0 ? "decreasing" : pceChange > 0 ? "increasing" : "stable";
+      const corePceTrend = corePceChange < 0 ? "decreasing" : corePceChange > 0 ? "increasing" : "stable";
+      
+      analysis += `The Fed's preferred inflation measure, PCE, is at ${formatValue(pceValue)}% (${pceTrend}), with Core PCE at ${formatValue(corePceValue)}% (${corePceTrend}). `;
     } else {
-      analysis += `Core PCE is near the Fed's ${fedTarget}% target. `;
+      analysis += "PCE data is not available for comparison with the Fed's preferred inflation measure. ";
     }
     
-    // Add information about expectations
-    analysis += `Inflation expectations for the next year are at ${formatValue(oneYearExpectation.value)}%, while 5-year expectations are at ${formatValue(fiveYearExpectation.value)}%. `;
+    // Compare to Fed target using Core CPI if PCE is not available
+    const fedTarget = 2.0;
+    const coreValue = pceData ? pceData.coreRate : coreCpiValue;
+    
+    if (coreValue > fedTarget + 0.5) {
+      analysis += `Core inflation remains above the Fed's ${fedTarget}% target, which may influence monetary policy decisions. `;
+    } else if (coreValue < fedTarget - 0.5) {
+      analysis += `Core inflation is below the Fed's ${fedTarget}% target, which may influence monetary policy decisions. `;
+    } else {
+      analysis += `Core inflation is near the Fed's ${fedTarget}% target. `;
+    }
+    
+    // Add information about expectations if available
+    if (oneYearExpectation && fiveYearExpectation) {
+      analysis += `Inflation expectations for the next year are at ${formatValue(oneYearExpectation.value)}%, while 5-year expectations are at ${formatValue(fiveYearExpectation.value)}%. `;
+    } else {
+      analysis += "Inflation expectations data is not currently available. ";
+    }
     
     // Conclude with an overall assessment
-    if (corePceValue > fedTarget + 1.0 || cpiValue > fedTarget + 1.5) {
+    if (coreValue > fedTarget + 1.0 || cpiValue > fedTarget + 1.5) {
       analysis += `Overall, inflation remains elevated relative to the Fed's target, suggesting continued vigilance from policymakers.`;
-    } else if (corePceValue < fedTarget - 0.5 || cpiValue < fedTarget - 0.5) {
+    } else if (coreValue < fedTarget - 0.5 || cpiValue < fedTarget - 0.5) {
       analysis += `Overall, inflation is running below the Fed's target, which may influence future monetary policy decisions.`;
     } else {
       analysis += `Overall, inflation appears to be moderating toward the Fed's target, suggesting a balanced approach to monetary policy.`;
