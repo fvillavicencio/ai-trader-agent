@@ -303,11 +303,11 @@ function formatMacroeconomicFactorsData(macroData) {
     
     // Add inflation expectations
     if (inflation.expectations && inflation.expectations.oneYear !== undefined) {
-      formattedData += `  - University of Michigan 1-Year Inflation Expectation: ${formatValue(inflation.expectations.oneYear)}%\n`;
+      formattedData += `  - University of Michigan 1-Year Inflation Expectation: ${formatValue(inflation.expectations.oneYear.value)}% (Last Updated: ${new Date(inflation.expectations.oneYear.lastUpdated).toLocaleDateString()})\n`;
     }
     
     if (inflation.expectations && inflation.expectations.fiveYear !== undefined) {
-      formattedData += `  - University of Michigan 5-Year Inflation Expectation: ${formatValue(inflation.expectations.fiveYear)}%\n`;
+      formattedData += `  - University of Michigan 5-Year Inflation Expectation: ${formatValue(inflation.expectations.fiveYear.value)}% (Last Updated: ${new Date(inflation.expectations.fiveYear.lastUpdated).toLocaleDateString()})\n`;
     }
     
     // Add additional inflation metrics
