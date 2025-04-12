@@ -1,5 +1,6 @@
-// Generate the HTML ::content
+// Generate the HTML
 function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml, fundamentalMetricsHtml, macroeconomicFactorsHtml, geopoliticalRisksHtml, analysisResult) {
+  try {
     // Extract data from analysis result
     const props = PropertiesService.getScriptProperties();
     const decision = analysisResult.decision || 'No Decision';
@@ -24,6 +25,7 @@ function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml
       decisionColor = '#FFA500'; // Orange/Amber
       decisionIcon = '⚠️';
     }
+
     let html = `
     <!DOCTYPE html>
     <html>
@@ -258,7 +260,7 @@ function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml
         
         <div class="footer">
           <div style="font-size: 14px; margin-bottom: 10px;">${props.getProperty('NEWSLETTER_NAME')} - Professional Trading Insights</div>
-          <div style="font-size: 12px; margin-bottom: 20px;">&copy; ${new Date().getFullYear()} ${ props.getProperty('NEWSLETTER_NAME')}. All rights reserved.</div>
+          <div style="font-size: 12px; margin-bottom: 20px;">&copy; ${new Date().getFullYear()} ${props.getProperty('NEWSLETTER_NAME')}. All rights reserved.</div>
           <div class="disclaimer" style="font-size: 12px; color: rgba(255,255,255,0.9);">
             The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.
           </div>
