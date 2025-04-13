@@ -67,7 +67,9 @@ function publishToGhost(fileId, folderId, fileName) {
           excerpt: excerpt,
           email_segment: emailSegment,
           email_only: false,
-          canonical_url: ""  // Optional: Add your canonical URL
+          canonical_url: "",
+          email_recipient_filter: "all", // Force email to all members
+          send_email_when_published: true // Explicit email flag
         };
 
         if (config.authorId) {
@@ -132,7 +134,7 @@ function publishToGhost(fileId, folderId, fileName) {
 
         if (existingPostId) {
           // Update existing post
-          const updateUrl = config.apiUrl + '/ghost/api/admin/posts/' + existingPostId + '?send_email_when_published=true';
+          const updateUrl = config.apiUrl + '/ghost/api/admin/posts/' + existingPostId + '?source=html&send_email_when_published=true';
           const updateResponse = UrlFetchApp.fetch(updateUrl, {
             method: 'put',
             headers: {
@@ -146,6 +148,13 @@ function publishToGhost(fileId, folderId, fileName) {
           const updateResult = JSON.parse(updateResponse.getContentText());
           Logger.log('Update result: ' + JSON.stringify(updateResult, null, 2));
 
+          // Log email queue information
+          if (!debugMode && (updateResult.posts[0]?.status === 'published')) {
+            Logger.log(`Check Ghost dashboard to verify email queue:
+            ${config.apiUrl}/ghost/#/settings/newsletters`);
+            Logger.log('Allow 5-10 minutes for email delivery');
+          }
+
           return {
             status: 'updated',
             message: 'Post updated successfully',
@@ -154,11 +163,18 @@ function publishToGhost(fileId, folderId, fileName) {
         }
 
         // Create new post
-        const createUrl = config.apiUrl + '/ghost/api/admin/posts/?send_email_when_published=true';
+        const createUrl = config.apiUrl + '/ghost/api/admin/posts/?source=html&send_email_when_published=true';
         const createResponse = UrlFetchApp.fetch(createUrl, options);
         Logger.log('Create response status code: ' + createResponse.getResponseCode());
         const createResult = JSON.parse(createResponse.getContentText());
         Logger.log('Create result: ' + JSON.stringify(createResult, null, 2));
+
+        // Log email queue information
+        if (!debugMode && (createResult.posts[0]?.status === 'published')) {
+          Logger.log(`Check Ghost dashboard to verify email queue:
+          ${config.apiUrl}/ghost/#/settings/newsletters`);
+          Logger.log('Allow 5-10 minutes for email delivery');
+        }
 
         return {
           status: 'published',
@@ -320,17 +336,17 @@ function publishToGhost(fileId, folderId, fileName) {
      */
     function extractJustificationExcerpt(htmlContent) {
       try {
-        // Find the Justification section using string manipulation
-        const startMarker = '<div class="section"><h2>Justification</h2>';
-        const endMarker = '</div>';
+        // Find the Justification section using a more flexible pattern
+        const startPattern = /<div class="section">\s*<h2>Justification<\/h2>\s*<div[^>]*>/;
+        const endPattern = /<\/div>/;
         
-        const startIndex = htmlContent.indexOf(startMarker);
-        if (startIndex === -1) {
+        const match = startPattern.exec(htmlContent);
+        if (!match) {
           return '';
         }
         
-        const contentStart = startIndex + startMarker.length;
-        const contentEnd = htmlContent.indexOf(endMarker, contentStart);
+        const contentStart = match[0].length;
+        const contentEnd = htmlContent.indexOf('</div>', contentStart);
         
         if (contentEnd === -1) {
           return '';
@@ -344,10 +360,44 @@ function publishToGhost(fileId, folderId, fileName) {
         content = content.replace(/\s+/g, ' ').trim(); // Normalize whitespace
         
         // Limit to 300 characters
+        Logger.log('Excerpt created:\n' + content);
         return content.substring(0, 300) + (content.length > 300 ? '...' : '');
       } catch (e) {
         Logger.log('Error extracting justification excerpt: ' + e.message);
         return '';
+      }
+    }
+
+    /**
+     * Check if Ghost email service is properly configured
+     * @returns {boolean} - True if email service is configured
+     */
+    function checkEmailService(config) {
+      try {
+        const token = generateGhostJWT(config.apiKey);
+        const url = config.apiUrl + '/ghost/api/admin/email/settings';
+        const response = UrlFetchApp.fetch(url, {
+          headers: {
+            'Authorization': 'Ghost ' + token,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.getResponseCode() === 200) {
+          const result = JSON.parse(response.getContentText());
+          if (result.email_settings && result.email_settings.enabled) {
+            Logger.log('Email service is configured and enabled');
+            return true;
+          }
+          Logger.log('Email service is configured but not enabled');
+          return false;
+        }
+        
+        Logger.log('Email service is not properly configured');
+        return false;
+      } catch (e) {
+        Logger.log('Error checking email service: ' + e.message);
+        return false;
       }
     }
 
@@ -380,7 +430,7 @@ function publishToGhost(fileId, folderId, fileName) {
         const file = files.next();
         Logger.log(`Found file: ${file.getName()} with ID: ${file.getId()}`);
 
-        // Publish the file to Ghost
+        // Publish the file to Ghost directly
         const result = publishToGhost(file.getId(), folder.getId(), fileName);
         Logger.log('Ghost publishing result: ' + JSON.stringify(result, null, 2));
         
