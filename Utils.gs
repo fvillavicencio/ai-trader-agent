@@ -214,7 +214,7 @@ function generateMarketSentimentSection(analysis) {
     
     // Generate source information
     const sourceInfo = sentimentData.source 
-      ? `<div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+      ? `<div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
            Source: ${sentimentData.source} | Last Updated: ${sentimentData.lastUpdated || 'N/A'}
          </div>`
       : '';
@@ -283,8 +283,8 @@ function generateMarketIndicatorsSection(analysis) {
             `;
           }).join('')}
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.majorIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+          Source: <a href="https://finance.yahoo.com/markets/">Yahoo Finance</a>, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -310,8 +310,8 @@ function generateMarketIndicatorsSection(analysis) {
             `;
           }).join('')}
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.sectorPerformance[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.sectorPerformance[0]?.timestamp)}
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+           Source: <a href="https://finance.yahoo.com/sectors/">Yahoo Finance</a>, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -372,7 +372,7 @@ function generateMarketIndicatorsSection(analysis) {
           </span>
         </div>
         
-        <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
+        <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
           Source: <a href="https://www.cnn.com/markets/fear-and-greed">CNN</a>, as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
         </div>
       </div>
@@ -408,8 +408,8 @@ function generateMarketIndicatorsSection(analysis) {
             `;
           }).join('')}
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.volatilityIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.volatilityIndices[0]?.timestamp)}
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+          Source: <a href="https://finance.yahoo.com/quote/%5EVIX/">Yahoo Finance</a>, as of ${formatDate(indicators.volatilityIndices[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -459,9 +459,6 @@ function generateMarketIndicatorsSection(analysis) {
             </div>
             `;
           }).join('')}
-        </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.upcomingEconomicEvents[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.upcomingEconomicEvents[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -683,8 +680,8 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="color: #555; font-size: 14px;">${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
           </div>
 
-          <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-            Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}
+          <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+            Source: <a href="${macro.treasuryYields.sourceUrl}">${macro.treasuryYields.source}</a>, as of ${formatDate(macro.treasuryYields.lastUpdated)}
           </div>
         </div>
       `;
@@ -706,7 +703,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="font-size: 16px; color: #333; line-height: 1.6;">${macro.fedPolicy.forwardGuidance || 'N/A'}</div>
               <!-- Source Information -->
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy.source.components.forwardGuidance.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.forwardGuidance.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.forwardGuidance.url || 'N/A'}">${macro.fedPolicy.source.components.forwardGuidance.source || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.forwardGuidance.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -718,7 +715,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
                 <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.rangeLow)}% - ${formatValue(macro.fedPolicy.currentRate.rangeHigh)}%</div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy.source.components.fedFundsRate.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.fedFundsRate.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.fedFundsRate.url || 'N/A'}">${macro.fedPolicy.source.components.fedFundsRate.source || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.fedFundsRate.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -747,7 +744,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               </div>
                <!-- Source Information -->
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy.source.components.futures.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.futures.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.futures.url || 'N/A'}">${macro.fedPolicy.source.components.futures.source || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.futures.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -759,12 +756,11 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
                 <div style="color: #666; font-size: 14px;">Next ${macro.fedPolicy.nextMeeting.fullText}</div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: ${macro.fedPolicy.source.components.meetings.url || 'N/A'}, as of ${formatDate(macro.fedPolicy.source.components.meetings.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.meetings.url || 'N/A'}">${macro.fedPolicy.source.components.meetings.source.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.meetings.timestamp || 'N/A')}
               </div>
             </div>
             
           </div>
-   
         </div>
       `;
     }
@@ -774,6 +770,9 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     const inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
       
     if (inflationData) {
+      if (debugMode) {
+          Logger.log("Inflation Data: " + JSON.stringify(inflationData));
+      } 
       inflationHtml = `
       <div style="margin-bottom: 20px;">
         <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
@@ -812,25 +811,56 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             </div>
           </div>
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: Bureau of Labor Statistics, Federal Reserve | Last updated: ${inflationData.lastUpdated}
+
+        <!-- Inflation Expectations Section -->
+        ${inflationData?.expectations && inflationData.expectations.oneYear && inflationData.expectations.fiveYear && inflationData.expectations.tenYear 
+          ? `
+        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #2196F3;">
+          <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.2em;">Inflation Expectations</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #666; font-size: 14px;">1-Year Expectation</div>
+              <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.expectations.oneYear.value + '%'}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #666; font-size: 14px;">5-Year Expectation</div>
+              <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.expectations.fiveYear.value + '%'}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #666; font-size: 14px;">10-Year Expectation</div>
+              <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.expectations.tenYear.value + '%'}</div>
+            </div>
+          </div>
+          <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+            Source: <a href="${inflationData.expectations.source.url || 'N/A'}">${inflationData.expectations.source.name || 'N/A'}</a>, as of ${formatDate(inflationData.expectations.lastUpdated)}
+          </div>
         </div>
-      </div>
-      
-      <div style="display: flex; margin-bottom: 15px;">
-        <div style="flex: 1; background-color: #f1f8e9; padding: 15px; border-radius: 4px; margin-right: 10px; border-left: 4px solid #4CAF50;">
-          <div style="font-weight: bold; color: #4CAF50; margin-bottom: 5px;">Inflation Trend Analysis</div>
-          <div style="color: #333;">${inflationData.trend}</div>
+          ` : ''}
+      `;
+    }
+    
+    // Inflation Trend Analysis Section
+    let inflationTrendHtml = '';
+    if (inflationData.trend && inflationData.outlook && inflationData.marketImpact) {
+      inflationTrendHtml = `
+      <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #4CAF50;">
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.2em;">Inflation Trend Analysis</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #666; font-size: 14px;">Trend</div>
+            <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.trend}</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #666; font-size: 14px;">Outlook</div>
+            <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.outlook}</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #666; font-size: 14px;">Market Impact</div>
+            <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.marketImpact}</div>
+          </div>
         </div>
-        
-        <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px; margin-right: 10px;">
-          <div style="font-weight: bold; margin-bottom: 5px;">Outlook</div>
-          <div style="color: #555; font-size: 14px;">${inflationData.outlook}</div>
-        </div>
-        
-        <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
-          <div style="font-weight: bold; margin-bottom: 5px;">Market Impact</div>
-          <div style="color: #555; font-size: 14px;">${inflationData.marketImpact}</div>
+        <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+          Source: <a href="${inflationData.sourceUrl}">${inflationData.source}</a>, as of ${formatDate(inflationData.lastUpdated)}
         </div>
       </div>
       `;
@@ -844,6 +874,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
       ${yieldsHtml}
       ${fedHtml}
       ${inflationHtml}
+      ${inflationTrendHtml}
     </div>
     `;
   } catch (error) {

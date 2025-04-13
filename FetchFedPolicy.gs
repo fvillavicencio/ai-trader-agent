@@ -58,6 +58,7 @@ function retrieveFedPolicyData() {
       futures: futuresData,
       source: {
         url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
+        name: "Federal Reserve Press Releases",
         timestamp: new Date().toISOString(),
         components: {
           fedFundsRate: fedFundsRate.source,
@@ -120,14 +121,21 @@ function retrieveFedPolicyData() {
         },
         source: {
           url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+          name: "Yahoo Finance",
           timestamp: new Date().toISOString(),
-          note: "Error fetching futures data"
+          note: "Error fetching futures data",
+          components: {
+            url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+            name: "Yahoo Finance",
+            timestamp: new Date().toISOString()
+          }
         }
       },
       forwardGuidance: "Error retrieving forward guidance",
       commentary: "Error occurred while retrieving Fed policy data",
       source: {
         url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
+        name: "Federal Reserve Press Releases",
         timestamp: new Date().toISOString(),
         components: {
           fedFundsRate: null,
@@ -192,7 +200,13 @@ function fetchFedFundsRateFromFRED() {
         rangeHigh: (Math.ceil(latestValue * 4) / 4).toFixed(2),
         source: {
           url: "https://fred.stlouisfed.org/series/FEDFUNDS",
-          timestamp: new Date().toISOString()
+          name: "Federal Reserve Bank of St. Louis",
+          timestamp: new Date().toISOString(),
+          components: {
+            url: "https://fred.stlouisfed.org/series/FEDFUNDS",
+            name: "Federal Reserve Bank of St. Louis",
+            timestamp: new Date().toISOString()
+          }
         }
       };
     }
@@ -502,7 +516,13 @@ function fetchFOMCMeetings() {
       nextMeeting: computeLastAndNextMeetings(meetings).nextMeeting,
       source: {
         url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-        timestamp: new Date().toISOString()
+        name: "Federal Reserve Meeting Calendar",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+          name: "Federal Reserve Meeting Calendar",
+          timestamp: new Date().toISOString()
+        }
       }
     };
   } catch (error) {
@@ -524,6 +544,11 @@ function fetchFOMCMeetings() {
         timezone: "",
         startDate: new Date(),
         endDate: new Date()
+      },
+      source: {
+        url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+        name: "Federal Reserve Meeting Calendar",
+        timestamp: new Date().toISOString()
       }
     };
   }
@@ -614,7 +639,13 @@ function fetchForwardGuidanceEnhanced() {
       commentary: `Latest FOMC statement retrieved from: ${articleLink}`,
       source: {
         url: articleLink,
-        timestamp: new Date(pubDate).toISOString()
+        name: "Federal Reserve Press Releases",
+        timestamp: new Date(pubDate).toISOString(),
+        components: {
+          url: articleLink,
+          name: "Federal Reserve Press Releases",
+          timestamp: new Date(pubDate).toISOString()
+        }
       }
     };
     
@@ -626,7 +657,13 @@ function fetchForwardGuidanceEnhanced() {
       commentary: "Error retrieving guidance: Using default statement",
       source: {
         url: rssUrl,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        name: "Federal Reserve Press Releases",
+        error: {
+          type: error.constructor.name,
+          message: error.message,
+          stack: error.stack
+        }
       }
     };
   }
@@ -1059,7 +1096,16 @@ function getFedFundsFuturesPrice() {
         lastUpdated: result.meta.regularMarketTime ? 
           new Date(result.meta.regularMarketTime * 1000).toISOString() : 
           new Date().toISOString(),
-        source: url
+        source: {
+          url: url,
+          name: "Yahoo Finance",
+          timestamp: new Date().toISOString(),
+          components: {
+            url: url,
+            name: "Yahoo Finance",
+            timestamp: new Date().toISOString()
+          }
+        }
       };
       
       Logger.log(`Successfully parsed futures data: ${JSON.stringify(output, null, 2)}`);
@@ -1103,8 +1149,14 @@ function fetchFedFundsFuturesProbabilities(currentRate) {
         },
         source: {
           url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+          name: "Yahoo Finance",
           timestamp: new Date().toISOString(),
-          note: "Futures price unavailable, using market probabilities"
+          note: "Futures price unavailable, using market probabilities",
+          components: {
+            url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+            name: "Yahoo Finance",
+            timestamp: new Date().toISOString()
+          }
         }
       };
     }
@@ -1121,8 +1173,14 @@ function fetchFedFundsFuturesProbabilities(currentRate) {
         hike: probabilities.hike
       },
       source: {
-        url: futuresPrice.source,
-        timestamp: futuresPrice.lastUpdated
+        url: futuresPrice.source.url,
+        name: futuresPrice.source.name,
+        timestamp: futuresPrice.lastUpdated,
+        components: {
+          url: futuresPrice.source.url,
+          name: futuresPrice.source.name,
+          timestamp: futuresPrice.lastUpdated
+        }
       }
     };
 
@@ -1138,8 +1196,14 @@ function fetchFedFundsFuturesProbabilities(currentRate) {
       },
       source: {
         url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+        name: "Yahoo Finance",
         timestamp: new Date().toISOString(),
-        note: "Error fetching futures data"
+        note: "Error fetching futures data",
+        components: {
+          url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+          name: "Yahoo Finance",
+          timestamp: new Date().toISOString()
+        }
       }
     };
   }
@@ -1347,6 +1411,7 @@ function retrieveCompleteFedPolicyData() {
       },
       source: {
         url: "https://www.federalreserve.gov/",
+        name: "Federal Reserve",
         timestamp: new Date().toISOString(),
         components: {
           fedFundsRate: fedFundsRate.source,
@@ -1413,12 +1478,19 @@ function retrieveCompleteFedPolicyData() {
       },
       source: {
         url: "https://www.federalreserve.gov/",
-        timestamp: new Date().toISOString()
-      },
-      error: {
-        message: errorMessage,
-        type: error.constructor.name,
-        stack: error.stack
+        name: "Federal Reserve",
+        timestamp: new Date().toISOString(),
+        components: {
+          fedFundsRate: null,
+          meetings: null,
+          forwardGuidance: null,
+          marketProbabilities: null
+        },
+        error: {
+          type: error.constructor.name,
+          message: errorMessage,
+          stack: error.stack
+        }
       }
     };
   }
