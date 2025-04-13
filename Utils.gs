@@ -703,7 +703,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="font-size: 16px; color: #333; line-height: 1.6;">${macro.fedPolicy.forwardGuidance || 'N/A'}</div>
               <!-- Source Information -->
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: <a href="${macro.fedPolicy.source.forwardGuidance.url || 'N/A'}">${macro.fedPolicy.source.forwardGuidance.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.forwardGuidance.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.forwardGuidance.url || 'N/A'}">${macro.fedPolicy.source.components.forwardGuidance.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.forwardGuidance.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -715,7 +715,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
                 <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.rangeLow)}% - ${formatValue(macro.fedPolicy.currentRate.rangeHigh)}%</div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: <a href="${macro.fedPolicy.source.fedFundsRate.url || 'N/A'}">${macro.fedPolicy.source.fedFundsRate.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.fedFundsRate.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.fedFundsRate.url || 'N/A'}">${macro.fedPolicy.source.components.fedFundsRate.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.fedFundsRate.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -744,7 +744,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               </div>
                <!-- Source Information -->
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: <a href="${macro.fedPolicy.source.futures.url || 'N/A'}">${macro.fedPolicy.source.futures.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.futures.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.futures.url || 'N/A'}">${macro.fedPolicy.source.components.futures.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.futures.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -756,7 +756,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
                 <div style="color: #666; font-size: 14px;">Next ${macro.fedPolicy.nextMeeting.fullText}</div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
-                Source: <a href="${macro.fedPolicy.source.meetings.url || 'N/A'}">${macro.fedPolicy.source.meetings.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.meetings.timestamp || 'N/A')}
+                Source: <a href="${macro.fedPolicy.source.components.meetings.url || 'N/A'}">${macro.fedPolicy.source.components.meetings.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.meetings.timestamp || 'N/A')}
               </div>
             </div>
             
