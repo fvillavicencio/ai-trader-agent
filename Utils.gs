@@ -728,10 +728,9 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Federal Funds Futures</div>
               <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;margin-top: 5px">
                   <div style="color: #666; font-size: 1em;">Current Price: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.currentPrice || 'N/A'}</span></div>
-                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.impliedRate || 'N/A'}</span>%</div>
-                  <br>
+                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.impliedRate || 'N/A'}%</span></div>
                 </div>
               </div>
               <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
@@ -871,22 +870,20 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
         <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px;">
             <div style="text-align: center;">
-              <div style="color: #4CAF50; font-size: 1.2em; margin-bottom: 15px;">Trend</div>
-              <div style="color: #2c3e50; font-size: 1em; line-height: 1.2;">${inflationData.trend}</div>
+              <div style="color: #4CAF50; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Trend</div>
+              <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.trend}</div>
             </div>
             <div style="text-align: center; border-left: 1px solid #eee; padding-left: 15px;">
-              <div style="color: #2196F3; font-size: 1.2em; margin-bottom: 15px;">Outlook</div>
-              <div style="color: #2c3e50; font-size: 1em; line-height: 1.2;">${inflationData.outlook}</div>
+              <div style="color: #2196F3; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Outlook</div>
+              <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.outlook}</div>
             </div>
             <div style="text-align: center; border-left: 1px solid #eee; padding-left: 15px;">
-              <div style="color: #9C27B0; font-size: 1.2em; margin-bottom: 15px;">Market Impact</div>
-              <div style="color: #2c3e50 font-size: 1em; line-height: 1.2;">${inflationData.marketImpact}</div>
+              <div style="color: #9C27B0; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Market Impact</div>
+              <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.marketImpact}</div>
             </div>
           </div>
           <div style="font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; padding-right: 15px;">
-            Source: <a href="${inflationData.sourceUrl}" style="color: #2196F3; text-decoration: none;">${inflationData.source}</a>
-            <br>
-            Last Updated: ${formatDate(inflationData.lastUpdated)}
+            Source: <a href="${inflationData.sourceUrl}" style="color: #2196F3; text-decoration: none;">${inflationData.source}</a>. Last Updated: ${formatDate(inflationData.lastUpdated)}
           </div>
         </div>
       </div>
