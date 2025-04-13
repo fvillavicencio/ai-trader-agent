@@ -716,7 +716,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #4CAF50; font-size: 1.2em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.currentRate)}%</div>
+                <div style="color: #4CAF50; font-size: 1.5em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.currentRate)}%</div>
                 <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.rangeLow)}% - ${formatValue(macro.fedPolicy.currentRate.rangeHigh)}%</div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
@@ -731,21 +731,22 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
                   <div style="color: #666; font-size: 1em;">Current Price: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.currentPrice || 'N/A'}</span></div>
                   <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.impliedRate || 'N/A'}</span>%</div>
+                  <br>
                 </div>
               </div>
               <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 5px;">
-                  <span style="color: #4CAF50; font-size: 1.5em;">&#8595;</span>
-                  <div style="color: #4CAF50; font-size: 1.5em;">${macro.fedPolicy.futures.probabilities.cut || 'N/A'}%</div>
+                  <span style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">&#8595;</span>
+                  <div style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities.cut || 'N/A'}%</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                  <span style="color: #757575; font-size: 1.5em;">&#8594;</span>
-                  <div style="color: #757575; font-size: 1.5em;">${macro.fedPolicy.futures.probabilities.hold || 'N/A'}%</div>
+                  <span style="color: #757575; font-size: 1.5em;font-weight: bold;">&#8594;</span>
+                  <div style="color: #757575; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities.hold || 'N/A'}%</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
-                  <span style="color: #f44336; font-size: 1.5em;">&#8593;</span>
-                  <div style="color: #f44336; font-size: 1.5em;">${macro.fedPolicy.futures.probabilities.hike || 'N/A'}%</div>
+                  <span style="color: #f44336; font-size: 1.5em;font-weight: bold;">&#8593;</span>
+                  <div style="color: #f44336; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities.hike || 'N/A'}%</div>
                 </div>
               </div>
               <!-- Source Information -->
@@ -793,12 +794,12 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #3498db; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
               <div style="display: flex; justify-content: space-around;">
                 <div>
-                  <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Headline</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${inflationData.cpi.headline.toFixed(1)}%</div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Headline</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.cpi.headline.toFixed(1)}%</div>
                 </div>
                 <div>
-                  <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Core</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${inflationData.cpi.core.toFixed(1)}%</div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Core</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.cpi.core.toFixed(1)}%</div>
                 </div>
               </div>
             </div>
@@ -810,12 +811,12 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #e67e22; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
               <div style="display: flex; justify-content: space-around;">
                 <div>
-                  <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Headline</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${inflationData.pce.headline.toFixed(1)}%</div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Headline</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.pce.headline.toFixed(1)}%</div>
                 </div>
                 <div>
-                  <div style="color: #555; font-size: 13px; margin-bottom: 2px;">Core</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 20px;">${inflationData.pce.core.toFixed(1)}%</div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Core</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.pce.core.toFixed(1)}%</div>
                 </div>
               </div>
             </div>
@@ -849,9 +850,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               </div>
             </div>
             <div style="font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; padding-right: 15px;">
-              Source: <a href="${inflationData.expectations.source.url || 'N/A'}" style="color: #2196F3; text-decoration: none;">${inflationData.expectations.source.name || 'N/A'}</a>
-              <br>
-              Last Updated: ${formatDate(new Date(inflationData.expectations.lastUpdated))}
+              Source: <a href="${inflationData.expectations.source.url || 'N/A'}" style="color: #2196F3; text-decoration: none;">${inflationData.expectations.source.name || 'N/A'}</a>. Last Updated: ${formatDate(new Date(inflationData.expectations.lastUpdated))}
             </div>
           </div>
         </div>
