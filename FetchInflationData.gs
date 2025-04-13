@@ -3,58 +3,79 @@
  * @return {Object} Inflation expectations data
  */
 function retrieveInflationExpectations() {
-  // Get FRED API key
-  const apiKey = getFREDApiKey();
-  if (!apiKey) {
-    Logger.log("FRED API key not found");
-    return null;
-  }
-  
-  const baseUrl = "https://api.stlouisfed.org/fred/series/observations";
-  
-  // FRED Series IDs
-  const series = {
-    oneYear: "MICH",        // 1-year expectation (median from U. Michigan)
-    fiveYear: "T5YIE",      // 5-year breakeven inflation
-    tenYear: "T10YIE"       // 10-year breakeven inflation
-  };
-
   try {
-    const results = {};
-    for (const [key, seriesId] of Object.entries(series)) {
-      const url = `${baseUrl}?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=1`;
-      const response = UrlFetchApp.fetch(url);
-      const data = JSON.parse(response.getContentText());
-
-      if (data.observations && data.observations.length > 0) {
-        const latestObservation = data.observations[0];
-        results[key] = {
-          value: parseFloat(latestObservation.value),
-          lastUpdated: latestObservation.date
-        };
-      } else {
-        results[key] = null;
+    // Check cache first
+    const scriptCache = CacheService.getScriptCache();
+    const cachedData = scriptCache.get('INFLATION_DATA');
+    
+    if (cachedData) {
+      const parsedData = JSON.parse(cachedData);
+      const cachedExpectations = parsedData.expectations;
+      
+      if (cachedExpectations && cachedExpectations.oneYear && cachedExpectations.fiveYear) {
+        Logger.log("Using cached inflation expectations data");
+        return cachedExpectations;
       }
     }
+    
+    // Get FRED API key
+    const apiKey = getFREDApiKey();
+    if (!apiKey) {
+      Logger.log("FRED API key not found");
+      return null;
+    }
+    
+    const baseUrl = "https://api.stlouisfed.org/fred/series/observations";
+    
+    // FRED Series IDs
+    const series = {
+      oneYear: "MICH",        // 1-year expectation (median from U. Michigan)
+      fiveYear: "T5YIE",      // 5-year breakeven inflation
+      tenYear: "T10YIE"       // 10-year breakeven inflation
+    };
 
-    return {
-      oneYear: results.oneYear,
-      fiveYear: results.fiveYear,
-      tenYear: results.tenYear,
-      source: {
-        url: "https://fred.stlouisfed.org/series/MICH",
-        name: "St. Louis Fed (FRED API)",
-        timestamp: new Date().toISOString(),
-        components: {
+    try {
+      const results = {};
+      for (const [key, seriesId] of Object.entries(series)) {
+        const url = `${baseUrl}?series_id=${seriesId}&api_key=${apiKey}&file_type=json&sort_order=desc&limit=1`;
+        const response = UrlFetchApp.fetch(url);
+        const data = JSON.parse(response.getContentText());
+        
+        if (data.observations && data.observations.length > 0) {
+          const observation = data.observations[0];
+          results[key] = {
+            value: parseFloat(observation.value),
+            lastUpdated: observation.date,
+            source: {
+              name: "FRED (Federal Reserve Economic Data)",
+              url: `https://fred.stlouisfed.org/series/${seriesId}`
+            }
+          };
+        }
+      }
+
+      return {
+        oneYear: results.oneYear,
+        fiveYear: results.fiveYear,
+        tenYear: results.tenYear,
+        source: {
           url: "https://fred.stlouisfed.org/series/MICH",
           name: "St. Louis Fed (FRED API)",
-          timestamp: new Date().toISOString()
-        }
-      },
-      lastUpdated: new Date().toISOString()
-    };
+          timestamp: new Date().toISOString(),
+          components: {
+            url: "https://fred.stlouisfed.org/series/MICH",
+            name: "St. Louis Fed (FRED API)",
+            timestamp: new Date().toISOString()
+          }
+        },
+        lastUpdated: new Date().toISOString()
+      };
+    } catch (error) {
+      Logger.log(`Error retrieving inflation expectations: ${error}`);
+      return null;
+    }
   } catch (error) {
-    Logger.log(`Error retrieving inflation expectations data: ${error}`);
+    Logger.log(`Error retrieving inflation expectations: ${error}`);
     return null;
   }
 }
@@ -344,7 +365,7 @@ function retrieveInflationData() {
     
     // Retrieve inflation expectations
     const expectationsData = retrieveInflationExpectations();
-    
+      
     // If we couldn't get any data, return an error
     if (!cpiData && !pceData && !expectationsData) {
       return {
@@ -383,11 +404,7 @@ function retrieveInflationData() {
     
     // Cache the data for 1 hour (in seconds)
     scriptCache.put('INFLATION_DATA', JSON.stringify(result), 60 * 60);
-    
-    if (debugMode) {
-        Logger.log("Inflation data retrieved:\n"+JSON.stringify(result, null, 2));
-    }
-    
+     
     return result;
   } catch (error) {
     Logger.log(`Error retrieving inflation data: ${error}`);
