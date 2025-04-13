@@ -1,14 +1,14 @@
-import axios, { AxiosError } from 'axios';
 import dotenv from 'dotenv';
 
+// Load environment variables from .env file
 dotenv.config();
 
 interface StockMetrics {
   symbol: string;
-  price: number | null;
-  priceChange: number | null;
-  changesPercentage: number | null;
-  volume: number | null;
+  price: number;
+  priceChange: number;
+  changesPercentage: number;
+  volume: number;
   marketCap: number | null;
   company: string | null;
   industry: string | null;
@@ -23,52 +23,53 @@ interface StockMetrics {
   returnOnAssets: number | null;
   profitMargin: number | null;
   dividendYield: number | null;
-  fiftyTwoWeekHigh: number | null;
-  fiftyTwoWeekLow: number | null;
-  dayHigh: number | null;
-  dayLow: number | null;
-  open: number | null;
-  close: number | null;
-  fiftyTwoWeekAverage: number | null;
+  fiftyTwoWeekHigh: number;
+  fiftyTwoWeekLow: number;
+  dayHigh: number;
+  dayLow: number;
+  open: number;
+  close: number;
+  fiftyTwoWeekAverage: number;
 }
 
 interface TradierClient {
   getStockMetrics(symbol: string): Promise<StockMetrics>;
 }
 
+// Updated TradierClientImpl class with corrected endpoints and improved error handling
 export class TradierClientImpl implements TradierClient {
-  private readonly baseUrl = 'https://api.tradier.com/v1';
-  private readonly headers: { [key: string]: string };
+  private readonly apiKey: string;
 
-  constructor(private readonly apiKey: string) {
+  constructor(apiKey: string) {
     if (!apiKey) {
       throw new Error('TRADIER_API_KEY must be provided');
     }
-    this.headers = {
-      'Authorization': `Bearer ${this.apiKey}`,
-      'Accept': 'application/json'
-    };
+    this.apiKey = apiKey;
   }
 
-  private async makeRequest<T>(endpoint: string, params: Record<string, any>): Promise<T> {
-    const url = new URL(`${this.baseUrl}/${endpoint}`);
-    for (const [key, value] of Object.entries(params)) {
+  private async makeRequest<T>(endpoint: string, params: { [key: string]: any } = {}): Promise<T> {
+    const url = new URL(`https://api.tradier.com/v1/${endpoint}`);
+    Object.entries(params).forEach(([key, value]) => {
       url.searchParams.append(key, value.toString());
-    }
-
-    console.log('Making request to', url.toString());
-    
-    const response = await fetch(url.toString(), {
-      headers: this.headers
     });
 
-    const data = await response.json();
-    console.log('Raw response from', endpoint, ':', data);
+    console.log('Making request to', url.toString());
 
-    if (!response.ok) {
-      throw new Error(`Tradier API error: ${response.statusText}`);
+    const response = await fetch(url.toString(), {
+      headers: {
+        'Authorization': `Bearer ${this.apiKey}`,
+        'Accept': 'application/json'
+      }
+    });
+
+    const contentType = response.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Unexpected response type: ${contentType}. Response: ${text}`);
     }
 
+    const data = await response.json();
+    console.log(`Raw response from ${endpoint} :`, data);
     return data;
   }
 
@@ -130,7 +131,7 @@ export class TradierClientImpl implements TradierClient {
       // Get Company Information
       try {
         console.log('Fetching company data for', symbol);
-        const companyData = await this.makeRequest<{ fundamentals: { company: { [key: string]: any } } }>('beta/markets/fundamentals/company', {
+        const companyData = await this.makeRequest<{ fundamentals: { company: { [key: string]: any } } }>('v1/markets/fundamentals/company', {
           symbols: symbol
         });
 
@@ -149,7 +150,7 @@ export class TradierClientImpl implements TradierClient {
       // Get Financial Metrics
       try {
         console.log('Fetching financial data for', symbol);
-        const ratiosData = await this.makeRequest<{ fundamentals: { ratios: { [key: string]: any } } }>('beta/markets/fundamentals/ratios', {
+        const ratiosData = await this.makeRequest<{ fundamentals: { ratios: { [key: string]: any } } }>('v1/markets/fundamentals/ratios', {
           symbols: symbol
         });
         
@@ -181,11 +182,14 @@ export class TradierClientImpl implements TradierClient {
   }
 }
 
-// Example usage
-async function main() {
-  const symbol = process.argv[2] || 'AAPL';
-  const client = new TradierClientImpl(process.env.TRADIER_API_KEY || '');
+async function main(symbol: string) {
+  const apiKey = process.env.TRADIER_API_KEY;
+  if (!apiKey) {
+    console.error('TRADIER_API_KEY environment variable is not set');
+    return;
+  }
 
+  const client = new TradierClientImpl(apiKey);
   try {
     const metrics = await client.getStockMetrics(symbol);
     console.log('Stock Metrics:', JSON.stringify(metrics, null, 2));
@@ -194,6 +198,10 @@ async function main() {
   }
 }
 
-if (require.main === module) {
-  main();
+const args = process.argv.slice(2);
+if (args.length !== 1) {
+  console.error('Usage: npm start <symbol>');
+  process.exit(1);
 }
+
+main(args[0]);

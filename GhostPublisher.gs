@@ -147,7 +147,7 @@ function publishToGhost(fileId, folderId, fileName) {
         }
 
         // Create new post
-        const createUrl = config.apiUrl + '/ghost/api/admin/posts/?send_email=true';
+        const createUrl = config.apiUrl + '/ghost/api/admin/posts/?send_email_when_published=true';
         const createResponse = UrlFetchApp.fetch(createUrl, options);
         Logger.log('Create response status code: ' + createResponse.getResponseCode());
         const createResult = JSON.parse(createResponse.getContentText());

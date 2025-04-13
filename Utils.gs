@@ -451,14 +451,14 @@ function generateMarketIndicatorsSection(analysis) {
             
             return `
             <div style="display: flex; margin-bottom: 15px;">
-              <div style="min-width: 150px;">
+              <div style="min-width: 10px;">
                 <div style="font-weight: bold; color: #2196f3; font-size: 13px;">${event.date}</div>
               </div>
               <div style="flex: 1; margin: 0 15px;">
                 <div style="font-weight: bold; margin-bottom: 2px;">${eventName}</div>
                 <div style="font-size: 12px; color: #666;">${eventSource}</div>
               </div>
-              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+              <div style="min-width: 10px; text-align: right; color: #555; font-size: 11px;">
                 ${values}
               </div>
             </div>
