@@ -41,7 +41,16 @@ function retrieveInflationExpectations() {
       oneYear: results.oneYear,
       fiveYear: results.fiveYear,
       tenYear: results.tenYear,
-      source: "St. Louis Fed (FRED API)",
+      source: {
+        url: "https://fred.stlouisfed.org/series/MICH",
+        name: "St. Louis Fed (FRED API)",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://fred.stlouisfed.org/series/MICH",
+          name: "St. Louis Fed (FRED API)",
+          timestamp: new Date().toISOString()
+        }
+      },
       lastUpdated: new Date().toISOString()
     };
   } catch (error) {
@@ -157,8 +166,8 @@ function testInflationData() {
       Logger.log(`  Year-over-Year: ${inflation.cpi.yearOverYearChange}%`);
       Logger.log(`  Core Rate: ${inflation.cpi.coreRate}%`);
       Logger.log(`  Change: ${inflation.cpi.change}%`);
-      Logger.log(`  Source: ${inflation.cpi.source}`);
-      Logger.log(`  Last Updated: ${new Date(inflation.cpi.lastUpdated).toLocaleString()}`);
+      Logger.log(`  Source: ${inflation.cpi.source.name}`);
+      Logger.log(`  Last Updated: ${new Date(inflation.cpi.source.timestamp).toLocaleString()}`);
     } else {
       Logger.log("CPI Data: Not available");
     }
@@ -169,8 +178,8 @@ function testInflationData() {
       Logger.log(`  Year-over-Year: ${inflation.pce.yearOverYearChange}%`);
       Logger.log(`  Core Rate: ${inflation.pce.coreRate}%`);
       Logger.log(`  Change: ${inflation.pce.change}%`);
-      Logger.log(`  Source: ${inflation.pce.source}`);
-      Logger.log(`  Last Updated: ${new Date(inflation.pce.lastUpdated).toLocaleString()}`);
+      Logger.log(`  Source: ${inflation.pce.source.name}`);
+      Logger.log(`  Last Updated: ${new Date(inflation.pce.source.timestamp).toLocaleString()}`);
     } else {
       Logger.log("PCE Data: Not available");
     }
@@ -178,13 +187,13 @@ function testInflationData() {
     // Log inflation expectations
     if (inflation.expectations) {
       Logger.log("Inflation Expectations:");
-      Logger.log(`  1-Year: ${inflation.expectations.oneYear.value}% (Last Updated: ${inflation.expectations.oneYear.lastUpdated})`);
-      Logger.log(`  5-Year: ${inflation.expectations.fiveYear.value}% (Last Updated: ${inflation.expectations.fiveYear.lastUpdated})`);
+      Logger.log(`  1-Year: ${inflation.expectations.oneYear.value}% (Last Updated: ${new Date(inflation.expectations.source.timestamp).toLocaleString()})`);
+      Logger.log(`  5-Year: ${inflation.expectations.fiveYear.value}% (Last Updated: ${new Date(inflation.expectations.source.timestamp).toLocaleString()})`);
       if (inflation.expectations.tenYear) {
-        Logger.log(`  10-Year: ${inflation.expectations.tenYear.value}% (Last Updated: ${inflation.expectations.tenYear.lastUpdated})`);
+        Logger.log(`  10-Year: ${inflation.expectations.tenYear.value}% (Last Updated: ${new Date(inflation.expectations.source.timestamp).toLocaleString()})`);
       }
-      Logger.log(`  Source: ${inflation.expectations.source}`);
-      Logger.log(`  Last Updated: ${new Date(inflation.expectations.lastUpdated).toLocaleString()}`);
+      Logger.log(`  Source: ${inflation.expectations.source.name}`);
+      Logger.log(`  Last Updated: ${new Date(inflation.expectations.source.timestamp).toLocaleString()}`);
     } else {
       Logger.log("Inflation Expectations: Not available");
     }
@@ -198,8 +207,8 @@ function testInflationData() {
     }
     
     // Log source and timestamp
-    Logger.log(`Source: ${inflation.source}`);
-    Logger.log(`Last Updated: ${new Date(inflation.lastUpdated).toLocaleString()}`);
+    Logger.log(`Source: ${inflation.source.name}`);
+    Logger.log(`Last Updated: ${new Date(inflation.source.timestamp).toLocaleString()}`);
   } else {
     Logger.log(`Error: ${inflation.message}`);
   }
@@ -355,13 +364,21 @@ function retrieveInflationData() {
         oneYear: expectationsData?.oneYear,
         fiveYear: expectationsData?.fiveYear,
         tenYear: expectationsData?.tenYear,
-        source: expectationsData?.source || 'St. Louis Fed (FRED API)',
+        source: expectationsData?.source,
         lastUpdated: expectationsData?.lastUpdated || new Date()
       },
       analysis: analysis,
-      source: "Bureau of Labor Statistics, Federal Reserve",
-      sourceUrl: "https://www.bls.gov/cpi/",
-      lastUpdated: new Date()
+      source: {
+        url: "https://www.bls.gov/cpi/",
+        name: "Bureau of Labor Statistics",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://www.bls.gov/cpi/",
+          name: "Bureau of Labor Statistics",
+          timestamp: new Date().toISOString()
+        }
+      },
+      lastUpdated: new Date().toISOString()
     };
     
     // Cache the data for 24 hours (in seconds)
@@ -557,9 +574,17 @@ function fetchCPIDataFromBLS() {
       coreChange: ((latestCoreCpi - previousCoreCpi) / previousCoreCpi) * 100,
       month: latestMonth - 1, // Convert to 0-indexed month
       year: latestYear,
-      source: "Bureau of Labor Statistics",
-      sourceUrl: "https://www.bls.gov/cpi/",
-      lastUpdated: new Date()
+      source: {
+        url: "https://www.bls.gov/cpi/",
+        name: "Bureau of Labor Statistics",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://www.bls.gov/cpi/",
+          name: "Bureau of Labor Statistics",
+          timestamp: new Date().toISOString()
+        }
+      },
+      lastUpdated: new Date().toISOString()
     };
   } catch (error) {
     Logger.log(`Error fetching CPI data from BLS: ${error}`);
@@ -685,9 +710,17 @@ function fetchCPIDataFromFRED() {
       coreChange: ((latestCoreCpi - previousCoreCpi) / previousCoreCpi) * 100,
       month: new Date(cpiData.observations[0].date).getMonth(),
       year: new Date(cpiData.observations[0].date).getFullYear(),
-      source: "Federal Reserve Economic Data (FRED)",
-      sourceUrl: "https://fred.stlouisfed.org/",
-      lastUpdated: new Date()
+      source: {
+        url: "https://fred.stlouisfed.org/",
+        name: "Federal Reserve Economic Data (FRED)",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://fred.stlouisfed.org/",
+          name: "Federal Reserve Economic Data (FRED)",
+          timestamp: new Date().toISOString()
+        }
+      },
+      lastUpdated: new Date().toISOString()
     };
   } catch (error) {
     Logger.log(`Error fetching CPI data from FRED: ${error}`);
@@ -913,9 +946,17 @@ function fetchPCEDataFromBEA() {
       coreChange: ((latestCorePce - previousCorePce) / previousCorePce) * 100,
       quarter: latestQuarter,
       year: latestYear,
-      source: "Bureau of Economic Analysis",
-      sourceUrl: "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
-      lastUpdated: new Date()
+      source: {
+        url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
+        name: "Bureau of Economic Analysis",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://www.bea.gov/data/personal-consumption-expenditures-price-index",
+          name: "Bureau of Economic Analysis",
+          timestamp: new Date().toISOString()
+        }
+      },
+      lastUpdated: new Date().toISOString()
     };
   } catch (error) {
     Logger.log(`Error fetching PCE data from BEA: ${error}`);
@@ -1045,9 +1086,17 @@ function fetchPCEDataFromFRED() {
       coreChange: coreMonthOverMonthChange,
       month: new Date(pceData.observations[0].date).getMonth(),
       year: new Date(pceData.observations[0].date).getFullYear(),
-      source: "Federal Reserve Economic Data (FRED)",
-      sourceUrl: "https://fred.stlouisfed.org/",
-      lastUpdated: new Date()
+      source: {
+        url: "https://fred.stlouisfed.org/",
+        name: "Federal Reserve Economic Data (FRED)",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://fred.stlouisfed.org/",
+          name: "Federal Reserve Economic Data (FRED)",
+          timestamp: new Date().toISOString()
+        }
+      },
+      lastUpdated: new Date().toISOString()
     };
   } catch (error) {
     Logger.log(`Error fetching PCE data from FRED: ${error}`);
