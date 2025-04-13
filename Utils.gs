@@ -826,25 +826,25 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
         ${inflationData?.expectations && inflationData.expectations.oneYear && inflationData.expectations.fiveYear && inflationData.expectations.tenYear 
           ? `
         <div style="background-color: #f8f9fa; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
-          <div style="background-color: #2196F3; color: white; padding: 12px; text-align: center;">
+          <div style="background-color:rgb(19, 52, 79); color: white; padding: 12px; text-align: center;">
             <div style="font-size: 1.1em; font-weight: bold; margin-bottom: 4px;">Inflation Expectations</div>
             <div style="font-size: 0.9em; color: rgba(255,255,255,0.8);">Market Consensus</div>
           </div>
           <div style="padding: 15px; background-color: white;">
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="flex: 1; text-align: center; padding: 0 15px;">
-                <div style="color: #4CAF50; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">1-Year</div>
-                <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.expectations.oneYear.value + '%'}</div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+              <div style="text-align: center;">
+                <div style="color: #4CAF50; font-size: 1.1em; margin-bottom: 6px;">1-Year</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.oneYear.value + '%'}</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.oneYear.lastUpdated))}</div>
               </div>
-              <div style="flex: 1; text-align: center; padding: 0 15px; border-left: 1px solid #eee;">
-                <div style="color: #2196F3; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">5-Year</div>
-                <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.expectations.fiveYear.value + '%'}</div>
+              <div style="text-align: center;">
+                <div style="color: #2196F3; font-size: 1.1em; margin-bottom: 6px;">5-Year</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.fiveYear.value + '%'}</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.fiveYear.lastUpdated))}</div>
               </div>
-              <div style="flex: 1; text-align: center; padding: 0 15px; border-left: 1px solid #eee;">
-                <div style="color: #9C27B0; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">10-Year</div>
-                <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.expectations.tenYear.value + '%'}</div>
+              <div style="text-align: center;">
+                <div style="color: #9C27B0; font-size: 1.1em; margin-bottom: 6px;">10-Year</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.tenYear.value + '%'}</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.tenYear.lastUpdated))}</div>
               </div>
             </div>
@@ -868,18 +868,18 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
           <div style="font-size: 0.9em; color: rgba(255,255,255,0.8);">Current Market Insights</div>
         </div>
         <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
-          <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; justify-content: space-between; align-items: top;">
             <div style="flex: 1; text-align: center; padding: 0 15px;">
               <div style="color: #4CAF50; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Trend</div>
-              <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.trend}</div>
+              <div style="color: #2c3e50; font-size: 0.8em; line-height: 1.2;">${inflationData.trend}</div>
             </div>
             <div style="flex: 1; text-align: center; padding: 0 15px; border-left: 1px solid #eee;">
               <div style="color: #2196F3; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Outlook</div>
-              <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.outlook}</div>
+              <div style="color: #2c3e50; font-size: 0.8em; line-height: 1.2;">${inflationData.outlook}</div>
             </div>
             <div style="flex: 1; text-align: center; padding: 0 15px; border-left: 1px solid #eee;">
               <div style="color: #9C27B0; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Market Impact</div>
-              <div style="color: #2c3e50; font-size: 0.9em; line-height: 1.2;">${inflationData.marketImpact}</div>
+              <div style="color: #2c3e50; font-size: 0.8em; line-height: 1.2;">${inflationData.marketImpact}</div>
             </div>
           </div>
           <div style="font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; padding-right: 15px;">
