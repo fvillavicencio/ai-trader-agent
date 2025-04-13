@@ -45,45 +45,40 @@ export class TradierClientImpl implements TradierClient {
       throw new Error('TRADIER_API_KEY must be provided');
     }
     this.headers = {
-      'Authorization': `Bearer ${apiKey}`,
+      'Authorization': `Bearer ${this.apiKey}`,
       'Accept': 'application/json'
     };
   }
 
-  private async makeRequest<T>(endpoint: string, params: Record<string, string> = {}): Promise<T> {
-    try {
-      const response = await axios.get<T>(`${this.baseUrl}/${endpoint}`, {
-        headers: this.headers,
-        params
-      });
-      
-      if (!response.data) {
-        throw new Error('No data returned from Tradier API');
-      }
-      
-      // Log the raw response for debugging
-      console.log(`Raw response from ${endpoint}:`, response.data);
-      
-      return response.data;
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      const message = axiosError.response?.data?.message || axiosError.message;
-      console.error(`API Error for endpoint ${endpoint}:`, {
-        status: axiosError.response?.status,
-        data: axiosError.response?.data,
-        message: message
-      });
-      throw new Error(`Tradier API error: ${message}`);
+  private async makeRequest<T>(endpoint: string, params: Record<string, any>): Promise<T> {
+    const url = new URL(`${this.baseUrl}/${endpoint}`);
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.append(key, value.toString());
     }
+
+    console.log('Making request to', url.toString());
+    
+    const response = await fetch(url.toString(), {
+      headers: this.headers
+    });
+
+    const data = await response.json();
+    console.log('Raw response from', endpoint, ':', data);
+
+    if (!response.ok) {
+      throw new Error(`Tradier API error: ${response.statusText}`);
+    }
+
+    return data;
   }
 
   async getStockMetrics(symbol: string): Promise<StockMetrics> {
     const metrics: StockMetrics = {
       symbol,
-      price: null,
-      priceChange: null,
-      changesPercentage: null,
-      volume: null,
+      price: 0,
+      priceChange: 0,
+      changesPercentage: 0,
+      volume: 0,
       marketCap: null,
       company: null,
       industry: null,
@@ -98,13 +93,13 @@ export class TradierClientImpl implements TradierClient {
       returnOnAssets: null,
       profitMargin: null,
       dividendYield: null,
-      fiftyTwoWeekHigh: null,
-      fiftyTwoWeekLow: null,
-      dayHigh: null,
-      dayLow: null,
-      open: null,
-      close: null,
-      fiftyTwoWeekAverage: null
+      fiftyTwoWeekHigh: 0,
+      fiftyTwoWeekLow: 0,
+      dayHigh: 0,
+      dayLow: 0,
+      open: 0,
+      close: 0,
+      fiftyTwoWeekAverage: 0
     };
 
     try {
@@ -114,43 +109,36 @@ export class TradierClientImpl implements TradierClient {
         symbols: symbol,
         greeks: 'false'
       });
-      
+
       console.log('Quote data received:', quoteData);
       
-      if (!quoteData.quotes?.quote) {
-        throw new Error('No quote data returned');
-      }
-      
-      const quote = quoteData.quotes.quote;
-
-      metrics.price = parseFloat(quote.last?.toString() || '0');
-      metrics.priceChange = metrics.price - parseFloat(quote.prevclose?.toString() || '0');
-      metrics.changesPercentage = metrics.priceChange ? ((metrics.priceChange / parseFloat(quote.prevclose?.toString() || '0')) * 100) : 0;
-      metrics.dayHigh = parseFloat(quote.high?.toString() || '0');
-      metrics.dayLow = parseFloat(quote.low?.toString() || '0');
-      metrics.open = parseFloat(quote.open?.toString() || '0');
-      metrics.close = parseFloat(quote.close?.toString() || '0');
-      metrics.volume = parseFloat(quote.volume?.toString() || '0');
-      metrics.fiftyTwoWeekHigh = parseFloat(quote.week_52_high?.toString() || '0');
-      metrics.fiftyTwoWeekLow = parseFloat(quote.week_52_low?.toString() || '0');
-      
-      // Calculate 52-week average only if both values exist
-      if (metrics.fiftyTwoWeekHigh > 0 && metrics.fiftyTwoWeekLow > 0) {
+      if (quoteData.quotes?.quote) {
+        const quote = quoteData.quotes.quote;
+        metrics.price = parseFloat(quote.last?.toString() || '0');
+        metrics.priceChange = parseFloat(quote.change?.toString() || '0');
+        metrics.changesPercentage = parseFloat(quote.change_percentage?.toString() || '0');
+        metrics.volume = parseInt(quote.volume?.toString() || '0');
+        metrics.fiftyTwoWeekHigh = parseFloat(quote.week_52_high?.toString() || '0');
+        metrics.fiftyTwoWeekLow = parseFloat(quote.week_52_low?.toString() || '0');
+        metrics.dayHigh = parseFloat(quote.high?.toString() || '0');
+        metrics.dayLow = parseFloat(quote.low?.toString() || '0');
+        metrics.open = parseFloat(quote.open?.toString() || '0');
+        metrics.close = parseFloat(quote.close?.toString() || '0');
         metrics.fiftyTwoWeekAverage = (metrics.fiftyTwoWeekHigh + metrics.fiftyTwoWeekLow) / 2;
       }
 
       // Get Company Information
       try {
         console.log('Fetching company data for', symbol);
-        const companyData = await this.makeRequest<{ companies: { company: { [key: string]: any } } }>('markets/fundamentals/company', {
+        const companyData = await this.makeRequest<{ fundamentals: { company: { [key: string]: any } } }>('beta/markets/fundamentals/company', {
           symbols: symbol
         });
-        
+
         console.log('Company data received:', companyData);
         
-        if (companyData.companies?.company) {
-          const company = companyData.companies.company;
-          metrics.company = company.name;
+        if (companyData.fundamentals?.company) {
+          const company = companyData.fundamentals.company;
+          metrics.company = company.name || company.description || symbol;
           metrics.industry = company.industry;
           metrics.sector = company.sector;
         }
@@ -161,37 +149,35 @@ export class TradierClientImpl implements TradierClient {
       // Get Financial Metrics
       try {
         console.log('Fetching financial data for', symbol);
-        const financialsData = await this.makeRequest<{ fundamentals: { financials: { [key: string]: any } } }>('markets/fundamentals/financials', {
-          symbols: symbol,
-          metrics: 'all'
+        const ratiosData = await this.makeRequest<{ fundamentals: { ratios: { [key: string]: any } } }>('beta/markets/fundamentals/ratios', {
+          symbols: symbol
         });
         
-        console.log('Financial data received:', financialsData);
+        console.log('Financial data received:', ratiosData);
         
-        if (financialsData.fundamentals?.financials) {
-          const financials = financialsData.fundamentals.financials;
-          metrics.marketCap = parseFloat(financials.market_cap?.toString() || '0');
-          metrics.beta = parseFloat(financials.beta?.toString() || '0');
-          metrics.pegRatio = parseFloat(financials.peg_ratio?.toString() || '0');
-          metrics.forwardPE = parseFloat(financials.pe_ratio_forward?.toString() || '0');
-          metrics.priceToBook = parseFloat(financials.price_to_book?.toString() || '0');
-          metrics.priceToSales = parseFloat(financials.price_to_sales?.toString() || '0');
-          metrics.debtToEquity = parseFloat(financials.debt_to_equity?.toString() || '0');
-          metrics.returnOnEquity = parseFloat(financials.return_on_equity?.toString() || '0');
-          metrics.returnOnAssets = parseFloat(financials.return_on_assets?.toString() || '0');
-          metrics.profitMargin = parseFloat(financials.profit_margin?.toString() || '0');
-          metrics.dividendYield = parseFloat(financials.dividend_yield?.toString() || '0');
+        if (ratiosData.fundamentals?.ratios) {
+          const ratios = ratiosData.fundamentals.ratios;
+          metrics.marketCap = parseFloat(ratios.market_cap?.toString() || '0');
+          metrics.beta = parseFloat(ratios.beta?.toString() || '0');
+          metrics.pegRatio = parseFloat(ratios.peg_ratio?.toString() || '0');
+          metrics.forwardPE = parseFloat(ratios.pe_ratio_forward?.toString() || '0');
+          metrics.priceToBook = parseFloat(ratios.price_to_book?.toString() || '0');
+          metrics.priceToSales = parseFloat(ratios.price_to_sales?.toString() || '0');
+          metrics.debtToEquity = parseFloat(ratios.debt_to_equity?.toString() || '0');
+          metrics.returnOnEquity = parseFloat(ratios.return_on_equity?.toString() || '0');
+          metrics.returnOnAssets = parseFloat(ratios.return_on_assets?.toString() || '0');
+          metrics.profitMargin = parseFloat(ratios.profit_margin?.toString() || '0');
+          metrics.dividendYield = parseFloat(ratios.dividend_yield?.toString() || '0');
         }
       } catch (error) {
         console.error('Error fetching financial data:', error);
       }
 
+      return metrics;
     } catch (error) {
       console.error('Error fetching data:', error);
       throw error;
     }
-
-    return metrics;
   }
 }
 
