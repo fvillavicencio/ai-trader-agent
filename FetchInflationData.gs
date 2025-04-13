@@ -318,7 +318,7 @@ function retrieveInflationData() {
   try {
     Logger.log("Retrieving inflation data...");
     
-    // Check cache first (24-hour cache for inflation data)
+    // Check cache first (1-hour cache for inflation data)
     const scriptCache = CacheService.getScriptCache();
     const cachedData = scriptCache.get('INFLATION_DATA');
     
@@ -326,13 +326,13 @@ function retrieveInflationData() {
       const parsedData = JSON.parse(cachedData);
       const cacheTime = new Date(parsedData.lastUpdated);
       const currentTime = new Date();
-      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
+      const cacheAgeMinutes = (currentTime - cacheTime) / (1000 * 60);
       
-      if (cacheAgeHours < 24) {
-        Logger.log("Using cached inflation data (less than 24 hours old)");
+      if (cacheAgeMinutes < 60) {
+        Logger.log("Using cached inflation data (less than 1 hour old)");
         return parsedData;
       } else {
-        Logger.log("Cached inflation data is more than 24 hours old");
+        Logger.log("Cached inflation data is more than 1 hour old");
       }
     }
     
@@ -381,8 +381,12 @@ function retrieveInflationData() {
       lastUpdated: new Date().toISOString()
     };
     
-    // Cache the data for 24 hours (in seconds)
-    scriptCache.put('INFLATION_DATA', JSON.stringify(result), 24 * 60 * 60);
+    // Cache the data for 1 hour (in seconds)
+    scriptCache.put('INFLATION_DATA', JSON.stringify(result), 60 * 60);
+    
+    if (debugMode) {
+        Logger.log("Inflation data retrieved:\n"+JSON.stringify(result, null, 2));
+    }
     
     return result;
   } catch (error) {
