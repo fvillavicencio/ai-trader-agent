@@ -68,11 +68,15 @@ function publishToGhost(fileId, folderId, fileName) {
         }
 
         // Log the payload (for debugging)
-        Logger.log('Post Payload: ' + JSON.stringify(postPayload, null, 2));
+        if (debugMode) {
+          Logger.log('Post Payload: ' + JSON.stringify(postPayload, null, 2));
+        }
 
         // Generate JWT token
         const token = generateGhostJWT(config.apiKey);
-        Logger.log('Generated JWT: ' + token);
+        if (debugMode) {
+          Logger.log('Generated JWT: ' + token);
+        }
 
         // Set up the request options
         const options = {
@@ -143,7 +147,7 @@ function publishToGhost(fileId, folderId, fileName) {
         }
 
         // Create new post
-        const createUrl = config.apiUrl + '/ghost/api/admin/posts/';
+        const createUrl = config.apiUrl + '/ghost/api/admin/posts/?send_email=true';
         const createResponse = UrlFetchApp.fetch(createUrl, options);
         Logger.log('Create response status code: ' + createResponse.getResponseCode());
         const createResult = JSON.parse(createResponse.getContentText());
