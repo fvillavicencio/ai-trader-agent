@@ -13,8 +13,7 @@ function publishToGhost(fileId, folderId, fileName) {
         const ghostApiUrl = props.getProperty('GHOST_API_URL') || 'https://market-pulse-daily.ghost.io';
         const ghostAdminApiKey = props.getProperty('GHOST_ADMIN_API_KEY') || '67f553a7f41c9900013e1fbe:36fe3da206f1ebb61643868fffca951da8ce9571521c1e8f853aadffe2f56e2e';
         const ghostAuthorId = props.getProperty('GHOST_AUTHOR_ID') || null;
-        const isDebugMode = props.getProperty('DEBUG_MODE') === 'true';
-
+        
         // Get current time in ET
         const now = new Date();
         const timeInET = Utilities.formatDate(now, TIME_ZONE, 'HH:mm');
@@ -25,13 +24,18 @@ function publishToGhost(fileId, folderId, fileName) {
         // Determine content type based on time
         const isPremiumContent = currentHour < 16 || (currentHour === 16 && currentMinute < 30);
 
+        // Set visibility and email segment based on content type
+        const visibility = isPremiumContent ? "paid" : "members";
+        const emailSegment = isPremiumContent ? "paid" : "all";
+
         // Log configuration
         Logger.log('Ghost API Configuration:');
         Logger.log('Raw API URL: ' + ghostApiUrl);
         Logger.log('Raw Admin API Key: ' + ghostAdminApiKey);
         Logger.log('Raw Author ID: ' + ghostAuthorId);
         Logger.log('Content Type: ' + (isPremiumContent ? 'Premium (Paid-members only)' : 'Standard (Members only)'));
-        Logger.log('Debug Mode: ' + isDebugMode);
+        Logger.log('Debug Mode: ' + debugMode);
+        Logger.log('Email Segment: ' + emailSegment);
 
         // Set configuration
         const config = {
@@ -57,10 +61,13 @@ function publishToGhost(fileId, folderId, fileName) {
         const postPayload = {
           title: title,
           lexical: JSON.stringify(formattedContent),
-          status: isDebugMode ? "draft" : "published",
+          status: debugMode ? "draft" : "published",
           tags: tags,
-          visibility: isPremiumContent ? "paid" : "members",
-          excerpt: excerpt
+          visibility: visibility,
+          excerpt: excerpt,
+          email_segment: emailSegment,
+          email_only: false,
+          canonical_url: ""  // Optional: Add your canonical URL
         };
 
         if (config.authorId) {
@@ -89,7 +96,7 @@ function publishToGhost(fileId, folderId, fileName) {
         };
 
         // In debug mode, create a draft in Ghost admin interface
-        if (isDebugMode) {
+        if (debugMode) {
           Logger.log('Debug mode enabled - creating draft post');
           const draftUrl = config.apiUrl + '/ghost/api/admin/posts/';
           const draftResponse = UrlFetchApp.fetch(draftUrl, options);
@@ -125,7 +132,7 @@ function publishToGhost(fileId, folderId, fileName) {
 
         if (existingPostId) {
           // Update existing post
-          const updateUrl = config.apiUrl + '/ghost/api/admin/posts/' + existingPostId;
+          const updateUrl = config.apiUrl + '/ghost/api/admin/posts/' + existingPostId + '?send_email_when_published=true';
           const updateResponse = UrlFetchApp.fetch(updateUrl, {
             method: 'put',
             headers: {
