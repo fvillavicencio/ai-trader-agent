@@ -51,16 +51,8 @@ function retrieveMacroeconomicFactors() {
     
     if (cachedData) {
       const parsedData = JSON.parse(cachedData);
-      const cacheTime = new Date(parsedData.timestamp);
-      const currentTime = new Date();
-      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
-      
-      if (cacheAgeHours < 24) {
-        Logger.log("Using cached complete macroeconomic factors data (less than 24 hours old)");
-        return parsedData;
-      } else {
-        Logger.log("Cached complete macroeconomic factors data is more than 24 hours old");
-      }
+      Logger.log("Using cached complete macroeconomic factors data");
+      return parsedData;
     }
     
     // Retrieve treasury yields data
@@ -71,6 +63,10 @@ function retrieveMacroeconomicFactors() {
     
     // Retrieve inflation data
     const inflation = retrieveInflationData();
+
+    if (debugMode){
+      Logger.log("Inflation data retrieved in retrieveMacroeconomicFactors:\n"+JSON.stringify(inflation, null, 2));
+    }
     
     // Retrieve geopolitical risks
     const geopoliticalRisks = retrieveGeopoliticalRisksData();
@@ -382,16 +378,8 @@ function retrieveTreasuryYieldsData() {
     
     if (cachedData) {
       const parsedData = JSON.parse(cachedData);
-      const cacheTime = new Date(parsedData.lastUpdated);
-      const currentTime = new Date();
-      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
-      
-      if (cacheAgeHours < 24) {
-        Logger.log("Using cached treasury yields data (less than 24 hours old)");
-        return parsedData;
-      } else {
-        Logger.log("Cached treasury yields data is more than 24 hours old");
-      }
+      Logger.log("Using cached treasury yields data");
+      return parsedData;
     }
     
     // Define the treasury yield terms to fetch
@@ -643,16 +631,8 @@ function retrieveGeopoliticalRisksData() {
     
     if (cachedData) {
       const parsedData = JSON.parse(cachedData);
-      const cacheTime = new Date(parsedData.lastUpdated);
-      const currentTime = new Date();
-      const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
-      
-      if (cacheAgeHours < 24) {
-        Logger.log("Using cached geopolitical risks data (less than 24 hours old)");
-        return parsedData;
-      } else {
-        Logger.log("Cached geopolitical risks data is more than 24 hours old");
-      }
+      Logger.log("Using cached geopolitical risks data");
+      return parsedData;
     }
     
     // Determine which AI provider to use
