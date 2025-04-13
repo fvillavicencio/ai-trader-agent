@@ -729,8 +729,8 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="font-weight: bold; margin-bottom: 5px;">Federal Funds Futures</div>
               <div style="display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-                  <div style="color: #666; font-size: 1.2em;">Current Price: ${macro.fedPolicy.futures.currentPrice || 'N/A'}</div>
-                  <div style="color: #666; font-size: 1.2em;">Implied Rate: ${macro.fedPolicy.futures.impliedRate || 'N/A'}%</div>
+                  <div style="color: #666; font-size: 1em;">Current Price: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.currentPrice || 'N/A'}</span></div>
+                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.impliedRate || 'N/A'}</span>%</div>
                 </div>
               </div>
               <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
@@ -977,14 +977,16 @@ function generateGeopoliticalRisksSection(analysis) {
         default:
           riskColor = '#4caf50'; // green for 'Low'
       }
-      
+      if (debugMode) {
+        Logger.log("Risk:\n"+ JSON.stringify(risk, null, 2));
+      }
       riskCardsHtml += `
       <div style="display: flex; margin-bottom: 15px;">
         <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
           <div style="font-weight: bold; margin-bottom: 5px;">${risk.name || 'Unknown Risk'}</div>
           <div style="color: #555; margin-bottom: 5px;">${risk.description || 'No description available'}</div>
           <div style="font-size: 12px; color: #757575;">
-            Region: ${risk.region || ''} • Impact Level: ${riskLevel}
+            Region: ${risk.region || ''} • Source: ${risk.source || 'N/A'}
           </div>
         </div>
         <div style="width: 80px; text-align: center; background-color: ${riskColor}; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
