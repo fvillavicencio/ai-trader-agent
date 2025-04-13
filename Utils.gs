@@ -179,6 +179,10 @@ function generateMarketSentimentSection(analysis) {
     const overallSentiment = sentimentData.overall || 'Neutral';
     const analysts = sentimentData.analysts || [];
     
+    // Get inflation expectations data
+    const inflation = analysis.macroeconomicFactors?.inflation || {};
+    const expectations = inflation.expectations || {};
+    
     // Generate analysts HTML
     let analystsHtml = '';
     if (analysts.length > 0) {
@@ -212,6 +216,37 @@ function generateMarketSentimentSection(analysis) {
       `;
     }
     
+    // Generate inflation expectations section
+    let expectationsHtml = '';
+    if (expectations.oneYear || expectations.fiveYear || expectations.tenYear) {
+      expectationsHtml = `
+        <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+          <div style="font-weight: bold; margin-bottom: 5px;">Inflation Expectations</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #4CAF50;">1-Year: ${formatValue(expectations.oneYear?.value)}%</div>
+              <div style="color: #666; font-size: 12px;">Last Updated: ${formatDate(new Date(expectations.oneYear?.lastUpdated))}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #2196F3;">5-Year: ${formatValue(expectations.fiveYear?.value)}%</div>
+              <div style="color: #666; font-size: 12px;">Last Updated: ${formatDate(new Date(expectations.fiveYear?.lastUpdated))}</div>
+            </div>
+            ${expectations.tenYear ? `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #9C27B0;">10-Year: ${formatValue(expectations.tenYear?.value)}%</div>
+              <div style="color: #666; font-size: 12px;">Last Updated: ${formatDate(new Date(expectations.tenYear?.lastUpdated))}</div>
+            </div>
+            ` : ''}
+          </div>
+          ${expectations.source ? `
+          <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+            Source: <a href="${expectations.source.url || 'N/A'}">${expectations.source.name || 'N/A'}</a>
+          </div>
+          ` : ''}
+        </div>
+      `;
+    }
+    
     // Generate source information
     const sourceInfo = sentimentData.source 
       ? `<div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
@@ -229,6 +264,7 @@ function generateMarketSentimentSection(analysis) {
       </div>
       
       ${analystsHtml}
+      ${expectationsHtml}
       ${sourceInfo}
     </div>
     `;
