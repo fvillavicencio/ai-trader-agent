@@ -40,6 +40,14 @@ function retrieveFedPolicyData() {
       Logger.log("----------------------------------------");
     }
     
+    // Fetch Fed Funds futures data
+    const futuresData = fetchFedFundsFuturesProbabilities(fedFundsRate.currentRate);
+    if (debugMode) {
+      Logger.log("----------------------------------------");
+      Logger.log("Fed Funds Futures Data:", futuresData);
+      Logger.log("----------------------------------------");
+    }
+    
     // Create the data structure
     const fedPolicy = {
       currentRate: fedFundsRate,
@@ -47,13 +55,16 @@ function retrieveFedPolicyData() {
       nextMeeting: computed.nextMeeting,
       forwardGuidance: guidance.forwardGuidance,
       commentary: guidance.commentary,
+      futures: futuresData,
       source: {
         url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
+        name: "Federal Reserve Press Releases",
         timestamp: new Date().toISOString(),
         components: {
           fedFundsRate: fedFundsRate.source,
           meetings: meetings.source,
-          forwardGuidance: guidance.source
+          forwardGuidance: guidance.source,
+          futures: futuresData?.source || null
         }
       }
     };
@@ -100,12 +111,43 @@ function retrieveFedPolicyData() {
         startDate: new Date(),
         endDate: new Date()
       },
-      meetings: [],
+      futures: {
+        currentPrice: null,
+        impliedRate: null,
+        probabilities: {
+          cut: 0,
+          hold: 0,
+          hike: 0
+        },
+        source: {
+          url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+          name: "Yahoo Finance",
+          timestamp: new Date().toISOString(),
+          note: "Error fetching futures data",
+          components: {
+            url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+            name: "Yahoo Finance",
+            timestamp: new Date().toISOString()
+          }
+        }
+      },
       forwardGuidance: "Error retrieving forward guidance",
       commentary: "Error occurred while retrieving Fed policy data",
       source: {
         url: "https://www.federalreserve.gov/newsevents/pressreleases/monetary.htm",
-        timestamp: new Date().toISOString()
+        name: "Federal Reserve Press Releases",
+        timestamp: new Date().toISOString(),
+        components: {
+          fedFundsRate: null,
+          meetings: null,
+          forwardGuidance: null,
+          futures: null
+        },
+        error: {
+          type: error.constructor.name,
+          message: error.message,
+          stack: error.stack
+        }
       }
     };
   }
@@ -158,7 +200,13 @@ function fetchFedFundsRateFromFRED() {
         rangeHigh: (Math.ceil(latestValue * 4) / 4).toFixed(2),
         source: {
           url: "https://fred.stlouisfed.org/series/FEDFUNDS",
-          timestamp: new Date().toISOString()
+          name: "Federal Reserve Bank of St. Louis",
+          timestamp: new Date().toISOString(),
+          components: {
+            url: "https://fred.stlouisfed.org/series/FEDFUNDS",
+            name: "Federal Reserve Bank of St. Louis",
+            timestamp: new Date().toISOString()
+          }
         }
       };
     }
@@ -468,7 +516,13 @@ function fetchFOMCMeetings() {
       nextMeeting: computeLastAndNextMeetings(meetings).nextMeeting,
       source: {
         url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-        timestamp: new Date().toISOString()
+        name: "Federal Reserve Meeting Calendar",
+        timestamp: new Date().toISOString(),
+        components: {
+          url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+          name: "Federal Reserve Meeting Calendar",
+          timestamp: new Date().toISOString()
+        }
       }
     };
   } catch (error) {
@@ -490,6 +544,11 @@ function fetchFOMCMeetings() {
         timezone: "",
         startDate: new Date(),
         endDate: new Date()
+      },
+      source: {
+        url: "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+        name: "Federal Reserve Meeting Calendar",
+        timestamp: new Date().toISOString()
       }
     };
   }
@@ -580,7 +639,13 @@ function fetchForwardGuidanceEnhanced() {
       commentary: `Latest FOMC statement retrieved from: ${articleLink}`,
       source: {
         url: articleLink,
-        timestamp: new Date(pubDate).toISOString()
+        name: "Federal Reserve Press Releases",
+        timestamp: new Date(pubDate).toISOString(),
+        components: {
+          url: articleLink,
+          name: "Federal Reserve Press Releases",
+          timestamp: new Date(pubDate).toISOString()
+        }
       }
     };
     
@@ -592,7 +657,13 @@ function fetchForwardGuidanceEnhanced() {
       commentary: "Error retrieving guidance: Using default statement",
       source: {
         url: rssUrl,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        name: "Federal Reserve Press Releases",
+        error: {
+          type: error.constructor.name,
+          message: error.message,
+          stack: error.stack
+        }
       }
     };
   }
@@ -1025,7 +1096,16 @@ function getFedFundsFuturesPrice() {
         lastUpdated: result.meta.regularMarketTime ? 
           new Date(result.meta.regularMarketTime * 1000).toISOString() : 
           new Date().toISOString(),
-        source: url
+        source: {
+          url: url,
+          name: "Yahoo Finance",
+          timestamp: new Date().toISOString(),
+          components: {
+            url: url,
+            name: "Yahoo Finance",
+            timestamp: new Date().toISOString()
+          }
+        }
       };
       
       Logger.log(`Successfully parsed futures data: ${JSON.stringify(output, null, 2)}`);
@@ -1048,7 +1128,6 @@ function getFedFundsFuturesPrice() {
  */
 function fetchFedFundsFuturesProbabilities(currentRate) {
   try {
-   
     // Fetch fresh data
     const futuresPrice = getFedFundsFuturesPrice();
     
@@ -1061,45 +1140,70 @@ function fetchFedFundsFuturesProbabilities(currentRate) {
       // Try to fetch market probabilities from alternative source
       const marketProbabilities = fetchMarketProbabilities();
       return {
-        impliedRate: "N/A",
-        currentRate: (currentRate !== undefined && currentRate !== null) ? currentRate.toFixed(2) : "N/A",
-        futuresPrice: (futuresPrice !== undefined && futuresPrice !== null) ? futuresPrice.price.toFixed(2) : "N/A",
-        probabilityUp: marketProbabilities.increase,
-        probabilityHold: marketProbabilities.hold,
-        probabilityDown: marketProbabilities.decrease,
+        price: null,
+        impliedRate: null,
+        probabilities: {
+          cut: parseFloat(marketProbabilities.decrease) || 0,
+          hold: parseFloat(marketProbabilities.hold) || 0,
+          hike: parseFloat(marketProbabilities.increase) || 0
+        },
         source: {
           url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+          name: "Yahoo Finance",
           timestamp: new Date().toISOString(),
-          note: "Futures price unavailable, using market probabilities"
+          note: "Futures price unavailable, using market probabilities",
+          components: {
+            url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+            name: "Yahoo Finance",
+            timestamp: new Date().toISOString()
+          }
         }
       };
     }
-    
-    const probabilities = calculateFedFundsProbabilities(currentRate, parseFloat(futuresPrice.price));
-     
-    return probabilities;
-    
-  } catch (error) {
-    if (debugMode) {
-      Logger.log("Error in fetchFedFundsFuturesProbabilities:");
-      Logger.log("Error Type:", error.constructor.name);
-      Logger.log("Error Message:", error.message);
-      Logger.log("Stack Trace:", error.stack);
-    }
-    
-    // Try to fetch market probabilities from alternative source
-    const marketProbabilities = fetchMarketProbabilities();
+
+    // Calculate probabilities using the actual futures price
+    const { impliedRate, probabilities } = calculateFedFundsProbabilities(currentRate, parseFloat(futuresPrice.price));
+
     return {
-      impliedRate: "N/A",
-      currentRate: currentRate.toFixed(2),
-      futuresPrice: "N/A",
-      probabilityUp: marketProbabilities.increase,
-      probabilityHold: marketProbabilities.hold,
-      probabilityDown: marketProbabilities.decrease,
+      currentPrice: parseFloat(futuresPrice.price),
+      impliedRate: parseFloat(impliedRate),
+      probabilities: {
+        cut: probabilities.cut,
+        hold: probabilities.hold,
+        hike: probabilities.hike
+      },
+      source: {
+        url: futuresPrice.source.url,
+        name: futuresPrice.source.name,
+        timestamp: futuresPrice.lastUpdated,
+        components: {
+          url: futuresPrice.source.url,
+          name: futuresPrice.source.name,
+          timestamp: futuresPrice.lastUpdated
+        }
+      }
+    };
+
+  } catch (error) {
+    Logger.log('Error in fetchFedFundsFuturesProbabilities:', error.message);
+    return {
+      currentPrice: null,
+      impliedRate: null,
+      probabilities: {
+        cut: 0,
+        hold: 0,
+        hike: 0
+      },
       source: {
         url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+        name: "Yahoo Finance",
         timestamp: new Date().toISOString(),
-        note: "Error occurred while fetching futures data, using market probabilities"
+        note: "Error fetching futures data",
+        components: {
+          url: "https://finance.yahoo.com/quote/ZQ%3DF/",
+          name: "Yahoo Finance",
+          timestamp: new Date().toISOString()
+        }
       }
     };
   }
@@ -1112,41 +1216,39 @@ function fetchFedFundsFuturesProbabilities(currentRate) {
  * @return {Object} An object containing the implied rate and probabilities
  */
 function calculateFedFundsProbabilities(currentRate, futuresPrice) {
-  const impliedRate = 100 - futuresPrice;  // Converts the price to an implied rate
+  const impliedRate = 100 - futuresPrice;  // Convert futures price to implied rate
   const diff = impliedRate - currentRate;
-  const rateStep = 0.25;  // A typical increment for rate changes (25 basis points)
-  const hikes = Math.abs(diff) / rateStep;
   
-  let probabilityUp = 0, probabilityDown = 0, probabilityHold = 0;
-  
+  // Parameters for the logistic model:
+  const threshold = 0.25;  // When |diff| equals 0.25, assign ~50% probability for a move.
+  const k = 5;           // Sensitivity parameter; adjust k to calibrate the steepness.
+
+  // Logistic function to calculate weight based on the magnitude of diff relative to the threshold.
+  const weight = 1 / (1 + Math.exp(-k * (Math.abs(diff) - threshold)));
+
+  let probabilityHike = 0, probabilityCut = 0, probabilityHold = 0;
+
   if (diff > 0) {
-    probabilityUp = Math.min(hikes * 100, 100);  // scale to percentage and cap at 100%
-    probabilityHold = 100 - probabilityUp;
-    probabilityDown = 0;
+    probabilityHike = weight * 100;
+    probabilityHold = (1 - weight) * 100;
+    probabilityCut = 0;
   } else if (diff < 0) {
-    probabilityDown = Math.min(hikes * 100, 100);
-    probabilityHold = 100 - probabilityDown;
-    probabilityUp = 0;
-  } else {
-    probabilityUp = 0;
+    probabilityCut = weight * 100;
+    probabilityHold = (1 - weight) * 100;
+    probabilityHike = 0;
+  } else {  // diff === 0
     probabilityHold = 100;
-    probabilityDown = 0;
   }
   
   return {
     impliedRate: impliedRate.toFixed(2),
-    currentRate: currentRate.toFixed(2),
-    futuresPrice: futuresPrice.toFixed(2),
-    probabilityUp: probabilityUp.toFixed(1),
-    probabilityHold: probabilityHold.toFixed(1),
-    probabilityDown: probabilityDown.toFixed(1),
-    source: {
-      url: "https://finance.yahoo.com/quote/ZQ%3DF/",
-      timestamp: new Date().toISOString()
+    probabilities: {
+      hike: probabilityHike.toFixed(1),
+      hold: probabilityHold.toFixed(1),
+      cut: probabilityCut.toFixed(1)
     }
   };
 }
-
 /**
  * Retrieves complete Fed policy data including futures probabilities
  * @return {Object} Complete Fed policy data
@@ -1301,14 +1403,15 @@ function retrieveCompleteFedPolicyData() {
       futuresData: {
         currentRate: fedFundsRate.currentRate,
         impliedRate: probabilities.impliedRate,
-        futuresPrice: probabilities.futuresPrice,
-        probabilityUp: probabilities.probabilityUp,
-        probabilityHold: probabilities.probabilityHold,
-        probabilityDown: probabilities.probabilityDown,
+        futuresPrice: probabilities.price,
+        probabilityUp: probabilities.probabilities.hike,
+        probabilityHold: probabilities.probabilities.hold,
+        probabilityDown: probabilities.probabilities.cut,
         source: probabilities.source
       },
       source: {
         url: "https://www.federalreserve.gov/",
+        name: "Federal Reserve",
         timestamp: new Date().toISOString(),
         components: {
           fedFundsRate: fedFundsRate.source,
@@ -1375,12 +1478,19 @@ function retrieveCompleteFedPolicyData() {
       },
       source: {
         url: "https://www.federalreserve.gov/",
-        timestamp: new Date().toISOString()
-      },
-      error: {
-        message: errorMessage,
-        type: error.constructor.name,
-        stack: error.stack
+        name: "Federal Reserve",
+        timestamp: new Date().toISOString(),
+        components: {
+          fedFundsRate: null,
+          meetings: null,
+          forwardGuidance: null,
+          marketProbabilities: null
+        },
+        error: {
+          type: error.constructor.name,
+          message: errorMessage,
+          stack: error.stack
+        }
       }
     };
   }
@@ -1638,31 +1748,34 @@ function formatFedPolicyData(fedPolicyData) {
         rangeHigh: "N/A"
       };
       
-      // Access the numeric values before formatting
-      formattedText += `- Current Rate: ${currentRate.currentRate}%\n`;
-      formattedText += `- Rate Range: ${currentRate.rangeLow}% - ${currentRate.rangeHigh}%\n`;
+      // Format current rate and range
+      formattedText += `- Current Federal Funds Rate: ${formatValue(currentRate.currentRate)}%\n`;
+      formattedText += `- Rate Range: ${formatValue(currentRate.rangeLow)}% - ${formatValue(currentRate.rangeHigh)}%\n`;
       
-      if (fedPolicyData.nextMeeting) {
-        formattedText += `- Next Meeting: ${fedPolicyData.nextMeeting.date}\n`;
-        formattedText += `- Meeting Time: ${fedPolicyData.nextMeeting.time} ${fedPolicyData.nextMeeting.timezone}\n`;
-      } else {
-        formattedText += `- Next Meeting: No upcoming meetings\n`;
+      // Format futures data if available
+      if (fedPolicyData.futuresData) {
+        formattedText += `\n**Fed Funds Futures Data:**\n`;
+        formattedText += `- Futures Price: ${formatValue(fedPolicyData.futuresData.futuresPrice)}\n`;
+        formattedText += `- Implied Rate: ${formatValue(fedPolicyData.futuresData.impliedRate)}%\n`;
+        formattedText += `- Probability of Rate Increase: ${formatValue(fedPolicyData.futuresData.probabilityUp)}%\n`;
+        formattedText += `- Probability of Rate Hold: ${formatValue(fedPolicyData.futuresData.probabilityHold)}%\n`;
+        formattedText += `- Probability of Rate Decrease: ${formatValue(fedPolicyData.futuresData.probabilityDown)}%\n`;
       }
       
-      formattedText += `- Forward Guidance: ${formatValue(fedPolicyData.forwardGuidance)}\n`;
-      formattedText += `- Commentary: ${formatValue(fedPolicyData.commentary)}\n`;
+      // Format meeting information
+      formattedText += `\n**FOMC Meetings:**\n`;
+      formattedText += `- Last Meeting: ${formatDate(fedPolicyData.lastMeeting?.startDate)}\n`;
+      formattedText += `- Next Meeting: ${formatDate(fedPolicyData.nextMeeting?.startDate)}\n`;
       
-      if (fedPolicyData.marketProbabilities) {
-        formattedText += `\n**Market Probabilities:**\n`;
-        formattedText += `- Rate Cut: ${formatValue(fedPolicyData.marketProbabilities.probabilityDown)}%\n`;
-        formattedText += `- Rate Hold: ${formatValue(fedPolicyData.marketProbabilities.probabilityHold)}%\n`;
-        formattedText += `- Rate Hike: ${formatValue(fedPolicyData.marketProbabilities.probabilityUp)}%\n`;
-        formattedText += `- Implied Rate: ${formatValue(fedPolicyData.marketProbabilities.impliedRate)}%\n`;
-      }
+      // Format forward guidance
+      formattedText += `\n**Forward Guidance:**\n`;
+      formattedText += `- Statement: ${formatValue(fedPolicyData.forwardGuidance)}\n`;
       
+      // Format source information
       formattedText += `\n**Source:**\n`;
-      formattedText += `- URL: ${formatValue(fedPolicyData.source.url)}\n`;
-      formattedText += `- Timestamp: ${formatValue(fedPolicyData.source.timestamp)}\n`;
+      formattedText += `- URL: ${formatValue(fedPolicyData.source?.url)}\n`;
+      formattedText += `- Timestamp: ${formatValue(fedPolicyData.source?.timestamp)}\n`;
+      formattedText += `- Components: ${formatValue(fedPolicyData.source?.components?.fedFundsRate?.url)}\n`;
     } else {
       formattedText += "- Error retrieving Fed policy data\n";
     }

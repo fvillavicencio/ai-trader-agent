@@ -459,7 +459,7 @@ function formatMacroeconomicFactorsData(macroData) {
       for (const risk of sortedRisks) {
         formattedText += `* ${formatValue(risk.name) || 'Unknown Risk'}: ${formatValue(risk.description) || 'No description'}\n`;
         formattedText += `  * Region: ${formatValue(risk.region) || 'Unknown Region'}\n`;
-        formattedText += `  * Impact Level: ${formatValue(risk.impactLevel) || 0}/10\n`;
+        formattedText += `  * Impact Level: ${formatValue(risk.impactLevel) || 0}\n`;
         formattedText += `  * Source: ${formatValue(risk.source) || 'N/A'} (${formatValue(risk.sourceUrl) || 'N/A'})\n`;
         formattedText += `  * Last Updated: ${formatValue(risk.timestamp) || 'N/A'}\n\n`;
       }

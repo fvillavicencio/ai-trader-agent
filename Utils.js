@@ -140,31 +140,8 @@ function testEnhancedJsonParsing() {
 function generateEmailTemplate(analysisResult, isTest = false) {
   try {
     // Extract data from analysis result
-    const props = PropertiesService.getScriptProperties();
-    const decision = analysisResult.decision || 'No Decision';
     const analysis = analysisResult.analysis || {};
     const analysisTime = analysisResult.timestamp ? new Date(analysisResult.timestamp) : new Date();
-    
-    // Define colors based on decision
-    let decisionColor = '#757575'; // Default gray
-    let decisionIcon = ''; // Default warning icon
-    
-    // Set colors and icon based on decision
-    if (decision.toLowerCase().includes('buy')) {
-      decisionColor = '#4caf50'; // Green
-      decisionIcon = '&#8593;'; // Up arrow using HTML entity
-    } else if (decision.toLowerCase().includes('sell')) {
-      decisionColor = '#f44336'; // Red
-      decisionIcon = '&#8595;'; // Down arrow using HTML entity
-    } else if (decision.toLowerCase().includes('hold')) {
-      decisionColor = '#ff9800'; // Orange
-      decisionIcon = '&#8594;'; // Right arrow using HTML entity
-    } else if (decision.toLowerCase().includes('watch')) {
-      decisionColor = '#FFA500'; // Orange/Amber
-      decisionIcon = '⚠️';
-    }
-    
-    // Format the analysis time
     const formattedAnalysisTime = formatDate(analysisTime);
     
     // Generate the sentiment section HTML
@@ -182,248 +159,7 @@ function generateEmailTemplate(analysisResult, isTest = false) {
     // Generate the geopolitical risks section HTML
     const geopoliticalRisksHtml = generateGeopoliticalRisksSection(analysis);
     
-    // Generate the HTML email
-    let html = `
-    <!DOCTYPE html>
-    <html>
-    <head>
-      <meta charset="UTF-8">
-      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-      <title>${props.getProperty('NEWSLETTER_NAME')}</title>
-      <style>
-        /* Base styles */
-        body {
-          font-family: 'Segoe UI', Arial, sans-serif;
-          background-color: #f5f7fa;
-          color: #333;
-          line-height: 1.5;
-          margin: 0;
-          padding: 0;
-          -webkit-text-size-adjust: 100%;
-          -ms-text-size-adjust: 100%;
-        }
-        
-        .container {
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 20px;
-          width: 100%;
-        }
-        
-        .header {
-          text-align: center;
-          margin-bottom: 30px;
-          padding: 0 10px;
-        }
-        
-        .logo {
-          margin-bottom: 15px;
-          max-width: 100%;
-          height: auto;
-        }
-        
-        .title {
-          font-size: 24px;
-          font-weight: bold;
-          color: #2c3e50;
-          margin: 0;
-          line-height: 1.2;
-        }
-        
-        .subtitle {
-          font-size: 14px;
-          color: #7f8c8d;
-          margin: 5px 0 0;
-          line-height: 1.4;
-        }
-        
-        .decision-banner {
-          background-color: #f8f9fa;
-          border-radius: 8px;
-          padding: 20px;
-          margin-bottom: 20px;
-          text-align: center;
-          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-          width: 100%;
-        }
-        
-        .decision-text {
-          font-size: 28px;
-          font-weight: bold;
-          margin: 0;
-          line-height: 1.2;
-        }
-        
-        .section {
-          background-color: white;
-          border-radius: 8px;
-          padding: 20px;
-          margin-bottom: 20px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          width: 100%;
-        }
-        
-        .section h2 {
-          color: #333;
-          border-bottom: 1px solid #eee;
-          padding-bottom: 10px;
-          margin-top: 0;
-          margin-bottom: 15px;
-          text-align: center;
-          font-size: 18px;
-          line-height: 1.3;
-        }
-        
-        .stock-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-          gap: 15px;
-          width: 100%;
-        }
-        
-        .stock-card {
-          display: flex;
-          flex-direction: column;
-          background: #fff;
-          border-radius: 6px;
-          padding: 15px;
-          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-          width: 100%;
-        }
-        
-        .footer {
-          text-align: center;
-          font-size: 12px;
-          color: #95a5a6;
-          margin-top: 30px;
-          padding: 10px;
-        }
-        
-        .disclaimer {
-          font-size: 11px;
-          color: #95a5a6;
-          margin-top: 10px;
-          text-align: center;
-          line-height: 1.4;
-        }
-        
-        /* Enhanced styles for fundamental metrics section */
-        .subsection {
-          margin-bottom: 20px;
-          width: 100%;
-        }
-        
-        .stocks-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-          gap: 15px;
-          margin-top: 15px;
-          width: 100%;
-        }
-        
-        /* Mobile-specific styles */
-        @media (max-width: 600px) {
-          .container {
-            padding: 15px;
-            width: 100%;
-          }
-          
-          .stock-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
-          }
-          
-          .stocks-grid {
-            grid-template-columns: 1fr;
-            gap: 10px;
-          }
-          
-          .stock-card {
-            padding: 12px;
-          }
-          
-          .decision-banner {
-            padding: 15px;
-          }
-          
-          .decision-text {
-            font-size: 24px;
-          }
-          
-          .title {
-            font-size: 20px;
-          }
-          
-          .section {
-            padding: 15px;
-          }
-          
-          .section h2 {
-            font-size: 16px;
-          }
-          
-          .header {
-            padding: 0 5px;
-          }
-        }
-        
-        /* Print styles */
-        @media print {
-          .container {
-            max-width: 100%;
-            width: 100%;
-          }
-          
-          .section {
-            box-shadow: none;
-          }
-          
-          .decision-banner {
-            box-shadow: none;
-          }
-        }
-      </style>
-    </head>
-    <body>
-      <div class="container">
-        <!-- Header -->
-        <div style="text-align: center; margin-bottom: 25px;">
-          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">${props.getProperty('NEWSLETTER_NAME')}</h1>
-          <p style="color: #7f8c8d; margin: 5px 0 0;">As of ${formattedAnalysisTime}</p>
-          ${isTest ? '<p style="color: #f44336; font-weight: bold;">TEST EMAIL - NOT ACTUAL TRADING ADVICE</p>' : ''}
-        </div>
-        
-        <!-- Decision Box -->
-        <div style="padding: 20px; margin: 25px 0; border-radius: 8px; text-align: center; background-color: #FFF8E1; border-left: 5px solid ${decisionColor}; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
-          <div style="font-size: 28px; font-weight: bold; color: ${decisionColor}; margin: 0 0 10px;">
-            <span style="margin-right: 10px;">${decisionIcon}</span>${decision}
-          </div>
-          <p style="font-size: 16px; color: #555; margin: 0;">${analysisResult.summary || 'No summary available.'}</p>
-        </div>
-        
-        <!-- Justification Section -->
-        <div class="section">
-          <h2>Justification</h2>
-          <div style="line-height: 1.6; color: #444; font-size: 13px;">${analysisResult.justification || 'No justification provided.'}</div>
-        </div>
-        
-        ${sentimentHtml}
-        ${marketIndicatorsHtml}
-        ${fundamentalMetricsHtml}
-        ${macroeconomicFactorsHtml}
-        ${geopoliticalRisksHtml}
-        
-        <div class="footer">
-          <p>  ${new Date().getFullYear()} ${props.getProperty('NEWSLETTER_NAME')}</p>
-          <div class="disclaimer">
-            This newsletter is for informational purposes only and should not be considered investment advice.
-          </div>
-        </div>
-      </div>
-    </body>
-    </html>`;
-
-    return html;
+    return generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml, fundamentalMetricsHtml, macroeconomicFactorsHtml, geopoliticalRisksHtml, analysisResult, isTest);
   } catch (error) {
     Logger.log('Error in generateEmailTemplate: ' + error.toString());
     throw error;
@@ -442,6 +178,9 @@ function generateMarketSentimentSection(analysis) {
     const sentimentData = analysis.marketSentiment || analysis.sentiment || {};
     const overallSentiment = sentimentData.overall || 'Neutral';
     const analysts = sentimentData.analysts || [];
+    
+    // Get inflation expectations data
+    const inflation = analysis.macroeconomicFactors?.inflation || {};
     
     // Generate analysts HTML
     let analystsHtml = '';
@@ -476,9 +215,11 @@ function generateMarketSentimentSection(analysis) {
       `;
     }
     
+
+    
     // Generate source information
     const sourceInfo = sentimentData.source 
-      ? `<div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+      ? `<div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
            Source: ${sentimentData.source} | Last Updated: ${sentimentData.lastUpdated || 'N/A'}
          </div>`
       : '';
@@ -519,10 +260,7 @@ function generateMarketIndicatorsSection(analysis) {
     if (!indicators || !indicators.success) {
       indicators = analysis.marketIndicators || {};
     }
-    
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-    
+      
     if (debugMode) {
       Logger.log("Debug mode enabled - got this indicators: " + JSON.stringify(indicators));
     }
@@ -550,8 +288,8 @@ function generateMarketIndicatorsSection(analysis) {
             `;
           }).join('')}
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.majorIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+          Source: <a href="https://finance.yahoo.com/markets/">Yahoo Finance</a>, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -577,8 +315,8 @@ function generateMarketIndicatorsSection(analysis) {
             `;
           }).join('')}
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.sectorPerformance[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.sectorPerformance[0]?.timestamp)}
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+           Source: <a href="https://finance.yahoo.com/sectors/">Yahoo Finance</a>, as of ${formatDate(indicators.majorIndices[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -599,6 +337,13 @@ function generateMarketIndicatorsSection(analysis) {
                       fgValue >= 75 ? '#4caf50' : 
                       fgValue >= 50 ? '#8bc34a' : 
                       '#ff9800';
+      
+      const previousValues = {
+        previousClose: indicators.fearAndGreedIndex.previousClose || 'N/A',
+        oneWeekAgo: indicators.fearAndGreedIndex.oneWeekAgo || 'N/A',
+        oneMonthAgo: indicators.fearAndGreedIndex.oneMonthAgo || 'N/A',
+        oneYearAgo: indicators.fearAndGreedIndex.oneYearAgo || 'N/A'
+      };
       
       fearGreedHtml = `
       <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
@@ -622,10 +367,18 @@ function generateMarketIndicatorsSection(analysis) {
         
         <div style="font-size: 14px; color: #555; margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid ${fgColor};">
           <span style="font-weight: bold;">${fgInterpretation}:</span> <span>${indicators.fearAndGreedIndex.analysis || 'Market sentiment indicator based on various market factors.'}</span>
+          <span style="margin-left: 50px; font-size: 12px; color: #888;">
+            ${Object.entries(previousValues)
+              .filter(([_, value]) => value && value !== 'N/A')
+              .map(([key, value]) => {
+                const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                return ` ${label}: ${value}`;
+              }).join(' | ')}
+          </span>
         </div>
         
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.fearAndGreedIndex.source || 'CNN'} (${indicators.fearAndGreedIndex.sourceUrl || 'N/A'}), as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
+        <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+          Source: <a href="https://www.cnn.com/markets/fear-and-greed">CNN</a>, as of ${formatDate(indicators.fearAndGreedIndex.timestamp)}
         </div>
       </div>
       `;
@@ -660,8 +413,8 @@ function generateMarketIndicatorsSection(analysis) {
             `;
           }).join('')}
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: ${indicators.volatilityIndices[0]?.source || 'Yahoo Finance'}, as of ${formatDate(indicators.volatilityIndices[0]?.timestamp)}
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+          Source: <a href="https://finance.yahoo.com/quote/%5EVIX/">Yahoo Finance</a>, as of ${formatDate(indicators.volatilityIndices[0]?.timestamp)}
         </div>
       </div>
       `;
@@ -702,7 +455,7 @@ function generateMarketIndicatorsSection(analysis) {
                 <div style="font-weight: bold; color: #2196f3; font-size: 13px;">${event.date}</div>
               </div>
               <div style="flex: 1; margin: 0 15px;">
-                <div style="font-weight: bold; margin-bottom: 2px; font-size: 13px;">${eventName}</div>
+                <div style="font-weight: bold; margin-bottom: 2px;">${eventName}</div>
                 <div style="font-size: 12px; color: #666;">${eventSource}</div>
               </div>
               <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
@@ -932,14 +685,17 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="color: #555; font-size: 14px;">${macro.treasuryYields.yieldCurve?.analysis || 'N/A'}</div>
           </div>
 
-          <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-            Source: ${macro.treasuryYields.source || 'N/A'} (${macro.treasuryYields.sourceUrl || 'N/A'}), as of ${formatDate(macro.treasuryYields.lastUpdated)}
+          <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+            Source: <a href="${macro.treasuryYields.sourceUrl}">${macro.treasuryYields.source}</a>, as of ${formatDate(macro.treasuryYields.lastUpdated)}
           </div>
         </div>
       `;
     }
 
     // Fed Policy
+    if (debugMode) {
+      Logger.log("Fed Policy: " + JSON.stringify(macro.fedPolicy));
+    }
     let fedHtml = '';
     if (macro.fedPolicy) {
       fedHtml = `
@@ -947,17 +703,54 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
           <div style="font-weight: bold; margin-bottom: 15px; font-size: 1.2em;">Federal Reserve Policy</div>
           
           <div style="background-color: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
-            <!-- Commentary Section -->
+            <!-- Forward Guidance Section -->
             <div style="margin-bottom: 15px;">
-              <div style="font-size: 16px; color: #333; line-height: 1.6;">${macro.fedPolicy.commentary || 'N/A'}</div>
+              <div style="font-size: 16px; color: #333; line-height: 1.6;">${macro.fedPolicy.forwardGuidance || 'N/A'}</div>
+              <!-- Source Information -->
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="${macro.fedPolicy.source.components.forwardGuidance.components.url || 'N/A'}">${macro.fedPolicy.source.components.forwardGuidance.components.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.forwardGuidance.components.timestamp || 'N/A')}
+              </div>
             </div>
             
             <!-- Current Rate Section -->
             <div style="margin-bottom: 15px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Current Rate</div>
+              <div style="font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #4CAF50; font-size: 1.2em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.rate)}%</div>
-                <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.lowerBound)}% - ${formatValue(macro.fedPolicy.currentRate.upperBound)}%</div>
+                <div style="color: #4CAF50; font-size: 1.2em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.currentRate)}%</div>
+                <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.rangeLow)}% - ${formatValue(macro.fedPolicy.currentRate.rangeHigh)}%</div>
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="${macro.fedPolicy.source.components.fedFundsRate.components.url || 'N/A'}">${macro.fedPolicy.source.components.fedFundsRate.components.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.fedFundsRate.components.timestamp || 'N/A')}
+              </div>
+            </div>
+            
+            <!-- Federal Funds Futures Section -->
+            <div style="margin-bottom: 15px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Federal Funds Futures</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="color: #666; font-size: 14px;">Current Price: ${macro.fedPolicy.futures.currentPrice || 'N/A'}</div>
+                  <div style="color: #666; font-size: 14px;">Implied Rate: ${macro.fedPolicy.futures.impliedRate || 'N/A'}%</div>
+                </div>
+              </div>
+              <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="color: #4CAF50; font-size: 1.5em;">&#8595;</span>
+                  <div style="color: #4CAF50; font-size: 14px;">${macro.fedPolicy.futures.probabilities.cut || 'N/A'}%</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="color: #757575; font-size: 1.5em;">&#8594;</span>
+                  <div style="color: #757575; font-size: 14px;">${macro.fedPolicy.futures.probabilities.hold || 'N/A'}%</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="color: #f44336; font-size: 1.5em;">&#8593;</span>
+                  <div style="color: #f44336; font-size: 14px;">${macro.fedPolicy.futures.probabilities.hike || 'N/A'}%</div>
+                </div>
+              </div>
+              <!-- Source Information -->
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="${macro.fedPolicy.source.components.futures.components.url || 'N/A'}">${macro.fedPolicy.source.components.futures.components.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.futures.components.timestamp || 'N/A')}
               </div>
             </div>
             
@@ -965,31 +758,14 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Meeting Schedule</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #666; font-size: 14px;">Last Meeting: ${formatDate(macro.fedPolicy.lastMeeting.date)}</div>
-                <div style="color: #666; font-size: 14px;">Next Meeting: ${formatDate(macro.fedPolicy.nextMeeting.date)}</div>
+                <div style="color: #666; font-size: 14px;">Last ${macro.fedPolicy.lastMeeting.fullText}</div>
+                <div style="color: #666; font-size: 14px;">Next ${macro.fedPolicy.nextMeeting.fullText}</div>
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="${macro.fedPolicy.source.components.meetings.components.url || 'N/A'}">${macro.fedPolicy.source.components.meetings.components.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.meetings.components.timestamp || 'N/A')}
               </div>
             </div>
             
-            <!-- Rate Change Probabilities Section -->
-            <div style="margin-bottom: 10px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
-              <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #f44336; font-size: 14px;">
-                  <span style="font-size: 1.5em;">&#8593;</span> ${macro.fedPolicy.nextMeeting.probabilityOfHike}%
-                </div>
-                <div style="color: #757575; font-size: 14px;">
-                  <span style="font-size: 1.5em;">&#8594;</span> ${macro.fedPolicy.nextMeeting.probabilityOfNoChange}%
-                </div>
-                <div style="color: #4CAF50; font-size: 14px;">
-                  <span style="font-size: 1.5em;">&#8595;</span> ${macro.fedPolicy.nextMeeting.probabilityOfCut}%
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Source Information -->
-          <div style="font-size: 12px; color: #888; margin-top: 15px; text-align: right;">
-            Source: ${macro.fedPolicy.source || 'N/A'} (${macro.fedPolicy.sourceUrl || 'N/A'}), as of ${formatDate(macro.fedPolicy.lastUpdated)}
           </div>
         </div>
       `;
@@ -997,9 +773,16 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     
     // Inflation
     let inflationHtml = '';
-    const inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
+    var inflationData = macroeconomicAnalysis?.macroeconomicFactors?.inflation;
       
     if (inflationData) {
+      if (!inflationData.expectations) {
+        inflationData.expectations = retrieveInflationExpectations();
+      }
+      if (debugMode) {
+        Logger.log("Inflation Data: " + JSON.stringify(inflationData));
+      } 
+ 
       inflationHtml = `
       <div style="margin-bottom: 20px;">
         <div style="font-weight: bold; margin-bottom: 10px;">Inflation</div>
@@ -1038,25 +821,57 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             </div>
           </div>
         </div>
-        <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
-          Source: Bureau of Labor Statistics, Federal Reserve | Last updated: ${inflationData.lastUpdated}
-        </div>
-      </div>
+
+        <!-- Inflation Expectations Section -->
       
-      <div style="display: flex; margin-bottom: 15px;">
-        <div style="flex: 1; background-color: #f1f8e9; padding: 15px; border-radius: 4px; margin-right: 10px; border-left: 4px solid #4CAF50;">
-          <div style="font-weight: bold; color: #4CAF50; margin-bottom: 5px;">Inflation Trend Analysis</div>
-          <div style="color: #333;">${inflationData.trend}</div>
+        ${inflationData?.expectations && inflationData.expectations.oneYear && inflationData.expectations.fiveYear && inflationData.expectations.tenYear 
+          ? `
+        <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #2196F3;">
+          <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.2em;">Inflation Expectations</div>
+          <div style="display: flex; flex-direction: column; gap: 10px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #666; font-size: 14px;">1-Year Expectation</div>
+              <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.expectations.oneYear.value + '%'}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #666; font-size: 14px;">5-Year Expectation</div>
+              <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.expectations.fiveYear.value + '%'}</div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="color: #666; font-size: 14px;">10-Year Expectation</div>
+              <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.expectations.tenYear.value + '%'}</div>
+            </div>
+          </div>
+          <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+            Source: <a href="${inflationData.expectations.source.url || 'N/A'}">${inflationData.expectations.source.name || 'N/A'}</a>, as of ${formatDate(inflationData.expectations.lastUpdated)}
+          </div>
         </div>
-        
-        <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px; margin-right: 10px;">
-          <div style="font-weight: bold; margin-bottom: 5px;">Outlook</div>
-          <div style="color: #555; font-size: 14px;">${inflationData.outlook}</div>
+          ` : ''}
+      `;
+    }
+    
+    // Inflation Trend Analysis Section
+    let inflationTrendHtml = '';
+    if (inflationData.trend && inflationData.outlook && inflationData.marketImpact) {
+      inflationTrendHtml = `
+      <div style="margin-top: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid #4CAF50;">
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.2em;">Inflation Trend Analysis</div>
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #666; font-size: 14px;">Trend</div>
+            <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.trend}</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #666; font-size: 14px;">Outlook</div>
+            <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.outlook}</div>
+          </div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="color: #666; font-size: 14px;">Market Impact</div>
+            <div style="color: #2c3e50; font-weight: bold; font-size: 16px;">${inflationData.marketImpact}</div>
+          </div>
         </div>
-        
-        <div style="flex: 1; padding: 15px; background-color: #f8f9fa; border-radius: 4px;">
-          <div style="font-weight: bold; margin-bottom: 5px;">Market Impact</div>
-          <div style="color: #555; font-size: 14px;">${inflationData.marketImpact}</div>
+        <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+          Source: <a href="${inflationData.sourceUrl}">${inflationData.source}</a>, as of ${formatDate(inflationData.lastUpdated)}
         </div>
       </div>
       `;
@@ -1070,6 +885,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
       ${yieldsHtml}
       ${fedHtml}
       ${inflationHtml}
+      ${inflationTrendHtml}
     </div>
     `;
   } catch (error) {
