@@ -5,10 +5,10 @@ dotenv.config();
 
 interface StockMetrics {
   symbol: string;
-  price: number;
-  priceChange: number;
-  changesPercentage: number;
-  volume: number;
+  price: number | null;
+  priceChange: number | null;
+  changesPercentage: number | null;
+  volume: number | null;
   marketCap: number | null;
   company: string | null;
   industry: string | null;
@@ -23,13 +23,14 @@ interface StockMetrics {
   returnOnAssets: number | null;
   profitMargin: number | null;
   dividendYield: number | null;
-  fiftyTwoWeekHigh: number;
-  fiftyTwoWeekLow: number;
-  dayHigh: number;
-  dayLow: number;
-  open: number;
-  close: number;
-  fiftyTwoWeekAverage: number;
+  fiftyTwoWeekHigh: number | null;
+  fiftyTwoWeekLow: number | null;
+  dayHigh: number | null;
+  dayLow: number | null;
+  open: number | null;
+  close: number | null;
+  fiftyTwoWeekAverage: number | null;
+  dataSource: string[];
 }
 
 interface TradierClient {
@@ -76,10 +77,10 @@ export class TradierClientImpl implements TradierClient {
   async getStockMetrics(symbol: string): Promise<StockMetrics> {
     const metrics: StockMetrics = {
       symbol,
-      price: 0,
-      priceChange: 0,
-      changesPercentage: 0,
-      volume: 0,
+      price: null,
+      priceChange: null,
+      changesPercentage: null,
+      volume: null,
       marketCap: null,
       company: null,
       industry: null,
@@ -94,13 +95,14 @@ export class TradierClientImpl implements TradierClient {
       returnOnAssets: null,
       profitMargin: null,
       dividendYield: null,
-      fiftyTwoWeekHigh: 0,
-      fiftyTwoWeekLow: 0,
-      dayHigh: 0,
-      dayLow: 0,
-      open: 0,
-      close: 0,
-      fiftyTwoWeekAverage: 0
+      fiftyTwoWeekHigh: null,
+      fiftyTwoWeekLow: null,
+      dayHigh: null,
+      dayLow: null,
+      open: null,
+      close: null,
+      fiftyTwoWeekAverage: null,
+      dataSource: ['Tradier']
     };
 
     try {
@@ -129,28 +131,10 @@ export class TradierClientImpl implements TradierClient {
         metrics.company = quote.description || symbol;
       }
 
-      // Get Company Information
-      try {
-        console.log('Fetching company data for', symbol);
-        const companyData = await this.makeRequest<{ fundamentals: { company: { [key: string]: any } } }>('markets/fundamentals/company', {
-          symbols: symbol
-        });
-
-        console.log('Company data received:', companyData);
-        
-        if (companyData.fundamentals?.company) {
-          const company = companyData.fundamentals.company;
-          metrics.industry = company.industry;
-          metrics.sector = company.sector;
-        }
-      } catch (error) {
-        console.error('Error fetching company data:', error);
-      }
-
       // Get Financial Metrics
       try {
         console.log('Fetching financial data for', symbol);
-        const ratiosData = await this.makeRequest<{ fundamentals: { ratios: { [key: string]: any } } }>('v1/markets/fundamentals/ratios', {
+        const ratiosData = await this.makeRequest<{ fundamentals: { ratios: { [key: string]: any } } }>('beta/markets/fundamentals/ratios', {
           symbols: symbol
         });
         
@@ -174,10 +158,135 @@ export class TradierClientImpl implements TradierClient {
         console.error('Error fetching financial data:', error);
       }
 
+      // Check for null values and try to fill them with Yahoo Finance data
+      const hasMissingData = 
+        metrics.marketCap === null ||
+        metrics.company === null ||
+        metrics.industry === null ||
+        metrics.sector === null ||
+        metrics.beta === null ||
+        metrics.pegRatio === null ||
+        metrics.forwardPE === null ||
+        metrics.priceToBook === null ||
+        metrics.priceToSales === null ||
+        metrics.debtToEquity === null ||
+        metrics.returnOnEquity === null ||
+        metrics.returnOnAssets === null ||
+        metrics.profitMargin === null ||
+        metrics.dividendYield === null;
+
+      if (hasMissingData) {
+        try {
+          console.log('Fetching missing data from Yahoo Finance for', symbol);
+          const yahooMetrics = await this.fetchYahooFinanceData(symbol);
+          
+          if (yahooMetrics) {
+            metrics.dataSource.push('Yahoo Finance');
+            
+            // Update metrics with Yahoo Finance data only for null values
+            if (metrics.marketCap === null) metrics.marketCap = yahooMetrics.marketCap;
+            if (metrics.company === null) metrics.company = yahooMetrics.company;
+            if (metrics.industry === null) metrics.industry = yahooMetrics.industry;
+            if (metrics.sector === null) metrics.sector = yahooMetrics.sector;
+            if (metrics.beta === null) metrics.beta = yahooMetrics.beta;
+            if (metrics.pegRatio === null) metrics.pegRatio = yahooMetrics.pegRatio;
+            if (metrics.forwardPE === null) metrics.forwardPE = yahooMetrics.forwardPE;
+            if (metrics.priceToBook === null) metrics.priceToBook = yahooMetrics.priceToBook;
+            if (metrics.priceToSales === null) metrics.priceToSales = yahooMetrics.priceToSales;
+            if (metrics.debtToEquity === null) metrics.debtToEquity = yahooMetrics.debtToEquity;
+            if (metrics.returnOnEquity === null) metrics.returnOnEquity = yahooMetrics.returnOnEquity;
+            if (metrics.returnOnAssets === null) metrics.returnOnAssets = yahooMetrics.returnOnAssets;
+            if (metrics.profitMargin === null) metrics.profitMargin = yahooMetrics.profitMargin;
+            if (metrics.dividendYield === null) metrics.dividendYield = yahooMetrics.dividendYield;
+          }
+        } catch (error) {
+          console.error('Error fetching Yahoo Finance data:', error);
+        }
+      }
+
       return metrics;
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error fetching stock metrics:', error);
       throw error;
+    }
+  }
+
+  // Add Yahoo Finance data fetching function
+  private async fetchYahooFinanceData(symbol: string): Promise<StockMetrics | null> {
+    try {
+      const rapidApiKey = process.env.RAPID_API_KEY;
+      if (!rapidApiKey) {
+        console.error('RAPID_API_KEY not found in environment variables');
+        return null;
+      }
+
+      const response = await fetch(`https://yahoo-finance15.p.rapidapi.com/auto-complete?q=${symbol.toUpperCase()}`, {
+        headers: {
+          'X-RapidAPI-Key': rapidApiKey,
+          'X-RapidAPI-Host': 'yahoo-finance15.p.rapidapi.com'
+        }
+      });
+
+      const data = await response.json();
+      
+      if (!data || !data.ResultSet?.Result?.[0]) {
+        console.error('No data received from Yahoo Finance API');
+        return null;
+      }
+
+      const quoteData = await fetch(`https://yahoo-finance15.p.rapidapi.com/quote/${data.ResultSet.Result[0].symbol}`, {
+        headers: {
+          'X-RapidAPI-Key': rapidApiKey,
+          'X-RapidAPI-Host': 'yahoo-finance15.p.rapidapi.com'
+        }
+      });
+
+      const quote = await quoteData.json();
+
+      if (!quote) {
+        console.error('No quote data received from Yahoo Finance API');
+        return null;
+      }
+
+      const metrics: StockMetrics = {
+        symbol,
+        price: quote.price?.raw,
+        priceChange: quote.regularMarketChange?.raw,
+        changesPercentage: quote.regularMarketChangePercent?.raw,
+        volume: quote.regularMarketVolume?.raw,
+        marketCap: quote.marketCap?.raw,
+        company: quote.shortName || quote.longName,
+        industry: quote.industryName,
+        sector: quote.sectorName,
+        beta: quote.beta?.raw,
+        pegRatio: quote.pegRatio?.raw,
+        forwardPE: quote.forwardPE?.raw,
+        priceToBook: quote.priceToBook?.raw,
+        priceToSales: quote.priceToSales?.raw,
+        debtToEquity: quote.debtToEquity?.raw,
+        returnOnEquity: quote.returnOnEquity?.raw,
+        returnOnAssets: quote.returnOnAssets?.raw,
+        profitMargin: quote.profitMargins?.raw,
+        dividendYield: quote.trailingAnnualDividendYield?.raw,
+        fiftyTwoWeekHigh: quote.fiftyTwoWeekHigh?.raw,
+        fiftyTwoWeekLow: quote.fiftyTwoWeekLow?.raw,
+        dayHigh: quote.regularMarketDayHigh?.raw,
+        dayLow: quote.regularMarketDayLow?.raw,
+        open: quote.regularMarketOpen?.raw,
+        close: quote.regularMarketPreviousClose?.raw,
+        fiftyTwoWeekAverage: (quote.fiftyTwoWeekHigh?.raw + quote.fiftyTwoWeekLow?.raw) / 2,
+        dataSource: ['Yahoo Finance via RapidAPI']
+      };
+
+      // Clean up the company name
+      if (metrics.company) {
+        metrics.company = metrics.company.trim();
+      }
+
+      return metrics;
+    } catch (error) {
+      console.error('Error fetching Yahoo Finance data:', error);
+      return null;
     }
   }
 }
