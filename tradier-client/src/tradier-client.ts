@@ -126,12 +126,13 @@ export class TradierClientImpl implements TradierClient {
         metrics.open = parseFloat(quote.open?.toString() || '0');
         metrics.close = parseFloat(quote.close?.toString() || '0');
         metrics.fiftyTwoWeekAverage = (metrics.fiftyTwoWeekHigh + metrics.fiftyTwoWeekLow) / 2;
+        metrics.company = quote.description || symbol;
       }
 
       // Get Company Information
       try {
         console.log('Fetching company data for', symbol);
-        const companyData = await this.makeRequest<{ fundamentals: { company: { [key: string]: any } } }>('v1/markets/fundamentals/company', {
+        const companyData = await this.makeRequest<{ fundamentals: { company: { [key: string]: any } } }>('markets/fundamentals/company', {
           symbols: symbol
         });
 
@@ -139,7 +140,6 @@ export class TradierClientImpl implements TradierClient {
         
         if (companyData.fundamentals?.company) {
           const company = companyData.fundamentals.company;
-          metrics.company = company.name || company.description || symbol;
           metrics.industry = company.industry;
           metrics.sector = company.sector;
         }
