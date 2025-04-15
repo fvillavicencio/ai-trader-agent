@@ -668,7 +668,6 @@ function generateFundamentalMetricsSection(analysis) {
                       <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
                       <div style=\"display: flex; flex-direction: column; align-items: flex-end; min-width: 110px;\">
                         <div style=\"font-weight: bold; font-size: 1.1em; color: ${getColor(stock.priceChange)}; margin-bottom: 2px; white-space: nowrap;\">${priceLine}</div>
-                        <div style=\"font-size: 0.95em; color: #555;\">${priceChangeDisplay !== 'N/A' ? priceChangeDisplay : ''}</div>
                       </div>
                     </div>
                     <!-- Metrics Table -->
