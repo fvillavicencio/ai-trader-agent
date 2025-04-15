@@ -571,7 +571,7 @@ function generateFundamentalMetricsSection(analysis) {
                 return `
                   <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
                     <div style="color: #000; min-width: 80px;">${label}</div>
-                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">${formatNumberWithSuffix(value, suffix)}</div>
+                    <div style="font-weight: bold; color: #000; overflow: hidden; text-overflow: ellipsis;">${formatNumberWithSuffix(value, suffix)}</div>
                   </div>
                 `;
               };
@@ -638,7 +638,7 @@ function generateFundamentalMetricsSection(analysis) {
               }
 
               // --- Compose the top-right price line ---
-              // Example: $94.65 ↑ 1.87 (2.02%)
+              // Example: $94.65 ↑5.18 (0.97%)
               let priceChangeAbs = '';
               if (typeof stock.priceChange === 'number' && isFinite(stock.priceChange)) {
                 priceChangeAbs = Math.abs(stock.priceChange).toFixed(2);
@@ -752,7 +752,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             ${macro.treasuryYields.yields.map(yield => `
               <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
                 <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${yield.term}</div>
-                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${typeof yield.yield === 'number' && isFinite(yield.yield) ? yield.yield.toFixed(2) : 'N/A'}%</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${typeof Number(yield.yield) === 'number' && isFinite(Number(yield.yield)) ? Number(yield.yield).toFixed(2) : 'N/A'}%</div>
                 <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
               </div>
             `).join('')}
@@ -771,9 +771,9 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
     }
 
     // Fed Policy
-    if (debugMode) {
+    //if (debugMode) {
       Logger.log("Fed Policy: " + JSON.stringify(macro.fedPolicy));
-    }
+    //}
     let fedHtml = '';
     if (macro.fedPolicy) {
       fedHtml = `
@@ -794,8 +794,10 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #4CAF50; font-size: 1.5em; font-weight: bold;">${typeof macro.fedPolicy.currentRate.currentRate === 'number' && isFinite(macro.fedPolicy.currentRate.currentRate) ? macro.fedPolicy.currentRate.currentRate.toFixed(2) : 'N/A'}%</div>
-                <div style="color: #666; font-size: 14px;">Range: ${typeof macro.fedPolicy.currentRate.rangeLow === 'number' && isFinite(macro.fedPolicy.currentRate.rangeLow) ? macro.fedPolicy.currentRate.rangeLow.toFixed(2) : 'N/A'}% - ${typeof macro.fedPolicy.currentRate.rangeHigh === 'number' && isFinite(macro.fedPolicy.currentRate.rangeHigh) ? macro.fedPolicy.currentRate.rangeHigh.toFixed(2) : 'N/A'}%</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 1.5em;">${typeof Number(macro.fedPolicy.currentRate.currentRate) === 'number' && isFinite(Number(macro.fedPolicy.currentRate.currentRate)) ? Number(macro.fedPolicy.currentRate.currentRate).toFixed(2) : 'N/A'}%</div>
+                <div style="color: #666; font-size: 14px;">
+                  Range: ${typeof Number(macro.fedPolicy.currentRate.rangeLow) === 'number' && isFinite(Number(macro.fedPolicy.currentRate.rangeLow)) ? Number(macro.fedPolicy.currentRate.rangeLow).toFixed(2) : 'N/A'}% - ${typeof Number(macro.fedPolicy.currentRate.rangeHigh) === 'number' && isFinite(Number(macro.fedPolicy.currentRate.rangeHigh)) ? Number(macro.fedPolicy.currentRate.rangeHigh).toFixed(2) : 'N/A'}%
+                </div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
                 Source: <a href="${macro.fedPolicy.source.components.fedFundsRate.components.url || 'N/A'}">${macro.fedPolicy.source.components.fedFundsRate.components.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.fedFundsRate.components.timestamp || 'N/A')}
@@ -807,23 +809,23 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="font-weight: bold; margin-bottom: 5px;">Federal Funds Futures</div>
               <div style="display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;margin-top: 5px">
-                  <div style="color: #666; font-size: 1em;">Current Price: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.currentPrice || 'N/A'}</span></div>
-                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${typeof macro.fedPolicy.futures.impliedRate === 'number' && isFinite(macro.fedPolicy.futures.impliedRate) ? macro.fedPolicy.futures.impliedRate.toFixed(2) : 'N/A'}%</span></div>
+                  <div style="color: #666; font-size: 1em;">Current Price: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.currentPrice != null && macro.fedPolicy.futures.currentPrice !== '' && isFinite(Number(macro.fedPolicy.futures.currentPrice)) ? Number(macro.fedPolicy.futures.currentPrice).toFixed(2) : 'N/A'}</span></div>
+                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.impliedRate != null && macro.fedPolicy.futures.impliedRate !== '' && isFinite(Number(macro.fedPolicy.futures.impliedRate)) ? Number(macro.fedPolicy.futures.impliedRate).toFixed(2) : 'N/A'}%</span></div>
                 </div>
               </div>
               <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">&#8595;</span>
-                  <div style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">${typeof macro.fedPolicy.futures.probabilities.cut === 'number' && isFinite(macro.fedPolicy.futures.probabilities.cut) ? macro.fedPolicy.futures.probabilities.cut.toFixed(0) : 'N/A'}%</div>
+                  <div style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities && macro.fedPolicy.futures.probabilities.cut != null && macro.fedPolicy.futures.probabilities.cut !== '' && isFinite(Number(macro.fedPolicy.futures.probabilities.cut)) ? Number(macro.fedPolicy.futures.probabilities.cut).toFixed(1) : 'N/A'}%</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="color: #757575; font-size: 1.5em;font-weight: bold;">&#8594;</span>
-                  <div style="color: #757575; font-size: 1.5em;font-weight: bold;">${typeof macro.fedPolicy.futures.probabilities.hold === 'number' && isFinite(macro.fedPolicy.futures.probabilities.hold) ? macro.fedPolicy.futures.probabilities.hold.toFixed(0) : 'N/A'}%</div>
+                  <div style="color: #757575; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities && macro.fedPolicy.futures.probabilities.hold != null && macro.fedPolicy.futures.probabilities.hold !== '' && isFinite(Number(macro.fedPolicy.futures.probabilities.hold)) ? Number(macro.fedPolicy.futures.probabilities.hold).toFixed(1) : 'N/A'}%</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="color: #f44336; font-size: 1.5em;font-weight: bold;">&#8593;</span>
-                  <div style="color: #f44336; font-size: 1.5em;font-weight: bold;">${typeof macro.fedPolicy.futures.probabilities.hike === 'number' && isFinite(macro.fedPolicy.futures.probabilities.hike) ? macro.fedPolicy.futures.probabilities.hike.toFixed(0) : 'N/A'}%</div>
+                  <div style="color: #f44336; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities && macro.fedPolicy.futures.probabilities.hike != null && macro.fedPolicy.futures.probabilities.hike !== '' && isFinite(Number(macro.fedPolicy.futures.probabilities.hike)) ? Number(macro.fedPolicy.futures.probabilities.hike).toFixed(1) : 'N/A'}%</div>
                 </div>
               </div>
               <!-- Source Information -->
@@ -912,17 +914,17 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
               <div style="text-align: center;">
                 <div style="color: #4CAF50; font-size: 1.1em; margin-bottom: 6px;">1-Year</div>
-                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.expectations.oneYear.value === 'number' && isFinite(inflationData.expectations.oneYear.value) ? inflationData.expectations.oneYear.value.toFixed(1) : 'N/A'}%</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.oneYear.value != null && inflationData.expectations.oneYear.value !== '' && isFinite(Number(inflationData.expectations.oneYear.value)) ? Number(inflationData.expectations.oneYear.value).toFixed(1) : 'N/A'}%</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.oneYear.lastUpdated))}</div>
               </div>
               <div style="text-align: center;">
                 <div style="color: #2196F3; font-size: 1.1em; margin-bottom: 6px;">5-Year</div>
-                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.expectations.fiveYear.value === 'number' && isFinite(inflationData.expectations.fiveYear.value) ? inflationData.expectations.fiveYear.value.toFixed(1) : 'N/A'}%</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.fiveYear.value != null && inflationData.expectations.fiveYear.value !== '' && isFinite(Number(inflationData.expectations.fiveYear.value)) ? Number(inflationData.expectations.fiveYear.value).toFixed(1) : 'N/A'}%</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.fiveYear.lastUpdated))}</div>
               </div>
               <div style="text-align: center;">
                 <div style="color: #9C27B0; font-size: 1.1em; margin-bottom: 6px;">10-Year</div>
-                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.expectations.tenYear.value === 'number' && isFinite(inflationData.expectations.tenYear.value) ? inflationData.expectations.tenYear.value.toFixed(1) : 'N/A'}%</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.tenYear.value != null && inflationData.expectations.tenYear.value !== '' && isFinite(Number(inflationData.expectations.tenYear.value)) ? Number(inflationData.expectations.tenYear.value).toFixed(1) : 'N/A'}%</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.tenYear.lastUpdated))}</div>
               </div>
             </div>

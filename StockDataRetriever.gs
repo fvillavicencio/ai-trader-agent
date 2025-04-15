@@ -88,7 +88,24 @@ function retrieveStockMetrics(symbol) {
     // Helper to merge and track sources
     function mergeMetrics(newData, source) {
       for (var key in newData) {
-        if (metrics.hasOwnProperty(key) && (metrics[key] === null || typeof metrics[key] === 'undefined') && newData[key] != null) {
+        if (
+          metrics.hasOwnProperty(key) &&
+          (metrics[key] === null || typeof metrics[key] === 'undefined') &&
+          newData[key] != null
+        ) {
+          // Additional validation for company field
+          if (
+            key === 'company' &&
+            (
+              newData[key] === 'Yahoo Finance' ||
+              newData[key] === 'Asset Management' ||
+              newData[key] === 'FMP' ||
+              newData[key] === 'GoogleFinance' ||
+              /finance|asset|management|industry|sector/i.test(newData[key])
+            )
+          ) {
+            continue; // Skip setting invalid company names
+          }
           metrics[key] = newData[key];
           metrics._fieldSources[key] = source;
         }
@@ -163,16 +180,6 @@ function retrieveStockMetrics(symbol) {
       Logger.log('FMP ratios fetch failed: ' + e);
     }
 
-    // 7. Google Finance (final fallback for any missing fields, including ratios)
-    try {
-      const googleFinance = fetchGoogleFinanceData(symbol);
-      if (googleFinance) {
-        mergeMetrics(googleFinance, 'GoogleFinance');
-      }
-    } catch (e) {
-      Logger.log('Google Finance fetch failed: ' + e);
-    }
-
     // Calculate percentage change if needed
     if (metrics.price !== null && metrics.priceChange !== null && metrics.changesPercentage === null) {
       metrics.changesPercentage = (metrics.priceChange / metrics.price) * 100;
@@ -184,24 +191,71 @@ function retrieveStockMetrics(symbol) {
       metrics.dataSource = [];
     }
 
-    const cacheData = {
-      ...metrics,
-      lastUpdated: new Date().toISOString(),
-      fromCache: false
-    };
-
-    // Store the data in cache with proper JSON stringification
-    const cacheString = JSON.stringify(cacheData);
-    scriptCache.put(cacheKey, cacheString, CACHE_DURATION * 60); // Convert minutes to seconds
-
-    const executionTime = (new Date().getTime() - startTime) / 1000;
-    Logger.log(`Retrieved stock metrics for ${symbol} in ${executionTime} seconds`);
-
-    // Return the exact same structure as what we stored in cache
-    return {
-      ...cacheData,
-      fromCache: false
-    };
+    // --- FALLBACK TO TRADIER PRICE AND DESCRIPTION ---
+    if ((metrics.price === null || !isValidCompanyName(metrics.company))) {
+      Logger.log('Still missing price or company, trying Tradier quote for both');
+      try {
+        var tradierQuote = fetchTradierQuote(symbol);
+        if (tradierQuote) {
+          if (metrics.price === null && tradierQuote.last != null) {
+            metrics.price = tradierQuote.last;
+          }
+          if (!isValidCompanyName(metrics.company) && tradierQuote.description && isValidCompanyName(tradierQuote.description)) {
+            metrics.company = tradierQuote.description;
+          }
+          if (metrics.close === null && tradierQuote.close != null) {
+            metrics.close = tradierQuote.close;
+          }
+          if (metrics.priceChange === null && tradierQuote.change != null) {
+            metrics.priceChange = tradierQuote.change;
+          }
+          if (metrics.changesPercentage === null && tradierQuote.change_percentage != null) {
+            metrics.changesPercentage = tradierQuote.change_percentage;
+          }
+          if (metrics.volume === null && tradierQuote.volume != null) {
+            metrics.volume = tradierQuote.volume;
+          }
+        }
+      } catch (e) { Logger.log('Tradier quote fallback failed: ' + e); }
+    }
+    // --- FALLBACK TO FMP ---
+    if (!isValidCompanyName(metrics.company)) {
+      Logger.log('Still missing or invalid company name, trying FMP');
+      try {
+        const fmpData = fetchFMPData(symbol);
+        if (fmpData && isValidCompanyName(fmpData.company)) {
+          metrics.company = fmpData.company;
+          if (fmpData.industry) metrics.industry = fmpData.industry;
+          if (fmpData.sector) metrics.sector = fmpData.sector;
+        }
+      } catch (e) { Logger.log('FMP fallback failed: ' + e); }
+    }
+    // --- FINAL FALLBACK ---
+    if (!isValidCompanyName(metrics.company)) {
+      metrics.company = symbol; // Use symbol as company name if all sources fail
+    }
+    Logger.log(`Final Yahoo Finance metrics: price=${metrics.price}, company=${metrics.company}, volume=${metrics.volume}`);
+    const hasEssentialData = metrics.price !== null && isValidCompanyName(metrics.company);
+    if (hasEssentialData) {
+      Logger.log(`Yahoo Finance API result data:`, {
+        price: metrics.price,
+        volume: metrics.volume,
+        marketCap: metrics.marketCap,
+        company: metrics.company,
+        industry: metrics.industry,
+        sector: metrics.sector
+      });
+      metrics.lastUpdated = new Date().toISOString();
+      scriptCache.put(cacheKey, JSON.stringify(metrics), CACHE_DURATION * 60); // expiration in seconds
+      Logger.log(`Cached stock metrics for ${symbol}`);
+      return {
+        ...metrics,
+        fromCache: false
+     };
+  } else {
+    Logger.log(`Failed to retrieve essential data from Yahoo Finance API. Missing price or valid company name.`);
+    return null;
+  }
   } catch (error) {
     Logger.log(`Error in retrieveStockMetrics: ${error}`);
     throw error;
@@ -399,18 +453,18 @@ function fetchGoogleFinanceData(symbol) {
     sheet.getRange("F1").setFormula(`=GOOGLEFINANCE(A1,"beta")`);
     
     // Wait for formulas to calculate
-    Utilities.sleep(2000);
+    Utilities.sleep(1000);
     
-    // Get the values
-    const price = sheet.getRange("B1").getValue();
-    const openPrice = sheet.getRange("C1").getValue();
-    const volume = sheet.getRange("D1").getValue();
-    const marketCap = sheet.getRange("E1").getValue();
-    const beta = sheet.getRange("F1").getValue();
+    // Get the values (SANITIZED)
+    const price = sanitizeMetricValue(sheet.getRange("B1").getValue());
+    const openPrice = sanitizeMetricValue(sheet.getRange("C1").getValue());
+    const volume = sanitizeMetricValue(sheet.getRange("D1").getValue());
+    const marketCap = sanitizeMetricValue(sheet.getRange("E1").getValue());
+    const beta = sanitizeMetricValue(sheet.getRange("F1").getValue());
     
     // Calculate price change and percentage change
-    const priceChange = price - openPrice;
-    const changesPercentage = (priceChange / openPrice) * 100;
+    const priceChange = (price !== null && openPrice !== null) ? price - openPrice : null;
+    const changesPercentage = (priceChange !== null && openPrice !== null && openPrice !== 0) ? (priceChange / openPrice) * 100 : null;
     
     // Get company name from the shared spreadsheet
     const companyData = getCompanyName(symbol);
@@ -418,7 +472,7 @@ function fetchGoogleFinanceData(symbol) {
     // Clean up
     DriveApp.getFileById(tempSpreadsheet.getId()).setTrashed(true);
     
-    // Create metrics object
+    // Create metrics object (SANITIZED)
     const metrics = {
       price: price,
       priceChange: priceChange,
@@ -433,17 +487,7 @@ function fetchGoogleFinanceData(symbol) {
     };
     
     // Detailed logging
-    console.log(`Google Finance data for ${symbol}:`, {
-      price: metrics.price,
-      priceChange: metrics.priceChange,
-      changesPercentage: metrics.changesPercentage,
-      volume: metrics.volume,
-      marketCap: metrics.marketCap,
-      beta: metrics.beta,
-      company: metrics.company,
-      industry: metrics.industry,
-      sector: metrics.sector
-    });
+    console.log(`Google Finance data for ${symbol}:`, metrics);
     
     return metrics;
   } catch (error) {
@@ -873,26 +917,46 @@ function fetchYahooFinanceData(symbol) {
       }
     }
     
+    // --- VALIDATE COMPANY NAME ---
     // If we're missing company data, try search endpoint
-    if (!metrics.company || !metrics.industry || !metrics.sector) {
-      Logger.log('Missing company data, trying search endpoint');
+    if (!isValidCompanyName(metrics.company) || !metrics.industry || !metrics.sector) {
+      Logger.log('Missing or invalid company data, trying search endpoint');
       const searchData = fetchYahooSearchData(symbol);
       if (searchData) {
         Logger.log('Successfully retrieved search data');
-        
-        // Only update if values are null
-        if (!metrics.company) metrics.company = searchData.company;
-        if (!metrics.industry) metrics.industry = searchData.industry;
-        if (!metrics.sector) metrics.sector = searchData.sector;
+        if (!isValidCompanyName(metrics.company) && isValidCompanyName(searchData.company)) metrics.company = searchData.company;
+        if (!metrics.industry && searchData.industry) metrics.industry = searchData.industry;
+        if (!metrics.sector && searchData.sector) metrics.sector = searchData.sector;
       }
     }
-    
-    // Debug the final metrics
+    // --- FALLBACK TO FMP ---
+    if (!isValidCompanyName(metrics.company)) {
+      Logger.log('Still missing or invalid company name, trying FMP');
+      try {
+        const fmpData = fetchFMPData(symbol);
+        if (fmpData && isValidCompanyName(fmpData.company)) {
+          metrics.company = fmpData.company;
+          if (fmpData.industry) metrics.industry = fmpData.industry;
+          if (fmpData.sector) metrics.sector = fmpData.sector;
+        }
+      } catch (e) { Logger.log('FMP fallback failed: ' + e); }
+    }
+    // --- FALLBACK TO TRADIER DESCRIPTION ---
+    if (!isValidCompanyName(metrics.company)) {
+      Logger.log('Still missing or invalid company name, trying Tradier quote description');
+      try {
+        var tradierQuote = fetchTradierQuote(symbol);
+        if (tradierQuote && tradierQuote.description && isValidCompanyName(tradierQuote.description)) {
+          metrics.company = tradierQuote.description;
+        }
+      } catch (e) { Logger.log('Tradier quote fallback failed: ' + e); }
+    }
+    // --- FINAL FALLBACK ---
+    if (!isValidCompanyName(metrics.company)) {
+      metrics.company = symbol; // Use symbol as company name if all sources fail
+    }
     Logger.log(`Final Yahoo Finance metrics: price=${metrics.price}, company=${metrics.company}, volume=${metrics.volume}`);
-    
-    // Check if we have the essential data
-    const hasEssentialData = metrics.price !== null && metrics.company !== null;
-    
+    const hasEssentialData = metrics.price !== null && isValidCompanyName(metrics.company);
     if (hasEssentialData) {
       Logger.log(`Yahoo Finance API result data:`, {
         price: metrics.price,
@@ -902,14 +966,13 @@ function fetchYahooFinanceData(symbol) {
         industry: metrics.industry,
         sector: metrics.sector
       });
-      
       return metrics;
     } else {
-      Logger.log(`Failed to retrieve essential data from Yahoo Finance API. Missing: ${!metrics.price ? 'price, ' : ''}${!metrics.company ? 'company' : ''}`);
+      Logger.log(`Failed to retrieve essential data from Yahoo Finance API. Missing price or valid company name.`);
       return null;
     }
   } catch (error) {
-    Logger.log(`Error fetching Yahoo Finance data for ${symbol}: ${error}`);
+    Logger.log(`Error in fetchYahooFinanceData for ${symbol}: ${error}`);
     return null;
   }
 }
@@ -1333,158 +1396,17 @@ function getYahooFinanceApiKey() {
 }
 
 /**
- * Clears the stock metrics cache for all symbols
- * This is useful when you want to force fresh data retrieval
- */
-function clearStockMetricsCache() {
-  try {
-    Logger.log('Clearing stock metrics cache...');
-    
-    // Get script cache
-    const scriptCache = CacheService.getScriptCache();
-    
-    // Define our stock symbols
-    const stockSymbols = [
-      // Major Indices
-      'SPY', 'QQQ', 'IWM', 'DIA',
-      // Magnificent Seven
-      'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA',
-      // Other common stocks
-      'V', 'JPM', 'JNJ', 'UNH', 'HD', 'PG', 'MA', 'BAC', 'DIS', 'ADBE',
-      'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM',
-      // Energy and Industrial
-      'XOM', 'CVX', 'BA', 'CAT', 'GE', 'MMM',
-      // Deprecated stock symbols
-      'FB', 'TWTR'
-    ];
-    
-    // Create cache keys for each symbol
-    const keysToRemove = stockSymbols.map(symbol => `STOCK_METRICS_${symbol}`);
-    
-    // Remove all keys in a batch operation
-    if (keysToRemove.length > 0) {
-      scriptCache.removeAll(keysToRemove);
-    }
-    
-    Logger.log(`Cleared stock metrics cache for ${keysToRemove.length} symbols`);
-    
-    return {
-      success: true,
-      message: `Cleared stock metrics cache for ${keysToRemove.length} symbols`
-    };
-  } catch (error) {
-    Logger.log(`Error clearing stock metrics cache: ${error}`);
-    return {
-      success: false,
-      message: `Error clearing cache: ${error}`
-    };
-  }
-}
-
+ * --- Utility: Pick first valid (non-null/undefined) value ---
 /**
- * Clears the stock metrics cache for a specific symbol
- * @param {string} symbol - Stock symbol to clear cache for
- * @return {Object} Result object with success status and message
+ * Returns the first valid (non-null/undefined) value from a list of values
+ * @param {...any} values - List of values to check
+ * @return {any} The first valid value or null if all values are invalid
  */
-function clearStockMetricsCacheForSymbol(symbol) {
-  try {
-    Logger.log(`Clearing stock metrics cache for ${symbol}...`);
-    
-    const scriptCache = CacheService.getScriptCache();
-    const cacheKey = `STOCK_METRICS_${symbol}`;
-    
-    // Remove the cache entry
-    scriptCache.remove(cacheKey);
-    
-    Logger.log(`Cleared cache for ${symbol}`);
-    
-    return {
-      success: true,
-      message: `Cleared stock metrics cache for ${symbol}`
-    };
-  } catch (error) {
-    Logger.log(`Error clearing stock metrics cache for ${symbol}: ${error}`);
-    return {
-      success: false,
-      message: `Error clearing cache for ${symbol}: ${error}`
-    };
+function pickFirstValid(...values) {
+  for (let v of values) {
+    if (v !== null && v !== undefined) return v;
   }
-}
-
-/**
- * Gets the company name for a given symbol
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Object containing company name, sector, and industry
- */
-function getCompanyName(symbol) {
-  try {
-    // Default return if we can't find the company name
-    const defaultReturn = {
-      company: symbol,
-      sector: null,
-      industry: null
-    };
-    
-    // First try to get from cache
-    const scriptCache = CacheService.getScriptCache();
-    const cacheKey = `COMPANY_DATA_${symbol}`;
-    
-    const cachedData = scriptCache.get(cacheKey);
-    
-    if (cachedData) {
-      try {
-        return JSON.parse(cachedData);
-      } catch (e) {
-        Logger.log(`Error parsing cached company data for ${symbol}: ${e}`);
-      }
-    }
-    
-    // Try to get company name from Yahoo Finance search
-    try {
-      const searchData = fetchYahooSearchData(symbol);
-      if (searchData && searchData.company) {
-        const companyData = {
-          company: searchData.company,
-          sector: searchData.sector || null,
-          industry: searchData.industry || null
-        };
-        
-        // Cache the data
-        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
-        return companyData;
-      }
-    } catch (e) {
-      Logger.log(`Error getting company name from Yahoo for ${symbol}: ${e}`);
-    }
-    
-    // If Yahoo fails, try FMP
-    try {
-      const fmpData = fetchFMPData(symbol);
-      if (fmpData && fmpData.company) {
-        const companyData = {
-          company: fmpData.company,
-          sector: fmpData.sector || null,
-          industry: fmpData.industry || null
-        };
-        
-        // Cache the data
-        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
-        return companyData;
-      }
-    } catch (e) {
-      Logger.log(`Error getting company name from FMP for ${symbol}: ${e}`);
-    }
-    
-    // If all else fails, return the symbol as the company name
-    return defaultReturn;
-  } catch (error) {
-    Logger.log(`Error in getCompanyName for ${symbol}: ${error}`);
-    return {
-      company: symbol,
-      sector: null,
-      industry: null
-    };
-  }
+  return null;
 }
 
 /**
@@ -1685,36 +1607,27 @@ function fetchTradierQuote(symbol) {
     "Accept": "application/json"
   };
   var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
-  
+
   try {
     var response = UrlFetchApp.fetch(url, options);
     var content = response.getContentText();
     var responseCode = response.getResponseCode();
-    
-    // Log the full response for debugging
     Logger.log(`Quote endpoint response code: ${responseCode}`);
     Logger.log(`Quote endpoint response content: ${content}`);
-    
     if (responseCode !== 200) {
       Logger.log("HTTP Error: " + responseCode + " for symbol: " + symbol + ". Raw response: " + content);
       throw new Error("HTTP Error: " + responseCode + " for symbol: " + symbol);
     }
-    
     var json = JSON.parse(content);
     if (!json.quotes || !json.quotes.quote) {
       throw new Error("No quote data returned for symbol: " + symbol);
     }
-    
     var quote = json.quotes.quote;
+    // --- PATCH: Always include description as company name fallback ---
     return {
-      last: quote.last || null,
-      volume: quote.volume || null,
-      open: quote.open || null,
-      high: quote.high || null,
-      low: quote.low || null,
-      close: quote.close || null,
-      change: quote.change || null,
-      change_percentage: quote.change_percentage || null
+      ...quote,
+      description: quote.description || null, // Always provide description
+      company: quote.description || null      // Patch: alias for company name
     };
   } catch (e) {
     Logger.log("Error in fetchTradierQuote for " + symbol + ": " + e.message);
@@ -1732,26 +1645,21 @@ function fetchTradierCompany(symbol) {
     "Accept": "application/json"
   };
   var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
-  
+
   try {
     var response = UrlFetchApp.fetch(url, options);
     var content = response.getContentText();
     var responseCode = response.getResponseCode();
-    
-    // Log the full response for debugging
     Logger.log(`Company endpoint response code: ${responseCode}`);
     Logger.log(`Company endpoint response content: ${content}`);
-    
     if (responseCode !== 200) {
       Logger.log("HTTP Error in fetchTradierCompany for " + symbol + ": " + responseCode + ". Raw response: " + content);
       throw new Error("HTTP Error: " + responseCode);
     }
-    
     var json = JSON.parse(content);
     if (!json.company) {
       throw new Error("No company data returned for symbol: " + symbol);
     }
-    
     return json.company;
   } catch (e) {
     Logger.log("Error in fetchTradierCompany for " + symbol + ": " + e.message);
@@ -1769,26 +1677,21 @@ function fetchTradierRatios(symbol) {
     "Accept": "application/json"
   };
   var options = { "method": "get", "headers": headers, "muteHttpExceptions": true };
-  
+
   try {
     var response = UrlFetchApp.fetch(url, options);
     var content = response.getContentText();
     var responseCode = response.getResponseCode();
-    
-    // Log the full response for debugging
     Logger.log(`Ratios endpoint response code: ${responseCode}`);
     Logger.log(`Ratios endpoint response content: ${content}`);
-    
     if (responseCode !== 200) {
       Logger.log("HTTP Error in fetchTradierRatios for " + symbol + ": " + responseCode + ". Raw response: " + content);
       throw new Error("HTTP Error: " + responseCode);
     }
-    
     var json = JSON.parse(content);
     if (!json.ratios) {
       throw new Error("No ratios data returned for symbol: " + symbol);
     }
-    
     return json.ratios;
   } catch (e) {
     Logger.log("Error in fetchTradierRatios for " + symbol + ": " + e.message);
@@ -1827,5 +1730,358 @@ function testTradierAPI() {
     Logger.log(`Missing required fields: ${missingFields.join(', ')}`);
   } else {
     Logger.log('All required fields present');
+  }
+}
+
+/**
+ * --- UTILITY: Sanitize metric values ---
+/**
+ * Sanitizes a metric value, converting #ERROR!, N/A, null, undefined, empty, or NaN to null
+ * @param {any} value
+ * @return {any|null}
+ */
+function sanitizeMetricValue(value) {
+  if (value === null || value === undefined) return null;
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (
+      trimmed === '' ||
+      trimmed.toUpperCase() === 'N/A' ||
+      trimmed.toUpperCase() === 'NA' ||
+      trimmed.toUpperCase() === 'NULL' ||
+      trimmed.toUpperCase() === 'UNDEFINED' ||
+      trimmed.startsWith('#ERROR')
+    ) {
+      return null;
+    }
+  }
+  if (typeof value === 'number' && isNaN(value)) return null;
+  return value;
+}
+
+/**
+ * --- UTILITY: Validate company name ---
+/**
+ * Checks if a company name is valid (not null, not N/A, not NaN, not empty)
+ * @param {string|null|undefined} name
+ * @return {boolean}
+ */
+function isValidCompanyName(name) {
+  if (!name) return false;
+  if (typeof name !== 'string') return false;
+  const invalids = ['N/A', 'NaN', 'null', 'undefined', ''];
+  return !invalids.includes(name.trim());
+}
+
+/**
+ * Fetches data from Yahoo Finance for a specific symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Yahoo Finance data
+ */
+function fetchYahooFinanceData(symbol) {
+  try {
+    Logger.log(`Fetching Yahoo Finance data for ${symbol}`);
+    
+    // Initialize metrics object
+    const metrics = {
+      symbol: symbol,
+      price: null,
+      priceChange: null,
+      changesPercentage: null,
+      volume: null,
+      marketCap: null,
+      company: null,
+      industry: null,
+      sector: null,
+      beta: null,
+      pegRatio: null,
+      pegForwardRatio: null, // NEW FIELD
+      forwardPE: null,
+      priceToBook: null,
+      priceToSales: null,
+      debtToEquity: null,
+      returnOnEquity: null,
+      returnOnAssets: null,
+      profitMargin: null,
+      dividendYield: null,
+      fiftyTwoWeekHigh: null,
+      fiftyTwoWeekLow: null,
+      dayHigh: null,
+      dayLow: null,
+      open: null,
+      close: null,
+      fiftyTwoWeekAverage: null,
+      dataSource: ['Yahoo Finance API']
+    };
+    
+    // Try key statistics endpoint first (most comprehensive)
+    const statsData = fetchYahooKeyStatistics(symbol);
+    if (statsData) {
+      Logger.log('Successfully retrieved key statistics data');
+      
+      // Update metrics with key statistics
+      metrics.marketCap = statsData.marketCap;
+      metrics.company = statsData.company;
+      metrics.industry = statsData.industry;
+      metrics.sector = statsData.sector;
+      metrics.beta = statsData.beta;
+      metrics.pegRatio = statsData.pegRatio;
+      metrics.forwardPE = statsData.forwardPE;
+      metrics.priceToBook = statsData.priceToBook;
+      metrics.priceToSales = statsData.priceToSales;
+      metrics.debtToEquity = statsData.debtToEquity;
+      metrics.returnOnEquity = statsData.returnOnEquity;
+      metrics.returnOnAssets = statsData.returnOnAssets;
+      metrics.profitMargin = statsData.profitMargin;
+      metrics.dividendYield = statsData.dividendYield;
+      metrics.fiftyTwoWeekHigh = statsData.fiftyTwoWeekHigh;
+      metrics.fiftyTwoWeekLow = statsData.fiftyTwoWeekLow;
+      metrics.price = statsData.currentPrice;
+      metrics.close = statsData.previousClose;
+      metrics.pegForwardRatio = statsData.pegForwardRatio; // NEW FIELD
+      
+      // Calculate price change and percentage change
+      if (metrics.price && metrics.close) {
+        metrics.priceChange = metrics.price - metrics.close;
+        metrics.changesPercentage = ((metrics.price - metrics.close) / metrics.close) * 100;
+      }
+    }
+    
+    // If we're missing price data, try price endpoint
+    if (!metrics.price || !metrics.volume) {
+      Logger.log('Missing price data, trying price endpoint');
+      const priceData = fetchYahooPriceData(symbol);
+      if (priceData) {
+        Logger.log('Successfully retrieved price data');
+        
+        // Only update if values are null
+        if (!metrics.price) metrics.price = priceData.price;
+        if (!metrics.volume) metrics.volume = priceData.volume;
+        if (!metrics.dayHigh) metrics.dayHigh = priceData.dayHigh;
+        if (!metrics.dayLow) metrics.dayLow = priceData.dayLow;
+        if (!metrics.open) metrics.open = priceData.open;
+        if (!metrics.close) metrics.close = priceData.close;
+        if (!metrics.fiftyTwoWeekAverage) metrics.fiftyTwoWeekAverage = priceData.fiftyTwoWeekAverage;
+        
+        // Recalculate price change if needed
+        if (metrics.price && metrics.close && !metrics.priceChange) {
+          metrics.priceChange = metrics.price - metrics.close;
+          metrics.changesPercentage = ((metrics.price - metrics.close) / metrics.close) * 100;
+        }
+      }
+    }
+    
+    // --- VALIDATE COMPANY NAME ---
+    // If we're missing company data, try search endpoint
+    if (!isValidCompanyName(metrics.company) || !metrics.industry || !metrics.sector) {
+      Logger.log('Missing or invalid company data, trying search endpoint');
+      const searchData = fetchYahooSearchData(symbol);
+      if (searchData) {
+        Logger.log('Successfully retrieved search data');
+        if (!isValidCompanyName(metrics.company) && isValidCompanyName(searchData.company)) metrics.company = searchData.company;
+        if (!metrics.industry && searchData.industry) metrics.industry = searchData.industry;
+        if (!metrics.sector && searchData.sector) metrics.sector = searchData.sector;
+      }
+    }
+    // --- FALLBACK TO FMP ---
+    if (!isValidCompanyName(metrics.company)) {
+      Logger.log('Still missing or invalid company name, trying FMP');
+      try {
+        const fmpData = fetchFMPData(symbol);
+        if (fmpData && isValidCompanyName(fmpData.company)) {
+          metrics.company = fmpData.company;
+          if (fmpData.industry) metrics.industry = fmpData.industry;
+          if (fmpData.sector) metrics.sector = fmpData.sector;
+        }
+      } catch (e) { Logger.log('FMP fallback failed: ' + e); }
+    }
+    // --- FALLBACK TO TRADIER DESCRIPTION ---
+    if (!isValidCompanyName(metrics.company)) {
+      Logger.log('Still missing or invalid company name, trying Tradier quote description');
+      try {
+        var tradierQuote = fetchTradierQuote(symbol);
+        if (tradierQuote && tradierQuote.description && isValidCompanyName(tradierQuote.description)) {
+          metrics.company = tradierQuote.description;
+        }
+      } catch (e) { Logger.log('Tradier quote fallback failed: ' + e); }
+    }
+    // --- FINAL FALLBACK ---
+    if (!isValidCompanyName(metrics.company)) {
+      metrics.company = symbol; // Use symbol as company name if all sources fail
+    }
+    Logger.log(`Final Yahoo Finance metrics: price=${metrics.price}, company=${metrics.company}, volume=${metrics.volume}`);
+    const hasEssentialData = metrics.price !== null && isValidCompanyName(metrics.company);
+    if (hasEssentialData) {
+      Logger.log(`Yahoo Finance API result data:`, {
+        price: metrics.price,
+        volume: metrics.volume,
+        marketCap: metrics.marketCap,
+        company: metrics.company,
+        industry: metrics.industry,
+        sector: metrics.sector
+      });
+      return metrics;
+    } else {
+      Logger.log(`Failed to retrieve essential data from Yahoo Finance API. Missing price or valid company name.`);
+      return null;
+    }
+  } catch (error) {
+    Logger.log(`Error in fetchYahooFinanceData for ${symbol}: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Gets the company name for a given symbol
+ * @param {String} symbol - The stock/ETF symbol
+ * @return {Object} Object containing company name, sector, and industry
+ */
+function getCompanyName(symbol) {
+  try {
+    // Default return if we can't find the company name
+    const defaultReturn = {
+      company: symbol,
+      sector: null,
+      industry: null
+    };
+    
+    // First try to get from cache
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKey = `COMPANY_DATA_${symbol}`;
+    
+    const cachedData = scriptCache.get(cacheKey);
+    
+    if (cachedData) {
+      try {
+        return JSON.parse(cachedData);
+      } catch (e) {
+        Logger.log(`Error parsing cached company data for ${symbol}: ${e}`);
+      }
+    }
+    
+    // Try to get company name from Yahoo Finance search
+    try {
+      const searchData = fetchYahooSearchData(symbol);
+      if (searchData && searchData.company) {
+        const companyData = {
+          company: searchData.company,
+          sector: searchData.sector || null,
+          industry: searchData.industry || null
+        };
+        
+        // Cache the data
+        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
+        return companyData;
+      }
+    } catch (e) {
+      Logger.log(`Error getting company name from Yahoo for ${symbol}: ${e}`);
+    }
+    
+    // If Yahoo fails, try FMP
+    try {
+      const fmpData = fetchFMPData(symbol);
+      if (fmpData && fmpData.company) {
+        const companyData = {
+          company: fmpData.company,
+          sector: fmpData.sector || null,
+          industry: fmpData.industry || null
+        };
+        
+        // Cache the data
+        scriptCache.put(cacheKey, JSON.stringify(companyData), 21600); // 6 hours
+        return companyData;
+      }
+    } catch (e) {
+      Logger.log(`Error getting company name from FMP for ${symbol}: ${e}`);
+    }
+    
+    // If all else fails, return the symbol as the company name
+    return defaultReturn;
+  } catch (error) {
+    Logger.log(`Error in getCompanyName for ${symbol}: ${error}`);
+    return {
+      company: symbol,
+      sector: null,
+      industry: null
+    };
+  }
+}
+
+/**
+ * Clears the stock metrics cache for all symbols
+ * This is useful when you want to force fresh data retrieval
+ */
+function clearStockMetricsCache() {
+  try {
+    Logger.log('Clearing stock metrics cache...');
+    
+    // Get script cache
+    const scriptCache = CacheService.getScriptCache();
+    
+    // Define our stock symbols
+    const stockSymbols = [
+      // Major Indices
+      'SPY', 'QQQ', 'IWM', 'DIA',
+      // Magnificent Seven
+      'AAPL', 'MSFT', 'GOOGL', 'AMZN', 'META', 'TSLA', 'NVDA',
+      // Other common stocks
+      'V', 'JPM', 'JNJ', 'UNH', 'HD', 'PG', 'MA', 'BAC', 'DIS', 'ADBE',
+      'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM',
+      // Energy and Industrial
+      'XOM', 'CVX', 'BA', 'CAT', 'GE', 'MMM',
+      // Deprecated stock symbols
+      'FB', 'TWTR'
+    ];
+    
+    // Create cache keys for each symbol
+    const keysToRemove = stockSymbols.map(symbol => `STOCK_METRICS_${symbol}`);
+    
+    // Remove all keys in a batch operation
+    if (keysToRemove.length > 0) {
+      scriptCache.removeAll(keysToRemove);
+    }
+    
+    Logger.log(`Cleared stock metrics cache for ${keysToRemove.length} symbols`);
+    
+    return {
+      success: true,
+      message: `Cleared stock metrics cache for ${keysToRemove.length} symbols`
+    };
+  } catch (error) {
+    Logger.log(`Error clearing stock metrics cache: ${error}`);
+    return {
+      success: false,
+      message: `Error clearing cache: ${error}`
+    };
+  }
+}
+
+/**
+ * Clears the stock metrics cache for a specific symbol
+ * @param {string} symbol - Stock symbol to clear cache for
+ * @return {Object} Result object with success status and message
+ */
+function clearStockMetricsCacheForSymbol(symbol) {
+  try {
+    Logger.log(`Clearing stock metrics cache for ${symbol}...`);
+    
+    const scriptCache = CacheService.getScriptCache();
+    const cacheKey = `STOCK_METRICS_${symbol}`;
+    
+    // Remove the cache entry
+    scriptCache.remove(cacheKey);
+    
+    Logger.log(`Cleared cache for ${symbol}`);
+    
+    return {
+      success: true,
+      message: `Cleared stock metrics cache for ${symbol}`
+    };
+  } catch (error) {
+    Logger.log(`Error clearing stock metrics cache for ${symbol}: ${error}`);
+    return {
+      success: false,
+      message: `Error clearing cache for ${symbol}: ${error}`
+    };
   }
 }

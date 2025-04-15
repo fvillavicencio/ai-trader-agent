@@ -18,7 +18,7 @@ function getTradingAnalysisPrompt() {
   };
   const formattedDate = currentDate.toLocaleString('en-US', options);
   
-  return `**Optimized Trading Analysis Prompt for GPT-4.5 API**
+  return `**Optimized Trading Analysis Prompt for GPT-4.1 API**
 
 Today's Date and Time: ${formattedDate}
 

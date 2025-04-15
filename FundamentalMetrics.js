@@ -36,7 +36,10 @@ function retrieveFundamentalMetrics(symbols = [], mentionedStocks = []) {
     const deprecatedSymbols = ['FB'];
     
     // Process each symbol
+    const processedSymbols = new Set();
     for (const symbol of allSymbols) {
+      if (processedSymbols.has(symbol)) continue; // Prevent duplicate fetches
+      processedSymbols.add(symbol);
       try {
         // Mark deprecated symbols
         if (deprecatedSymbols.includes(symbol)) {
@@ -256,24 +259,37 @@ function generateAnalysis(symbol, metrics, historicalAverages = {}, sectorAverag
  * @return {String} Formatted value
  */
 function formatValue(value, fixedDecimals = true, decimals = 2) {
-  if (value === null || value === undefined || isNaN(value) || typeof value !== 'number') {
-    // Try to convert to number if it's a string
-    if (typeof value === 'string') {
-      const parsedValue = parseFloat(value);
-      if (!isNaN(parsedValue)) {
-        value = parsedValue;
-      } else {
-        return "N/A";
-      }
+  // Robustly handle missing, error, or non-numeric values
+  if (
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    value === 'N/A' ||
+    value === '#ERROR!' ||
+    (typeof value === 'string' && value.trim() === '')
+  ) {
+    return 'N/A';
+  }
+
+  // Convert string to number if possible
+  if (typeof value === 'string') {
+    const parsedValue = parseFloat(value);
+    if (!isNaN(parsedValue) && isFinite(parsedValue)) {
+      value = parsedValue;
     } else {
-      return "N/A";
+      return 'N/A';
     }
   }
-  
+
+  // Only format if number is finite
+  if (typeof value !== 'number' || !isFinite(value)) {
+    return 'N/A';
+  }
+
   if (fixedDecimals) {
     return value.toFixed(decimals);
   }
-  
+
   return value.toString();
 }
 
@@ -539,49 +555,34 @@ function fetchTradierData(symbol) {
   }
 }
 
-/**
- * Fetches Google Finance data for a specific symbol
- * @param {String} symbol - The stock/ETF symbol
- * @return {Object} Google Finance data
- */
-function fetchGoogleFinanceData(symbol) {
-  try {
-    const cacheKey = `google_${symbol}`;
-    const cachedData = CacheService.getScriptCache().get(cacheKey);
-    if (cachedData) {
-      Logger.log(`Using cached Google Finance data for ${symbol}`);
-      return JSON.parse(cachedData);
-    }
-
-    // Fetch data from Google Finance
-    const url = `https://finance.google.com/finance/info?client=ig&q=${symbol}`;
-    const options = {
-      method: 'GET',
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'Mozilla/5.0'
-      },
-      muteHttpExceptions: true
-    };
-
-    const response = UrlFetchApp.fetch(url, options);
-    const data = JSON.parse(response.getContentText().replace(/\]/g, '').replace(/\[/g, ''));
-
-    // Log response details for debugging
-    Logger.log(`Google Finance API Response for ${symbol}:`);
-    Logger.log(`Status: ${response.getResponseCode()}`);
-    Logger.log(`Response: ${JSON.stringify(data, null, 2)}`);
-
-    // Cache the data for 1 hour
-    CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
-
-    return data;
-  } catch (error) {
-    Logger.log(`Error in fetchGoogleFinanceData for ${symbol}: ${error}`);
-    Logger.log(`Error details: ${error.stack}`);
-    return null;
-  }
-}
+// Commented out Google Finance API usage as per user request
+// function fetchGoogleFinanceData(symbol) {
+//   try {
+//     const cacheKey = `google_${symbol}`;
+//     const cachedData = CacheService.getScriptCache().get(cacheKey);
+//     if (cachedData) {
+//       Logger.log(`Using cached Google Finance data for ${symbol}`);
+//       return JSON.parse(cachedData);
+//     }
+//     // Fetch data from Google Finance
+//     const url = `https://finance.google.com/finance/info?client=ig&q=${symbol}`;
+//     const options = {
+//       method: 'GET',
+//       headers: {},
+//     };
+//     const response = UrlFetchApp.fetch(url, options);
+//     const data = JSON.parse(response.getContentText().replace(/\]/g, '').replace(/\[/g, ''));
+//     Logger.log(`Google Finance API Response for ${symbol}:`);
+//     Logger.log(`Status: ${response.getResponseCode()}`);
+//     Logger.log(`Response: ${JSON.stringify(data, null, 2)}`);
+//     CacheService.getScriptCache().put(cacheKey, JSON.stringify(data), 3600);
+//     return data;
+//   } catch (error) {
+//     Logger.log(`Error in fetchGoogleFinanceData for ${symbol}: ${error}`);
+//     Logger.log(`Error details: ${error.stack}`);
+//     return null;
+//   }
+// }
 
 /**
  * Test function to debug API calls
@@ -603,12 +604,66 @@ function testApiCalls(symbol = 'AAPL') {
     
     // Test Google Finance
     Logger.log('\nTesting Google Finance...');
-    const googleData = fetchGoogleFinanceData(symbol);
-    Logger.log('Google Finance Response:', JSON.stringify(googleData, null, 2));
+    // const googleData = fetchGoogleFinanceData(symbol);
+    // Logger.log('Google Finance Response:', JSON.stringify(googleData, null, 2));
     
     Logger.log('\n=== API Testing Complete ===');
   } catch (error) {
     Logger.log(`Error in testApiCalls: ${error}`);
     Logger.log(`Error details: ${error.stack}`);
   }
+}
+
+/**
+ * Formats an individual stock card for HTML output (consistent rich formatting)
+ * @param {Object} stock - The stock data object
+ * @returns {String} HTML for the stock card
+ */
+function formatStockCard(stock) {
+  if (!stock) return '';
+
+  var symbol = stock.symbol || stock.ticker || 'N/A';
+  var name = stock.name || stock.companyName || 'N/A';
+  var price = stock.price || 'N/A';
+  var formattedPrice = (typeof price === 'string' && price.indexOf('$') === 0) ? price : ('$' + price);
+  var priceChange = stock.priceChange || stock.change || '0%';
+  var priceChangeValue = parseFloat((priceChange + '').replace('%', '').replace('+', ''));
+  var priceChangeColor = priceChangeValue > 0 ? '#4caf50' : priceChangeValue < 0 ? '#f44336' : '#757575';
+  var priceChangeArrow = priceChangeValue > 0 ? '▲' : priceChangeValue < 0 ? '▼' : '';
+  var priceChangeFormatted = priceChangeValue > 0 ? ('+' + priceChange) : priceChange;
+  var peRatio = stock.pe || stock.peRatio || 'N/A';
+  var marketCap = stock.marketCap || 'N/A';
+  var comment = stock.comment || stock.analysis || '';
+  var source = stock.source || 'N/A';
+  var sourceUrl = stock.sourceUrl || '#';
+  var lastUpdated = stock.lastUpdated || 'N/A';
+
+  return [
+    '<div style="flex: 1; min-width: 250px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">',
+    '  <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background-color: #f9f9ff;">',
+    '    <div style="font-size: 18px; font-weight: 600; color: #5e35b1;">' + symbol + '</div>',
+    '    <div style="font-size: 14px; color: #666; font-style: italic;">' + name + '</div>',
+    '  </div>',
+    '  <div style="padding: 15px; background-color: #f5f5f5;">',
+    '    <div style="display: flex; justify-content: space-between; align-items: center;">',
+    '      <div style="font-size: 22px; font-weight: bold;">' + formattedPrice + '</div>',
+    '      <div style="display: flex; align-items: center;">',
+    '        <span style="font-size: 14px; color: ' + priceChangeColor + '; margin-right: 4px;">' + priceChangeArrow + '</span>',
+    '        <span style="font-size: 14px; color: ' + priceChangeColor + ';">' + priceChangeFormatted + '</span>',
+    '      </div>',
+    '    </div>',
+    '  </div>',
+    '  <div style="padding: 10px 15px;">',
+    '    <div style="font-size: 14px; color: #333;">',
+    '      <span style="margin-right: 16px;"><strong>P/E:</strong> ' + peRatio + '</span>',
+    '      <span><strong>Market Cap:</strong> ' + marketCap + '</span>',
+    '    </div>',
+    comment ? '    <div style="margin-top: 8px; color: #5e35b1; font-size: 13px; font-style: italic;">' + comment + '</div>' : '',
+    '  </div>',
+    '  <div style="padding: 8px 15px 10px 15px; font-size: 12px; color: #888; background: #fafafa; border-top: 1px solid #e0e0e0;">',
+    '    <span>Source: <a href="' + sourceUrl + '" style="color: #5e35b1; text-decoration: underline;">' + source + '</a></span>',
+    '    <span style="float: right;">' + lastUpdated + '</span>',
+    '  </div>',
+    '</div>'
+  ].join('\n');
 }

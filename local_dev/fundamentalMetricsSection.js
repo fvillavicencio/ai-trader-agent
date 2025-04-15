@@ -70,44 +70,43 @@ function generateFundamentalMetricsSection(analysis) {
  */
 function formatStockCard(stock) {
   if (!stock) return '';
-  
+
   // Extract stock data
-  const symbol = stock.symbol || 'N/A';
-  const name = stock.name || 'N/A';
-  
+  const symbol = stock.symbol || stock.ticker || 'N/A';
+  const name = stock.name || stock.companyName || 'N/A';
+
   // Format price (ensure $ is present but not duplicated)
   const price = stock.price || 'N/A';
   const formattedPrice = price.toString().startsWith('$') ? price : `$${price}`;
-  
+
   // Format price change
   const priceChange = stock.priceChange || stock.change || '0%';
   const priceChangeValue = parseFloat(priceChange.replace('%', '').replace('+', ''));
   const priceChangeColor = priceChangeValue > 0 ? '#4caf50' : priceChangeValue < 0 ? '#f44336' : '#757575';
   const priceChangeArrow = priceChangeValue > 0 ? '▲' : priceChangeValue < 0 ? '▼' : '';
   const priceChangeFormatted = priceChangeValue > 0 ? `+${priceChange}` : priceChange;
-  
+
   // PE ratio (could be pe or peRatio depending on format)
   const peRatio = stock.pe || stock.peRatio || 'N/A';
-  
+
   // Market cap
   const marketCap = stock.marketCap || 'N/A';
-  
+
   // Comment or analysis
   const comment = stock.comment || stock.analysis || '';
-  
+
   // Source information
   const source = stock.source || 'N/A';
   const sourceUrl = stock.sourceUrl || '#';
   const lastUpdated = stock.lastUpdated || 'N/A';
-  
+
   return `
   <div style="flex: 1; min-width: 250px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">
     <!-- Stock Header -->
     <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; border-bottom: 1px solid #e0e0e0; background-color: #f9f9ff;">
       <div style="font-size: 18px; font-weight: 600; color: #5e35b1;">${symbol}</div>
-      <div style="font-size: 14px; color: #666;">${name}</div>
+      <div style="font-size: 14px; color: #666; font-style: italic;">${name}</div>
     </div>
-    
     <!-- Stock Price -->
     <div style="padding: 15px; background-color: #f5f5f5;">
       <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -118,36 +117,21 @@ function formatStockCard(stock) {
         </div>
       </div>
     </div>
-    
-    <!-- Key Metrics -->
-    <div style="padding: 15px;">
-      <div style="font-weight: 500; margin-bottom: 10px; color: #333;">Key Metrics</div>
-      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
-        ${marketCap ? `
-        <div style="background-color: #f5f5f5; border-radius: 4px; padding: 8px 12px;">
-          <div style="font-size: 12px; color: #666;">Market Cap</div>
-          <div style="font-size: 14px; font-weight: 500;">${marketCap}</div>
-        </div>` : ''}
-        
-        ${peRatio ? `
-        <div style="background-color: #f5f5f5; border-radius: 4px; padding: 8px 12px;">
-          <div style="font-size: 12px; color: #666;">P/E Ratio</div>
-          <div style="font-size: 14px; font-weight: 500;">${peRatio}</div>
-        </div>` : ''}
+    <!-- Fundamentals -->
+    <div style="padding: 10px 15px;">
+      <div style="font-size: 14px; color: #333;">
+        <span style="margin-right: 16px;"><strong>P/E:</strong> ${peRatio}</span>
+        <span><strong>Market Cap:</strong> ${marketCap}</span>
       </div>
+      ${comment ? `<div style=\"margin-top: 8px; color: #5e35b1; font-size: 13px; font-style: italic;\">${comment}</div>` : ''}
     </div>
-    
-    <!-- Analysis -->
-    ${comment ? `
-    <div style="padding: 0 15px 15px; border-left: 3px solid #5e35b1;">
-      <div style="font-style: italic; color: #333; font-size: 13px; line-height: 1.4;">${comment}</div>
-    </div>` : ''}
-    
-    <!-- Source -->
-    <div style="padding: 8px 15px; border-top: 1px solid #e0e0e0; font-size: 11px; color: #999; text-align: right;">
-      Source: <a href="${sourceUrl}" style="color: #3498db; text-decoration: none;">${source}</a> | Last updated: ${lastUpdated}
+    <!-- Source and Timestamp -->
+    <div style="padding: 8px 15px 10px 15px; font-size: 12px; color: #888; background: #fafafa; border-top: 1px solid #e0e0e0;">
+      <span>Source: <a href="${sourceUrl}" style="color: #5e35b1; text-decoration: underline;">${source}</a></span>
+      <span style="float: right;">${lastUpdated}</span>
     </div>
-  </div>`;
+  </div>
+  `;
 }
 
 module.exports = generateFundamentalMetricsSection;

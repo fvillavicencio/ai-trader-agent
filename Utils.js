@@ -283,7 +283,7 @@ function generateMarketIndicatorsSection(analysis) {
             <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
               <div style="font-weight: bold; width: 200px;">${index.name}</div>
               <div style="flex: 1; text-align: right;">${price}</div>
-              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${change.toFixed(2)} (${percentChange.toFixed(1)}%)</div>
+              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${typeof change === 'number' && isFinite(change) ? change.toFixed(2) : 'N/A'}</div>
             </div>
             `;
           }).join('')}
@@ -310,7 +310,7 @@ function generateMarketIndicatorsSection(analysis) {
             return `
             <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};">
               <div style="font-weight: bold; width: 200px;">${sector.name}</div>
-              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${percentChange.toFixed(1)}%</div>
+              <div style="color: ${changeColor}; font-weight: bold; margin-left: 10px;">${changeIcon} ${typeof percentChange === 'number' && isFinite(percentChange) ? percentChange.toFixed(1) : 'N/A'}%</div>
             </div>
             `;
           }).join('')}
@@ -349,7 +349,7 @@ function generateMarketIndicatorsSection(analysis) {
       <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
         <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
           <div style="font-weight: bold; font-size: 1.3em;">Fear & Greed Index:</div>
-          <div style="font-weight: bold; color: ${fgColor}; font-size: 1.69em;">${fgValue}</div>
+          <div style="font-weight: bold; color: ${fgColor}; font-size: 1.69em;">${typeof fgValue === 'number' && isFinite(fgValue) ? fgValue.toFixed(0) : 'N/A'}</div>
         </div>
         
         <div style="position: relative; height: 10px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
@@ -562,7 +562,12 @@ function generateFundamentalMetricsSection(analysis) {
 
               // Create metric items only for non-N/A values
               const createMetricItem = (label, value, suffix = '') => {
-                if (value === 'N/A' || value === null || value === undefined) return '';
+                if (
+                  value === 'N/A' || value === null || value === undefined ||
+                  value === '' || value === false ||
+                  (typeof value === 'number' && (isNaN(value) || !isFinite(value))) ||
+                  (typeof value === 'string' && ['n/a', 'na', 'nan', 'null', 'undefined', '-'].includes(value.trim().toLowerCase()))
+                ) return '';
                 return `
                   <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
                     <div style="color: #000; min-width: 80px;">${label}</div>
@@ -571,39 +576,112 @@ function generateFundamentalMetricsSection(analysis) {
                 `;
               };
 
+              // Dynamically render all available metrics from the stock object, excluding non-values
+              const metricLabels = {
+                marketCap: 'Market Cap',
+                peRatio: 'P/E Ratio',
+                forwardPE: 'Forward PE',
+                pegRatio: 'PEG Ratio',
+                pegForwardRatio: 'PEG Forward Ratio',
+                priceToBook: 'Price/Book',
+                priceToSales: 'Price/Sales',
+                debtToEquity: 'Debt/Equity',
+                returnOnEquity: 'ROE',
+                returnOnAssets: 'ROA',
+                profitMargin: 'Profit Margin',
+                dividendYield: 'Dividend Yield',
+                beta: 'Beta',
+                volume: 'Volume',
+                open: 'Open',
+                close: 'Previous Close',
+                dayHigh: 'Day High',
+                dayLow: 'Day Low',
+                fiftyTwoWeekHigh: '52W High',
+                fiftyTwoWeekLow: '52W Low',
+                sector: 'Sector',
+                industry: 'Industry',
+                // Add more fields as needed from StockDataRetriever.gs
+              };
+
+              // Determine company name: prefer 'name', fallback to 'company', fallback to symbol if all else fails
+              let companyName = '';
+              if (stock.name && typeof stock.name === 'string' && stock.name.trim() && stock.name.trim().toUpperCase() !== 'N/A') {
+                companyName = stock.name.trim();
+              } else if (stock.company && typeof stock.company === 'string' && stock.company.trim() && stock.company.trim().toUpperCase() !== 'N/A') {
+                companyName = stock.company.trim();
+              } else {
+                companyName = stock.symbol || '';
+              }
+
+              // Arrow logic: prefer string sign, fallback to number, fallback to neutral
+              let arrow = '';
+              if (typeof stock.priceChange === 'string') {
+                arrow = stock.priceChange.trim().startsWith('-') ? '&#8595;' : '&#8593;';
+              } else if (typeof stock.priceChange === 'number') {
+                arrow = stock.priceChange < 0 ? '&#8595;' : '&#8593;';
+              } else {
+                arrow = '';
+              }
+
+              // Price change display: show string if string, else formatted number, else N/A
+              let priceChangeDisplay = 'N/A';
+              if (typeof stock.priceChange === 'string') {
+                priceChangeDisplay = stock.priceChange;
+              } else if (typeof stock.priceChange === 'number' && isFinite(stock.priceChange)) {
+                priceChangeDisplay = stock.priceChange.toFixed(2);
+              }
+
+              // Percent change display: only if number and finite
+              let percentChangeDisplay = '';
+              if (typeof stock.changesPercentage === 'number' && isFinite(stock.changesPercentage)) {
+                percentChangeDisplay = '(' + stock.changesPercentage.toFixed(2) + '%)';
+              }
+
+              // --- Compose the top-right price line ---
+              // Example: $94.65 ↑ 1.87 (2.02%)
+              let priceChangeAbs = '';
+              if (typeof stock.priceChange === 'number' && isFinite(stock.priceChange)) {
+                priceChangeAbs = Math.abs(stock.priceChange).toFixed(2);
+              } else if (typeof stock.priceChange === 'string' && stock.priceChange.trim() && stock.priceChange !== 'N/A') {
+                priceChangeAbs = stock.priceChange.replace(/^[-+]/, '');
+              }
+              let priceLine = `$${formatValue(stock.price)}`;
+              if (arrow) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)};\">${arrow}</span>`;
+              if (priceChangeAbs) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)}; font-weight: normal;\">${priceChangeAbs}</span>`;
+              if (percentChangeDisplay && percentChangeDisplay !== '(N/A%)') priceLine += ` <span style=\"color: ${getColor(stock.priceChange)}; font-weight: normal;\">${percentChangeDisplay}</span>`;
+              // --- Helper to add $ prefix for open/close ---
+              function renderDollarValue(val) {
+                if (val === undefined || val === null || val === '' || isNaN(val)) return '';
+                return `$${formatValue(val)}`;
+              }
+
               return `
-                <div class="stock-card">
-                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid ${getColor(stock.priceChange)};">
-                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
-                      <div style="font-weight: bold; font-size: 16px; color: #000;">${stock.symbol}</div>
-                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">${stock.company || 'N/A'}${stock.sector ? ` - ${stock.sector}` : ''}${stock.industry ? ` - ${stock.industry}` : ''}</div>
+                <div class=\"stock-card\">
+                  <div style=\"flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid ${getColor(stock.priceChange)};\">
+                    <div style=\"display: flex; justify-content: space-between; align-items: flex-start; padding: 10px; background-color: #f8f9fa; overflow: hidden;\">
+                      <!-- Left: Symbol and Company Name -->
+                      <div style=\"display: flex; flex-direction: column; align-items: flex-start; min-width: 120px;\">
+                        <div style=\"font-weight: bold; font-size: 18px; color: #000; letter-spacing: 1px;\">${stock.symbol}</div>
+                        <div style=\"font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;\">${companyName}</div>
+                      </div>
+                      <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+                      <div style=\"display: flex; flex-direction: column; align-items: flex-end; min-width: 110px;\">
+                        <div style=\"font-weight: bold; font-size: 1.1em; color: ${getColor(stock.priceChange)}; margin-bottom: 2px; white-space: nowrap;\">${priceLine}</div>
+                      </div>
                     </div>
-                    <div style="padding: 15px; background-color: white; overflow: hidden;">
-                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
-                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$${formatNumberWithSuffix(stock.price, '')}</div>
-                        <div style="color: ${getColor(stock.priceChange)}; font-weight: bold;">
-                          <span style="margin-right: 3px;">${stock.priceChange >= 0 ? '&#8593;' : '&#8595;'}</span>
-                          ${typeof stock.priceChange === 'number' ? (stock.priceChange >= 0 ? '+' : '') + stock.priceChange.toFixed(2) + '%' : stock.priceChange || 'N/A'}
-                        </div>
-                      </div>
-                      
-                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
-                        ${createMetricItem('Market Cap', `$${formatLargeNumber(stock.marketCap)}`)}
-                        ${createMetricItem('P/E Ratio', stock.peRatio)}
-                        ${createMetricItem('Forward PE', stock.forwardPE)}
-                        ${createMetricItem('PEG Ratio', stock.pegRatio)}
-                        ${createMetricItem('Price/Book', stock.priceToBook)}
-                        ${createMetricItem('Price/Sales', stock.priceToSales)}
-                        ${createMetricItem('Debt/Equity', stock.debtToEquity)}
-                        ${createMetricItem('ROE', stock.returnOnEquity)}
-                        ${createMetricItem('ROA', stock.returnOnAssets)}
-                        ${createMetricItem('Profit Margin', stock.profitMargin)}
-                        ${createMetricItem('Dividend Yield', stock.dividendYield)}
-                      </div>
-                      
-                      ${stock.summary ? `<div style="margin-top: 10px; font-style: italic; font-size: 13px; color: ${getColor(stock.priceChange)}; border-left: 3px solid #ddd; padding-left: 10px;">${stock.summary}</div>` : ''}
-                      
-                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: ${formatDate(stock.lastUpdated)}</div>
+                    <!-- Metrics Table -->
+                    <div style=\"padding: 10px; background-color: white;\">
+                      <table style=\"width: 100%; border-collapse: collapse; font-size: 0.97em;\">
+                        <tbody>
+                          ${Object.keys(metricLabels).map(key => {
+                            if (stock[key] === undefined || stock[key] === null || stock[key] === '') return '';
+                            let displayValue = stock[key];
+                            if (key === 'open' || key === 'close') displayValue = renderDollarValue(stock[key]);
+                            if (key === 'marketCap') displayValue = formatMarketCap(stock[key]);
+                            return `<tr><td style=\"color: #777; padding: 2px 8px 2px 0;\">${metricLabels[key]}</td><td style=\"font-weight: bold; color: #222; padding: 2px 0; text-align: right;\">${displayValue}</td></tr>`;
+                          }).join('')}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 </div>
@@ -674,7 +752,7 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             ${macro.treasuryYields.yields.map(yield => `
               <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
                 <div style="color: #666; font-size: 14px; margin-bottom: 8px;">${yield.term}</div>
-                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${formatValue(yield.yield)}%</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">${typeof yield.yield === 'number' && isFinite(yield.yield) ? yield.yield.toFixed(2) : 'N/A'}%</div>
                 <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
               </div>
             `).join('')}
@@ -716,8 +794,8 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
-                <div style="color: #4CAF50; font-size: 1.5em; font-weight: bold;">${formatValue(macro.fedPolicy.currentRate.currentRate)}%</div>
-                <div style="color: #666; font-size: 14px;">Range: ${formatValue(macro.fedPolicy.currentRate.rangeLow)}% - ${formatValue(macro.fedPolicy.currentRate.rangeHigh)}%</div>
+                <div style="color: #4CAF50; font-size: 1.5em; font-weight: bold;">${typeof macro.fedPolicy.currentRate.currentRate === 'number' && isFinite(macro.fedPolicy.currentRate.currentRate) ? macro.fedPolicy.currentRate.currentRate.toFixed(2) : 'N/A'}%</div>
+                <div style="color: #666; font-size: 14px;">Range: ${typeof macro.fedPolicy.currentRate.rangeLow === 'number' && isFinite(macro.fedPolicy.currentRate.rangeLow) ? macro.fedPolicy.currentRate.rangeLow.toFixed(2) : 'N/A'}% - ${typeof macro.fedPolicy.currentRate.rangeHigh === 'number' && isFinite(macro.fedPolicy.currentRate.rangeHigh) ? macro.fedPolicy.currentRate.rangeHigh.toFixed(2) : 'N/A'}%</div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
                 Source: <a href="${macro.fedPolicy.source.components.fedFundsRate.components.url || 'N/A'}">${macro.fedPolicy.source.components.fedFundsRate.components.name || 'N/A'}</a>, as of ${formatDate(macro.fedPolicy.source.components.fedFundsRate.components.timestamp || 'N/A')}
@@ -730,22 +808,22 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="display: flex; flex-direction: column; gap: 8px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;margin-top: 5px">
                   <div style="color: #666; font-size: 1em;">Current Price: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.currentPrice || 'N/A'}</span></div>
-                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${macro.fedPolicy.futures.impliedRate || 'N/A'}%</span></div>
+                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">${typeof macro.fedPolicy.futures.impliedRate === 'number' && isFinite(macro.fedPolicy.futures.impliedRate) ? macro.fedPolicy.futures.impliedRate.toFixed(2) : 'N/A'}%</span></div>
                 </div>
               </div>
               <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">&#8595;</span>
-                  <div style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities.cut || 'N/A'}%</div>
+                  <div style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">${typeof macro.fedPolicy.futures.probabilities.cut === 'number' && isFinite(macro.fedPolicy.futures.probabilities.cut) ? macro.fedPolicy.futures.probabilities.cut.toFixed(0) : 'N/A'}%</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="color: #757575; font-size: 1.5em;font-weight: bold;">&#8594;</span>
-                  <div style="color: #757575; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities.hold || 'N/A'}%</div>
+                  <div style="color: #757575; font-size: 1.5em;font-weight: bold;">${typeof macro.fedPolicy.futures.probabilities.hold === 'number' && isFinite(macro.fedPolicy.futures.probabilities.hold) ? macro.fedPolicy.futures.probabilities.hold.toFixed(0) : 'N/A'}%</div>
                 </div>
                 <div style="display: flex; align-items: center; gap: 5px;">
                   <span style="color: #f44336; font-size: 1.5em;font-weight: bold;">&#8593;</span>
-                  <div style="color: #f44336; font-size: 1.5em;font-weight: bold;">${macro.fedPolicy.futures.probabilities.hike || 'N/A'}%</div>
+                  <div style="color: #f44336; font-size: 1.5em;font-weight: bold;">${typeof macro.fedPolicy.futures.probabilities.hike === 'number' && isFinite(macro.fedPolicy.futures.probabilities.hike) ? macro.fedPolicy.futures.probabilities.hike.toFixed(0) : 'N/A'}%</div>
                 </div>
               </div>
               <!-- Source Information -->
@@ -794,11 +872,11 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="display: flex; justify-content: space-around;">
                 <div>
                   <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Headline</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.cpi.headline.toFixed(1)}%</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.cpi.headline === 'number' && isFinite(inflationData.cpi.headline) ? inflationData.cpi.headline.toFixed(1) : 'N/A'}%</div>
                 </div>
                 <div>
                   <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Core</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.cpi.core.toFixed(1)}%</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.cpi.core === 'number' && isFinite(inflationData.cpi.core) ? inflationData.cpi.core.toFixed(1) : 'N/A'}%</div>
                 </div>
               </div>
             </div>
@@ -811,11 +889,11 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
               <div style="display: flex; justify-content: space-around;">
                 <div>
                   <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Headline</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.pce.headline.toFixed(1)}%</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.pce.headline === 'number' && isFinite(inflationData.pce.headline) ? inflationData.pce.headline.toFixed(1) : 'N/A'}%</div>
                 </div>
                 <div>
                   <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Core</div>
-                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.pce.core.toFixed(1)}%</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.pce.core === 'number' && isFinite(inflationData.pce.core) ? inflationData.pce.core.toFixed(1) : 'N/A'}%</div>
                 </div>
               </div>
             </div>
@@ -834,17 +912,17 @@ function generateMacroeconomicFactorsSection(macroeconomicAnalysis) {
             <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
               <div style="text-align: center;">
                 <div style="color: #4CAF50; font-size: 1.1em; margin-bottom: 6px;">1-Year</div>
-                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.oneYear.value + '%'}</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.expectations.oneYear.value === 'number' && isFinite(inflationData.expectations.oneYear.value) ? inflationData.expectations.oneYear.value.toFixed(1) : 'N/A'}%</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.oneYear.lastUpdated))}</div>
               </div>
               <div style="text-align: center;">
                 <div style="color: #2196F3; font-size: 1.1em; margin-bottom: 6px;">5-Year</div>
-                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.fiveYear.value + '%'}</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.expectations.fiveYear.value === 'number' && isFinite(inflationData.expectations.fiveYear.value) ? inflationData.expectations.fiveYear.value.toFixed(1) : 'N/A'}%</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.fiveYear.lastUpdated))}</div>
               </div>
               <div style="text-align: center;">
                 <div style="color: #9C27B0; font-size: 1.1em; margin-bottom: 6px;">10-Year</div>
-                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${inflationData.expectations.tenYear.value + '%'}</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">${typeof inflationData.expectations.tenYear.value === 'number' && isFinite(inflationData.expectations.tenYear.value) ? inflationData.expectations.tenYear.value.toFixed(1) : 'N/A'}%</div>
                 <div style="color: #666; font-size: 0.8em; margin-top: 4px;">${formatDate(new Date(inflationData.expectations.tenYear.lastUpdated))}</div>
               </div>
             </div>
@@ -1128,14 +1206,82 @@ function generateMacroeconomicFactorsHelper() {
 }
 
 function formatNumberWithSuffix(value, suffix = '') {
-  if (value === 'N/A' || value === null || value === undefined) return 'N/A';
-  if (typeof value !== 'number') return value;
+  // Handle obvious missing or error values
+  if (
+    value === null ||
+    value === undefined ||
+    value === '' ||
+    value === 'N/A' ||
+    value === '#ERROR!' ||
+    (typeof value === 'string' && value.trim() === '')
+  ) {
+    return 'N/A';
+  }
+
+  var num = Number(value);
+  if (!isFinite(num)) return 'N/A';
+
+  if (suffix === 'B') return (num / 1e9).toFixed(1) + 'B';
+  if (suffix === 'M') return (num / 1e6).toFixed(1) + 'M';
+  if (suffix === 'K') return (num / 1e3).toFixed(1) + 'K';
+
+  return num.toFixed(2);
+}
+
+/**
+ * Mapping of metrics keys to human-readable labels for stock cards
+ */
+const METRIC_LABELS = {
+  marketCap: 'Market Cap',
+  volume: 'Volume',
+  open: 'Open',
+  close: 'Close',
+  peRatio: 'P/E Ratio',
+  beta: 'Beta',
+  dayHigh: 'Day High',
+  dayLow: 'Day Low',
+  fiftyTwoWeekHigh: '52W High',
+  fiftyTwoWeekLow: '52W Low',
+  priceToBook: 'P/B Ratio',
+  priceToSales: 'P/S Ratio',
+  forwardPE: 'Forward P/E',
+  debtToEquity: 'Debt/Equity',
+  returnOnEquity: 'ROE',
+  returnOnAssets: 'ROA',
+  profitMargin: 'Profit Margin',
+  dividendYield: 'Dividend Yield',
+  sector: 'Sector',
+  industry: 'Industry',
+};
+
+/**
+ * Format a market cap or large number as $X.XXB, $X.XXM, etc.
+ * @param {Number} value
+ * @return {String}
+ */
+function formatMarketCap(value) {
+  if (value == null || isNaN(value)) return 'N/A';
+  if (value >= 1e12) return `$${(value / 1e12).toFixed(2)}T`;
+  if (value >= 1e9)  return `$${(value / 1e9).toFixed(2)}B`;
+  if (value >= 1e6)  return `$${(value / 1e6).toFixed(2)}M`;
+  if (value >= 1e3)  return `$${(value / 1e3).toFixed(2)}K`;
+  return `$${value}`;
+}
+
+/**
+ * Format price, change, and percent change for stock card top-right display
+ * @param {Number} price
+ * @param {Number} priceChange
+ * @param {Number} changePercent
+ * @return {String} e.g. "$539.12 ↑5.18 (0.97%)"
+ */
+function formatPriceLine(price, priceChange, changePercent) {
+  if (price == null) return '';
   
-  if (suffix === 'B') return (value / 1e9).toFixed(1) + 'B';
-  if (suffix === 'M') return (value / 1e6).toFixed(1) + 'M';
-  if (suffix === 'K') return (value / 1e3).toFixed(1) + 'K';
-  
-  return value.toFixed(2);
+  const arrow = priceChange > 0 ? '↑' : priceChange < 0 ? '↓' : '';
+  const absChange = priceChange != null ? Math.abs(priceChange).toFixed(2) : '';
+  const pct = changePercent != null ? `(${changePercent.toFixed(2)}%)` : '';
+  return `$${Number(price).toFixed(2)} ${arrow}${absChange} ${pct}`.trim();
 }
 
 /**
