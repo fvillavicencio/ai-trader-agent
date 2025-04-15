@@ -4,7 +4,7 @@
   "description": "Tradier API client for stock metrics",
   "main": "src/tradier-client.ts",
   "scripts": {
-    "start": "ts-node src/tradier-client.ts",
+    "start": "node src/tradier-client.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.3.1",
+    "got": "^11.8.6",
     "ts-node": "^10.9.2"
   }
 }
