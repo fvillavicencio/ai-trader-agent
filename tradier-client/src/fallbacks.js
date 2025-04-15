@@ -25,6 +25,31 @@ async function fetchFMPData(symbol, apiKey) {
   }
 }
 
+async function fetchFMPRatios(symbol, apiKey) {
+  const url = `https://financialmodelingprep.com/api/v3/ratios/${encodeURIComponent(symbol)}?apikey=${apiKey}`;
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return undefined;
+    const data = await response.json();
+    if (!Array.isArray(data) || data.length === 0) return undefined;
+    const ratios = data[0]; // Most recent year/quarter
+    return {
+      peRatio: ratios.priceEarningsRatio || undefined,
+      pegRatio: ratios.pegRatio || undefined,
+      pegForwardRatio: ratios.forwardPEG || ratios.forwardPegRatio || undefined,
+      priceToBook: ratios.priceToBookRatio || undefined,
+      priceToSales: ratios.priceToSalesRatio || undefined,
+      debtToEquity: ratios.debtEquityRatio || undefined,
+      returnOnEquity: ratios.returnOnEquity || undefined,
+      returnOnAssets: ratios.returnOnAssets || undefined,
+      profitMargin: ratios.netProfitMargin || undefined
+    };
+  } catch (err) {
+    console.error('FMP ratios fallback error:', err);
+    return undefined;
+  }
+}
+
 // --- IEX Cloud ---
 async function fetchIEXData(symbol, apiKey) {
   const url = `https://cloud.iexapis.com/stable/stock/${encodeURIComponent(symbol)}/company?token=${apiKey}`;
@@ -45,5 +70,6 @@ async function fetchIEXData(symbol, apiKey) {
 
 module.exports = {
   fetchFMPData,
+  fetchFMPRatios,
   fetchIEXData
 };

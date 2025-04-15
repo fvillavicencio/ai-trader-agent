@@ -1,7 +1,7 @@
 require('dotenv').config();
 const fetch = require('node-fetch');
 const got = require('got');
-const { fetchFMPData } = require('./fallbacks');
+const { fetchFMPData, fetchFMPRatios } = require('./fallbacks');
 
 class TradierClientImpl {
   constructor() {
@@ -168,7 +168,7 @@ class TradierClientImpl {
     } catch (err) {
       console.error('Yahoo Finance Web scraping error:', err);
     }
-    // 4. FMP fallback
+    // 4. FMP fallback for company, industry, sector, etc.
     try {
       if (!metrics.company || !metrics.industry || !metrics.sector || !metrics.marketCap || !metrics.beta || !metrics.priceToBook || !metrics.priceToSales || !metrics.dividendYield) {
         const fmpApiKey = process.env.FMP_API_KEY;
@@ -190,7 +190,27 @@ class TradierClientImpl {
     } catch (err) {
       console.error('FMP fallback error:', err);
     }
-    // IEX Cloud fallback removed due to business closure
+    // 5. FMP ratios fallback for financial ratios
+    try {
+      const fmpApiKey = process.env.FMP_API_KEY;
+      if (fmpApiKey) {
+        const ratios = await fetchFMPRatios(symbol, fmpApiKey);
+        if (ratios) {
+          if (!metrics.peRatio && ratios.peRatio) { metrics.peRatio = ratios.peRatio; fieldSource['peRatio'] = 'FMP'; }
+          if (!metrics.pegRatio && ratios.pegRatio) { metrics.pegRatio = ratios.pegRatio; fieldSource['pegRatio'] = 'FMP'; }
+          if (!metrics.pegForwardRatio && ratios.pegForwardRatio) { metrics.pegForwardRatio = ratios.pegForwardRatio; fieldSource['pegForwardRatio'] = 'FMP'; }
+          if (!metrics.priceToBook && ratios.priceToBook) { metrics.priceToBook = ratios.priceToBook; fieldSource['priceToBook'] = 'FMP'; }
+          if (!metrics.priceToSales && ratios.priceToSales) { metrics.priceToSales = ratios.priceToSales; fieldSource['priceToSales'] = 'FMP'; }
+          if (!metrics.debtToEquity && ratios.debtToEquity) { metrics.debtToEquity = ratios.debtToEquity; fieldSource['debtToEquity'] = 'FMP'; }
+          if (!metrics.returnOnEquity && ratios.returnOnEquity) { metrics.returnOnEquity = ratios.returnOnEquity; fieldSource['returnOnEquity'] = 'FMP'; }
+          if (!metrics.returnOnAssets && ratios.returnOnAssets) { metrics.returnOnAssets = ratios.returnOnAssets; fieldSource['returnOnAssets'] = 'FMP'; }
+          if (!metrics.profitMargin && ratios.profitMargin) { metrics.profitMargin = ratios.profitMargin; fieldSource['profitMargin'] = 'FMP'; }
+          metrics.dataSource.push('FMP Ratios');
+        }
+      }
+    } catch (err) {
+      console.error('FMP ratios fallback error:', err);
+    }
     metrics.fieldSource = fieldSource;
     return metrics;
   }
@@ -202,14 +222,26 @@ if (args.length !== 1) {
   console.error('Usage: node tradier-client.js <symbol>');
   process.exit(1);
 }
+const symbol = args[0];
+
 (async () => {
-  const symbol = args[0];
   const client = new TradierClientImpl();
-  try {
-    const metrics = await client.getStockMetrics(symbol);
-    console.log(JSON.stringify(metrics, null, 2));
-  } catch (err) {
-    console.error('Error:', err);
-    process.exit(1);
+  const metrics = await client.getStockMetrics(symbol);
+  // Only output fields that have values (not undefined or null)
+  const output = {};
+  for (const [key, value] of Object.entries(metrics)) {
+    if (value !== undefined && value !== null &&
+        // filter out empty arrays/objects
+        (!(Array.isArray(value)) || value.length > 0) &&
+        (!(typeof value === 'object' && !Array.isArray(value)) || Object.keys(value).length > 0)) {
+      output[key] = value;
+    }
+  }
+  // Print each data element as: [data element], [value] (source: [source])
+  const fieldSource = metrics.fieldSource || {};
+  for (const [key, value] of Object.entries(output)) {
+    if (key === 'fieldSource' || key === 'dataSource') continue;
+    const source = fieldSource[key] ? ` (source: ${fieldSource[key]})` : '';
+    console.log(`${key}, ${value}${source}`);
   }
 })();
