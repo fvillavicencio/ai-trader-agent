@@ -258,7 +258,7 @@ function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml
         </div>
         
         <!-- Justification Section -->
-        <div class="section">
+        <div class="section" id="justification-section">
           <h2>Justification</h2>
           <div style="line-height: 1.6; color: #444; font-size: 13px;">${analysisResult.justification || 'No justification provided.'}</div>
         </div>
@@ -270,8 +270,8 @@ function generateHTML(formattedAnalysisTime, sentimentHtml, marketIndicatorsHtml
         ${geopoliticalRisksHtml}
         
         <div class="footer" style="text-align: center; background-color: #1a365d">
-          <div style="font-size: 14px; margin-bottom: 10px;">${isTest ? 'This is a test email. ' : ''}${props.getProperty('NEWSLETTER_NAME')} - Actionable Trading Insights</div>
-          <div style="font-size: 12px; margin-bottom: 20px;">&copy; ${new Date().getFullYear()} ${props.getProperty('NEWSLETTER_NAME')}. All rights reserved.</div>
+          <div style="font-size: 14px; color: rgba(255,255,255,0.9); margin-bottom: 10px;">${isTest ? 'This is a test email. ' : ''}${props.getProperty('NEWSLETTER_NAME')} - Actionable Trading Insights</div>
+          <div style="font-size: 12px; color: rgba(255,255,255,0.9); margin-bottom: 20px;">&copy; ${new Date().getFullYear()} ${props.getProperty('NEWSLETTER_NAME')}. All rights reserved.</div>
           <div class="disclaimer" style="font-size: 12px; color: rgba(255,255,255,0.9);">
             Disclaimer: The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.
           </div>
