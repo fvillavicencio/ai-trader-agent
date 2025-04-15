@@ -14,7 +14,27 @@ function retrieveFedPolicyData() {
     }
     
     // Fetch current Fed Funds Rate
-    const fedFundsRate = fetchFedFundsRateFromFRED();
+    let fedFundsRate = fetchFedFundsRateFromFRED();
+    // Fallback: If FRED fails, try Yahoo Finance futures implied rate
+    if (!fedFundsRate || !fedFundsRate.currentRate) {
+      if (debugMode) Logger.log('FRED API failed, falling back to Yahoo Finance futures for implied rate.');
+      const futures = getFedFundsFuturesPrice();
+      if (futures && futures.impliedRate) {
+        fedFundsRate = {
+          currentRate: futures.impliedRate,
+          rangeLow: futures.impliedRate,
+          rangeHigh: futures.impliedRate,
+          source: {
+            url: futures.source?.url || 'https://finance.yahoo.com/quote/ZQ=F/',
+            name: 'Yahoo Finance Futures',
+            timestamp: new Date().toISOString(),
+            components: futures.source || {}
+          }
+        };
+      }
+    }
+    Logger.log('Current Federal Funds Rate:', fedFundsRate);
+    
     if (debugMode) {
       Logger.log("----------------------------------------");
       Logger.log("Fed Funds Rate retrieved:", fedFundsRate);
@@ -1291,6 +1311,24 @@ function retrieveCompleteFedPolicyData() {
         Logger.log("Fed Funds Rate retrieved successfully");
         Logger.log("Fed Funds Rate data:\n" + JSON.stringify(fedFundsRate, null, 2));
         Logger.log("----------------------------------------");
+      }
+
+      if (!fedFundsRate || !fedFundsRate.currentRate) {
+          if (debugMode) Logger.log('FRED API failed, falling back to Yahoo Finance futures for implied rate.');
+        const futures = getFedFundsFuturesPrice();
+        if (futures && futures.impliedRate) {
+          fedFundsRate = {
+            currentRate: futures.impliedRate,
+            rangeLow: futures.impliedRate,
+            rangeHigh: futures.impliedRate,
+            source: {
+              url: futures.source?.url || 'https://finance.yahoo.com/quote/ZQ=F/',
+              name: 'Yahoo Finance Futures',
+              timestamp: new Date().toISOString(),
+              components: futures.source || {}
+            }
+          };
+        }
       }
     } catch (rateError) {
       const errorMessage = `Error fetching Fed Funds rate: ${rateError.message}`;
