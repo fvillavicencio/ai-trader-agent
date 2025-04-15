@@ -637,32 +637,50 @@ function generateFundamentalMetricsSection(analysis) {
                 percentChangeDisplay = '(' + stock.changesPercentage.toFixed(2) + '%)';
               }
 
+              // --- Compose the top-right price line ---
+              // Example: $94.65 ↑ 1.87 (2.02%)
+              let priceChangeAbs = '';
+              if (typeof stock.priceChange === 'number' && isFinite(stock.priceChange)) {
+                priceChangeAbs = Math.abs(stock.priceChange).toFixed(2);
+              } else if (typeof stock.priceChange === 'string' && stock.priceChange.trim() && stock.priceChange !== 'N/A') {
+                priceChangeAbs = stock.priceChange.replace(/^[-+]/, '');
+              }
+              let priceLine = `$${formatValue(stock.price)}`;
+              if (arrow) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)};\">${arrow}</span>`;
+              if (priceChangeAbs) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)}; font-weight: normal;\">${priceChangeAbs}</span>`;
+              if (percentChangeDisplay && percentChangeDisplay !== '(N/A%)') priceLine += ` <span style=\"color: #555; font-weight: normal;\">${percentChangeDisplay}</span>`;
+
+              // --- Helper to add $ prefix for open/close ---
+              function renderDollarValue(val) {
+                if (val === undefined || val === null || val === '' || isNaN(val)) return '';
+                return `$${formatValue(val)}`;
+              }
+
               return `
-                <div class="stock-card">
-                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid ${getColor(stock.priceChange)};">
-                    <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px; background-color: #f8f9fa; overflow: hidden;">
+                <div class=\"stock-card\">
+                  <div style=\"flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid ${getColor(stock.priceChange)};\">
+                    <div style=\"display: flex; justify-content: space-between; align-items: flex-start; padding: 10px; background-color: #f8f9fa; overflow: hidden;\">
                       <!-- Left: Symbol and Company Name -->
-                      <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 120px;">
-                        <div style="font-weight: bold; font-size: 18px; color: #000; letter-spacing: 1px;">${stock.symbol}</div>
-                        <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${companyName}</div>
+                      <div style=\"display: flex; flex-direction: column; align-items: flex-start; min-width: 120px;\">
+                        <div style=\"font-weight: bold; font-size: 18px; color: #000; letter-spacing: 1px;\">${stock.symbol}</div>
+                        <div style=\"font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;\">${companyName}</div>
                       </div>
-                      <!-- Right: Price, Arrow, Price Change, % Change (all in one line, right-aligned) -->
-                      <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 110px;">
-                        <div style="font-weight: bold; font-size: 1.1em; color: ${getColor(stock.priceChange)}; margin-bottom: 2px;">
-                          $${formatValue(stock.price)} <span style="font-size: 1.1em;">${arrow}</span>
-                        </div>
-                        <div style="font-size: 0.95em; color: #555;">
-                          ${priceChangeDisplay} ${percentChangeDisplay}
-                        </div>
+                      <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+                      <div style=\"display: flex; flex-direction: column; align-items: flex-end; min-width: 110px;\">
+                        <div style=\"font-weight: bold; font-size: 1.1em; color: ${getColor(stock.priceChange)}; margin-bottom: 2px; white-space: nowrap;\">${priceLine}</div>
+                        <div style=\"font-size: 0.95em; color: #555;\">${priceChangeDisplay !== 'N/A' ? priceChangeDisplay : ''}</div>
                       </div>
                     </div>
                     <!-- Metrics Table -->
-                    <div style="padding: 10px 15px 10px 15px; background-color: #fff;">
-                      <table style="width: 100%; border-collapse: collapse; font-size: 0.97em;">
+                    <div style=\"padding: 10px; background-color: white;\">
+                      <table style=\"width: 100%; border-collapse: collapse; font-size: 0.97em;\">
                         <tbody>
                           ${Object.keys(metricLabels).map(key => {
                             if (stock[key] === undefined || stock[key] === null || stock[key] === '') return '';
-                            return `<tr><td style=\"color: #777; padding: 2px 8px 2px 0;\">${metricLabels[key]}</td><td style=\"font-weight: bold; color: #222; padding: 2px 0; text-align: right;\">${stock[key]}</td></tr>`;
+                            let displayValue = stock[key];
+                            if (key === 'open' || key === 'close') displayValue = renderDollarValue(stock[key]);
+                            if (key === 'marketCap') displayValue = formatMarketCap(stock[key]);
+                            return `<tr><td style=\"color: #777; padding: 2px 8px 2px 0;\">${metricLabels[key]}</td><td style=\"font-weight: bold; color: #222; padding: 2px 0; text-align: right;\">${displayValue}</td></tr>`;
                           }).join('')}
                         </tbody>
                       </table>
