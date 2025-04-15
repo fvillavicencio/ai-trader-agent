@@ -648,8 +648,7 @@ function generateFundamentalMetricsSection(analysis) {
               let priceLine = `$${formatValue(stock.price)}`;
               if (arrow) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)};\">${arrow}</span>`;
               if (priceChangeAbs) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)}; font-weight: normal;\">${priceChangeAbs}</span>`;
-              if (percentChangeDisplay && percentChangeDisplay !== '(N/A%)') priceLine += ` <span style=\"color: #555; font-weight: normal;\">${percentChangeDisplay}</span>`;
-
+              if (percentChangeDisplay && percentChangeDisplay !== '(N/A%)') priceLine += ` <span style=\"color: ${getColor(stock.priceChange)}; font-weight: normal;\">${percentChangeDisplay}</span>`;
               // --- Helper to add $ prefix for open/close ---
               function renderDollarValue(val) {
                 if (val === undefined || val === null || val === '' || isNaN(val)) return '';
