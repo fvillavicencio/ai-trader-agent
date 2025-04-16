@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>S&P 500 Market Analyzer Report</title>
+  <style>
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #fafbfc; color: #222; margin: 0; padding: 0; }
+    .container { max-width: 800px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 32px; }
+    h1 { text-align: center; margin-bottom: 8px; }
+    h2 { margin-top: 32px; color: #2a4d8f; }
+    h3 { margin: 20px 0 10px 0; color: #1a2b47; }
+    hr { border: none; border-top: 2px solid #e3e7ee; margin: 16px 0; }
+    table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
+    th, td { border: 1px solid #e3e7ee; padding: 8px 12px; text-align: left; }
+    th { background: #f3f7fa; }
+    .source-block { color: #555; font-size: 0.98em; margin: 10px 0 18px 0; }
+    .eps { font-size: 1.2em; margin-bottom: 6px; }
+    .market-path-value { font-size: 1.1em; margin-bottom: 8px; }
+    .market-path-expl { font-size: 0.97em; color: #555; margin-top: 8px; }
+    .holdings-block, .earnings-block, .market-path-block { margin-bottom: 32px; }
+    @media (max-width: 600px) { .container { padding: 8px; } th, td { font-size: 0.97em; } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>S&amp;P 500 Market Analyzer Report</h1><h2>S&P 500 Forward P/E Ratio</h2><hr/><div class="pe-block">P/E: <strong>26.86</strong></div><div class="source-block"><strong>Source:</strong> multpl.com<br/><strong>URL:</strong> <a href="https://www.multpl.com/s-p-500-pe-ratio/table/by-month">https://www.multpl.com/s-p-500-pe-ratio/table/by-month</a><br/><strong>Last Update:</strong> Apr 15, 2025</div><div class="market-path-block"><h2>Market "Path of Least Resistance"</h2><hr/><div class="market-path-value">Neutral (RSI=41.5)</div><div class="source-block"><strong>Source:</strong> Tradier (RSI)<br/><strong>URL:</strong> <a href="https://developer.tradier.com/documentation/markets/get-timesales">https://developer.tradier.com/documentation/markets/get-timesales</a><br/><strong>Last Update:</strong> 2025-04-16T02:44:35.168Z</div><div class="market-path-expl">Explanation: The 'Path of Least Resistance' is based on the Relative Strength Index (RSI) of SPY. RSI is a momentum indicator that ranges from 0 to 100.<ul><li>RSI &gt; 70: Overbought (market may be due for a pullback)</li><li>RSI &lt; 30: Oversold (market may be due for a rebound)</li><li>RSI between 30 and 70: Neutral (no strong directional bias).</li></ul>Typical values: Most of the time, RSI will be between 30 and 70. Extreme readings above 70 or below 30 are less common and signal potential reversals.</div></div><h2>Top 5 Weighted Stocks in S&P 500</h2><hr/><div class="holdings-block"><h3>S&P 500 (SPY)</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>
+<tr><td>1</td><td>AAPL</td><td>APPLE INC</td><td>6.64%</td></tr>
+<tr><td>2</td><td>MSFT</td><td>MICROSOFT CORP</td><td>6.29%</td></tr>
+<tr><td>3</td><td>NVDA</td><td>NVIDIA CORP</td><td>5.91%</td></tr>
+<tr><td>4</td><td>AMZN</td><td>AMAZON.COM INC</td><td>3.75%</td></tr>
+<tr><td>5</td><td>META</td><td>META PLATFORMS INC CLASS A</td><td>2.54%</td></tr>
+</tbody></table>
+<div class="source-block"><strong>Source:</strong> State Street Global Advisors<br/><strong>URL:</strong> <a href="https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx">https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx</a><br/><strong>Last Update:</strong> Tue Jan 28 2025 21:28:41 GMT-0500 (Eastern Standard Time)</div>
+</div><h2>Top 5 Weighted Stocks in NASDAQ 100</h2><hr/><div class="holdings-block"><h3>NASDAQ 100 (QQQ)</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>
+<tr><td>1</td><td>AAPL </td><td>Apple Inc</td><td>8.79%</td></tr>
+<tr><td>2</td><td>MSFT </td><td>Microsoft Corp</td><td>8.33%</td></tr>
+<tr><td>3</td><td>NVDA </td><td>NVIDIA Corp</td><td>7.80%</td></tr>
+<tr><td>4</td><td>AMZN </td><td>Amazon.com Inc</td><td>5.58%</td></tr>
+<tr><td>5</td><td>AVGO </td><td>Broadcom Inc</td><td>3.99%</td></tr>
+</tbody></table>
+<div class="source-block"><strong>Source:</strong> Invesco<br/><strong>URL:</strong> <a href="https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ">https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ</a><br/><strong>Last Update:</strong> 2025-04-16T02:44:35.756Z</div>
+</div><h2>Top 5 Weighted Stocks in Dow Jones 30</h2><hr/><div class="holdings-block"><h3>Dow Jones 30 (DIA)</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>
+<tr><td>1</td><td>UNH</td><td>UNITEDHEALTH GROUP INC</td><td>8.90%</td></tr>
+<tr><td>2</td><td>GS</td><td>GOLDMAN SACHS GROUP INC</td><td>7.64%</td></tr>
+<tr><td>3</td><td>MSFT</td><td>MICROSOFT CORP</td><td>5.88%</td></tr>
+<tr><td>4</td><td>HD</td><td>HOME DEPOT INC</td><td>5.42%</td></tr>
+<tr><td>5</td><td>SHW</td><td>SHERWIN WILLIAMS CO/THE</td><td>5.17%</td></tr>
+</tbody></table>
+<div class="source-block"><strong>Source:</strong> State Street Global Advisors<br/><strong>URL:</strong> <a href="https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx">https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx</a><br/><strong>Last Update:</strong> Tue Jan 28 2025 21:28:41 GMT-0500 (Eastern Standard Time)</div>
+</div><h2>S&P 500 Earnings Per Share (Trailing 12M)</h2><hr/><div class="earnings-block">
+<h3>S&P 500 Earnings Per Share (Trailing 12M)</h3>
+<div class="eps">EPS: <strong>$202.67</strong></div>
+<div>S&P 500 Target at <strong>15x</strong>: <strong>3040.05</strong></div>
+<div>S&P 500 Target at <strong>17x</strong>: <strong>3445.39</strong></div>
+<div>S&P 500 Target at <strong>20x</strong>: <strong>4053.40</strong></div>
+<div class="source-block"><strong>Source:</strong> multpl.com<br/><strong>URL:</strong> <a href="https://www.multpl.com/s-p-500-earnings/table/by-month">https://www.multpl.com/s-p-500-earnings/table/by-month</a><br/><strong>Last Update:</strong> Sep 30, 2024</div>
+</div>  </div>
+</body>
+</html>
