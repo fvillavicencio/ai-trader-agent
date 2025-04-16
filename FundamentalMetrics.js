@@ -624,7 +624,7 @@ function formatStockCard(stock) {
 
   var symbol = stock.symbol || stock.ticker || 'N/A';
   var name = stock.name || stock.companyName || 'N/A';
-  var price = stock.price || 'N/A';
+  var price = (typeof stock.price === 'number' && isFinite(stock.price)) ? ('$' + stock.price.toFixed(2)) : (stock.price || 'N/A');
   var formattedPrice = (typeof price === 'string' && price.indexOf('$') === 0) ? price : ('$' + price);
   var priceChange = stock.priceChange || stock.change || '0%';
   var priceChangeValue = parseFloat((priceChange + '').replace('%', '').replace('+', ''));
@@ -637,6 +637,11 @@ function formatStockCard(stock) {
   var source = stock.source || 'N/A';
   var sourceUrl = stock.sourceUrl || '#';
   var lastUpdated = stock.lastUpdated || 'N/A';
+
+  // Format key price fields with $ and 2 decimals if number
+  function fmt(val) {
+    return (typeof val === 'number' && isFinite(val)) ? ('$' + val.toFixed(2)) : (val != null ? val : 'N/A');
+  }
 
   return [
     '<div style="flex: 1; min-width: 250px; border: 1px solid #e0e0e0; border-radius: 8px; overflow: hidden;">',
@@ -657,6 +662,15 @@ function formatStockCard(stock) {
     '    <div style="font-size: 14px; color: #333;">',
     '      <span style="margin-right: 16px;"><strong>P/E:</strong> ' + peRatio + '</span>',
     '      <span><strong>Market Cap:</strong> ' + marketCap + '</span>',
+    '    </div>',
+    '    <div style="margin-top: 8px; font-size: 13px;">',
+    '      <div><strong>Volume</strong> <span style="float:right;">' + (stock.volume != null ? stock.volume.toLocaleString() : 'N/A') + '</span></div>',
+    '      <div><strong>Open</strong> <span style="float:right;">' + fmt(stock.open) + '</span></div>',
+    '      <div><strong>Previous Close</strong> <span style="float:right;">' + fmt(stock.previousClose) + '</span></div>',
+    '      <div><strong>Day High</strong> <span style="float:right;">' + fmt(stock.dayHigh) + '</span></div>',
+    '      <div><strong>Day Low</strong> <span style="float:right;">' + fmt(stock.dayLow) + '</span></div>',
+    '      <div><strong>52W High</strong> <span style="float:right;">' + fmt(stock.high52Week) + '</span></div>',
+    '      <div><strong>52W Low</strong> <span style="float:right;">' + fmt(stock.low52Week) + '</span></div>',
     '    </div>',
     comment ? '    <div style="margin-top: 8px; color: #5e35b1; font-size: 13px; font-style: italic;">' + comment + '</div>' : '',
     '  </div>',

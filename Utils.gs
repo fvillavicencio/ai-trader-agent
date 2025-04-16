@@ -411,7 +411,7 @@ function generateMarketIndicatorsSection(analysis) {
         </div>
         
         <div style="position: relative; height: 10px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
-          <div style="position: absolute; top: 0; left: ${fgValue}%; transform: translateX(-50%); width: 15px; height: 15px; background-color: #333; border-radius: 50%;"></div>
+          <div style="position: absolute; top: 0; bottom: 0; left: ${fgValue}%; transform: translateX(-50%); width: 15px; height: 15px; background-color: #333; border-radius: 50%;"></div>
           <div style="position: absolute; top: -6px; left: calc(${fgValue}% - 6px); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
         </div>
         
@@ -701,12 +701,16 @@ function generateFundamentalMetricsSection(analysis) {
               if (typeof stock.priceChange === 'number' && isFinite(stock.priceChange)) {
                 priceChangeAbs = Math.abs(stock.priceChange).toFixed(2);
               } else if (typeof stock.priceChange === 'string' && stock.priceChange.trim() && stock.priceChange !== 'N/A') {
-                priceChangeAbs = stock.priceChange.replace(/^[-+]/, '');
+                // Try to parse string to number for formatting
+                var num = parseFloat(stock.priceChange.replace(/[$,]/g, ''));
+                priceChangeAbs = isFinite(num) ? num.toFixed(2) : stock.priceChange;
               }
+              // Compose the top-right price line (restored logic)
               let priceLine = `$${formatValue(stock.price)}`;
-              if (arrow) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)};\">${arrow}</span>`;
-              if (priceChangeAbs) priceLine += ` <span style=\"color: ${getColor(stock.priceChange)}; font-weight: normal;\">${priceChangeAbs}</span>`;
-              if (percentChangeDisplay && percentChangeDisplay !== '(N/A%)') priceLine += ` <span style=\"color: ${getColor(stock.priceChange)}; font-weight: normal;\">${percentChangeDisplay}</span>`;
+              if (arrow) priceLine += ` <span style="color: ${getColor(stock.priceChange)};">${arrow}</span>`;
+              if (priceChangeAbs) priceLine += ` <span style="color: ${getColor(stock.priceChange)}; font-weight: normal;">${priceChangeAbs}</span>`;
+              if (percentChangeDisplay && percentChangeDisplay !== '(N/A%)') priceLine += ` <span style="color: ${getColor(stock.priceChange)}; font-weight: normal;">${percentChangeDisplay}</span>`;
+
               // --- Helper to add $ prefix for open/close ---
               function renderDollarValue(val) {
                 if (val === undefined || val === null || val === '' || isNaN(val)) return '';
@@ -733,10 +737,21 @@ function generateFundamentalMetricsSection(analysis) {
                         <tbody>
                           ${Object.keys(metricLabels).map(key => {
                             if (stock[key] === undefined || stock[key] === null || stock[key] === '') return '';
-                            let displayValue = stock[key];
-                            if (key === 'open' || key === 'close') displayValue = renderDollarValue(stock[key]);
-                            if (key === 'marketCap') displayValue = formatMarketCap(stock[key]);
-                            return `<tr><td style=\"color: #777; padding: 2px 8px 2px 0;\">${metricLabels[key]}</td><td style=\"font-weight: bold; color: #222; padding: 2px 0; text-align: right;\">${displayValue}</td></tr>`;
+                             let displayValue = stock[key];
+                             // Always show $ and 2 decimals for price fields
+                             if (["open", "close", "dayHigh", "dayLow", "fiftyTwoWeekHigh", "fiftyTwoWeekLow"].includes(key)) {
+                               if (typeof stock[key] === 'number' && isFinite(stock[key])) {
+                                 displayValue = `$${stock[key].toFixed(2)}`;
+                               } else if (typeof stock[key] === 'string' && stock[key] && stock[key] !== 'N/A') {
+                                 // Try to parse string to number for formatting
+                                 var num = parseFloat(stock[key].replace(/[$,]/g, ''));
+                                 displayValue = isFinite(num) ? `$${num.toFixed(2)}` : stock[key];
+                               } else {
+                                 displayValue = 'N/A';
+                               }
+                             }
+                             if (key === 'marketCap') displayValue = formatMarketCap(stock[key]);
+                             return `<tr><td style=\"color: #777; padding: 2px 8px 2px 0;\">${metricLabels[key]}</td><td style=\"font-weight: bold; color: #222; padding: 2px 0; text-align: right;\">${displayValue}</td></tr>`;
                           }).join('')}
                         </tbody>
                       </table>
@@ -1219,24 +1234,20 @@ function saveToGoogleDrive(filename, content) {
  * @return {String} Formatted value
  */
 function formatValue(value, decimals = 2) {
-  // Handle undefined, null, or NaN values
   if (value === undefined || value === null || isNaN(value)) {
     return "N/A";
   }
-  
-  // Convert to number if it's not already
   if (typeof value !== 'number') {
-    // Try to parse as number if it's a string
     if (typeof value === 'string') {
-      const parsed = parseFloat(value);
+      // Remove commas before parsing
+      const sanitized = value.replace(/,/g, '');
+      const parsed = parseFloat(sanitized);
       if (!isNaN(parsed)) {
         return parsed.toFixed(decimals);
       }
     }
-    // For other non-number types, return N/A
     return "N/A";
   }
-  
   return value.toFixed(decimals);
 }
 

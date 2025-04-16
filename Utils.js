@@ -322,6 +322,64 @@ function generateMarketIndicatorsSection(analysis) {
       `;
     }
     
+    // --- Sector Performance and Market Futures (side by side if futures available) ---
+    let marketFuturesData = null;
+    try {
+      marketFuturesData = fetchMarketFuturesIfAfterHours();
+    } catch (e) {
+      Logger.log('Error fetching market futures: ' + e);
+    }
+    const hasFutures = marketFuturesData && marketFuturesData.consolidated && marketFuturesData.consolidated.length > 0;
+    if (indicators.sectorPerformance && Array.isArray(indicators.sectorPerformance)) {
+      let sectorsCol = `
+        <div style=\"flex: 1; margin-right: 16px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); padding: 12px;\">
+          <div style=\"font-weight: bold; font-size: 16px; margin-bottom: 10px;\">Sector Performance</div>
+          <div style=\"display: flex; flex-direction: column; gap: 8px;\">
+            ${indicators.sectorPerformance.map(sector => {
+              const percentChange = sector.percentChange || 0;
+              const changeColor = percentChange >= 0 ? '#4caf50' : '#f44336';
+              const changeIcon = percentChange >= 0 ? '&#8593;' : '&#8595;';
+              return `
+                <div style=\"display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};\">
+                  <div style=\"font-weight: bold; width: 200px;\">${sector.name}</div>
+                  <div style=\"color: ${changeColor}; font-weight: bold; margin-left: 10px;\">${changeIcon} ${typeof percentChange === 'number' && isFinite(percentChange) ? percentChange.toFixed(1) : 'N/A'}%</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+          <div style=\"font-size: 10px; color: #888; margin-top: 10px; text-align: right;\">
+            Source: <a href=\"https://finance.yahoo.com/sectors/\">Yahoo Finance</a>, as of ${formatDate(indicators.majorIndices?.[0]?.timestamp)}
+          </div>
+        </div>
+      `;
+      let futuresCol = '';
+      if (hasFutures) {
+        futuresCol = `
+          <div style=\"flex: 1; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.07); padding: 12px;\">
+            <div style=\"font-weight: bold; font-size: 16px; margin-bottom: 10px;\">Market Futures</div>
+            <div style=\"display: flex; flex-direction: column; gap: 8px;\">
+              ${marketFuturesData.consolidated.map(fut => {
+                const lastStr = fut.last !== undefined ? fut.last : 'N/A';
+                const changeStr = fut.percentChange !== undefined ? `${fut.percentChange >= 0 ? "+" : ""}${parseFloat(fut.percentChange).toFixed(2)}%` : 'N/A';
+                const changeColor = fut.percentChange >= 0 ? '#4caf50' : '#f44336';
+                const changeIcon = fut.percentChange >= 0 ? '&#8593;' : '&#8595;';
+                return `
+                  <div style=\"display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid ${changeColor};\">
+                    <div style=\"font-weight: bold; width: 200px;\">${fut.name} (${fut.symbol})</div>
+                    <div style=\"color: ${changeColor}; font-weight: bold; margin-left: 10px;\">${changeIcon} ${lastStr} (${changeStr})</div>
+                    <div style=\"font-size: 9px; color: #888; margin-left: auto;\">${fut.lastUpdated ? `As of ${formatDate(fut.lastUpdated)}` : ''}</div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }
+      sectorsHtml = hasFutures ?
+        `<div style=\"display: flex; flex-direction: row; gap: 18px;\">${sectorsCol}${futuresCol}</div>` :
+        sectorsCol;
+    }
+    
     // Fear & Greed Index
     let fearGreedHtml = '';
     if (indicators.fearAndGreedIndex && !indicators.fearAndGreedIndex.error) {
@@ -675,10 +733,21 @@ function generateFundamentalMetricsSection(analysis) {
                         <tbody>
                           ${Object.keys(metricLabels).map(key => {
                             if (stock[key] === undefined || stock[key] === null || stock[key] === '') return '';
-                            let displayValue = stock[key];
-                            if (key === 'open' || key === 'close') displayValue = renderDollarValue(stock[key]);
-                            if (key === 'marketCap') displayValue = formatMarketCap(stock[key]);
-                            return `<tr><td style=\"color: #777; padding: 2px 8px 2px 0;\">${metricLabels[key]}</td><td style=\"font-weight: bold; color: #222; padding: 2px 0; text-align: right;\">${displayValue}</td></tr>`;
+                             let displayValue = stock[key];
+                             // Always show $ and 2 decimals for price fields
+                             if (["open", "close", "dayHigh", "dayLow", "fiftyTwoWeekHigh", "fiftyTwoWeekLow"].includes(key)) {
+                               if (typeof stock[key] === 'number' && isFinite(stock[key])) {
+                                 displayValue = `$${stock[key].toFixed(2)}`;
+                               } else if (typeof stock[key] === 'string' && stock[key] && stock[key] !== 'N/A') {
+                                 // Try to parse string to number for formatting
+                                 var num = parseFloat(stock[key].replace(/[$,]/g, ''));
+                                 displayValue = isFinite(num) ? `$${num.toFixed(2)}` : stock[key];
+                               } else {
+                                 displayValue = 'N/A';
+                               }
+                             }
+                             if (key === 'marketCap') displayValue = formatMarketCap(stock[key]);
+                             return `<tr><td style=\"color: #777; padding: 2px 8px 2px 0;\">${metricLabels[key]}</td><td style=\"font-weight: bold; color: #222; padding: 2px 0; text-align: right;\">${displayValue}</td></tr>`;
                           }).join('')}
                         </tbody>
                       </table>
@@ -1071,7 +1140,7 @@ function generateGeopoliticalRisksSection(analysis) {
       </div>
       `;
     });
-
+    
     return `
     <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
       <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
