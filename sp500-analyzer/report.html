@@ -19,42 +19,64 @@
     .market-path-value { font-size: 1.1em; margin-bottom: 8px; }
     .market-path-expl { font-size: 0.97em; color: #555; margin-top: 8px; }
     .holdings-block, .earnings-block, .market-path-block { margin-bottom: 32px; }
+    .stale-warning { color: #f44336; font-size: 0.98em; margin: 10px 0 18px 0; }
     @media (max-width: 600px) { .container { padding: 8px; } th, td { font-size: 0.97em; } }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>S&amp;P 500 Market Analyzer Report</h1><h2>S&P 500 Forward P/E Ratio</h2><hr/><div class="pe-block">P/E: <strong>26.86</strong></div><div class="source-block"><strong>Source:</strong> multpl.com<br/><strong>URL:</strong> <a href="https://www.multpl.com/s-p-500-pe-ratio/table/by-month">https://www.multpl.com/s-p-500-pe-ratio/table/by-month</a><br/><strong>Last Update:</strong> Apr 15, 2025</div><div class="market-path-block"><h2>Market "Path of Least Resistance"</h2><hr/><div class="market-path-value">Neutral (RSI=41.5)</div><div class="source-block"><strong>Source:</strong> Tradier (RSI)<br/><strong>URL:</strong> <a href="https://developer.tradier.com/documentation/markets/get-timesales">https://developer.tradier.com/documentation/markets/get-timesales</a><br/><strong>Last Update:</strong> 2025-04-16T02:44:35.168Z</div><div class="market-path-expl">Explanation: The 'Path of Least Resistance' is based on the Relative Strength Index (RSI) of SPY. RSI is a momentum indicator that ranges from 0 to 100.<ul><li>RSI &gt; 70: Overbought (market may be due for a pullback)</li><li>RSI &lt; 30: Oversold (market may be due for a rebound)</li><li>RSI between 30 and 70: Neutral (no strong directional bias).</li></ul>Typical values: Most of the time, RSI will be between 30 and 70. Extreme readings above 70 or below 30 are less common and signal potential reversals.</div></div><h2>Top 5 Weighted Stocks in S&P 500</h2><hr/><div class="holdings-block"><h3>S&P 500 (SPY)</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>
-<tr><td>1</td><td>AAPL</td><td>APPLE INC</td><td>6.64%</td></tr>
-<tr><td>2</td><td>MSFT</td><td>MICROSOFT CORP</td><td>6.29%</td></tr>
-<tr><td>3</td><td>NVDA</td><td>NVIDIA CORP</td><td>5.91%</td></tr>
-<tr><td>4</td><td>AMZN</td><td>AMAZON.COM INC</td><td>3.75%</td></tr>
-<tr><td>5</td><td>META</td><td>META PLATFORMS INC CLASS A</td><td>2.54%</td></tr>
+    <h1>S&amp;P 500 Market Analyzer Report</h1><div class="spx-index-block"><h2>Current S&P 500 Index Level</h2><div class="spx-index">5275.70</div><div class="source-block"><strong>Source:</strong> Yahoo Finance<br/><strong>URL:</strong> <a href="https://finance.yahoo.com/quote/%5EGSPC/">https://finance.yahoo.com/quote/%5EGSPC/</a><br/><strong>Last Update:</strong> 2025-04-16 20:55:01 UTC</div></div><h2>S&P 500 Trailing P/E Ratio</h2><hr/><div class="pe-block">P/E: <strong>26.25</strong></div><div class="source-block"><strong>Source:</strong> multpl.com<br/><strong>URL:</strong> <a href="https://www.multpl.com/s-p-500-pe-ratio/table/by-month">https://www.multpl.com/s-p-500-pe-ratio/table/by-month</a><br/><strong>Last Update:</strong> 2025-04-16 04:00:00 UTC</div><div class="pe-history-block">
+    <h3>Historical P/E Context</h3>
+    <table><thead><tr><th>Current</th><th>5-Year Avg</th><th>10-Year Avg</th></tr></thead><tbody>
+      <tr><td>26.25</td><td>19.1</td><td>17.6</td></tr>
+    </tbody></table>
+    <div class="pe-history-note">Current P/E is above both 5- and 10-year averages.</div>
+  </div><h2>S&P 500 Forward EPS & Implied Index Values (2025 & 2026)</h2><hr/><div class="forward-pe-block">
+<h3>S&P 500 Forward EPS & Implied Index Targets</h3>
+<table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th><th>15x</th><th>% vs Index</th><th>17x</th><th>% vs Index</th><th>20x</th><th>% vs Index</th><th>Source URL</th></tr></thead><tbody>
+<tr><td>Low</td><td>2025</td><td>2025-04-16 00:00:00 UTC</td><td><strong>$270.00</strong></td><td>4050.00</td><td>-23.2%</td><td>4590.00</td><td>-13.0%</td><td>5400.00</td><td>2.4%</td><td><a href="https://archive.yardeni.com/pub/yriearningsforecast.pdf">link</a></td></tr>
+<tr><td>Base</td><td>2025</td><td>2025-04-16 00:00:00 UTC</td><td><strong>$275.42</strong></td><td>4131.30</td><td>-21.7%</td><td>4682.14</td><td>-11.3%</td><td>5508.40</td><td>4.4%</td><td><a href="https://archive.yardeni.com/pub/yriearningsforecast.pdf">link</a></td></tr>
+<tr><td>High</td><td>2025</td><td>2025-04-16 00:00:00 UTC</td><td><strong>$290.00</strong></td><td>4350.00</td><td>-17.5%</td><td>4930.00</td><td>-6.6%</td><td>5800.00</td><td>9.9%</td><td><a href="https://archive.yardeni.com/pub/yriearningsforecast.pdf">link</a></td></tr>
+</tbody></table></div><div class="market-path-block"><h2>Market "Path of Least Resistance"</h2><hr/><div class="market-path-value">Neutral (RSI=39.2) (RSI period: 14-day)</div><div class="source-block"><strong>Source:</strong> Tradier (RSI)<br/><strong>URL:</strong> <a href="https://developer.tradier.com/documentation/markets/get-timesales">https://developer.tradier.com/documentation/markets/get-timesales</a><br/><strong>Last Update:</strong> 2025-04-16 23:49:59 UTC</div><div class="market-path-expl">Explanation: RSI is a 14-day lookback. 50-day MA: <b>570.58</b>, 200-day MA: <b>573.69</b>, SPY last: <b>525.66</b>. Below 200-day MA. Below 50-day MA.</div></div><h2>Top 5 Weighted Stocks in S&P 500</h2><hr/><div class="holdings-block"><h3>S&P 500 (SPY)</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>
+<tr><td>1</td><td>AAPL</td><td>APPLE INC</td><td>6.63%</td></tr>
+<tr><td>2</td><td>MSFT</td><td>MICROSOFT CORP</td><td>6.27%</td></tr>
+<tr><td>3</td><td>NVDA</td><td>NVIDIA CORP</td><td>6.00%</td></tr>
+<tr><td>4</td><td>AMZN</td><td>AMAZON.COM INC</td><td>3.70%</td></tr>
+<tr><td>5</td><td>META</td><td>META PLATFORMS INC CLASS A</td><td>2.50%</td></tr>
 </tbody></table>
-<div class="source-block"><strong>Source:</strong> State Street Global Advisors<br/><strong>URL:</strong> <a href="https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx">https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx</a><br/><strong>Last Update:</strong> Tue Jan 28 2025 21:28:41 GMT-0500 (Eastern Standard Time)</div>
+<div class="source-block"><strong>Source:</strong> State Street Global Advisors<br/><strong>URL:</strong> <a href="https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx">https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx</a><br/><strong>Last Update:</strong> 2025-04-16 00:00:00 UTC</div>
 </div><h2>Top 5 Weighted Stocks in NASDAQ 100</h2><hr/><div class="holdings-block"><h3>NASDAQ 100 (QQQ)</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>
-<tr><td>1</td><td>AAPL </td><td>Apple Inc</td><td>8.79%</td></tr>
-<tr><td>2</td><td>MSFT </td><td>Microsoft Corp</td><td>8.33%</td></tr>
-<tr><td>3</td><td>NVDA </td><td>NVIDIA Corp</td><td>7.80%</td></tr>
-<tr><td>4</td><td>AMZN </td><td>Amazon.com Inc</td><td>5.58%</td></tr>
-<tr><td>5</td><td>AVGO </td><td>Broadcom Inc</td><td>3.99%</td></tr>
+<tr><td>1</td><td>AAPL </td><td>Apple Inc</td><td>8.76%</td></tr>
+<tr><td>2</td><td>MSFT </td><td>Microsoft Corp</td><td>8.27%</td></tr>
+<tr><td>3</td><td>NVDA </td><td>NVIDIA Corp</td><td>7.89%</td></tr>
+<tr><td>4</td><td>AMZN </td><td>Amazon.com Inc</td><td>5.49%</td></tr>
+<tr><td>5</td><td>AVGO </td><td>Broadcom Inc</td><td>4.00%</td></tr>
 </tbody></table>
-<div class="source-block"><strong>Source:</strong> Invesco<br/><strong>URL:</strong> <a href="https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ">https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ</a><br/><strong>Last Update:</strong> 2025-04-16T02:44:35.756Z</div>
+<div class="source-block"><strong>Source:</strong> Invesco<br/><strong>URL:</strong> <a href="https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ">https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ</a><br/><strong>Last Update:</strong> 2025-04-16 23:27:09 UTC</div>
 </div><h2>Top 5 Weighted Stocks in Dow Jones 30</h2><hr/><div class="holdings-block"><h3>Dow Jones 30 (DIA)</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>
-<tr><td>1</td><td>UNH</td><td>UNITEDHEALTH GROUP INC</td><td>8.90%</td></tr>
-<tr><td>2</td><td>GS</td><td>GOLDMAN SACHS GROUP INC</td><td>7.64%</td></tr>
-<tr><td>3</td><td>MSFT</td><td>MICROSOFT CORP</td><td>5.88%</td></tr>
-<tr><td>4</td><td>HD</td><td>HOME DEPOT INC</td><td>5.42%</td></tr>
-<tr><td>5</td><td>SHW</td><td>SHERWIN WILLIAMS CO/THE</td><td>5.17%</td></tr>
+<tr><td>1</td><td>UNH</td><td>UNITEDHEALTH GROUP INC</td><td>8.88%</td></tr>
+<tr><td>2</td><td>GS</td><td>GOLDMAN SACHS GROUP INC</td><td>7.73%</td></tr>
+<tr><td>3</td><td>MSFT</td><td>MICROSOFT CORP</td><td>5.87%</td></tr>
+<tr><td>4</td><td>HD</td><td>HOME DEPOT INC</td><td>5.39%</td></tr>
+<tr><td>5</td><td>SHW</td><td>SHERWIN WILLIAMS CO/THE</td><td>5.13%</td></tr>
 </tbody></table>
-<div class="source-block"><strong>Source:</strong> State Street Global Advisors<br/><strong>URL:</strong> <a href="https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx">https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx</a><br/><strong>Last Update:</strong> Tue Jan 28 2025 21:28:41 GMT-0500 (Eastern Standard Time)</div>
+<div class="source-block"><strong>Source:</strong> State Street Global Advisors<br/><strong>URL:</strong> <a href="https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx">https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx</a><br/><strong>Last Update:</strong> 2025-04-16 00:00:00 UTC</div>
 </div><h2>S&P 500 Earnings Per Share (Trailing 12M)</h2><hr/><div class="earnings-block">
 <h3>S&P 500 Earnings Per Share (Trailing 12M)</h3>
 <div class="eps">EPS: <strong>$202.67</strong></div>
 <div>S&P 500 Target at <strong>15x</strong>: <strong>3040.05</strong></div>
 <div>S&P 500 Target at <strong>17x</strong>: <strong>3445.39</strong></div>
 <div>S&P 500 Target at <strong>20x</strong>: <strong>4053.40</strong></div>
-<div class="source-block"><strong>Source:</strong> multpl.com<br/><strong>URL:</strong> <a href="https://www.multpl.com/s-p-500-earnings/table/by-month">https://www.multpl.com/s-p-500-earnings/table/by-month</a><br/><strong>Last Update:</strong> Sep 30, 2024</div>
-</div>  </div>
+<div class="source-block"><strong>Source:</strong> multpl.com<br/><strong>URL:</strong> <a href="https://www.multpl.com/s-p-500-earnings/table/by-month">https://www.multpl.com/s-p-500-earnings/table/by-month</a><br/><strong>Last Update:</strong> 2024-09-30 04:00:00 UTC</div>
+</div><div class="stale-warning"><strong>Warning:</strong> Trailing EPS data may be stale (last updated 2024-09-30 04:00:00 UTC)</div><div class="freshness-block"><h3>Data Freshness Summary</h3><table><thead><tr><th>Section</th><th>Last Updated</th><th>Source</th></tr></thead><tbody>
+<tr><td>S&P 500 Index</td><td>2025-04-16 20:55:01 UTC</td><td>Yahoo Finance</td></tr>
+<tr><td>Trailing P/E</td><td>2025-04-16 04:00:00 UTC</td><td>multpl.com</td></tr>
+<tr><td>Forward EPS</td><td>2025-04-16 00:00:00 UTC</td><td>Yardeni Research</td></tr>
+<tr><td>Market Path (RSI)</td><td>2025-04-16 23:49:59 UTC</td><td>Tradier (RSI)</td></tr>
+<tr><td>SPY Holdings</td><td>2025-04-16 00:00:00 UTC</td><td>State Street Global Advisors</td></tr>
+<tr><td>QQQ Holdings</td><td>2025-04-16 23:27:09 UTC</td><td>Invesco</td></tr>
+<tr><td>DIA Holdings</td><td>2025-04-16 00:00:00 UTC</td><td>State Street Global Advisors</td></tr>
+<tr><td>Trailing EPS</td><td>2024-09-30 04:00:00 UTC</td><td>multpl.com</td></tr>
+</tbody></table></div>  </div>
 </body>
 </html>

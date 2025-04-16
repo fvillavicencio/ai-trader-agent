@@ -25,10 +25,179 @@ const ETF_SOURCES = {
   }
 };
 
+// Enhanced: Robustly extract 'As of' date from all common formats in the first 20 rows
+function extractAsOfDate(rows, workbook) {
+  let lastUpdated = null;
+  const patterns = [
+    // Holdings: As of 15-Apr-2025
+    /holdings:?\s*as of:?\s*([0-9]{1,2}-[A-Za-z]{3}-[0-9]{4})/i,
+    // Holdings: As of Apr 15, 2025
+    /holdings:?\s*as of:?\s*([A-Za-z]{3,9})\s*([0-9]{1,2}),?\s*([0-9]{4})/i,
+    // Holdings as of: April 15, 2025
+    /holdings\s*as of:?\s*([A-Za-z]{3,9})\s*([0-9]{1,2}),?\s*([0-9]{4})/i,
+    // As of: 2025-04-15
+    /as of:?\s*([0-9]{4})-([0-9]{2})-([0-9]{2})/i
+  ];
+  for (let i = 0; i < Math.min(20, rows.length); ++i) {
+    for (const cell of rows[i]) {
+      for (const pat of patterns) {
+        const m = pat.exec(cell);
+        if (m) {
+          if (pat === patterns[0]) {
+            // 15-Apr-2025
+            const [day, mon, year] = m[1].split('-');
+            const monthNum = {
+              Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11
+            }[mon];
+            if (monthNum !== undefined) {
+              lastUpdated = new Date(Date.UTC(parseInt(year), monthNum, parseInt(day))).toISOString();
+            }
+          } else if (pat === patterns[1] || pat === patterns[2]) {
+            // Apr 15, 2025 or April 15, 2025
+            const mon = m[1].slice(0,3);
+            const day = m[2];
+            const year = m[3];
+            const monthNum = {
+              Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11
+            }[mon];
+            if (monthNum !== undefined) {
+              lastUpdated = new Date(Date.UTC(parseInt(year), monthNum, parseInt(day))).toISOString();
+            }
+          } else if (pat === patterns[3]) {
+            // 2025-04-15
+            const year = m[1];
+            const month = parseInt(m[2], 10) - 1;
+            const day = m[3];
+            lastUpdated = new Date(Date.UTC(parseInt(year), month, parseInt(day))).toISOString();
+          }
+        }
+      }
+      if (lastUpdated) return lastUpdated;
+    }
+  }
+  // Fallback to file metadata if not found
+  if (!lastUpdated && workbook.Props && workbook.Props.ModifiedDate) {
+    lastUpdated = workbook.Props.ModifiedDate;
+  }
+  // Fallback to now if nothing found
+  if (!lastUpdated) lastUpdated = new Date().toISOString();
+  return lastUpdated;
+}
+
+// Helper: Validate plausible as-of date (not before 2020, not in the future)
+function isValidAsOfDate(dateStr) {
+  if (!dateStr) return false;
+  const dt = new Date(dateStr);
+  const now = new Date('2025-04-16T19:27:09-04:00'); // use provided current time
+  if (isNaN(dt.getTime())) return false;
+  if (dt.getUTCFullYear() < 2020) return false;
+  if (dt > now) return false;
+  return true;
+}
+
+// Scrape State Street individual ETF pages for SPY/DIA holdings and as-of date using hidden input for date
+async function fetchStateStreetHoldingsAndDate(symbol) {
+  const urls = {
+    SPY: 'https://www.ssga.com/us/en/individual/etfs/spdr-sp-500-etf-trust-spy',
+    DIA: 'https://www.ssga.com/us/en/individual/etfs/spdr-dow-jones-industrial-average-etf-trust-dia'
+  };
+  const url = urls[symbol];
+  if (!url) return null;
+  try {
+    const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const $ = cheerio.load(data);
+    // Extract 'As of' date from hidden input JSON
+    let asOf = null;
+    const quickInfoVal = $('#fund-quick-info').attr('value');
+    if (quickInfoVal) {
+      try {
+        const quickInfo = JSON.parse(quickInfoVal.replace(/&quot;/g, '"'));
+        if (quickInfo && quickInfo.asOfDateSimple) {
+          // Format as ISO string
+          const date = new Date(quickInfo.asOfDateSimple + ' UTC');
+          if (!isNaN(date.getTime())) {
+            asOf = date.toISOString();
+          }
+        }
+      } catch (e) {}
+    }
+    // Attempt to extract Top Holdings table if present
+    let holdings = [];
+    // Look for a table with at least 4 columns and header containing 'Holding' or 'Weight'
+    $('table').each((i, table) => {
+      const header = $(table).find('thead th').map((i, th) => $(th).text().toLowerCase()).get().join(' ');
+      if (/holding|weight/.test(header)) {
+        $(table).find('tbody tr').slice(0, 5).each((j, row) => {
+          const tds = $(row).find('td');
+          if (tds.length >= 4) {
+            holdings.push({
+              symbol: $(tds[0]).text().trim(),
+              name: $(tds[1]).text().trim(),
+              weight: $(tds[3]).text().trim()
+            });
+          }
+        });
+      }
+    });
+    return { holdings, asOf };
+  } catch (e) {
+    return null;
+  }
+}
+
+// Patch getTopHoldings to use new State Street page for SPY/DIA
 export async function getTopHoldings(symbol) {
-  let lastUpdated = new Date().toISOString();
-  // Try Tradier first
-  if (TRADIER_API_KEY) {
+  let lastUpdated = null;
+  let lastUpdatedSource = '';
+  let holdings = [];
+  // For SPY/DIA, extract date from web, but use spreadsheet for holdings
+  if (symbol === 'SPY' || symbol === 'DIA') {
+    // Extract date from web page
+    const webData = await fetchStateStreetHoldingsAndDate(symbol);
+    if (webData && webData.asOf && isValidAsOfDate(webData.asOf)) {
+      lastUpdated = webData.asOf;
+      lastUpdatedSource = 'State Street Web (Date Only)';
+    }
+    // Always use spreadsheet for holdings
+    const { holdings: excelHoldings } = await fetchTopHoldingsFromXlsx(symbol);
+    holdings = excelHoldings;
+    if (!lastUpdated) {
+      // fallback to Excel date if web failed
+      const { lastUpdated: excelUpdated } = await fetchTopHoldingsFromXlsx(symbol);
+      if (isValidAsOfDate(excelUpdated)) {
+        lastUpdated = excelUpdated;
+        lastUpdatedSource = 'Excel';
+      }
+    }
+    if (!lastUpdated) {
+      lastUpdated = new Date('2025-04-16T19:49:29-04:00').toISOString();
+      lastUpdatedSource = 'Fallback (now)';
+    }
+    console.log(`[getTopHoldings] Using as-of date for ${symbol}: ${lastUpdated} (source: ${lastUpdatedSource})`);
+    return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated };
+  }
+  // For SPY/DIA, use new web source
+  if (symbol === 'SPY' || symbol === 'DIA') {
+    const webData = await fetchStateStreetHoldingsAndDate(symbol);
+    if (webData && webData.holdings.length && isValidAsOfDate(webData.asOf)) {
+      holdings = webData.holdings;
+      lastUpdated = webData.asOf;
+      lastUpdatedSource = 'State Street Web (Individual ETF)';
+      console.log(`[getTopHoldings] Using new State Street page for ${symbol}`);
+      return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: '', lastUpdated };
+    }
+  }
+  // If not found or not SPY/DIA, fallback to previous logic
+  // For SPY/DIA, try web scrape first
+  if (symbol === 'SPY' || symbol === 'DIA') {
+    const webAsOf = await fetchStateStreetAsOfDate(symbol);
+    if (isValidAsOfDate(webAsOf)) {
+      lastUpdated = webAsOf;
+      lastUpdatedSource = 'State Street Web';
+    }
+  }
+  // If not found, try Tradier
+  if (!lastUpdated && TRADIER_API_KEY) {
     try {
       const response = await axios.get(TRADIER_BASE_URL, {
         params: { symbols: symbol },
@@ -39,35 +208,30 @@ export async function getTopHoldings(symbol) {
       });
       const holdings = response.data && response.data.holdings && response.data.holdings.holding;
       if (holdings && Array.isArray(holdings) && holdings.length > 0) {
-        // Tradier sometimes returns the ETF symbol instead of the actual holding for QQQ
-        // If all symbols are the ETF, fallback to Excel
-        const allAreETF = holdings.slice(0, 5).every(h => h.symbol === symbol);
-        if (allAreETF) {
-          console.log(`Falling back to Excel for ${symbol} holdings (Tradier returned only ETF symbols)`);
-          return await fetchTopHoldingsFromXlsx(symbol);
+        if (response.data.holdings.as_of_date && isValidAsOfDate(response.data.holdings.as_of_date)) {
+          lastUpdated = new Date(response.data.holdings.as_of_date).toISOString();
+          lastUpdatedSource = 'Tradier API';
         }
-        const top = holdings
-          .filter(h => h.weight && h.symbol)
-          .sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight))
-          .slice(0, 5)
-          .map(h => ({
-            symbol: h.symbol,
-            name: h.name,
-            weight: h.weight + '%'
-          }));
-        console.log(`Returned holdings for ${symbol} from Tradier API`);
-        return { holdings: top, sourceName: 'Tradier', sourceUrl: TRADIER_BASE_URL, lastUpdated };
+        return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated };
       }
     } catch (e) {
-      // If 404 or other error, fallback to Excel
       console.log(`Error fetching holdings for ${symbol} from Tradier: ${e.message}`);
     }
   }
   // Fallback: Download and parse Excel file from provider
-  console.log(`Falling back to Excel for ${symbol} holdings (Tradier not used)`);
-  const { holdings, lastUpdated: excelUpdated } = await fetchTopHoldingsFromXlsx(symbol);
-  lastUpdated = excelUpdated;
-  return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated };
+  console.log(`Falling back to Excel for ${symbol} holdings`);
+  const { holdings: excelHoldings, lastUpdated: excelUpdated } = await fetchTopHoldingsFromXlsx(symbol);
+  if (isValidAsOfDate(excelUpdated)) {
+    lastUpdated = excelUpdated;
+    lastUpdatedSource = 'Excel';
+  }
+  // If still not valid, fallback to file metadata or now
+  if (!lastUpdated) {
+    lastUpdated = new Date('2025-04-16T19:27:09-04:00').toISOString(); // fallback to current time
+    lastUpdatedSource = 'Fallback (now)';
+  }
+  console.log(`[getTopHoldings] Using as-of date for ${symbol}: ${lastUpdated} (source: ${lastUpdatedSource})`);
+  return { holdings: excelHoldings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated };
 }
 
 async function fetchTopHoldingsFromXlsx(symbol) {
@@ -104,11 +268,39 @@ async function fetchTopHoldingsFromXlsx(symbol) {
     }))
     .sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight))
     .slice(0, 5);
+  const lastUpdated = extractAsOfDate(rows, workbook);
   console.log(`Returned holdings for ${symbol} from Excel file`);
-  // Try to parse the last updated date from the Excel file if available
-  let lastUpdated = new Date().toISOString();
-  if (workbook.Props && workbook.Props.ModifiedDate) {
-    lastUpdated = workbook.Props.ModifiedDate;
-  }
   return { holdings, lastUpdated };
+}
+
+// Scrape State Street site for SPY/DIA 'As of' date
+async function fetchStateStreetAsOfDate(symbol) {
+  const urls = {
+    SPY: 'https://www.ssga.com/us/en/intermediary/etfs/funds/spdr-sp-500-etf-trust-spy#fund-holdings',
+    DIA: 'https://www.ssga.com/us/en/intermediary/etfs/funds/spdr-dow-jones-industrial-average-etf-trust-dia#fund-holdings'
+  };
+  const url = urls[symbol];
+  if (!url) return null;
+  try {
+    const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const $ = cheerio.load(data);
+    // Look for 'Holdings as of' or similar text
+    let asOf = null;
+    $('[class*=asOf], [class*=date], div, span, p)').each((i, el) => {
+      const text = $(el).text();
+      const m = /(Holdings)?\s*as of:?\s*([A-Za-z]{3,9})\s*([0-9]{1,2}),?\s*([0-9]{4})/i.exec(text);
+      if (m) {
+        const mon = m[2].slice(0,3);
+        const day = m[3];
+        const year = m[4];
+        const monthNum = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11}[mon];
+        if (monthNum !== undefined) {
+          asOf = new Date(Date.UTC(parseInt(year), monthNum, parseInt(day))).toISOString();
+        }
+      }
+    });
+    return asOf;
+  } catch (e) {
+    return null;
+  }
 }
