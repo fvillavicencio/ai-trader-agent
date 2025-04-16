@@ -51,6 +51,17 @@ function fetchMarketFuturesIfAfterHours(options) {
     Logger.log('[Market Hours Check] Proceeding: after hours or forced after hours.');
   }
 
+  // --- Caching: 30 min cache for market futures ---
+  var cache = CacheService.getScriptCache();
+  var cacheKey = 'marketFuturesData';
+  if (!forceAfterHours) {
+    var cached = cache.get(cacheKey);
+    if (cached) {
+      Logger.log('[Market Futures] Returning cached data');
+      return JSON.parse(cached);
+    }
+  }
+
   // --- US Futures (major contracts) from Tradier ---
   var usFuturesSymbols = [
     { symbol: 'ES', name: 'S&P 500 E-mini Futures', provider: 'Tradier' },
@@ -114,8 +125,8 @@ function fetchMarketFuturesIfAfterHours(options) {
   // --- Global Indices from Twelve Data (non-US indices only) ---
   var twelveDataApiKey = getTwelveDataApiKey();
   var globalIndices = [
-    { symbol: 'DAX', name: 'DAX', provider: 'TwelveData' },
-    { symbol: 'CAC', name: 'CAC 40', provider: 'TwelveData' },
+    { symbol: 'DAX', name: 'German DAX Index', provider: 'TwelveData' },
+    { symbol: 'CAC', name: 'France CAC 40 Index', provider: 'TwelveData' },
     // Add more if you find valid index symbols from https://twelvedata.com/symbols
   ];
   var globalSymbols = globalIndices.map(function(s) { return s.symbol; }).join(',');
@@ -175,7 +186,7 @@ function fetchMarketFuturesIfAfterHours(options) {
     Logger.log('Twelve Data fetch failed: ' + e);
   }
 
-  return {
+  var result = {
     asOf: new Date().toISOString(),
     source: {
       name: 'Mixed',
@@ -183,6 +194,16 @@ function fetchMarketFuturesIfAfterHours(options) {
     },
     consolidated: consolidatedData
   };
+  cache.put(cacheKey, JSON.stringify(result), 1800); // 30 min cache
+  return result;
+}
+
+/**
+ * Clears the market futures cache.
+ */
+function clearMarketFuturesCache() {
+  var cache = CacheService.getScriptCache();
+  cache.remove('marketFuturesData');
 }
 
 /**
