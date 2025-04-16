@@ -174,6 +174,14 @@ function getFREDApiKey() {
 }
 
 /**
+ * Retrieves the Twelve Data API key from script properties.
+ * @return {string|null} The API key or null if not set.
+ */
+function getTwelveDataApiKey() {
+  return PropertiesService.getScriptProperties().getProperty('TWELVE_DATA_API_KEY');
+}
+
+/**
  * Gets the configured AI provider for macroeconomic factors data retrieval
  * Checks script properties first, then falls back to the constant
  * 
@@ -886,25 +894,4 @@ function generateDebugOpenAIResponse() {
     "justification": "Given the current extreme fear in the market, as indicated by the Fear & Greed Index, and the flat yield curve suggesting uncertainty, a cautious approach is advised. However, the mixed analyst sentiment, with optimism in energy and potential rebounds in semiconductors, suggests that selective opportunities may exist. The geopolitical risks and upcoming economic events further justify a 'Watch for Better Price Action' decision, as these factors could lead to market volatility and better buying opportunities.",
     "timestamp": timestamp
   };
-}
-
-/**
- * Gets the FRED API key from script properties
- * @return {String} The FRED API key
- */
-function getFREDApiKey() {
-  try {
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const apiKey = scriptProperties.getProperty('FRED_API_KEY');
-    
-    if (!apiKey) {
-      Logger.log("FRED API key not found in script properties");
-      return null;
-    }
-    
-    return apiKey;
-  } catch (error) {
-    Logger.log(`Error getting FRED API key: ${error}`);
-    return null;
-  }
 }

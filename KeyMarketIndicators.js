@@ -77,7 +77,21 @@ function retrieveKeyMarketIndicators() {
       results.success = false;
       results.message = "Failed to retrieve some market data";
     }
-    
+
+    // --- Integrate Market Futures Data after Sectors ---
+    try {
+      var marketFuturesData = fetchMarketFuturesIfAfterHours && fetchMarketFuturesIfAfterHours();
+      if (marketFuturesData && marketFuturesData.consolidated && marketFuturesData.consolidated.length > 0) {
+        results.marketFutures = marketFuturesData;
+        Logger.log("Market futures data integrated into key market indicators.");
+      } else {
+        Logger.log("No market futures data to integrate (likely market hours or data unavailable).");
+      }
+    } catch (error) {
+      Logger.log(`Error retrieving market futures data: ${error}`);
+    }
+    // --- End Market Futures Integration ---
+
     // Get volatility indices data
     try {
       const volatilityIndicesData = retrieveVolatilityIndices();
@@ -228,7 +242,26 @@ function formatKeyMarketIndicatorsData(data) {
       // Add timestamp
       formattedText += `  * Last Updated: ${new Date(data.sectorPerformance[0].timestamp || data.timestamp || new Date()).toLocaleString()}\n\n`;
     }
-    
+
+    // --- Market Futures Section (NEW) ---
+    if (data.marketFutures && data.marketFutures.consolidated && data.marketFutures.consolidated.length > 0) {
+      formattedText += "**Market Futures:**\n";
+      for (const fut of data.marketFutures.consolidated) {
+        const lastStr = fut.last !== undefined ? fut.last : "N/A";
+        const changeStr = fut.percentChange !== undefined ? `${fut.percentChange >= 0 ? "+" : ""}${fut.percentChange.toFixed(2)}%` : "N/A";
+        formattedText += `  * ${fut.name} (${fut.symbol}): ${lastStr} (${changeStr}) [${fut.provider}]`;
+        if (fut.source && fut.source.url) {
+          formattedText += ` | Source: ${fut.source.url}`;
+        }
+        if (fut.lastUpdated) {
+          formattedText += ` | Last Updated: ${new Date(fut.lastUpdated).toLocaleString()}`;
+        }
+        formattedText += "\n";
+      }
+      formattedText += "\n";
+    }
+    // --- End Market Futures Section ---
+
     // Format Fear & Greed Index
     if (data.fearAndGreedIndex) {
       formattedText += `* CNN Fear & Greed Index:\n`;
@@ -266,21 +299,23 @@ function formatKeyMarketIndicatorsData(data) {
     // Format upcoming economic events
     if (data.upcomingEconomicEvents && data.upcomingEconomicEvents.length > 0) {
       formattedText += "* Upcoming Economic Events:\n";
-      
       // Sort events by date (ascending)
       const sortedEvents = [...data.upcomingEconomicEvents].sort((a, b) => {
         return new Date(a.date) - new Date(b.date);
       });
-      
-      // Add each event
+      // Add each event with all details
       for (const event of sortedEvents) {
-        // Format the date as ISO string for consistency
         const dateObj = new Date(event.date);
         const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
+        const title = event.fullText || event.name || event.title || event.indicator || "Economic Event";
+        const country = event.country ? ` | Country: ${event.country}` : "";
+        const source = event.source ? ` | Source: ${event.source}` : "";
+        const actual = event.actual !== undefined && event.actual !== null ? ` | Actual: ${event.actual}` : "";
+        const forecast = event.forecast !== undefined && event.forecast !== null ? ` | Forecast: ${event.forecast}` : "";
+        const previous = event.previous !== undefined && event.previous !== null ? ` | Previous: ${event.previous}` : "";
         
-        formattedText += `  * ${dateStr}: ${event.name || "Economic Event"}\n`;
+        formattedText += `  * ${dateStr}: ${title}${country}${source}${actual}${forecast}${previous}\n`;
       }
-      
       // Add timestamp
       formattedText += `  * Last Updated: ${new Date(data.timestamp || new Date()).toLocaleString()}\n`;
     } else {
@@ -1378,7 +1413,7 @@ function retrieveUpcomingEconomicEvents() {
       date: event.date,
       time: event.time || "All Day",
       country: event.country,
-      event: event.event,
+      event: event.fullText || event.name || event.title || event.indicator || "Economic Event",
       source: event.source,
       period: event.period || "",
       actual: event.actual || "N/A",
@@ -1614,126 +1649,20 @@ function testImprovedDataRetrieval() {
     const scriptCache = CacheService.getScriptCache();
     scriptCache.remove('KEY_MARKET_INDICATORS_DATA');
     scriptCache.remove('FEAR_AND_GREED_INDEX_DATA');
+    scriptCache.remove('MAJOR_INDICES_DATA');
+    scriptCache.remove('SECTOR_PERFORMANCE_DATA');
+    scriptCache.remove('VOLATILITY_INDICES_DATA');
     scriptCache.remove('UPCOMING_ECONOMIC_EVENTS_DATA');
+    
+    // Optionally, we could also clear the stale cache from Properties
+    // but we'll keep it as a fallback for now
+    // const scriptProperties = PropertiesService.getScriptProperties();
+    // scriptProperties.deleteProperty('FEAR_AND_GREED_INDEX_STALE_CACHE');
+    
     Logger.log("All caches cleared successfully");
-    
-    // Step 2: Retrieve key market indicators data
-    Logger.log("\n--- Step 2: Retrieving key market indicators data ---");
-    const keyMarketIndicators = retrieveKeyMarketIndicators();
-    
-    // Step 3: Log the results with detailed information
-    Logger.log("\n--- Step 3: Logging detailed results ---");
-    Logger.log(`Overall Status: ${keyMarketIndicators.success ? "Success" : "Partial Success/Failure"}`);
-    Logger.log(`Message: ${keyMarketIndicators.message}`);
-    
-    // Check Major Indices
-    if (keyMarketIndicators.majorIndices && keyMarketIndicators.majorIndices.length > 0) {
-      Logger.log(`Major Indices: Retrieved ${keyMarketIndicators.majorIndices.length} indices`);
-      Logger.log(`First index: ${keyMarketIndicators.majorIndices[0].name} (${keyMarketIndicators.majorIndices[0].symbol}): ${keyMarketIndicators.majorIndices[0].value}`);
-    } else {
-      Logger.log("Major Indices: Not found");
-    }
-    
-    // Check Sector Performance
-    if (keyMarketIndicators.sectorPerformance && keyMarketIndicators.sectorPerformance.length > 0) {
-      Logger.log(`Sector Performance: Retrieved ${keyMarketIndicators.sectorPerformance.length} sectors`);
-      Logger.log(`First sector: ${keyMarketIndicators.sectorPerformance[0].name}: ${keyMarketIndicators.sectorPerformance[0].percentChange}%`);
-    } else {
-      Logger.log("Sector Performance: Not found");
-    }
-    
-    // Check Volatility Indices
-    if (keyMarketIndicators.volatilityIndices && keyMarketIndicators.volatilityIndices.length > 0) {
-      Logger.log(`Volatility Indices: Retrieved ${keyMarketIndicators.volatilityIndices.length} indices`);
-      Logger.log(`First index: ${keyMarketIndicators.volatilityIndices[0].name} (${keyMarketIndicators.volatilityIndices[0].symbol}): ${keyMarketIndicators.volatilityIndices[0].value}`);
-    } else {
-      Logger.log("Volatility Indices: Not found");
-    }
-    
-    // Check Fear & Greed Index
-    if (keyMarketIndicators.fearAndGreedIndex && !keyMarketIndicators.fearAndGreedIndex.error) {
-      Logger.log(`Fear & Greed Index: Retrieved (${keyMarketIndicators.fearAndGreedIndex.currentValue} - ${keyMarketIndicators.fearAndGreedIndex.rating})`);
-      Logger.log(`Source: ${keyMarketIndicators.fearAndGreedIndex.source}`);
-      Logger.log(`Is Stale Data: ${keyMarketIndicators.fearAndGreedIndex.isStaleData ? "Yes" : "No"}`);
-    } else {
-      Logger.log("Fear & Greed Index: Not found");
-      if (keyMarketIndicators.fearAndGreedIndex && keyMarketIndicators.fearAndGreedIndex.errorMessage) {
-        Logger.log(`Error: ${keyMarketIndicators.fearAndGreedIndex.errorMessage}`);
-      }
-    }
-    
-    // Check Upcoming Economic Events
-    if (keyMarketIndicators.upcomingEconomicEvents && keyMarketIndicators.upcomingEconomicEvents.length > 0) {
-      Logger.log(`Upcoming Economic Events: Retrieved ${keyMarketIndicators.upcomingEconomicEvents.length} events`);
-      Logger.log(`Source: ${keyMarketIndicators.upcomingEconomicEvents.source}`);
-      Logger.log(`Is Stale Data: ${keyMarketIndicators.upcomingEconomicEvents.isStaleData ? "Yes" : "No"}`);
-      
-      // Log details of each event
-      keyMarketIndicators.upcomingEconomicEvents.forEach((event, index) => {
-        Logger.log(`Event ${index + 1}:`);
-        Logger.log(`  Date: ${event.date}`);
-        Logger.log(`  Name: ${event.name}`);
-        Logger.log(`  Country: ${event.country}`);
-        Logger.log(`  Source: ${event.source}`);
-        if (event.actual !== undefined) {
-          Logger.log(`  Actual: ${event.actual}`);
-        }
-        if (event.forecast !== undefined) {
-          Logger.log(`  Forecast: ${event.forecast}`);
-        }
-        if (event.previous !== undefined) {
-          Logger.log(`  Previous: ${event.previous}`);
-        }
-      });
-    } else {
-      Logger.log("Upcoming Economic Events: Not found");
-    }
-    
-    // Step 4: Check formatted data
-    Logger.log("\n--- Step 4: Checking formatted data ---");
-    if (keyMarketIndicators.formattedData) {
-      Logger.log("Formatted data is available");
-      Logger.log("First 200 characters of formatted data:");
-      Logger.log(keyMarketIndicators.formattedData.substring(0, 200) + "...");
-    } else {
-      Logger.log("Formatted data is not available");
-    }
-    
-    // Step 5: Test individual data retrieval functions
-    Logger.log("\n--- Step 5: Testing individual data retrieval functions ---");
-    
-    // Test Fear & Greed Index with primary and alternative sources
-    Logger.log("\nTesting Fear & Greed Index retrieval:");
-    const fearAndGreedIndex = retrieveFearAndGreedIndex();
-    if (fearAndGreedIndex && !fearAndGreedIndex.error) {
-      Logger.log(`Retrieved: ${fearAndGreedIndex.currentValue} (${fearAndGreedIndex.rating})`);
-      Logger.log(`Source: ${fearAndGreedIndex.source}`);
-      Logger.log(`Is Stale Data: ${fearAndGreedIndex.isStaleData ? "Yes" : "No"}`);
-    } else {
-      Logger.log("Failed to retrieve Fear & Greed Index");
-      if (fearAndGreedIndex && fearAndGreedIndex.errorMessage) {
-        Logger.log(`Error: ${fearAndGreedIndex.errorMessage}`);
-      }
-    }
-    
-    // Test Economic Events with primary and alternative sources
-    Logger.log("\nTesting Economic Events retrieval:");
-    const economicEvents = retrieveUpcomingEconomicEvents();
-    if (economicEvents && economicEvents.events && economicEvents.events.length > 0) {
-      Logger.log(`Retrieved ${economicEvents.events.length} events`);
-      Logger.log(`Source: ${economicEvents.source}`);
-      Logger.log(`Is Stale Data: ${economicEvents.isStaleData ? "Yes" : "No"}`);
-    } else {
-      Logger.log("Failed to retrieve Economic Events");
-      if (economicEvents && economicEvents.errorMessage) {
-        Logger.log(`Error: ${economicEvents.errorMessage}`);
-      }
-    }
-    
-    Logger.log("\n=== IMPROVED DATA RETRIEVAL TESTING COMPLETE ===");
-    return "Comprehensive data retrieval test completed. Check the logs for detailed results.";
+    return "All caches cleared successfully";
   } catch (error) {
-    Logger.log(`Error in testImprovedDataRetrieval: ${error}`);
+    Logger.log(`Error clearing key market indicators cache: ${error}`);
     return `Error: ${error}`;
   }
 }

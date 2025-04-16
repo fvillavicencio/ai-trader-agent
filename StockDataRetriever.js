@@ -86,28 +86,39 @@ function retrieveStockMetrics(symbol) {
     };
 
     // Helper to merge and track sources
-    function mergeMetrics(newData, source) {
+ function mergeMetrics(newData, source) {
       for (var key in newData) {
-        if (
-          metrics.hasOwnProperty(key) &&
-          (metrics[key] === null || typeof metrics[key] === 'undefined') &&
-          newData[key] != null
-        ) {
-          // Additional validation for company field
+        if (metrics.hasOwnProperty(key)) {
+          const newVal = newData[key];
+          const currVal = metrics[key];
+          const isValid = newVal !== null && typeof newVal !== 'undefined' && newVal !== '' && newVal !== 'N/A';
+          // For company: allow set only if current is null/empty/N/A (never overwrite a valid value)
           if (
             key === 'company' &&
-            (
-              newData[key] === 'Yahoo Finance' ||
-              newData[key] === 'Asset Management' ||
-              newData[key] === 'FMP' ||
-              newData[key] === 'GoogleFinance' ||
-              /finance|asset|management|industry|sector/i.test(newData[key])
-            )
+            (currVal === null || typeof currVal === 'undefined' || currVal === '' || currVal === 'N/A') && isValid
           ) {
-            continue; // Skip setting invalid company names
+            metrics[key] = newVal;
+            metrics._fieldSources[key] = source;
+            continue;
           }
-          metrics[key] = newData[key];
-          metrics._fieldSources[key] = source;
+          // For all other fields
+          if (
+            key !== 'company' &&
+            (currVal === null || typeof currVal === 'undefined' || currVal === '' || currVal === 'N/A') && isValid
+          ) {
+            metrics[key] = newVal;
+            metrics._fieldSources[key] = source;
+          }
+          // If current value is valid, only replace with another valid value (for non-company fields)
+          else if (
+            key !== 'company' &&
+            isValid &&
+            currVal !== null && typeof currVal !== 'undefined' && currVal !== '' && currVal !== 'N/A' &&
+            newVal !== currVal
+          ) {
+            metrics[key] = newVal;
+            metrics._fieldSources[key] = source;
+          }
         }
       }
       if (source && metrics.dataSource.indexOf(source) === -1) {
@@ -128,9 +139,11 @@ function retrieveStockMetrics(symbol) {
     // 2. Tradier
     try {
       const tradierMetrics = fetchTradierData(symbol);
-      if (tradierMetrics) {
-        mergeMetrics(tradierMetrics, 'Tradier');
+      if (tradierMetrics && tradierMetrics.company && tradierMetrics.company !== '' && tradierMetrics.company !== 'N/A') {
+        metrics.company = tradierMetrics.company;
+        metrics._fieldSources['company'] = 'Tradier';
       }
+      mergeMetrics(tradierMetrics, 'Tradier');
     } catch (e) {
       Logger.log('Tradier fetch failed: ' + e);
     }
@@ -1578,12 +1591,10 @@ function fetchTradierData(symbol) {
     price: quoteData ? quoteData.last : null,
     volume: quoteData ? quoteData.volume : null,
     open: quoteData ? quoteData.open : null,
-    high: quoteData ? quoteData.high : null,
-    low: quoteData ? quoteData.low : null,
     close: quoteData ? quoteData.close : null,
     priceChange: quoteData ? quoteData.change : null,
     changesPercentage: quoteData ? quoteData.change_percentage : null,
-    company: fundamentals.company || null,
+    company: fundamentals.company || (quoteData ? quoteData.description : null) || null,
     industry: fundamentals.industry || null,
     sector: fundamentals.sector || null,
     marketcap: fundamentals.marketcap || null,
@@ -1591,7 +1602,12 @@ function fetchTradierData(symbol) {
     dividendYield: fundamentals.dividendYield || null,
     profitMargin: fundamentals.profitMargin || null,
     returnOnEquity: fundamentals.returnOnEquity || null,
-    returnOnAssets: fundamentals.returnOnAssets || null
+    returnOnAssets: fundamentals.returnOnAssets || null,
+    // --- Properly map Tradier quote fields to internal metrics fields ---
+    fiftyTwoWeekHigh: quoteData ? quoteData.week_52_high : null,
+    fiftyTwoWeekLow: quoteData ? quoteData.week_52_low : null,
+    dayHigh: quoteData ? quoteData.high : null,
+    dayLow: quoteData ? quoteData.low : null
   };
   
   return combinedData;
@@ -2028,7 +2044,8 @@ function clearStockMetricsCache() {
       'V', 'JPM', 'JNJ', 'UNH', 'HD', 'PG', 'MA', 'BAC', 'DIS', 'ADBE',
       'NFLX', 'CRM', 'AMD', 'TSM', 'ASML', 'AVGO', 'CSCO', 'INTC', 'QCOM',
       // Energy and Industrial
-      'XOM', 'CVX', 'BA', 'CAT', 'GE', 'MMM',
+      'XOM', 'CVX',
+      'BA', 'CAT', 'GE', 'MMM',
       // Deprecated stock symbols
       'FB', 'TWTR'
     ];

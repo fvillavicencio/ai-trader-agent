@@ -159,6 +159,33 @@ function generateDataRetrievalText() {
           formattedText += `* Volatility Indices: Data not available\n`;
         }
         
+        // --- Market Futures Section (OpenAI Prompt Version) ---
+        // Fetch market futures only if after hours
+        let marketFuturesData = null;
+        try {
+          marketFuturesData = fetchMarketFuturesIfAfterHours();
+        } catch (e) {
+          Logger.log('Error fetching market futures: ' + e);
+        }
+        if (marketFuturesData && marketFuturesData.consolidated && marketFuturesData.consolidated.length > 0) {
+          formattedText += "**Market Futures:**\n";
+          for (const fut of marketFuturesData.consolidated) {
+            const lastStr = fut.last !== undefined ? fut.last : "N/A";
+            const changeStr = fut.percentChange !== undefined ? `${fut.percentChange >= 0 ? "+" : ""}${parseFloat(fut.percentChange).toFixed(2)}%` : "N/A";
+            // OMIT [Tradier] for OpenAI prompt, include other providers
+            let providerStr = (fut.provider && fut.provider !== "Tradier") ? ` [${fut.provider}]` : "";
+            formattedText += `  * ${fut.name} (${fut.symbol}): ${lastStr} (${changeStr})${providerStr}`;
+            if (fut.source && fut.source.url) {
+              formattedText += ` | Source: ${fut.source.url}`;
+            }
+            if (fut.lastUpdated) {
+              formattedText += ` | Last Updated: ${new Date(fut.lastUpdated).toLocaleString()}`;
+            }
+            formattedText += "\n";
+          }
+          formattedText += "\n";
+        }
+        
         // Format upcoming economic events
         if (keyMarketIndicatorsData.upcomingEconomicEvents && keyMarketIndicatorsData.upcomingEconomicEvents.length > 0) {
           formattedText += `* Upcoming Economic Events:\n`;
