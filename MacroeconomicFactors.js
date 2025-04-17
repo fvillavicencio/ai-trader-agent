@@ -23,7 +23,7 @@ function getMacroeconomicfactorsPrompt() {
           "name": "Brief name of the risk",
           "description": "Detailed description of the risk",
           "region": "Affected region",
-          "impactLevel": "High/Medium/Low",
+          "impactLevel": "a number from 1 to 10, with 1 being least impactful and 10 being the most catastrophic",
           "marketImpact": "Description of potential market impact",
           "source": "Source of information",
           "url": "URL to source"
@@ -1133,7 +1133,38 @@ function retrieveGeopoliticalRisksFromPerplexity() {
     }
     
     const geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-    
+
+    // Map numeric impact to qualitative and sort descending (robust to either impactLevel or impact fields)
+    if (Array.isArray(geopoliticalData.risks)) {
+      geopoliticalData.risks.forEach(risk => {
+        // Accept impact as either 'impactLevel' or 'impact' (prefer number)
+        let impactNum = null;
+        if (typeof risk.impact === 'number') {
+          impactNum = risk.impact;
+        } else if (typeof risk.impactLevel === 'number') {
+          impactNum = risk.impactLevel;
+        } else if (typeof risk.impactLevel === 'string' && !isNaN(Number(risk.impactLevel))) {
+          impactNum = Number(risk.impactLevel);
+        }
+        if (impactNum !== null) {
+          // Map to qualitative
+          if (impactNum >= 9) {
+            risk.impactLevel = 'Severe';
+          } else if (impactNum >= 5) {
+            risk.impactLevel = 'High';
+          } else if (impactNum >= 3) {
+            risk.impactLevel = 'Medium';
+          } else {
+            risk.impactLevel = 'Low';
+          }
+          // Store the numeric value for sorting
+          risk._impactNum = impactNum;
+        }
+      });
+      // Sort descending by numeric impact if present
+      geopoliticalData.risks.sort((a, b) => (b._impactNum || 0) - (a._impactNum || 0));
+    }
+
     // Add timestamp
     geopoliticalData.lastUpdated = new Date();
     
@@ -1199,7 +1230,7 @@ function retrieveGeopoliticalRisksFromOpenAI() {
     // Set up the API request
     const url = "https://api.openai.com/v1/chat/completions";
     const payload = {
-      model: "gpt-4-turbo",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -1210,8 +1241,8 @@ function retrieveGeopoliticalRisksFromOpenAI() {
           content: prompt
         }
       ],
-      temperature: 0.2,
-      max_tokens: 4000
+      temperature: 0.3,
+      max_tokens: 3000
     };
     
     const options = {
@@ -1243,7 +1274,38 @@ function retrieveGeopoliticalRisksFromOpenAI() {
     }
     
     const geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-    
+
+    // Map numeric impact to qualitative and sort descending (robust to either impactLevel or impact fields)
+    if (Array.isArray(geopoliticalData.risks)) {
+      geopoliticalData.risks.forEach(risk => {
+        // Accept impact as either 'impactLevel' or 'impact' (prefer number)
+        let impactNum = null;
+        if (typeof risk.impact === 'number') {
+          impactNum = risk.impact;
+        } else if (typeof risk.impactLevel === 'number') {
+          impactNum = risk.impactLevel;
+        } else if (typeof risk.impactLevel === 'string' && !isNaN(Number(risk.impactLevel))) {
+          impactNum = Number(risk.impactLevel);
+        }
+        if (impactNum !== null) {
+          // Map to qualitative
+          if (impactNum >= 9) {
+            risk.impactLevel = 'Severe';
+          } else if (impactNum >= 5) {
+            risk.impactLevel = 'High';
+          } else if (impactNum >= 3) {
+            risk.impactLevel = 'Medium';
+          } else {
+            risk.impactLevel = 'Low';
+          }
+          // Store the numeric value for sorting
+          risk._impactNum = impactNum;
+        }
+      });
+      // Sort descending by numeric impact if present
+      geopoliticalData.risks.sort((a, b) => (b._impactNum || 0) - (a._impactNum || 0));
+    }
+
     // Add timestamp
     geopoliticalData.lastUpdated = new Date();
     

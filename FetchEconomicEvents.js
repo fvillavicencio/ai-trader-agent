@@ -174,18 +174,16 @@ function isSignificantEvent(event) {
   
   // Check for important indicators
   const importantIndicators = [
-    'GDP',
-    'CPI',
-    'PPI',
-    'ISM',
-    'PMI',
+    'commerce',
+    'gdp',
+    'cpi',
+    'ppi',
+    'ism',
+    'pmi',
     'fed',
-    'Fed Interest Rate',
-    'Fed Conf',
     'bls',
     'mba',
-    'FRB'
-
+    'frb'
   ];
   
   return importantIndicators.some(indicator => 
@@ -291,6 +289,46 @@ function decryptEventInfo(eventName, source) {
     'Import Prices MM': {
       name: 'Import Prices Index MoM',
       source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Import Prices YY': {
+      name: 'Import Prices Index YoY',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'House Starts MM: Change': {
+      name: 'Housing Starts Month-over-Month Change',
+      source: 'U.S. Department of Commerce'
+    },
+    'Housing Starts Number': {
+      name: 'Housing Starts (Total Number)',
+      source: 'U.S. Department of Commerce'
+    },
+    'Build Permits: Change MM': {
+      name: 'Building Permits Month-over-Month Change',
+      source: 'U.S. Department of Commerce'
+    },
+    'Build Permits: Number': {
+      name: 'Building Permits (Total Number)',
+      source: 'U.S. Department of Commerce'
+    },
+    'Philly Fed 6M Index*': {
+      name: 'Philadelphia Fed 6-Month Outlook Index',
+      source: 'Federal Reserve Bank of Philadelphia'
+    },
+    'Philly Fed Business Indx*': {
+      name: 'Philadelphia Fed Business Conditions Index',
+      source: 'Federal Reserve Bank of Philadelphia'
+    },
+    'Rich Fed Comp. Index': {
+      name: 'Richmond Fed Composite Index',
+      source: 'Federal Reserve Bank of Richmond'
+    },
+    'Rich Fed Mfg Shipments': {
+      name: 'Richmond Fed Manufacturing Shipments Index',
+      source: 'Federal Reserve Bank of Richmond'
+    },
+    'Rich Fed, Services Index': {
+      name: 'Richmond Fed Services Index',
+      source: 'Federal Reserve Bank of Richmond'
     }
   };
 

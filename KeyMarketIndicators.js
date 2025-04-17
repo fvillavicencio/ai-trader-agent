@@ -307,14 +307,15 @@ function formatKeyMarketIndicatorsData(data) {
       for (const event of sortedEvents) {
         const dateObj = new Date(event.date);
         const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD format
-        const title = event.fullText || event.name || event.title || event.indicator || "Economic Event";
+        // Use event.event (decrypted name), fallback to event.title, then event.indicator, then 'Economic Event' as a last resort
+        const eventName = event.event || event.title || event.indicator || "Economic Event";
         const country = event.country ? ` | Country: ${event.country}` : "";
         const source = event.source ? ` | Source: ${event.source}` : "";
         const actual = event.actual !== undefined && event.actual !== null ? ` | Actual: ${event.actual}` : "";
         const forecast = event.forecast !== undefined && event.forecast !== null ? ` | Forecast: ${event.forecast}` : "";
         const previous = event.previous !== undefined && event.previous !== null ? ` | Previous: ${event.previous}` : "";
         
-        formattedText += `  * ${dateStr}: ${title}${country}${source}${actual}${forecast}${previous}\n`;
+        formattedText += `  * ${dateStr}: ${eventName}${country}${source}${actual}${forecast}${previous}\n`;
       }
       // Add timestamp
       formattedText += `  * Last Updated: ${new Date(data.timestamp || new Date()).toLocaleString()}\n`;
@@ -1315,7 +1316,7 @@ function getRatingFromValue(value) {
   
   if (value <= 25) {
     return "Extreme Fear";
-  } else if (value <= 45) {
+  } else if (value <= 44) {
     return "Fear";
   } else if (value <= 54) {
     return "Neutral";
@@ -1413,7 +1414,7 @@ function retrieveUpcomingEconomicEvents() {
       date: event.date,
       time: event.time || "All Day",
       country: event.country,
-      event: event.fullText || event.name || event.title || event.indicator || "Economic Event",
+      event: event.event || event.title || event.indicator || "Economic Event",
       source: event.source,
       period: event.period || "",
       actual: event.actual || "N/A",

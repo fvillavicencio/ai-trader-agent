@@ -262,7 +262,7 @@ function sendPromptToOpenAI(prompt, apiKey) {
     
     // Request payload
     const payload = {
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",

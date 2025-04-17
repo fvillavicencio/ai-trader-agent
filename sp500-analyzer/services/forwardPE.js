@@ -3,7 +3,7 @@ import XLSX from 'xlsx';
 import path from 'path';
 import fs from 'fs';
 
-const LOCAL_XLSX_PATH = path.join(process.cwd(), 'sp-500-eps-est.xlsx');
+const LOCAL_XLSX_PATH = path.join(process.cwd(), 'services/sp-500-eps-est.xlsx');
 const SPGLOBAL_XLSX_URL = 'https://www.spglobal.com/spdji/en/documents/additional-material/sp-500-eps-est.xlsx';
 
 /**
@@ -12,22 +12,36 @@ const SPGLOBAL_XLSX_URL = 'https://www.spglobal.com/spdji/en/documents/additiona
  */
 export async function getForwardEpsEstimates() {
   let workbook;
-  // Prefer local file if present
-  if (fs.existsSync(LOCAL_XLSX_PATH)) {
-    workbook = XLSX.readFile(LOCAL_XLSX_PATH);
-  } else {
-    // Download the latest S&P Global XLSX with browser-like headers
+  let xlsBuffer;
+  let fetchedRemote = false;
+  try {
+    // Try to fetch remote XLSX file
     const response = await axios.get(SPGLOBAL_XLSX_URL, {
       responseType: 'arraybuffer',
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/json,text/plain,*/*',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'Referer': 'https://www.spglobal.com/spdji/en/',
-        'Accept-Language': 'en-US,en;q=0.9'
-      }
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Encoding': 'gzip, compress, deflate, br'
+      },
+      timeout: 7000,
     });
-    workbook = XLSX.read(response.data, { type: 'buffer' });
+    if (response.status === 200 && response.data && response.headers["content-type"] && response.headers["content-type"].includes("spreadsheet")) {
+      xlsBuffer = Buffer.from(response.data);
+      fetchedRemote = true;
+      // Overwrite the local file with the new content
+      fs.writeFileSync(LOCAL_XLSX_PATH, xlsBuffer);
+    } else {
+      throw new Error('Remote XLS fetch did not return valid XLSX data');
+    }
+  } catch (err) {
+    // Fallback: use local file
+    xlsBuffer = fs.readFileSync(LOCAL_XLSX_PATH);
   }
+
+  // Now parse xlsBuffer with xlsx
+  workbook = XLSX.read(xlsBuffer, { type: 'buffer' });
   // Find the relevant sheet (usually first)
   const sheet = workbook.Sheets[workbook.SheetNames[0]];
   // Convert to array of arrays
@@ -68,7 +82,7 @@ export async function getForwardEpsEstimates() {
     if ((year === 2025 || year === 2026) && row[0].startsWith('12/31') && !isNaN(eps)) {
       results.push({
         source: 'S&P Global',
-        url: fs.existsSync(LOCAL_XLSX_PATH) ? LOCAL_XLSX_PATH : SPGLOBAL_XLSX_URL,
+        url: fetchedRemote ? SPGLOBAL_XLSX_URL : LOCAL_XLSX_PATH,
         year,
         eps
       });
