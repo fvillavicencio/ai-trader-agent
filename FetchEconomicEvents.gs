@@ -174,16 +174,16 @@ function isSignificantEvent(event) {
   
   // Check for important indicators
   const importantIndicators = [
-    'GDP',
-    'CPI',
-    'PPI',
-    'ISM',
-    'PMI',
+    'commerce',
+    'gdp',
+    'cpi',
+    'ppi',
+    'ism',
+    'pmi',
     'fed',
-    'Commerce',
     'bls',
     'mba',
-    'FRB'
+    'frb'
   ];
   
   return importantIndicators.some(indicator => 
