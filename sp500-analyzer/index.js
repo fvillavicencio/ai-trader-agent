@@ -18,24 +18,26 @@ function htmlSourceBlock(sourceName, sourceUrl, lastUpdated) {
 }
 
 function htmlHoldingsBlock(indexName, symbol, top, sourceName, sourceUrl, lastUpdated) {
-  let lines = [`<div class="holdings-block"><h3>${indexName} (${symbol})</h3><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>`];
+  let lines = [`<div class="holdings-block"><h3>${indexName} (${symbol})</h3><div class="responsive-table"><table><thead><tr><th>#</th><th>Ticker</th><th>Company</th><th>Weight</th></tr></thead><tbody>`];
   top.forEach((h, i) => {
     lines.push(`<tr><td>${i + 1}</td><td>${h.symbol}</td><td>${h.name}</td><td>${h.weight}</td></tr>`);
   });
-  lines.push('</tbody></table>');
+  lines.push('</tbody></table></div>');
   lines.push(htmlSourceBlock(sourceName, sourceUrl, lastUpdated));
   lines.push('</div>');
   return lines.join('\n');
 }
 
 function htmlEarningsBlock(earningsObj, multiples) {
+  // Render EPS and targets as a table for clarity
   let lines = [`<div class="earnings-block">`];
-  lines.push(`<h3>S&P 500 Earnings Per Share (Trailing 12M)</h3>`);
-  lines.push(`<div class="eps">EPS: <strong>$${earningsObj.value}</strong></div>`);
+  lines.push(`<div class="responsive-table"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>`);
+  lines.push(`<tr><td><strong>EPS (TTM)</strong></td><td><strong>$${earningsObj.value}</strong></td></tr>`);
   multiples.forEach(multiple => {
     const target = (parseFloat(earningsObj.value) * multiple).toFixed(2);
-    lines.push(`<div>S&P 500 Target at <strong>${multiple}x</strong>: <strong>${target}</strong></div>`);
+    lines.push(`<tr><td>S&P 500 Target at <strong>${multiple}x</strong></td><td><strong>${target}</strong></td></tr>`);
   });
+  lines.push(`</tbody></table></div>`);
   lines.push(htmlSourceBlock(earningsObj.sourceName, earningsObj.sourceUrl, earningsObj.lastUpdated));
   lines.push('</div>');
   return lines.join('\n');
@@ -51,9 +53,7 @@ function htmlRSIBlock(pathObj, maObj) {
 
 function htmlForwardPETable(estimates, multiples, currentIndex) {
   let lines = [
-    `<div class="forward-pe-block">`,
-    `<h3>S&P 500 Forward EPS & Implied Index Targets</h3>`,
-    `<table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th>` +
+    `<div class="forward-pe-block"><div class="responsive-table"><table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th>` +
       multiples.map(m => `<th>${m}x</th><th>% vs Index</th>`).join('') + `<th>Source URL</th></tr></thead><tbody>`
   ];
   estimates.forEach(est => {
@@ -67,16 +67,16 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
       }).join('') +
       `<td><a href="${est.url}">link</a></td></tr>`);
   });
-  lines.push('</tbody></table></div>');
+  lines.push('</tbody></table></div></div>');
   return lines.join('\n');
 }
 
 function htmlHistoricalPEBlock(currentPE, pe5yr, pe10yr) {
   return `<div class="pe-history-block">
     <h3>Historical P/E Context</h3>
-    <table><thead><tr><th>Current</th><th>5-Year Avg</th><th>10-Year Avg</th></tr></thead><tbody>
+    <div class="responsive-table"><table><thead><tr><th>Current</th><th>5-Year Avg</th><th>10-Year Avg</th></tr></thead><tbody>
       <tr><td>${currentPE}</td><td>${pe5yr}</td><td>${pe10yr}</td></tr>
-    </tbody></table>
+    </tbody></table></div>
     <div class="pe-history-note">Current P/E is ${(currentPE > pe5yr && currentPE > pe10yr) ? 'above' : 'near'} both 5- and 10-year averages.</div>
   </div>`;
 }
@@ -95,12 +95,12 @@ function htmlStalenessWarning(lastUpdated, maxAgeDays, label) {
 
 function htmlDataFreshnessTable(sections) {
   let lines = [
-    '<div class="freshness-block"><h3>Data Freshness Summary</h3><table><thead><tr><th>Section</th><th>Last Updated</th><th>Source</th></tr></thead><tbody>'
+    '<div class="freshness-block"><h3>Data Freshness Summary</h3><div class="responsive-table"><table><thead><tr><th>Section</th><th>Last Updated</th><th>Source</th></tr></thead><tbody>'
   ];
   for (const s of sections) {
     lines.push(`<tr><td>${s.label}</td><td>${formatTimestamp(s.lastUpdated) || ''}</td><td>${s.sourceName || ''}</td></tr>`);
   }
-  lines.push('</tbody></table></div>');
+  lines.push('</tbody></table></div></div>');
   return lines.join('\n');
 }
 
@@ -130,22 +130,37 @@ const htmlHeader = `<!DOCTYPE html>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>S&P 500 Market Analyzer Report</title>
   <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #fafbfc; color: #222; margin: 0; padding: 0; }
-    .container { max-width: 800px; margin: 30px auto; background: #fff; border-radius: 12px; box-shadow: 0 4px 24px rgba(0,0,0,0.08); padding: 32px; }
-    h1 { text-align: center; margin-bottom: 8px; }
-    h2 { margin-top: 32px; color: #2a4d8f; }
-    h3 { margin: 20px 0 10px 0; color: #1a2b47; }
-    hr { border: none; border-top: 2px solid #e3e7ee; margin: 16px 0; }
-    table { border-collapse: collapse; width: 100%; margin-bottom: 10px; }
-    th, td { border: 1px solid #e3e7ee; padding: 8px 12px; text-align: left; }
-    th { background: #f3f7fa; }
-    .source-block { color: #555; font-size: 0.98em; margin: 10px 0 18px 0; }
-    .eps { font-size: 1.2em; margin-bottom: 6px; }
-    .market-path-value { font-size: 1.1em; margin-bottom: 8px; }
-    .market-path-expl { font-size: 0.97em; color: #555; margin-top: 8px; }
-    .holdings-block, .earnings-block, .market-path-block { margin-bottom: 32px; }
-    .stale-warning { color: #f44336; font-size: 0.98em; margin: 10px 0 18px 0; }
-    @media (max-width: 600px) { .container { padding: 8px; } th, td { font-size: 0.97em; } }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: linear-gradient(120deg, #f7fafc 0%, #eef2fb 100%); color: #232a3b; margin: 0; padding: 0; }
+    .container { max-width: 98vw; width: 100%; min-width: 0; margin: 0 auto; background: #fff; border-radius: 18px; box-shadow: 0 4px 32px rgba(0,0,0,0.10); padding: 2.5vw 2vw; transition: box-shadow 0.2s; }
+    h1 { text-align: center; margin-bottom: 12px; letter-spacing: 0.01em; font-size: 2.1em; font-weight: 700; color: #2563eb; }
+    h2 { margin-top: 2.2em; color: #2a4d8f; font-weight: 600; font-size: 1.2em; background: linear-gradient(90deg, #e0e7ff 60%, #f0f7ff 100%); padding: 0.4em 0.6em; border-radius: 8px; }
+    h3 { margin: 1.2em 0 0.7em 0; color: #1a2b47; font-weight: 500; font-size: 1.07em; }
+    hr { border: none; border-top: 2px solid #e3e7ee; margin: 1.1em 0; }
+    .text-block, .source-block, .pe-history-note, .market-path-expl { font-size: 0.97em; color: #3b4151; }
+    .source-block { color: #555; font-size: 0.92em; margin: 0.7em 0 1.2em 0; background: #f3f6fa; border-left: 4px solid #2563eb; padding: 0.5em 1em; border-radius: 7px; }
+    .eps { font-size: 1.22em; margin-bottom: 6px; font-weight: 600; color: #1e293b; }
+    .market-path-value { font-size: 1.13em; margin-bottom: 8px; font-weight: 500; color: #0e7490; }
+    .market-path-expl { font-size: 0.93em; color: #64748b; margin-top: 10px; }
+    .holdings-block, .earnings-block, .market-path-block { margin-bottom: 2.3em; }
+    .stale-warning { color: #f44336; font-size: 0.97em; margin: 0.7em 0 1.2em 0; font-weight: 500; background: #fff3f3; border-left: 4px solid #f44336; padding: 0.5em 1em; border-radius: 7px; }
+    .pe-history-note { color: #475569; margin-top: 0.4em; background: #f1f5fb; border-radius: 6px; padding: 0.4em 0.8em; }
+    .spx-index { font-size: 2.2em; color: #2563eb; font-weight: 700; margin: 0.5em 0 0.7em 0; }
+    /* Responsive Table Styling */
+    .responsive-table { width: 100%; overflow-x: auto; display: block; margin-bottom: 1.2em; border-radius: 12px; background: #fafdff; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+    .responsive-table table { width: 100%; min-width: 480px; border-collapse: collapse; background: inherit; }
+    .responsive-table th, .responsive-table td { border: 1px solid #e3e7ee; padding: 0.85em 0.6em; text-align: left; font-size: 1.01em; white-space: nowrap; }
+    .responsive-table th { background: linear-gradient(90deg, #dbeafe 60%, #f0f7ff 100%); color: #1e293b; font-weight: 600; }
+    .responsive-table tr:nth-child(even) td { background: #f6f8fc; }
+    @media (max-width: 900px) { .container { max-width: 100vw; padding: 2vw 1vw; } .responsive-table table { min-width: 350px; font-size: 0.97em; } .responsive-table th, .responsive-table td { padding: 0.65em 0.3em; } }
+    @media (max-width: 600px) {
+      .container { padding: 0.7em 0.1em; border-radius: 8px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); }
+      h1 { font-size: 1.3em; }
+      h2 { font-size: 1.07em; }
+      h3 { font-size: 1em; }
+      .responsive-table table { min-width: 270px; font-size: 0.95em; }
+      .responsive-table th, .responsive-table td { padding: 0.45em 0.15em; }
+      .text-block, .source-block, .pe-history-note, .market-path-expl { font-size: 0.91em; }
+    }
   </style>
 </head>
 <body>

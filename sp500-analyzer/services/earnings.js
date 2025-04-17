@@ -12,9 +12,9 @@ export async function getSP500Earnings() {
     const url = 'https://www.spglobal.com/spdji/en/indices/equity/sp-500/#overview';
     const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
     const $ = cheerio.load(data);
-    // Target the main index data widget for EPS and date
+    // Use precise selectors for the S&P Global EPS (TTM)
     let eps = null, lastUpdated = null;
-    // Find the widget with 'Earnings Per Share (TTM)'
+    // EPS: Find the row labeled 'Earnings Per Share (TTM)' in the main data table
     $(".index-data-table__body__row").each((i, row) => {
       const label = $(row).find('.index-data-table__body__cell--label').text().trim();
       if (/Earnings Per Share/i.test(label)) {
@@ -22,7 +22,7 @@ export async function getSP500Earnings() {
         if (value) eps = value;
       }
     });
-    // Find the 'As of' date in the widget footer or nearby
+    // Date: Find the "As of" date in the disclaimer/footer
     $(".index-data-table__disclaimer, .index-data-table__footer, .index-data-table__last-updated").each((i, el) => {
       const text = $(el).text();
       const d = /As of:?\s*([A-Za-z]{3,9})\s*([0-9]{1,2}),?\s*([0-9]{4})/i.exec(text);
