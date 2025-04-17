@@ -16,6 +16,16 @@
         "userSymbol": "ScriptApp",
         "version": "V1",
         "serviceId": "script"
+      },
+      {
+        "userSymbol": "Drive",
+        "version": "v3",
+        "serviceId": "drive"
+      },
+      {
+        "userSymbol": "Sheets",
+        "version": "v4",
+        "serviceId": "sheets"
       }
     ]
   },

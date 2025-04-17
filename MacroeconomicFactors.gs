@@ -1199,7 +1199,7 @@ function retrieveGeopoliticalRisksFromOpenAI() {
     // Set up the API request
     const url = "https://api.openai.com/v1/chat/completions";
     const payload = {
-      model: "gpt-4-turbo",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -1210,8 +1210,8 @@ function retrieveGeopoliticalRisksFromOpenAI() {
           content: prompt
         }
       ],
-      temperature: 0.2,
-      max_tokens: 4000
+      temperature: 0.3,
+      max_tokens: 3000
     };
     
     const options = {

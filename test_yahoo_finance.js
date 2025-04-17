@@ -1,120 +1,168 @@
-/**
- * Local test script for the Yahoo Finance API
- * 
- * This script tests the Yahoo Finance API through RapidAPI
- * 
- * To run this script:
- * 1. Install Node.js if not already installed
- * 2. Run: npm install axios dotenv
- * 3. Create a .env file with your Yahoo Finance API key (YAHOO_FINANCE_API_KEY=your_key_here)
- * 4. Run: node test_yahoo_finance.js
- */
+// Unified S&P 500 (SPY) EPS (TTM) and P/E retrieval script with cascading fallbacks
+// Attempts Yahoo Finance (yahoo-finance15), then yahu-finance2, then falls back to S&P Global and multpl.com
 
-// Load environment variables from .env file
 require('dotenv').config();
 const axios = require('axios');
+const cheerio = require('cheerio');
 
-// Get the API key from environment variables
-const YAHOO_FINANCE_API_KEY = process.env.YAHOO_FINANCE_API_KEY;
+const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
 
-// Check if API key is available
-if (!YAHOO_FINANCE_API_KEY) {
-  console.error('Error: Yahoo Finance API key not found in environment variables.');
-  console.log('Please create a .env file with YAHOO_FINANCE_API_KEY=your_key_here');
+if (!RAPIDAPI_KEY) {
+  console.error('Error: RAPIDAPI_KEY not found in environment variables.');
   process.exit(1);
 }
 
-console.log(`Using API key: ${YAHOO_FINANCE_API_KEY.substring(0, 5)}...`);
+async function fetchFromYahoo15() {
+  const RAPIDAPI_HOST = 'yahoo-finance15.p.rapidapi.com';
+  const options = {
+    method: 'GET',
+    url: `https://${RAPIDAPI_HOST}/api/yahoo/qu/quote/SPY`,
+    headers: {
+      'X-RapidAPI-Key': RAPIDAPI_KEY,
+      'X-RapidAPI-Host': RAPIDAPI_HOST,
+    },
+  };
+  const response = await axios.request(options);
+  const quote = response.data.body && response.data.body.length > 0 ? response.data.body[0] : null;
+  if (!quote) throw new Error('No quote data in yahoo-finance15 response');
+  const price = quote.regularMarketPrice;
+  const pe = quote.trailingPE;
+  const eps = quote.epsTrailingTwelveMonths;
+  if (!price || !pe || !eps) throw new Error('Missing EPS/PE/Price from yahoo-finance15');
+  return {
+    eps,
+    pe,
+    price,
+    sourceName: 'yahoo-finance15 (RapidAPI)',
+    sourceUrl: 'https://rapidapi.com/sparior/api/yahoo-finance15',
+    lastUpdated: new Date().toISOString(),
+  };
+}
 
-/**
- * Tests the Yahoo Finance API with a simple query
- */
-async function testYahooFinanceAPI() {
+async function fetchFromYahu2() {
+  const RAPIDAPI_HOST = 'yahu-finance2.p.rapidapi.com';
+  const options = {
+    method: 'GET',
+    url: `https://${RAPIDAPI_HOST}/key-statistics/SPY`,
+    headers: {
+      'X-RapidAPI-Key': RAPIDAPI_KEY,
+      'X-RapidAPI-Host': RAPIDAPI_HOST,
+    },
+  };
+  const response = await axios.request(options);
+  const data = response.data;
+  const price = data.price || data.regularMarketPrice;
+  const pe = data.trailingPE || data.peRatio || data.trailingPe;
+  const eps = data.trailingEps || data.eps;
+  if (!price || !pe || !eps) throw new Error('Missing EPS/PE/Price from yahu-finance2');
+  return {
+    eps,
+    pe,
+    price,
+    sourceName: 'yahu-finance2 (RapidAPI)',
+    sourceUrl: 'https://rapidapi.com/tonyapi9892/api/yahu-finance2',
+    lastUpdated: new Date().toISOString(),
+  };
+}
+
+async function fetchFromSPGlobalOrMultpl() {
+  // Try S&P Global first
   try {
-    console.log("=== TESTING YAHOO FINANCE API ===");
-    
-    // Yahoo Finance API endpoint for fundamentals data
-    const apiUrl = "https://apidojo-yahoo-finance-v1.p.rapidapi.com/stock/get-fundamentals";
-    
-    const options = {
-      method: 'GET',
-      url: apiUrl,
-      params: {
-        region: 'US',
-        symbol: 'AAPL',
-        lang: 'en-US',
-        modules: 'assetProfile,summaryProfile,fundProfile'
-      },
-      headers: {
-        'X-RapidAPI-Key': YAHOO_FINANCE_API_KEY,
-        'X-RapidAPI-Host': 'apidojo-yahoo-finance-v1.p.rapidapi.com'
+    const url = 'https://www.spglobal.com/spdji/en/indices/equity/sp-500/#overview';
+    const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+    const $ = cheerio.load(data);
+    let eps = null, lastUpdated = null;
+    $(".index-data-table__body__row").each((i, row) => {
+      const label = $(row).find('.index-data-table__body__cell--label').text().trim();
+      if (/Earnings Per Share/i.test(label)) {
+        const value = $(row).find('.index-data-table__body__cell--value').text().replace(/[$,]/g, '').trim();
+        if (value) eps = value;
       }
-    };
-    
-    console.log("Making API request...");
-    
-    // Make the API request
-    const response = await axios.request(options);
-    
-    // Log the response status
-    console.log(`Yahoo Finance API response status code: ${response.status}`);
-    
-    // Check if the request was successful
-    if (response.status === 200) {
-      const data = response.data;
-      
-      // Log the keys in the response for debugging
-      console.log(`Yahoo Finance API response keys: ${Object.keys(data).join(', ')}`);
-      
-      // Check for specific data we expect from the fundamentals endpoint
-      if (data && data.quoteSummary && data.quoteSummary.result) {
-        console.log("Yahoo Finance API returned valid fundamentals data");
-        console.log("Success: API request successful");
-        
-        // Display some sample data
-        if (data.quoteSummary.result[0] && data.quoteSummary.result[0].assetProfile) {
-          const profile = data.quoteSummary.result[0].assetProfile;
-          console.log("\nCompany Profile Sample Data:");
-          console.log(`Company: ${profile.companyName || 'N/A'}`);
-          console.log(`Industry: ${profile.industry || 'N/A'}`);
-          console.log(`Sector: ${profile.sector || 'N/A'}`);
-          console.log(`Website: ${profile.website || 'N/A'}`);
-          console.log(`Full-Time Employees: ${profile.fullTimeEmployees || 'N/A'}`);
-        }
-      } else {
-        // Still consider it a success if we get valid JSON, just log what we received
-        if (data && Object.keys(data).length > 0) {
-          console.log(`Yahoo Finance API returned data but missing expected structure. Found keys: ${Object.keys(data).join(', ')}`);
-          console.log("Partial Success: API returned data but not in the expected format");
-        } else {
-          console.log("Yahoo Finance API returned empty data object");
-          console.log("Failed: Received a 200 status code but the response data was empty");
+    });
+    $(".index-data-table__disclaimer, .index-data-table__footer, .index-data-table__last-updated").each((i, el) => {
+      const text = $(el).text();
+      const d = /As of:?\s*([A-Za-z]{3,9})\s*([0-9]{1,2}),?\s*([0-9]{4})/i.exec(text);
+      if (d) {
+        const mon = d[1].slice(0,3);
+        const day = d[2];
+        const year = d[3];
+        const monthNum = {Jan:0,Feb:1,Mar:2,Apr:3,May:4,Jun:5,Jul:6,Aug:7,Sep:8,Oct:9,Nov:10,Dec:11}[mon];
+        if (monthNum !== undefined) {
+          lastUpdated = new Date(Date.UTC(parseInt(year), monthNum, parseInt(day))).toISOString();
         }
       }
-    } else {
-      // Handle error response
-      console.log(`Yahoo Finance API error response: ${JSON.stringify(response.data)}`);
-      console.log(`Failed: API request failed with status code ${response.status}`);
+    });
+    if (eps) {
+      return {
+        value: eps,
+        sourceName: 'S&P Global',
+        sourceUrl: url,
+        lastUpdated: lastUpdated || new Date().toISOString()
+      };
     }
-  } catch (error) {
-    console.error("Error testing Yahoo Finance API:");
-    if (error.response) {
-      // The request was made and the server responded with a status code
-      // that falls out of the range of 2xx
-      console.error(`Status: ${error.response.status}`);
-      console.error(`Data: ${JSON.stringify(error.response.data)}`);
-      console.error(`Headers: ${JSON.stringify(error.response.headers)}`);
-    } else if (error.request) {
-      // The request was made but no response was received
-      console.error("No response received from server");
-      console.error(error.request);
-    } else {
-      // Something happened in setting up the request that triggered an Error
-      console.error("Error setting up request:", error.message);
-    }
-    console.error("Failed: API request error");
+  } catch (e) {
+    // If forbidden or fails, fall back
+  }
+  // Fallback: multpl.com
+  const url = 'https://www.multpl.com/s-p-500-earnings/table/by-month';
+  const { data } = await axios.get(url);
+  const $ = cheerio.load(data);
+  const table = $('table');
+  if (table.length === 0) {
+    throw new Error('No table found');
+  }
+  const row = table.find('tbody tr').eq(1);
+  const cell = row.find('td').eq(1).text();
+  const dateCell = row.find('td').eq(0).text();
+  const earnings = cell.replace(/[^0-9.]/g, '').trim();
+  const lastUpdated = dateCell.trim() || new Date().toISOString();
+  if (!earnings) throw new Error('Could not parse earnings from table');
+  return {
+    value: earnings,
+    sourceName: 'multpl.com',
+    sourceUrl: url,
+    lastUpdated
+  };
+}
+
+async function getSP500Fundamentals() {
+  // Try yahoo-finance15
+  try {
+    const yahoo15 = await fetchFromYahoo15();
+    return { ...yahoo15, provider: 'yahoo15' };
+  } catch (e) {
+    console.warn('[WARN] yahoo-finance15 failed:', e.message);
+  }
+  // Try yahu-finance2
+  try {
+    const yahu2 = await fetchFromYahu2();
+    return { ...yahu2, provider: 'yahu2' };
+  } catch (e) {
+    console.warn('[WARN] yahu-finance2 failed:', e.message);
+  }
+  // Fallback to S&P Global or multpl.com
+  try {
+    const fallback = await fetchFromSPGlobalOrMultpl();
+    return { ...fallback, provider: fallback.sourceName };
+  } catch (e) {
+    console.error('[ERROR] All providers failed:', e.message);
+    throw new Error('All S&P 500 EPS sources failed');
   }
 }
 
-// Run the test
-testYahooFinanceAPI();
+(async () => {
+  try {
+    const result = await getSP500Fundamentals();
+    console.log('=== S&P 500 (SPY) EPS (TTM) & P/E (Cascading) ===');
+    if (result.price) console.log(`Price: $${result.price}`);
+    if (result.pe) console.log(`TTM P/E: ${result.pe}`);
+    if (result.eps) console.log(`TTM EPS: $${result.eps}`);
+    if (result.value) console.log(`TTM EPS (fallback): $${result.value}`);
+    console.log(`Source: ${result.sourceName || result.provider}`);
+    console.log(`Last Updated: ${result.lastUpdated}`);
+    if (result.sourceUrl) console.log(`Source URL: ${result.sourceUrl}`);
+  } catch (err) {
+    console.error('Failed to fetch S&P 500 EPS:', err.message);
+    process.exit(1);
+  }
+})();

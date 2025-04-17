@@ -86,7 +86,7 @@ function retrieveStockMetrics(symbol) {
     };
 
     // Helper to merge and track sources
- function mergeMetrics(newData, source) {
+    function mergeMetrics(newData, source) {
       for (var key in newData) {
         if (metrics.hasOwnProperty(key)) {
           const newVal = newData[key];
@@ -99,6 +99,14 @@ function retrieveStockMetrics(symbol) {
           ) {
             metrics[key] = newVal;
             metrics._fieldSources[key] = source;
+            continue;
+          }
+          // For price: Only allow Yahoo to set price if Tradier did not provide one
+          if (
+            key === 'price' && source === 'YahooFinanceWeb' && metrics._fieldSources['price'] === 'Tradier'
+          ) {
+            // Skip assigning price from Yahoo if Tradier already set it
+            Logger.log('[mergeMetrics] Skipping Yahoo price because Tradier already set price for ' + metrics.symbol);
             continue;
           }
           // For all other fields
@@ -584,7 +592,18 @@ function fetchYahooFinanceWebData(symbol) {
     }
 
     const htmlContent = response.getContentText();
-    
+
+    // Check for error/captcha/block page
+    if (
+      htmlContent.includes('detected unusual traffic') ||
+      htmlContent.includes('captcha') ||
+      htmlContent.includes('To continue, please verify you are not a robot') ||
+      htmlContent.includes('Access to this page has been denied')
+    ) {
+      Logger.log(`[YahooWeb] Blocked or error page detected for symbol: ${symbol}`);
+      return null;
+    }
+
     // Extract metrics using regex
     const pegRatioMatch = htmlContent.match(/PEG Ratio[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);
     const forwardPERatioMatch = htmlContent.match(/Forward P\/E[^<]*<\/td>\s*<td[^>]*>([\d.,]+|N\/A)<\/td>/is);

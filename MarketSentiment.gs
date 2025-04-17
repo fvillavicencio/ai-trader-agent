@@ -436,7 +436,7 @@ function getOpenAIApiKey() {
  */
 function getOpenAIModelName() {
   const scriptProperties = PropertiesService.getScriptProperties();
-  const modelName = scriptProperties.getProperty('OPENAI_MODEL_NAME') || 'gpt-4-turbo';
+  const modelName = scriptProperties.getProperty('OPENAI_MODEL_NAME') || 'gpt-4o';
   return modelName;
 }
 
@@ -491,7 +491,7 @@ function initializeMarketSentimentConfig() {
     
     const scriptProperties = PropertiesService.getScriptProperties();
     const configDefaults = {
-      'OPENAI_MODEL_NAME': 'gpt-4-turbo',
+      'OPENAI_MODEL_NAME': 'gpt-4o',
       'OPENAI_TEMPERATURE': '0.3',
       'OPENAI_MAX_TOKENS': '2000',
       'ANALYST_NAMES': 'Dan Nathan,Josh Brown,Steve Weiss,Joe Terranova',

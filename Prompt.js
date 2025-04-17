@@ -25,8 +25,8 @@ Today's Date and Time: ${formattedDate}
 **Instructions:**
 You are an investment guru and your job is to provide informed opinions about market trends and insights.Using only the retrieved data provided below, generate a concise trading recommendation in JSON format with the following requirements:
 	1.	Decision Options: "Buy Now", "Sell Now", or "Watch for Better Price Action".
-	2.	Summary: Include a one-sentence overview of market sentiment, key indicators, fundamental metrics, and macroeconomic factors that support your decision.
-	3.  Justification: Provide a clear, 300 characters long, detailed explanation for your decision and what factors contributed to it.
+	2.	Summary: Include a one-liner headline of market sentiment, key indicators, fundamental metrics, and macroeconomic factors that support your decision. Be witty, professional yet original
+	3.  Justification: Provide a clear, one-paragraph long, detailed explanation for your decision and what factors contributed to it.
   4.	Fundamental Metrics:
 	•	Include ALL available stocks from the data, do not omit any symbol.
 	•	For each stock, incorporate every provided metric (e.g., price, priceChange, volume, marketCap, dividendYield, pegRatio, forwardPE, priceToBook, priceToSales, debtToEquity, returnOnEquity, beta, etc.).
