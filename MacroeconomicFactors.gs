@@ -1148,7 +1148,7 @@ function retrieveGeopoliticalRisksFromPerplexity() {
         }
         if (impactNum !== null) {
           // Map to qualitative
-          if (impactNum >= 8) {
+          if (impactNum >= 9) {
             risk.impactLevel = 'Severe';
           } else if (impactNum >= 5) {
             risk.impactLevel = 'High';
@@ -1289,7 +1289,7 @@ function retrieveGeopoliticalRisksFromOpenAI() {
         }
         if (impactNum !== null) {
           // Map to qualitative
-          if (impactNum >= 8) {
+          if (impactNum >= 9) {
             risk.impactLevel = 'Severe';
           } else if (impactNum >= 5) {
             risk.impactLevel = 'High';
