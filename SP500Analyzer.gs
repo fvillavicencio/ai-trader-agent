@@ -128,50 +128,77 @@ function formatSP500AnalysisText(lambdaJson) {
 }
 
 /**
- * Formats the S&P 500 Lambda JSON into an HTML section styled like Utils.gs.
+ * Formats the S&P 500 Lambda JSON into an HTML section harmonized with Utils.gs style.
  * @param {Object} lambdaJson - The parsed Lambda JSON (with .body property if raw)
  * @return {String} HTML section for email/report
  */
 function formatSP500AnalysisHtml(lambdaJson) {
   var data = lambdaJson && lambdaJson.body ? JSON.parse(lambdaJson.body) : lambdaJson;
   var html = [];
-  html.push('<section class="market-section sp500-section">');
-  html.push('<h2>S&amp;P 500 Market Summary</h2>');
-  html.push('<ul>');
+  html.push('<div class="section" style="margin-bottom: 32px;">');
+  html.push('<h2 style="margin-top:0;margin-bottom:16px;font-size:1.35em;">S&amp;P 500 Market Summary</h2>');
+
+  // Index Price Card
   if (data.sp500Index) {
-    html.push(`<li><strong>Index Price:</strong> ${data.sp500Index.price} <span class="muted">(Last Updated: ${formatDate_(data.sp500Index.lastUpdated)})</span> <span class="source">[${data.sp500Index.sourceName}]</span></li>`);
+    html.push('<div style="background:#f8f9fa;padding:14px 18px 10px 18px;border-radius:8px;margin-bottom:14px;">');
+    html.push(`<div style="font-weight:bold;font-size:1.1em;">Index Price: <span style="font-weight:normal;">${data.sp500Index.price}</span></div>`);
+    html.push(`<div style="color:#888;font-size:12px;">Last Updated: ${formatDate_(data.sp500Index.lastUpdated)} &nbsp;|&nbsp; Source: <a href="${data.sp500Index.sourceUrl || '#'}" style="color:#2196f3;text-decoration:none;">${data.sp500Index.sourceName}</a></div>`);
+    html.push('</div>');
   }
+  // Trailing PE Card
   if (data.trailingPE) {
-    html.push(`<li><strong>Trailing P/E:</strong> ${data.trailingPE.pe} <span class="source">[${data.trailingPE.sourceName}]</span></li>`);
+    html.push('<div style="background:#f8f9fa;padding:14px 18px 10px 18px;border-radius:8px;margin-bottom:14px;">');
+    html.push(`<div><strong>Trailing P/E:</strong> ${data.trailingPE.pe}</div>`);
+    html.push(`<div style="color:#888;font-size:12px;">Source: <a href="${data.trailingPE.sourceUrl || '#'}" style="color:#2196f3;text-decoration:none;">${data.trailingPE.sourceName}</a></div>`);
+    html.push('</div>');
   }
+  // Forward EPS Estimates
   if (data.forwardEstimates && data.forwardEstimates.length > 0) {
-    html.push('<li><strong>Forward EPS Estimates:</strong><ul>');
+    html.push('<div style="background:#f8f9fa;padding:14px 18px 10px 18px;border-radius:8px;margin-bottom:14px;">');
+    html.push('<div style="font-weight:bold;">Forward EPS Estimates:</div>');
+    html.push('<ul style="margin:8px 0 0 18px;padding:0;">');
     data.forwardEstimates.forEach(function(est) {
-      html.push(`<li>${est.year}: EPS ${est.eps} (${est.scenario}, as of ${est.estimateDate})</li>`);
+      html.push(`<li style="margin-bottom:2px;">${est.year}: <span style="font-weight:bold;">EPS ${est.eps}</span> <span style="color:#666;font-size:12px;">(${est.scenario}, as of ${est.estimateDate})</span></li>`);
     });
-    html.push('</ul></li>');
+    html.push('</ul>');
+    html.push('</div>');
   }
+  // Market Path
   if (data.marketPath) {
-    html.push(`<li><strong>Market Path:</strong> ${data.marketPath.value} (RSI: ${data.marketPath.rsi.toFixed(1)}) <span class="source">[${data.marketPath.sourceName}]</span></li>`);
+    html.push('<div style="background:#f8f9fa;padding:14px 18px 10px 18px;border-radius:8px;margin-bottom:14px;">');
+    html.push(`<div><strong>Market Path:</strong> ${data.marketPath.value} <span style="color:#888;font-size:12px;">(RSI: ${data.marketPath.rsi.toFixed(1)})</span></div>`);
+    html.push(`<div style="color:#888;font-size:12px;">Source: <a href="${data.marketPath.sourceUrl || '#'}" style="color:#2196f3;text-decoration:none;">${data.marketPath.sourceName}</a></div>`);
+    html.push('</div>');
   }
+  // Moving Averages
   if (data.movingAverages) {
-    html.push(`<li><strong>Moving Averages:</strong> 50-day SMA: ${data.movingAverages.sma50}, 200-day SMA: ${data.movingAverages.sma200}</li>`);
+    html.push('<div style="background:#f8f9fa;padding:14px 18px 10px 18px;border-radius:8px;margin-bottom:14px;">');
+    html.push(`<div><strong>SPY Moving Averages:</strong> <span style="font-weight:normal;">50-day: ${data.movingAverages.sma50}, 200-day: ${data.movingAverages.sma200}</span></div>`);
+    html.push('</div>');
   }
+  // ETF Holdings
   if (data.etfHoldings && data.etfHoldings.length > 0) {
-    html.push('<li><strong>ETF Top Holdings:</strong><ul>');
+    html.push('<div style="background:#f8f9fa;padding:14px 18px 10px 18px;border-radius:8px;margin-bottom:14px;">');
+    html.push('<div style="font-weight:bold;">ETF Top Holdings:</div>');
     data.etfHoldings.forEach(function(etf) {
-      var top = etf.holdings.slice(0, 3).map(function(h) {
-        return `${h.symbol} (${h.name}, ${h.weight})`;
-      }).join('; ');
-      html.push(`<li>${etf.symbol}: ${top}</li>`);
+      html.push(`<div style="margin-top:8px;margin-bottom:2px;font-weight:bold;">${etf.symbol} <span style="font-weight:normal;color:#888;">(${etf.indexName})</span></div>`);
+      html.push('<div style="margin-left:10px;">');
+      etf.holdings.slice(0, 5).forEach(function(h) {
+        html.push(`<span style="display:inline-block;background:#e3f2fd;color:#0d47a1;padding:2px 8px;border-radius:4px;margin-right:5px;font-size:12px;">${h.symbol}: ${h.name} (${h.weight})</span>`);
+      });
+      html.push('</div>');
+      html.push(`<div style="color:#888;font-size:12px;">Source: <a href="${etf.sourceUrl || '#'}" style="color:#2196f3;text-decoration:none;">${etf.sourceName}</a> &nbsp;|&nbsp; Last Updated: ${formatDate_(etf.lastUpdated)}</div>`);
     });
-    html.push('</ul></li>');
+    html.push('</div>');
   }
+  // Trailing EPS
   if (data.earnings) {
-    html.push(`<li><strong>Trailing EPS:</strong> ${data.earnings.eps} (P/E: ${data.earnings.pe}) <span class="source">[${data.earnings.sourceName}]</span></li>`);
+    html.push('<div style="background:#f8f9fa;padding:14px 18px 10px 18px;border-radius:8px;margin-bottom:14px;">');
+    html.push(`<div><strong>Trailing EPS:</strong> ${data.earnings.eps} (P/E: ${data.earnings.pe})</div>`);
+    html.push(`<div style="color:#888;font-size:12px;">Source: <a href="${data.earnings.sourceUrl || '#'}" style="color:#2196f3;text-decoration:none;">${data.earnings.sourceName}</a></div>`);
+    html.push('</div>');
   }
-  html.push('</ul>');
-  html.push('</section>');
+  html.push('</div>');
   return html.join('');
 }
 
