@@ -23,7 +23,7 @@ function getMacroeconomicfactorsPrompt() {
           "name": "Brief name of the risk",
           "description": "Detailed description of the risk",
           "region": "Affected region",
-          "impactLevel": "a number from 1 to 10, with 1 being least impactful and 10 being most impactful",
+          "impactLevel": "a number from 1 to 10, with 1 being least impactful and 10 being the most catastrophic",
           "marketImpact": "Description of potential market impact",
           "source": "Source of information",
           "url": "URL to source"
