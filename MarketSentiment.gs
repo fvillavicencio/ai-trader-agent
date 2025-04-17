@@ -38,8 +38,8 @@ function retrieveMarketSentiment() {
       // Continue execution - we'll get fresh data below
     }
     
-    // Retrieve market sentiment data from OpenAI
-    const marketSentimentData = retrieveOpenAIMarketSentiment();
+    // Retrieve market sentiment data from Perplexity
+    const marketSentimentData = retrievePerplexityMarketSentiment();
     
     // Check if we have valid data
     if (marketSentimentData && marketSentimentData.success) {
@@ -177,61 +177,26 @@ function extractSymbolsFromText(text) {
 }
 
 /**
- * Retrieves market sentiment data from OpenAI
+ * Retrieves market sentiment data from Perplexity
  * @return {Object} Market sentiment data
  */
-function retrieveOpenAIMarketSentiment() {
+function retrievePerplexityMarketSentiment() {
   try {
-    Logger.log("Retrieving market sentiment data from OpenAI...");
+    Logger.log("Retrieving market sentiment data from Perplexity API...");
     
-    // Get the OpenAI API key
-    const apiKey = getOpenAIApiKey();
+    // Get the Perplexity API key
+    const apiKey = getPerplexityApiKey();
     if (!apiKey) {
-      throw new Error("OpenAI API key not found in script properties");
+      throw new Error("Perplexity API key not found in script properties");
     }
     
-    // Generate the prompt for OpenAI
+    // Generate the prompt for Perplexity
     const prompt = getOpenAIMarketSentimentPrompt();
     
-    // Call the OpenAI API
-    const response = callOpenAIApi(prompt, apiKey);
-    
-    // Parse the response
-    const marketSentimentData = parseOpenAIResponse(response);
-    
-    // Add success flag and timestamp
-    marketSentimentData.success = true;
-    marketSentimentData.lastUpdated = new Date().toISOString();
-    
-    // Log some information about the retrieved data
-    if (marketSentimentData.analysts) {
-      Logger.log(`Market sentiment data retrieved with ${marketSentimentData.analysts.length} analysts and ${marketSentimentData.sentimentIndicators.length} sentiment indicators.`);
-    }
-    
-    return marketSentimentData;
-  } catch (error) {
-    Logger.log(`Error retrieving market sentiment data from OpenAI: ${error}`);
-    return {
-      success: false,
-      error: error.toString(),
-      analysts: [],
-      sentimentIndicators: []
-    };
-  }
-}
-
-/**
- * Calls the OpenAI API to retrieve market sentiment data
- * @param {String} prompt - The prompt to send to OpenAI
- * @param {String} apiKey - The OpenAI API key
- * @return {Object} The response from OpenAI
- */
-function callOpenAIApi(prompt, apiKey) {
-  try {
-    Logger.log("Calling OpenAI API...");
-    
+    // Call the Perplexity API
+    const url = "https://api.perplexity.ai/chat/completions";
     const payload = {
-      model: getOpenAIModelName(),
+      model: "sonar-pro",
       messages: [
         {
           role: "system",
@@ -242,10 +207,9 @@ function callOpenAIApi(prompt, apiKey) {
           content: prompt
         }
       ],
-      temperature: getOpenAITemperature(),
-      max_tokens: getOpenAIMaxTokens()
+      temperature: 0.2,
+      max_tokens: 4000
     };
-    
     const options = {
       method: 'post',
       contentType: 'application/json',
@@ -257,37 +221,21 @@ function callOpenAIApi(prompt, apiKey) {
     };
     
     // Log the payload for debugging (omit sensitive information)
-    Logger.log(`OpenAI API Request - Model: ${payload.model}, Temperature: ${payload.temperature}, Max Tokens: ${payload.max_tokens}`);
+    Logger.log(`Perplexity API Request - Model: ${payload.model}, Temperature: ${payload.temperature}, Max Tokens: ${payload.max_tokens}`);
     
-    // Call the OpenAI API
-    const response = UrlFetchApp.fetch("https://api.openai.com/v1/chat/completions", options);
+    // Call the Perplexity API
+    const response = UrlFetchApp.fetch(url, options);
     const responseCode = response.getResponseCode();
     
     if (responseCode !== 200) {
-      throw new Error(`OpenAI API returned status code ${responseCode}: ${response.getContentText()}`);
+      throw new Error(`Perplexity API returned status code ${responseCode}: ${response.getContentText()}`);
     }
     
     const responseData = JSON.parse(response.getContentText());
-    Logger.log(`OpenAI API Response - Status: Success, Tokens: ${responseData.usage ? responseData.usage.total_tokens : 'unknown'}`);
+    Logger.log(`Perplexity API Response - Status: Success, Tokens: ${responseData.usage ? responseData.usage.total_tokens : 'unknown'}`);
     
-    return responseData;
-  } catch (error) {
-    Logger.log(`Error calling OpenAI API: ${error}`);
-    throw new Error(`Failed to call OpenAI API: ${error}`);
-  }
-}
-
-/**
- * Parses the response from OpenAI
- * @param {Object} response - The response from OpenAI
- * @return {Object} The parsed market sentiment data
- */
-function parseOpenAIResponse(response) {
-  try {
-    // Extract the content from the response
-    const content = response.choices[0].message.content;
-    
-    // Try to extract JSON using regex
+    // Parse the response
+    const content = responseData.choices[0].message.content;
     const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
     
     let jsonData;
@@ -297,7 +245,7 @@ function parseOpenAIResponse(response) {
       Logger.log("Successfully extracted market sentiment JSON using regex pattern");
     } else {
       // If we can't extract JSON, return an error
-      throw new Error("Could not extract JSON from OpenAI response");
+      throw new Error("Could not extract JSON from Perplexity response");
     }
     
     // Ensure the data has the expected structure
@@ -343,20 +291,30 @@ function parseOpenAIResponse(response) {
       });
     }
     
+    // Add success flag and timestamp
+    jsonData.success = true;
+    jsonData.lastUpdated = new Date().toISOString();
+    
+    // Log some information about the retrieved data
+    if (jsonData.analysts) {
+      Logger.log(`Market sentiment data retrieved with ${jsonData.analysts.length} analysts and ${jsonData.sentimentIndicators.length} sentiment indicators.`);
+    }
+    
     return jsonData;
   } catch (error) {
-    Logger.log(`Error parsing OpenAI response: ${error}`);
+    Logger.log(`Error retrieving market sentiment data from Perplexity: ${error}`);
     return {
+      success: false,
+      error: error.toString(),
       analysts: [],
-      sentimentIndicators: [],
-      error: `Error parsing OpenAI response: ${error}`
+      sentimentIndicators: []
     };
   }
 }
 
 /**
- * Generates a prompt for OpenAI to retrieve market sentiment data
- * @return {String} The prompt for OpenAI
+ * Generates a prompt for Perplexity to retrieve market sentiment data
+ * @return {String} The prompt for Perplexity
  */
 function getOpenAIMarketSentimentPrompt() {
   const currentDate = new Date();
@@ -421,65 +379,13 @@ Your response should ONLY include the JSON object, without any additional text.`
 }
 
 /**
- * Gets the OpenAI API key from script properties
- * @return {String} The OpenAI API key
+ * Gets the Perplexity API key from script properties
+ * @return {String} The Perplexity API key
  */
-function getOpenAIApiKey() {
+function getPerplexityApiKey() {
   const scriptProperties = PropertiesService.getScriptProperties();
-  const apiKey = scriptProperties.getProperty('OPENAI_API_KEY');
+  const apiKey = scriptProperties.getProperty('PERPLEXITY_API_KEY');
   return apiKey;
-}
-
-/**
- * Gets the OpenAI model name from script properties
- * @return {String} The OpenAI model name
- */
-function getOpenAIModelName() {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const modelName = scriptProperties.getProperty('OPENAI_MODEL_NAME') || 'gpt-4o';
-  return modelName;
-}
-
-/**
- * Gets the OpenAI temperature from script properties
- * @return {Number} The OpenAI temperature
- */
-function getOpenAITemperature() {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const temperature = scriptProperties.getProperty('OPENAI_TEMPERATURE') || 0.3;
-  return parseFloat(temperature);
-}
-
-/**
- * Gets the OpenAI max tokens from script properties
- * @return {Number} The OpenAI max tokens
- */
-function getOpenAIMaxTokens() {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const maxTokens = scriptProperties.getProperty('OPENAI_MAX_TOKENS') || 2000;
-  return parseInt(maxTokens);
-}
-
-/**
- * Gets the analyst names from script properties
- * @return {Array} The analyst names
- */
-function getAnalystNames() {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const analystNames = scriptProperties.getProperty('ANALYST_NAMES');
-  return analystNames ? analystNames.split(',').map(name => name.trim()) : 
-    ["Dan Nathan", "Josh Brown", "Steve Weiss", "Joe Terranova"]; // Default values
-}
-
-/**
- * Gets the prominent financial figures from script properties
- * @return {Array} The prominent financial figures
- */
-function getProminentFinancialFigures() {
-  const scriptProperties = PropertiesService.getScriptProperties();
-  const prominentFigures = scriptProperties.getProperty('PROMINENT_FINANCIAL_FIGURES');
-  return prominentFigures ? prominentFigures.split(',').map(name => name.trim()) : 
-    ["Dan Niles", "Mohamed El-Erian"]; // Default values
 }
 
 /**
@@ -491,9 +397,7 @@ function initializeMarketSentimentConfig() {
     
     const scriptProperties = PropertiesService.getScriptProperties();
     const configDefaults = {
-      'OPENAI_MODEL_NAME': 'gpt-4o',
-      'OPENAI_TEMPERATURE': '0.3',
-      'OPENAI_MAX_TOKENS': '2000',
+      'PERPLEXITY_API_KEY': '',
       'ANALYST_NAMES': 'Dan Nathan,Josh Brown,Steve Weiss,Joe Terranova',
       'PROMINENT_FINANCIAL_FIGURES': 'Dan Niles,Mohamed El-Erian'
     };
@@ -726,4 +630,26 @@ function testMentionedStocksExtraction() {
       error: error.toString()
     };
   }
+}
+
+/**
+ * Gets the analyst names from script properties
+ * @return {Array} The analyst names
+ */
+function getAnalystNames() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const analystNames = scriptProperties.getProperty('ANALYST_NAMES');
+  return analystNames ? analystNames.split(',').map(name => name.trim()) : 
+    ["Dan Nathan", "Josh Brown", "Steve Weiss", "Joe Terranova"]; // Default values
+}
+
+/**
+ * Gets the prominent financial figures from script properties
+ * @return {Array} The prominent financial figures
+ */
+function getProminentFinancialFigures() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const prominentFigures = scriptProperties.getProperty('PROMINENT_FINANCIAL_FIGURES');
+  return prominentFigures ? prominentFigures.split(',').map(name => name.trim()) : 
+    ["Dan Niles", "Mohamed El-Erian"]; // Default values
 }

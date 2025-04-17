@@ -180,13 +180,10 @@ function isSignificantEvent(event) {
     'ISM',
     'PMI',
     'fed',
-    'Fed Interest Rate',
-    'Fed Conf',
     'Commerce',
     'bls',
     'mba',
     'FRB'
-
   ];
   
   return importantIndicators.some(indicator => 
