@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 dotenv.config();
-import { getSP500PE } from './services/sp500.js';
+// Removed: import { getSP500PE } from './services/sp500.js';
 import { getTopHoldings } from './services/etf.js';
 import { getSP500Earnings } from './services/earnings.js';
 import { getMarketPath } from './services/technicals.js';
@@ -32,13 +32,22 @@ function htmlEarningsBlock(earningsObj, multiples) {
   // Render EPS and targets as a table for clarity
   let lines = [`<div class="earnings-block">`];
   lines.push(`<div class="responsive-table"><table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>`);
-  lines.push(`<tr><td><strong>EPS (TTM)</strong></td><td><strong>$${earningsObj.value}</strong></td></tr>`);
-  multiples.forEach(multiple => {
-    const target = (parseFloat(earningsObj.value) * multiple).toFixed(2);
-    lines.push(`<tr><td>S&P 500 Target at <strong>${multiple}x</strong></td><td><strong>${target}</strong></td></tr>`);
-  });
+  // Accept value from .eps, .value, or .price for robustness
+  const epsVal = earningsObj?.eps ?? earningsObj?.value ?? null;
+  if (epsVal !== null && !isNaN(epsVal)) {
+    lines.push(`<tr><td><strong>EPS (TTM)</strong></td><td><strong>${formatUSD(Number(epsVal).toFixed(2))}</strong></td></tr>`);
+    multiples.forEach(multiple => {
+      const target = parseFloat(epsVal) * multiple;
+      lines.push(`<tr><td>S&P 500 Target at <strong>${multiple}x</strong></td><td><strong>${formatUSD(target.toFixed(2))}</strong></td></tr>`);
+    });
+  } else {
+    lines.push(`<tr><td><strong>EPS (TTM)</strong></td><td><strong>N/A</strong></td></tr>`);
+    multiples.forEach(multiple => {
+      lines.push(`<tr><td>S&P 500 Target at <strong>${multiple}x</strong></td><td><strong>N/A</strong></td></tr>`);
+    });
+  }
   lines.push(`</tbody></table></div>`);
-  lines.push(htmlSourceBlock(earningsObj.sourceName, earningsObj.sourceUrl, earningsObj.lastUpdated));
+  lines.push(htmlSourceBlock(earningsObj?.sourceName || 'N/A', earningsObj?.sourceUrl || '', earningsObj?.lastUpdated || ''));
   lines.push('</div>');
   return lines.join('\n');
 }
@@ -59,11 +68,11 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
   estimates.forEach(est => {
     // For now, label as 'Base' (can extend if multiple scenarios)
     const scenario = est.scenario || 'Base';
-    lines.push(`<tr><td>${scenario}</td><td>${est.year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${est.eps.toFixed(2)}</strong></td>` +
+    lines.push(`<tr><td>${scenario}</td><td>${est.year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(est.eps).toFixed(2)}</strong></td>` +
       multiples.map(m => {
         const target = est.eps * m;
         const pct = currentIndex ? (((target - currentIndex) / currentIndex) * 100).toFixed(1) + '%' : '';
-        return `<td>${target.toFixed(2)}</td><td>${pct}</td>`;
+        return `<td><strong>${formatUSD(Number(target).toFixed(2))}</strong></td><td>${pct}</td>`;
       }).join('') +
       `<td><a href="${est.url}">link</a></td></tr>`);
   });
@@ -71,14 +80,22 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
   return lines.join('\n');
 }
 
-function htmlHistoricalPEBlock(currentPE, pe5yr, pe10yr) {
-  return `<div class="pe-history-block">
-    <h3>Historical P/E Context</h3>
-    <div class="responsive-table"><table><thead><tr><th>Current</th><th>5-Year Avg</th><th>10-Year Avg</th></tr></thead><tbody>
-      <tr><td>${currentPE}</td><td>${pe5yr}</td><td>${pe10yr}</td></tr>
-    </tbody></table></div>
-    <div class="pe-history-note">Current P/E is ${(currentPE > pe5yr && currentPE > pe10yr) ? 'above' : 'near'} both 5- and 10-year averages.</div>
-  </div>`;
+function htmlPERatioBlock(pe, sourceName, sourceUrl, lastUpdated) {
+  return `
+    <div class="pe-block">P/E: <strong>${Number(pe).toFixed(2)}</strong></div>
+    ${htmlSourceBlock(sourceName, sourceUrl, lastUpdated)}
+  `;
+}
+
+function htmlPEHistoryBlock(pe, avg5, avg10) {
+  return `
+    <div class="pe-history-block">
+      <h3>Historical P/E Context</h3>
+      <div class="responsive-table"><table><thead><tr><th>Current</th><th>5-Year Avg</th><th>10-Year Avg</th></tr></thead><tbody>
+        <tr><td>${Number(pe).toFixed(2)}</td><td>${Number(avg5).toFixed(2)}</td><td>${Number(avg10).toFixed(2)}</td></tr>
+      </tbody></table></div>
+    </div>
+  `;
 }
 
 function htmlStalenessWarning(lastUpdated, maxAgeDays, label) {
@@ -121,6 +138,11 @@ function formatTimestamp(ts) {
   // Pad with zeros
   const pad = n => n.toString().padStart(2, '0');
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth()+1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())} UTC`;
+}
+
+function formatUSD(val) {
+  if (val === null || val === undefined || isNaN(val)) return 'N/A';
+  return '$' + Number(val).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
 const htmlHeader = `<!DOCTYPE html>
@@ -180,15 +202,31 @@ async function main() {
     freshnessSections.push({ label: 'S&P 500 Index', lastUpdated: spxObj.lastUpdated, sourceName: spxObj.sourceName });
 
     // 1. S&P 500 Trailing P/E
-    const peObj = await getSP500PE();
+    const earningsObj = await getSP500Earnings();
     html += htmlSectionHeader('S&P 500 Trailing P/E Ratio');
-    html += `<div class="pe-block">P/E: <strong>${peObj.value}</strong></div>`;
-    html += htmlSourceBlock(peObj.sourceName, peObj.sourceUrl, peObj.lastUpdated);
-    html += htmlStalenessWarning(peObj.lastUpdated, 35, 'Trailing P/E');
-    freshnessSections.push({ label: 'Trailing P/E', lastUpdated: peObj.lastUpdated, sourceName: peObj.sourceName });
+    if (earningsObj && earningsObj.pe && earningsObj.sourceName && earningsObj.sourceUrl) {
+      html += htmlPERatioBlock(earningsObj.pe, earningsObj.sourceName, earningsObj.sourceUrl, earningsObj.lastUpdated);
+      // Use Yahoo Finance public URL if the provider is Yahoo, otherwise use API doc URL
+      let publicUrl = '';
+      if (earningsObj.provider && earningsObj.provider.startsWith('yahoo')) {
+        publicUrl = 'https://finance.yahoo.com/quote/%5EGSPC/key-statistics?p=%5EGSPC';
+      }
+      html += htmlSourceBlock(
+        earningsObj.sourceName,
+        publicUrl || earningsObj.sourceUrl,
+        earningsObj.lastUpdated
+      );
+      freshnessSections.push({ label: 'Trailing P/E', lastUpdated: earningsObj.lastUpdated, sourceName: earningsObj.sourceName });
+      html += htmlPEHistoryBlock(earningsObj.pe, 19.1, 17.6);
+    } else {
+      html += `<div class="pe-block">P/E: <strong>N/A</strong></div>`;
+      html += '<div class="source-block">Unable to retrieve P/E data from APIs.</div>';
+      freshnessSections.push({ label: 'Trailing P/E', lastUpdated: '', sourceName: 'N/A' });
+      html += htmlPEHistoryBlock('N/A', 19.1, 17.6);
+    }
 
     // 1b. Historical P/E context (always present)
-    html += htmlHistoricalPEBlock(peObj.value, 19.1, 17.6);
+    // Moved inside the logic above
 
     // 2. S&P 500 Forward P/E Table (with scenario labels, dates, % moves)
     const forwardEstimates = await getForwardEpsEstimates();
@@ -222,7 +260,6 @@ async function main() {
     html += htmlETFDateConsistencyWarning(etfDates);
 
     // 5. S&P 500 Total Earnings (Trailing 12M)
-    const earningsObj = await getSP500Earnings();
     html += htmlSectionHeader('S&P 500 Earnings Per Share (Trailing 12M)');
     html += htmlEarningsBlock(earningsObj, [15, 17, 20]);
     html += htmlStalenessWarning(earningsObj.lastUpdated, 35, 'Trailing EPS');
