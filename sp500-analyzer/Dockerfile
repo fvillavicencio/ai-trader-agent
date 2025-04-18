@@ -1,7 +1,8 @@
 FROM public.ecr.aws/lambda/nodejs:20
 
-# Install dependencies needed for Playwright (Chromium)
+# Install system dependencies for Chromium (Amazon Linux 2 names)
 RUN yum install -y \
+    alsa-lib \
     atk \
     cups-libs \
     gtk3 \
@@ -21,13 +22,19 @@ RUN yum install -y \
     xorg-x11-fonts-misc \
     xorg-x11-fonts-Type1 \
     xorg-x11-utils \
+    libdrm \
+    libgbm \
+    nss \
+    GConf2 \
+    dbus-glib \
     wget \
     && yum clean all
 
-# Install Playwright and Chromium
+ENV HOME=/var/task
+
 COPY package*.json ./
 RUN npm install
-ENV HOME=/var/task
+
 RUN npx playwright install chromium
 
 COPY lambda_function.js ./
