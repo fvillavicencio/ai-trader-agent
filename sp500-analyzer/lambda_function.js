@@ -3,7 +3,7 @@ console.log('Loaded package.json:', require('./package.json'));
 
 const { chromium } = require('playwright');
 
-exports.lambda_handler = async (event, context) => {
+exports.handler = async (event, context) => {
   let browser = null;
   try {
     browser = await chromium.launch({
@@ -19,4 +19,5 @@ exports.lambda_handler = async (event, context) => {
   } finally {
     if (browser) await browser.close();
   }
+  return;
 };
