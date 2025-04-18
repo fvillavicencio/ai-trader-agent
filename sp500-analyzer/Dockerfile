@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/nodejs:20
 
-# Install system dependencies for Chromium
+# Install dependencies needed for Playwright (Chromium)
 RUN yum install -y \
     atk \
     cups-libs \
@@ -21,22 +21,15 @@ RUN yum install -y \
     xorg-x11-fonts-misc \
     xorg-x11-fonts-Type1 \
     xorg-x11-utils \
+    wget \
     && yum clean all
 
-# Install Node.js dependencies
+# Install Playwright and Chromium
 COPY package*.json ./
 RUN npm install
-
-# Set HOME so Playwright installs browsers to a writable location
 ENV HOME=/var/task
-
-# Install Chromium only (not all browsers)
 RUN npx playwright install chromium
 
-# Copy your Lambda handler
 COPY lambda_function.js ./
-
-# Add a comment to trigger a new workflow
-# Trigger build: 2025-04-18T18:59:09-04:00
 
 CMD [ "lambda_function.handler" ]
