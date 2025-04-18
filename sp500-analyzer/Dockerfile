@@ -1,11 +1,11 @@
-FROM public.ecr.aws/lambda/nodejs:20
+FROM mcr.microsoft.com/playwright:v1.42.1-focal
 
+# Install AWS Lambda Runtime Interface Client (RIC)
+RUN npm install aws-lambda-ric
+
+# Copy your Lambda handler and dependencies
 COPY package*.json ./
-RUN npm install
-
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-ENV HOME=/var/task
-RUN npx playwright install chromium --with-deps
+RUN npm install --omit=dev
 
 COPY lambda_function.js ./
 
