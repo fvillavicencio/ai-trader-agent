@@ -134,14 +134,13 @@ function formatSP500AnalysisText(lambdaJson) {
     if (data.trailingPE.sourceUrl) lines.push(`  URL: ${data.trailingPE.sourceUrl}`);
     if (data.trailingPE.lastUpdated) lines.push(`  Last Update: ${formatDate_(data.trailingPE.lastUpdated)}`);
     lines.push('');
-  }
-
-  // Historical P/E Context (standalone section)
-  if (data.trailingPE && data.trailingPE.history) {
-    lines.push('Historical P/E Context:');
-    lines.push('  Current | 5-Year Avg | 10-Year Avg');
-    lines.push(`  ${Number(data.trailingPE.pe).toFixed(2)} | ${Number(data.trailingPE.history.avg5).toFixed(2)} | ${Number(data.trailingPE.history.avg10).toFixed(2)}`);
-    lines.push('');
+    // Render Historical P/E Context immediately after
+    if (data.trailingPE.history) {
+      lines.push('  Historical P/E Context:');
+      lines.push('  Current | 5-Year Avg | 10-Year Avg');
+      lines.push(`  ${Number(data.trailingPE.pe).toFixed(2)} | ${Number(data.trailingPE.history.avg5).toFixed(2)} | ${Number(data.trailingPE.history.avg10).toFixed(2)}`);
+      lines.push('');
+    }
   }
 
   // Forward EPS Table
@@ -237,16 +236,18 @@ function formatSP500AnalysisHtml(lambdaJson) {
   if (data.trailingPE) {
     html.push('<h2>S&P 500 Trailing P/E Ratio</h2><hr/>');
     html.push(`<div class="pe-block">P/E: <strong>${data.trailingPE.pe}</strong></div>`);
-    html.push(`<div class="source-block"><strong>Source:</strong> ${data.trailingPE.sourceName}<br/><strong>URL:</strong> <a href="${data.trailingPE.sourceUrl || '#'}">${data.trailingPE.sourceUrl || ''}</a><br/><strong>Last Update:</strong> ${formatDate_(data.trailingPE.lastUpdated)}</div>`);
-    html.push('');
-  }
-
-  // Historical P/E Context (standalone section)
-  if (data.trailingPE && data.trailingPE.history) {
-    html.push('<h2>Historical P/E Context</h2>');
-    html.push('<div class="responsive-table"><table><thead><tr><th>Current</th><th>5-Year Avg</th><th>10-Year Avg</th></tr></thead><tbody>');
-    html.push(`<tr><td>${Number(data.trailingPE.pe).toFixed(2)}</td><td>${Number(data.trailingPE.history.avg5).toFixed(2)}</td><td>${Number(data.trailingPE.history.avg10).toFixed(2)}</td></tr>`);
-    html.push('</tbody></table></div>');
+    html.push('<div class="source-block">');
+    html.push(`<strong>Source:</strong> ${data.trailingPE.sourceName}<br/>`);
+    html.push(`<strong>URL:</strong> <a href="${data.trailingPE.sourceUrl}">${data.trailingPE.sourceUrl}</a><br/>`);
+    html.push(`<strong>Last Update:</strong> ${formatDate_(data.trailingPE.lastUpdated)}`);
+    html.push('</div>');
+    // Render Historical P/E Context immediately after
+    if (data.trailingPE.history) {
+      html.push('<h2>Historical P/E Context</h2>');
+      html.push('<div class="responsive-table"><table><thead><tr><th>Current</th><th>5-Year Avg</th><th>10-Year Avg</th></tr></thead><tbody>');
+      html.push(`<tr><td>${Number(data.trailingPE.pe).toFixed(2)}</td><td>${Number(data.trailingPE.history.avg5).toFixed(2)}</td><td>${Number(data.trailingPE.history.avg10).toFixed(2)}</td></tr>`);
+      html.push('</tbody></table></div>');
+    }
   }
 
   // Forward EPS Table
