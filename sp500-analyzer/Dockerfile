@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/playwright:v1.42.1-focal
+FROM mcr.microsoft.com/playwright/aws-lambda:v1.42.1
 
 # Install AWS Lambda Runtime Interface Client (RIC)
 # RUN npm install aws-lambda-ric
