@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/nodejs:20
 
-# Install system dependencies for Chromium (corrected package names)
+# Install system dependencies for Chromium (remove problematic packages)
 RUN yum install -y \
     alsa-lib \
     atk \
@@ -25,8 +25,6 @@ RUN yum install -y \
     libdrm \
     libgbm \
     nss \
-    gconf2 \
-    dbus-glib \
     wget \
     && yum clean all
 
