@@ -2,9 +2,44 @@ import axios from 'axios';
 import XLSX from 'xlsx';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+import playwright from "playwright-core";
+import chromium from "@sparticuz/chromium";
 
-const LOCAL_XLSX_PATH = path.join(process.cwd(), 'services/sp-500-eps-est.xlsx');
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const isLambda = !!process.env.LAMBDA_TASK_ROOT;
+const LOCAL_XLSX_PATH = isLambda ? '/tmp/sp-500-eps-est.xlsx' : path.join(__dirname, 'sp-500-eps-est.xlsx');
 const SPGLOBAL_XLSX_URL = 'https://www.spglobal.com/spdji/en/documents/additional-material/sp-500-eps-est.xlsx';
+
+/**
+ * Attempts to download the XLSX file using Playwright (headless browser).
+ * Returns true if successful, false otherwise.
+ */
+async function downloadXlsxWithPlaywright(downloadPath) {
+  const browser = await playwright.chromium.launch({
+    args: chromium.args,
+    executablePath: await chromium.executablePath(),
+    headless: true,
+    ignoreDefaultArgs: ["--disable-extensions"], // Optional, but helps in Lambda
+  });
+  const context = await browser.newContext({ acceptDownloads: true });
+  const page = await context.newPage();
+  try {
+    await page.goto('https://www.spglobal.com/spdji/en/indices/equity/sp-500/#data');
+    // Wait for the download link to be present
+    await page.waitForSelector('a[href*="sp-500-eps-est.xlsx"]', { timeout: 10000 });
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.click('a[href*="sp-500-eps-est.xlsx"]')
+    ]);
+    await download.saveAs(downloadPath);
+    await browser.close();
+    return true;
+  } catch (err) {
+    await browser.close();
+    return false;
+  }
+}
 
 /**
  * Fetches S&P 500 forward EPS estimates for 2025 and 2026 from the local S&P Global Excel file if present, otherwise attempts web download.
@@ -14,30 +49,37 @@ export async function getForwardEpsEstimates() {
   let workbook;
   let xlsBuffer;
   let fetchedRemote = false;
-  try {
-    // Try to fetch remote XLSX file
-    const response = await axios.get(SPGLOBAL_XLSX_URL, {
-      responseType: 'arraybuffer',
-      headers: {
-        'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/json,text/plain,*/*',
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Referer': 'https://www.spglobal.com/spdji/en/',
-        'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, compress, deflate, br'
-      },
-      timeout: 7000,
-    });
-    if (response.status === 200 && response.data && response.headers["content-type"] && response.headers["content-type"].includes("spreadsheet")) {
-      xlsBuffer = Buffer.from(response.data);
-      fetchedRemote = true;
-      // Overwrite the local file with the new content
-      fs.writeFileSync(LOCAL_XLSX_PATH, xlsBuffer);
-    } else {
-      throw new Error('Remote XLS fetch did not return valid XLSX data');
-    }
-  } catch (err) {
-    // Fallback: use local file
+
+  // Try to load local file first
+  if (fs.existsSync(LOCAL_XLSX_PATH)) {
     xlsBuffer = fs.readFileSync(LOCAL_XLSX_PATH);
+  } else {
+    // Try direct Axios download
+    try {
+      const response = await axios.get(SPGLOBAL_XLSX_URL, {
+        responseType: 'arraybuffer',
+        headers: {
+          'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,application/json,text/plain,*/*',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+          'Referer': 'https://www.spglobal.com/spdji/en/',
+          'Accept-Language': 'en-US,en;q=0.9',
+          'Accept-Encoding': 'gzip, compress, deflate, br'
+        },
+        timeout: 15000
+      });
+      xlsBuffer = response.data;
+      fs.writeFileSync(LOCAL_XLSX_PATH, xlsBuffer);
+      fetchedRemote = true;
+    } catch (err) {
+      // If Axios fails, try Playwright
+      const playwrightSuccess = await downloadXlsxWithPlaywright(LOCAL_XLSX_PATH);
+      if (playwrightSuccess) {
+        xlsBuffer = fs.readFileSync(LOCAL_XLSX_PATH);
+        fetchedRemote = true;
+      } else {
+        throw new Error('Failed to download S&P 500 EPS estimate XLSX file by all methods.');
+      }
+    }
   }
 
   // Now parse xlsBuffer with xlsx
@@ -52,6 +94,9 @@ export async function getForwardEpsEstimates() {
   for (let i = 120; i < Math.min(rows.length, 140); i++) {
     console.log(`[${i}]`, rows[i]);
   }
+
+
+  
   console.log('============================');
 
   // Find the 'ESTIMATES' row and extract data rows after it, until 'ACTUALS'

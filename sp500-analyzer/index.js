@@ -217,7 +217,12 @@ async function main() {
         earningsObj.lastUpdated
       );
       freshnessSections.push({ label: 'Trailing P/E', lastUpdated: earningsObj.lastUpdated, sourceName: earningsObj.sourceName });
-      html += htmlPEHistoryBlock(earningsObj.pe, 19.1, 17.6);
+      // Use real-time historical P/E context if available, fallback to hardcoded
+      html += htmlPEHistoryBlock(
+        earningsObj.pe,
+        earningsObj.history?.avg5 ?? 19.1,
+        earningsObj.history?.avg10 ?? 17.6
+      );
     } else {
       html += `<div class="pe-block">P/E: <strong>N/A</strong></div>`;
       html += '<div class="source-block">Unable to retrieve P/E data from APIs.</div>';
