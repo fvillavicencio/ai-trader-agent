@@ -1,3 +1,6 @@
+// Debug: Log loaded package.json
+console.log('Loaded package.json:', require('./package.json'));
+
 const { chromium } = require('playwright');
 
 exports.lambda_handler = async (event, context) => {
