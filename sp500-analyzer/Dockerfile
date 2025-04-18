@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/nodejs:20
 
-# Install system dependencies for Chromium (remove problematic packages)
+# Install ALL required system dependencies for Chromium
 RUN yum install -y \
     alsa-lib \
     atk \
@@ -26,16 +26,29 @@ RUN yum install -y \
     libgbm \
     nss \
     wget \
-    && yum clean all
+    libXinerama \
+    libxcb \
+    libX11-xcb \
+    mesa-libgbm \
+    libxshmfence \
+    fontconfig \
+    && yum clean all \
+    && rm -rf /var/cache/yum
 
-# Use writable directory for Chromium
-ENV HOME=/tmp
+# Lambda/Playwright environment variables
+ENV HOME=/tmp \
+    PLAYWRIGHT_BROWSERS_PATH=/tmp \
+    PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
+    LAMBDA_TASK_ROOT=/var/task
+
+WORKDIR ${LAMBDA_TASK_ROOT}
 
 COPY package*.json ./
 RUN npm install
 
 # Install Playwright with Chromium and system dependencies
-RUN npx playwright install chromium --with-deps
+RUN npx playwright install chromium --with-deps \
+    && mv /root/.cache/ms-playwright /tmp/playwright-cache
 
 COPY lambda_function.js ./
 
