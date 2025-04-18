@@ -52,4 +52,6 @@ RUN npx playwright install chromium --with-deps \
 
 COPY lambda_function.js ./
 
+RUN ls -al /var/task
+
 CMD [ "lambda_function.handler" ]
