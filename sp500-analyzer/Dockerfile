@@ -1,41 +1,39 @@
 FROM public.ecr.aws/lambda/nodejs:20
 
-# Install ALL required system dependencies for Chromium
-RUN yum install -y \
+# Install ALL required system dependencies for Chromium (using apt-get for Debian-based Lambda image)
+RUN apt-get update && \
+    apt-get install -y \
     alsa-lib \
     atk \
-    cups-libs \
+    cups-common \
     gtk3 \
-    ipa-gothic-fonts \
-    libXcomposite \
-    libXcursor \
-    libXdamage \
-    libXext \
-    libXi \
-    libXrandr \
-    libXScrnSaver \
-    libXtst \
-    pango \
-    xorg-x11-fonts-100dpi \
-    xorg-x11-fonts-75dpi \
-    xorg-x11-fonts-cyrillic \
-    xorg-x11-fonts-misc \
-    xorg-x11-fonts-Type1 \
-    xorg-x11-utils \
-    libdrm \
-    libgbm \
-    nss \
+    fonts-ipafont-gothic \
+    libxcomposite1 \
+    libxcursor1 \
+    libxdamage1 \
+    libxext6 \
+    libxi6 \
+    libxrandr2 \
+    libxss1 \
+    libxtst6 \
+    libdrm2 \
+    libgbm1 \
+    libnss3 \
     wget \
-    libXinerama \
-    libxcb \
-    libX11-xcb \
-    mesa-libgbm \
-    libxshmfence \
+    libxinerama1 \
+    libxcb1 \
+    libx11-xcb1 \
+    mesa-utils \
+    libxshmfence1 \
     fontconfig \
-    && yum clean all \
-    && rm -rf /var/cache/yum
+    x11-utils \
+    xfonts-100dpi \
+    xfonts-75dpi \
+    xfonts-cyrillic \
+    xfonts-base \
+    xfonts-scalable \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# Lambda/Playwright environment variables
 ENV HOME=/tmp \
     PLAYWRIGHT_BROWSERS_PATH=/tmp \
     PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 \
