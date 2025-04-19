@@ -7,7 +7,7 @@ COPY package*.json ./
 RUN npm install
 
 # Install Playwright with Chromium
-RUN npx playwright install chromium --with-deps
+RUN npx playwright install chromium
 
 COPY lambda_function.js ./
 
