@@ -14,9 +14,6 @@ COPY lambda_function.js ./
 # Stage 2: Official Playwright base image (v1.43.1-jammy) for Lambda compatibility
 FROM mcr.microsoft.com/playwright:v1.43.1-jammy
 
-# Install AWS Lambda Runtime Interface Client
-RUN npm install aws-lambda-ric
-
 WORKDIR /var/task
 
 COPY --from=build /app/package*.json ./
