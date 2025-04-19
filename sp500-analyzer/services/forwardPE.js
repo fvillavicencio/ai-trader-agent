@@ -4,7 +4,6 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import playwright from "playwright-core";
-import chromium from "@sparticuz/chromium";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const isLambda = !!process.env.LAMBDA_TASK_ROOT;
@@ -17,10 +16,14 @@ const SPGLOBAL_XLSX_URL = 'https://www.spglobal.com/spdji/en/documents/additiona
  */
 async function downloadXlsxWithPlaywright(downloadPath) {
   const browser = await playwright.chromium.launch({
-    args: chromium.args,
-    executablePath: await chromium.executablePath(),
     headless: true,
-    ignoreDefaultArgs: ["--disable-extensions"], // Optional, but helps in Lambda
+    args: [
+      '--no-sandbox',
+      '--disable-gpu',
+      '--single-process',
+      '--no-zygote',
+      '--disable-dev-shm-usage'
+    ]
   });
   const context = await browser.newContext({ acceptDownloads: true });
   const page = await context.newPage();
