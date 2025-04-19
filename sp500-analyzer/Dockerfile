@@ -22,4 +22,4 @@ COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package*.json ./
 COPY --from=build /app/lambda_function.js ./
 
-CMD [ "node_modules/aws-lambda-ric/bin/ric.js", "lambda_function.handler" ]
+CMD [ "node_modules/.bin/aws-lambda-ric", "lambda_function.handler" ]
