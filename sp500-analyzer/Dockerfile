@@ -3,10 +3,10 @@ FROM node:20-slim as build
 
 WORKDIR /app
 
-COPY sp500-analyzer/package*.json ./
+COPY package*.json ./
 RUN npm install
 
-COPY sp500-analyzer/lambda_function.js ./
+COPY lambda_function.js ./
 
 # Stage 2: Use Playwright base image for Chromium/system deps
 FROM mcr.microsoft.com/playwright:v1.43.1-jammy
