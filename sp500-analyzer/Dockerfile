@@ -11,8 +11,8 @@ RUN npx playwright install chromium
 
 COPY lambda_function.js ./
 
-# Stage 2: Amazon Linux 2 Lambda runtime with yum for system deps
-FROM public.ecr.aws/lambda/provided:al2
+# Stage 2: Node.js 20 Lambda runtime with yum for system deps
+FROM public.ecr.aws/lambda/nodejs:20
 
 # Install system dependencies for Chromium/Playwright
 RUN yum install -y \
