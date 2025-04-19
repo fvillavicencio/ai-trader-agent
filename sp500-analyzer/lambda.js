@@ -84,6 +84,13 @@ const CACHE = {
 };
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
+// Helper: Flush all in-memory caches
+function flushAllCaches() {
+  CACHE.result = null;
+  CACHE.timestamp = 0;
+  console.log('[DIAG] All in-memory caches flushed.');
+}
+
 export const handler = async (event) => {
   try {
     console.log("[DIAG] Lambda handler started", { event });
@@ -104,6 +111,18 @@ export const handler = async (event) => {
         statusCode: 200,
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ testResults }),
+      };
+    }
+    // === FLUSH CACHE ENDPOINT ===
+    if (
+      (event.action && event.action === 'flushCache') ||
+      (event.queryStringParameters && event.queryStringParameters.action === 'flushCache')
+    ) {
+      flushAllCaches();
+      return {
+        statusCode: 200,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: 'Cache flushed.' })
       };
     }
     // Normal analyzer
