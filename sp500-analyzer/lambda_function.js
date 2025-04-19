@@ -3,7 +3,13 @@ const playwright = require('playwright-core');
 exports.handler = async (event) => {
   const browser = await playwright.chromium.launch({
     headless: true,
-    args: ['--no-sandbox']
+    args: [
+      '--no-sandbox',
+      '--disable-gpu',
+      '--single-process',
+      '--no-zygote',
+      '--disable-dev-shm-usage'
+    ]
   });
   const page = await browser.newPage();
   await page.goto('https://example.com');
