@@ -13,7 +13,7 @@ RUN npm install
 COPY lambda_function.js ./
 
 # Stage 2: Use Playwright base image for Chromium/system deps
-FROM mcr.microsoft.com/playwright:v1.43.1-jammy
+FROM mcr.microsoft.com/playwright:v1.52.0-jammy
 
 WORKDIR /var/task
 
