@@ -4,6 +4,7 @@ FROM node:20-slim as build
 WORKDIR /app
 
 COPY package*.json ./
+RUN ls -l /app
 RUN npm install
 
 COPY lambda_function.js ./
