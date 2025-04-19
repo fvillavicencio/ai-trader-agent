@@ -5,7 +5,7 @@ WORKDIR /app
 
 COPY package*.json ./
 RUN apt-get update && \
-    apt-get install -y cmake autoconf automake libtool && \
+    apt-get install -y cmake autoconf automake libtool build-essential && \
     rm -rf /var/lib/apt/lists/*
 RUN ls -l /app
 RUN npm install
