@@ -4,7 +4,9 @@ FROM node:20-slim as build
 WORKDIR /app
 
 COPY package*.json ./
-RUN apt-get update && apt-get install -y cmake && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y cmake autoconf automake libtool && \
+    rm -rf /var/lib/apt/lists/*
 RUN ls -l /app
 RUN npm install
 
