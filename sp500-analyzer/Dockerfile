@@ -1,12 +1,12 @@
 FROM public.ecr.aws/lambda/nodejs:20
 
-# Install ALL required system dependencies for Chromium (using apt-get for Debian-based Lambda image)
+# Install ALL required system dependencies for Chromium (Debian package names)
 RUN apt-get update && \
     apt-get install -y \
-    alsa-lib \
-    atk \
+    libasound2 \
+    libatk1.0-0 \
     cups-common \
-    gtk3 \
+    libgtk-3-0 \
     fonts-ipafont-gothic \
     libxcomposite1 \
     libxcursor1 \
@@ -44,7 +44,6 @@ WORKDIR ${LAMBDA_TASK_ROOT}
 COPY package*.json ./
 RUN npm install
 
-# Install Playwright with Chromium and system dependencies
 RUN npx playwright install chromium --with-deps \
     && mv /root/.cache/ms-playwright /tmp/playwright-cache
 
