@@ -71,13 +71,14 @@ export async function getMarketPath() {
       sourceUrl: 'https://developer.tradier.com/documentation/markets/get-timesales',
       lastUpdated: now
     };
-  } catch (e) {
-    return {
-      value: `Could not determine market path: ${e.message}`,
+  } catch (err) {
+    console.error('[getMarketPath] Error:', err);
+    return { 
+      value: `Could not determine market path: ${err.message}`,
       rsi: null,
       sourceName: 'Tradier (RSI)',
       sourceUrl: 'https://developer.tradier.com/documentation/markets/get-timesales',
-      lastUpdated: new Date().toISOString()
+      lastUpdated: new Date().toISOString() 
     };
   }
 }

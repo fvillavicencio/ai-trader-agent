@@ -16,8 +16,8 @@ import { getSP500Earnings } from '../services/earnings.js';
     if (price !== null) console.log(`Price: $${price}`);
     if (pe !== null) console.log(`TTM P/E: ${pe}`);
     if (eps !== null) console.log(`TTM EPS: $${eps}`);
-    console.log(`Source: ${result.sourceName || result.provider}`);
-    console.log(`Last Updated: ${result.lastUpdated}`);
+    console.log(`Source: ${result.sourceName || result.provider || 'N/A'}`);
+    console.log(`Last Updated: ${result.lastUpdated || 'N/A'}`);
     if (result.sourceUrl) console.log(`Source URL: ${result.sourceUrl}`);
     if (result.provider === 'S&P Global' || result.provider === 'multpl') {
       console.warn('\n[NOTE] Only limited fields are available from fallback web sources.');

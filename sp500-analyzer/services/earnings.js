@@ -46,86 +46,91 @@ async function getHistoricalPEAverages() {
 }
 
 export async function getSP500Earnings() {
-  // Try yahoo-finance15 primary API first
   try {
-    const yahoo15 = await getSP500EpsAndPeFromYahoo15();
-    if (yahoo15 && yahoo15.eps && yahoo15.pe && yahoo15.price) {
-      // Fetch historical P/E averages
-      const history = await getHistoricalPEAverages();
-      return {
-        eps: yahoo15.eps,
-        pe: yahoo15.pe,
-        price: yahoo15.price,
-        sourceName: yahoo15.sourceName,
-        sourceUrl: yahoo15.sourceUrl,
-        lastUpdated: yahoo15.lastUpdated,
-        provider: 'yahoo15',
-        history, // { avg5, avg10, ... }
+    // Try yahoo-finance15 primary API first
+    try {
+      const yahoo15 = await getSP500EpsAndPeFromYahoo15();
+      if (yahoo15 && yahoo15.eps && yahoo15.pe && yahoo15.price) {
+        // Fetch historical P/E averages
+        const history = await getHistoricalPEAverages();
+        return {
+          eps: yahoo15.eps,
+          pe: yahoo15.pe,
+          price: yahoo15.price,
+          sourceName: yahoo15.sourceName,
+          sourceUrl: yahoo15.sourceUrl,
+          lastUpdated: yahoo15.lastUpdated,
+          provider: 'yahoo15',
+          history, // { avg5, avg10, ... }
+        };
+      }
+    } catch (e) {}
+    // If yahoo-finance15 fails, try yahu-finance2
+    try {
+      const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+      const RAPIDAPI_HOST = 'yahu-finance2.p.rapidapi.com';
+      const options = {
+        method: 'GET',
+        url: `https://${RAPIDAPI_HOST}/key-statistics/SPY`,
+        headers: {
+          'X-RapidAPI-Key': RAPIDAPI_KEY,
+          'X-RapidAPI-Host': RAPIDAPI_HOST,
+        },
       };
-    }
-  } catch (e) {}
-  // If yahoo-finance15 fails, try yahu-finance2
-  try {
-    const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-    const RAPIDAPI_HOST = 'yahu-finance2.p.rapidapi.com';
-    const options = {
-      method: 'GET',
-      url: `https://${RAPIDAPI_HOST}/key-statistics/SPY`,
-      headers: {
-        'X-RapidAPI-Key': RAPIDAPI_KEY,
-        'X-RapidAPI-Host': RAPIDAPI_HOST,
-      },
-    };
-    const response = await axios.request(options);
-    const data = response.data;
-    const price = data.price || data.regularMarketPrice;
-    const pe = data.trailingPE || data.peRatio || data.trailingPe;
-    const eps = data.trailingEps || data.eps;
-    if (price && pe && eps) {
-      const history = await getHistoricalPEAverages();
-      return {
-        eps,
-        pe,
-        price,
-        sourceName: 'yahu-finance2 (RapidAPI)',
-        sourceUrl: 'https://rapidapi.com/tonyapi9892/api/yahu-finance2',
-        lastUpdated: new Date().toISOString(),
-        provider: 'yahu2',
-        history,
+      const response = await axios.request(options);
+      const data = response.data;
+      const price = data.price || data.regularMarketPrice;
+      const pe = data.trailingPE || data.peRatio || data.trailingPe;
+      const eps = data.trailingEps || data.eps;
+      if (price && pe && eps) {
+        const history = await getHistoricalPEAverages();
+        return {
+          eps,
+          pe,
+          price,
+          sourceName: 'yahu-finance2 (RapidAPI)',
+          sourceUrl: 'https://rapidapi.com/tonyapi9892/api/yahu-finance2',
+          lastUpdated: new Date().toISOString(),
+          provider: 'yahu2',
+          history,
+        };
+      }
+    } catch (e) {}
+    // Try yahoo-finance127 (RapidAPI)
+    try {
+      const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
+      const RAPIDAPI_HOST = 'yahoo-finance127.p.rapidapi.com';
+      const options = {
+        method: 'GET',
+        url: `https://${RAPIDAPI_HOST}/price/spy`,
+        headers: {
+          'X-RapidAPI-Key': RAPIDAPI_KEY,
+          'X-RapidAPI-Host': RAPIDAPI_HOST,
+        },
       };
-    }
-  } catch (e) {}
-  // Try yahoo-finance127 (RapidAPI)
-  try {
-    const RAPIDAPI_KEY = process.env.RAPIDAPI_KEY;
-    const RAPIDAPI_HOST = 'yahoo-finance127.p.rapidapi.com';
-    const options = {
-      method: 'GET',
-      url: `https://${RAPIDAPI_HOST}/price/spy`,
-      headers: {
-        'X-RapidAPI-Key': RAPIDAPI_KEY,
-        'X-RapidAPI-Host': RAPIDAPI_HOST,
-      },
-    };
-    const response = await axios.request(options);
-    const data = response.data;
-    const price = data.regularMarketPrice?.raw || data.regularMarketPrice;
-    const pe = data.trailingPE?.raw || data.trailingPE;
-    const eps = data.epsTrailingTwelveMonths?.raw || data.epsTrailingTwelveMonths;
-    if (price && pe && eps) {
-      const history = await getHistoricalPEAverages();
-      return {
-        eps,
-        pe,
-        price,
-        sourceName: 'yahoo-finance127 (RapidAPI)',
-        sourceUrl: 'https://rapidapi.com/manwilbahaa/api/yahoo-finance127',
-        lastUpdated: new Date().toISOString(),
-        provider: 'yahoo127',
-        history,
-      };
-    }
-  } catch (e) {}
-  // If all fail, return null
-  return null;
+      const response = await axios.request(options);
+      const data = response.data;
+      const price = data.regularMarketPrice?.raw || data.regularMarketPrice;
+      const pe = data.trailingPE?.raw || data.trailingPE;
+      const eps = data.epsTrailingTwelveMonths?.raw || data.epsTrailingTwelveMonths;
+      if (price && pe && eps) {
+        const history = await getHistoricalPEAverages();
+        return {
+          eps,
+          pe,
+          price,
+          sourceName: 'yahoo-finance127 (RapidAPI)',
+          sourceUrl: 'https://rapidapi.com/manwilbahaa/api/yahoo-finance127',
+          lastUpdated: new Date().toISOString(),
+          provider: 'yahoo127',
+          history,
+        };
+      }
+    } catch (e) {}
+    // If all fail, return null
+    return null;
+  } catch (err) {
+    console.error('[getSP500Earnings] Error:', err);
+    return { eps: null, pe: null, price: null, value: null, sourceName: 'N/A', sourceUrl: '', lastUpdated: new Date().toISOString(), provider: 'N/A' };
+  }
 }

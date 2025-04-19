@@ -1,23 +1,34 @@
 // test-api.js
-const axios = require('axios');
-require('dotenv').config();
+import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 
-async function testAPI() {
-  const url = process.env.LAMBDA_SERVICE_URL;
-  const apiKey = process.env.LAMBDA_API_KEY;
+const LAMBDA_SERVICE_URL = process.env.LAMBDA_SERVICE_URL;
+const LAMBDA_API_KEY = process.env.LAMBDA_API_KEY;
+
+if (!LAMBDA_SERVICE_URL) {
+  console.error('LAMBDA_SERVICE_URL is not set in .env');
+  process.exit(1);
+}
+
+const headers = {};
+if (LAMBDA_API_KEY) {
+  headers['x-api-key'] = LAMBDA_API_KEY;
+}
+
+async function testLambda() {
   try {
-    const response = await axios.post(url, {}, {
-      headers: apiKey ? { 'x-api-key': apiKey } : {}
-    });
-    console.log('Status:', response.status);
-    console.log('Data:', JSON.stringify(response.data, null, 2));
-  } catch (err) {
-    if (err.response) {
-      console.error('Error response:', err.response.status, err.response.data);
+    const response = await axios.post(LAMBDA_SERVICE_URL, {
+      action: 'analyzeSP500'
+    }, { headers });
+    console.log('Lambda Response:', JSON.stringify(response.data, null, 2));
+  } catch (error) {
+    if (error.response) {
+      console.error('Lambda Error:', error.response.status, error.response.data);
     } else {
-      console.error('Error:', err.message);
+      console.error('Request Error:', error.message);
     }
   }
 }
 
-testAPI();
+testLambda();
