@@ -1,4 +1,6 @@
 import axios from 'axios';
+import dotenv from 'dotenv';
+dotenv.config();
 import { getSP500EpsAndPeFromYahoo15 } from './yahoo15.js';
 
 /**
@@ -8,40 +10,71 @@ import { getSP500EpsAndPeFromYahoo15 } from './yahoo15.js';
  * 3. yahoo-finance127 (RapidAPI)
  * Returns: { eps, pe, price, value, sourceName, sourceUrl, lastUpdated, provider }
  */
-// Helper: Fetch historical P/E averages from multpl.com
+// Helper: Fetch historical P/E averages from FRED API, fallback to HTML scraping
 async function getHistoricalPEAverages() {
-  // Scrape multpl.com for 5-year and 10-year average P/E ratios
-  // (Simple implementation; for production use, consider robust error handling)
   const axios = (await import('axios')).default;
-  const cheerio = (await import('cheerio')).default || (await import('cheerio'));
-  const url = 'https://www.multpl.com/s-p-500-pe-ratio/table/by-year';
+  const FRED_API_KEY = process.env.FRED_API_KEY;
+  const FRED_SERIES_ID = 'SP500PE'; // FRED series for S&P 500 P/E ratio
+  const fredUrl = `https://api.stlouisfed.org/fred/series/observations?series_id=${FRED_SERIES_ID}&api_key=${FRED_API_KEY}&file_type=json`;
   try {
-    const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
-    const $ = cheerio.load(data);
-    const rows = $('table#datatable tbody tr');
-    const peByYear = [];
-    rows.each((i, row) => {
-      const year = parseInt($(row).find('td').eq(0).text().trim(), 10);
-      const pe = parseFloat($(row).find('td').eq(1).text().trim());
-      if (!isNaN(year) && !isNaN(pe)) {
-        peByYear.push({ year, pe });
-      }
-    });
-    // Assume the table is sorted descending (most recent first)
+    const { data } = await axios.get(fredUrl);
+    if (!data || !data.observations) throw new Error('No data from FRED');
     const currentYear = new Date().getFullYear();
-    const pe5 = peByYear.filter(r => r.year > currentYear - 5).map(r => r.pe);
-    const pe10 = peByYear.filter(r => r.year > currentYear - 10).map(r => r.pe);
+    const peByYear = {};
+    data.observations.forEach(obs => {
+      if (!obs.value || obs.value === '.' || isNaN(Number(obs.value))) return;
+      const year = parseInt(obs.date.slice(0, 4), 10);
+      if (!peByYear[year]) peByYear[year] = [];
+      peByYear[year].push(Number(obs.value));
+    });
+    const yearlyPE = Object.entries(peByYear).map(([year, values]) => ({
+      year: Number(year),
+      pe: values.reduce((a, b) => a + b, 0) / values.length
+    }));
+    const pe5 = yearlyPE.filter(r => r.year > currentYear - 5).map(r => r.pe);
+    const pe10 = yearlyPE.filter(r => r.year > currentYear - 10).map(r => r.pe);
     const avg5 = pe5.length ? pe5.reduce((a, b) => a + b, 0) / pe5.length : null;
     const avg10 = pe10.length ? pe10.reduce((a, b) => a + b, 0) / pe10.length : null;
     return {
       avg5: avg5 ? Number(avg5.toFixed(2)) : null,
       avg10: avg10 ? Number(avg10.toFixed(2)) : null,
-      sourceName: 'multpl.com',
-      sourceUrl: url,
+      sourceName: 'FRED (St. Louis Fed)',
+      sourceUrl: fredUrl,
       lastUpdated: new Date().toISOString(),
     };
   } catch (e) {
-    return { avg5: null, avg10: null, sourceName: 'multpl.com', sourceUrl: url, lastUpdated: new Date().toISOString() };
+    console.error('[getHistoricalPEAverages] FRED API error:', e.message);
+    // === Fallback: HTML scraping from multpl.com ===
+    try {
+      const cheerio = (await import('cheerio')).default || (await import('cheerio'));
+      const url = 'https://www.multpl.com/s-p-500-pe-ratio/table/by-year';
+      const { data } = await axios.get(url, { headers: { 'User-Agent': 'Mozilla/5.0' } });
+      const $ = cheerio.load(data);
+      const rows = $('table#datatable tbody tr');
+      const peByYear = [];
+      rows.each((i, row) => {
+        const year = parseInt($(row).find('td').eq(0).text().trim(), 10);
+        const pe = parseFloat($(row).find('td').eq(1).text().trim());
+        if (!isNaN(year) && !isNaN(pe)) {
+          peByYear.push({ year, pe });
+        }
+      });
+      const currentYear = new Date().getFullYear();
+      const pe5 = peByYear.filter(r => r.year > currentYear - 5).map(r => r.pe);
+      const pe10 = peByYear.filter(r => r.year > currentYear - 10).map(r => r.pe);
+      const avg5 = pe5.length ? pe5.reduce((a, b) => a + b, 0) / pe5.length : null;
+      const avg10 = pe10.length ? pe10.reduce((a, b) => a + b, 0) / pe10.length : null;
+      return {
+        avg5: avg5 ? Number(avg5.toFixed(2)) : null,
+        avg10: avg10 ? Number(avg10.toFixed(2)) : null,
+        sourceName: 'multpl.com',
+        sourceUrl: url,
+        lastUpdated: new Date().toISOString(),
+      };
+    } catch (fallbackErr) {
+      console.error('[getHistoricalPEAverages] Fallback HTML scraping error:', fallbackErr.message);
+      return { avg5: null, avg10: null, sourceName: 'multpl.com', sourceUrl: 'https://www.multpl.com/s-p-500-pe-ratio/table/by-year', lastUpdated: new Date().toISOString() };
+    }
   }
 }
 
