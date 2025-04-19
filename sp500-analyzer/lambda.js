@@ -126,14 +126,33 @@ export const handler = async (event) => {
     console.log(`[DIAG] analyzeSP500 execution time: ${after - before} ms`);
     console.log(`[DIAG] Total execution time: ${Date.now() - event.startTime} ms`);
 
+    // === SANITIZE OUTPUT: Ensure no .lastUpdated access on null ===
+    function sanitize(obj) {
+      if (Array.isArray(obj)) {
+        return obj.map(sanitize);
+      } else if (obj && typeof obj === 'object') {
+        const out = {};
+        for (const [k, v] of Object.entries(obj)) {
+          if (k === 'lastUpdated' && (v === null || v === undefined)) {
+            out[k] = '';
+          } else {
+            out[k] = sanitize(v);
+          }
+        }
+        return out;
+      }
+      return obj;
+    }
+    const safeResult = sanitize(result);
+
     // Store in cache
-    CACHE.result = result;
+    CACHE.result = safeResult;
     CACHE.timestamp = now;
 
     return {
       statusCode: 200,
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(result)
+      body: JSON.stringify(safeResult)
     };
   } catch (err) {
     console.error("[DIAG] Lambda handler error:", err);

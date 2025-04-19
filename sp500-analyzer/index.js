@@ -14,7 +14,7 @@ function htmlSectionHeader(title) {
 }
 
 function htmlSourceBlock(sourceName, sourceUrl, lastUpdated) {
-  return `<div class="source-block"><strong>Source:</strong> ${sourceName}<br/><strong>URL:</strong> <a href="${sourceUrl}">${sourceUrl}</a><br/><strong>Last Update:</strong> ${formatTimestamp(lastUpdated)}</div>`;
+  return `<div class="source-block"><strong>Source:</strong> ${sourceName || 'N/A'}<br/><strong>URL:</strong> <a href="${sourceUrl || ''}">${sourceUrl || ''}</a><br/><strong>Last Update:</strong> ${formatTimestamp(lastUpdated || '')}</div>`;
 }
 
 function htmlHoldingsBlock(indexName, symbol, top, sourceName, sourceUrl, lastUpdated) {
@@ -23,7 +23,7 @@ function htmlHoldingsBlock(indexName, symbol, top, sourceName, sourceUrl, lastUp
     lines.push(`<tr><td>${i + 1}</td><td>${h.symbol}</td><td>${h.name}</td><td>${h.weight}</td></tr>`);
   });
   lines.push('</tbody></table></div>');
-  lines.push(htmlSourceBlock(sourceName, sourceUrl, lastUpdated));
+  lines.push(htmlSourceBlock(sourceName || 'N/A', sourceUrl || '', lastUpdated || ''));
   lines.push('</div>');
   return lines.join('\n');
 }
@@ -53,11 +53,11 @@ function htmlEarningsBlock(earningsObj, multiples) {
 }
 
 function htmlMarketPathBlock(pathObj) {
-  return `<div class="market-path-block">${htmlSectionHeader('Market "Path of Least Resistance"')}<div class="market-path-value">${pathObj.value}</div>${htmlSourceBlock(pathObj.sourceName, pathObj.sourceUrl, pathObj.lastUpdated)}<div class="market-path-expl">Explanation: The 'Path of Least Resistance' is based on the Relative Strength Index (RSI) of SPY. RSI is a momentum indicator that ranges from 0 to 100.<ul><li>RSI &gt; 70: Overbought (market may be due for a pullback)</li><li>RSI &lt; 30: Oversold (market may be due for a rebound)</li><li>RSI between 30 and 70: Neutral (no strong directional bias).</li></ul>Typical values: Most of the time, RSI will be between 30 and 70. Extreme readings above 70 or below 30 are less common and signal potential reversals.</div></div>`;
+  return `<div class="market-path-block">${htmlSectionHeader('Market "Path of Least Resistance"')}<div class="market-path-value">${pathObj.value}</div>${htmlSourceBlock(pathObj.sourceName || 'N/A', pathObj.sourceUrl || '', pathObj.lastUpdated || '')}<div class="market-path-expl">Explanation: The 'Path of Least Resistance' is based on the Relative Strength Index (RSI) of SPY. RSI is a momentum indicator that ranges from 0 to 100.<ul><li>RSI &gt; 70: Overbought (market may be due for a pullback)</li><li>RSI &lt; 30: Oversold (market may be due for a rebound)</li><li>RSI between 30 and 70: Neutral (no strong directional bias).</li></ul>Typical values: Most of the time, RSI will be between 30 and 70. Extreme readings above 70 or below 30 are less common and signal potential reversals.</div></div>`;
 }
 
 function htmlRSIBlock(pathObj, maObj) {
-  return `<div class="market-path-block">${htmlSectionHeader('Market "Path of Least Resistance"')}<div class="market-path-value">${pathObj.value} (RSI period: 14-day)</div>${htmlSourceBlock(pathObj.sourceName, pathObj.sourceUrl, pathObj.lastUpdated)}<div class="market-path-expl">Explanation: RSI is a 14-day lookback. 50-day MA: <b>${maObj.sma50.toFixed(2)}</b>, 200-day MA: <b>${maObj.sma200.toFixed(2)}</b>, SPY last: <b>${maObj.latest.toFixed(2)}</b>. ${maObj.latest > maObj.sma200 ? 'Above' : 'Below'} 200-day MA. ${maObj.latest > maObj.sma50 ? 'Above' : 'Below'} 50-day MA.</div></div>`;
+  return `<div class="market-path-block">${htmlSectionHeader('Market "Path of Least Resistance"')}<div class="market-path-value">${pathObj.value} (RSI period: 14-day)</div>${htmlSourceBlock(pathObj.sourceName || 'N/A', pathObj.sourceUrl || '', pathObj.lastUpdated || '')}<div class="market-path-expl">Explanation: RSI is a 14-day lookback. 50-day MA: <b>${maObj.sma50.toFixed(2)}</b>, 200-day MA: <b>${maObj.sma200.toFixed(2)}</b>, SPY last: <b>${maObj.latest.toFixed(2)}</b>. ${maObj.latest > maObj.sma200 ? 'Above' : 'Below'} 200-day MA. ${maObj.latest > maObj.sma50 ? 'Above' : 'Below'} 50-day MA.</div></div>`;
 }
 
 function htmlForwardPETable(estimates, multiples, currentIndex) {
@@ -83,7 +83,7 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
 function htmlPERatioBlock(pe, sourceName, sourceUrl, lastUpdated) {
   return `
     <div class="pe-block">P/E: <strong>${Number(pe).toFixed(2)}</strong></div>
-    ${htmlSourceBlock(sourceName, sourceUrl, lastUpdated)}
+    ${htmlSourceBlock(sourceName || 'N/A', sourceUrl || '', lastUpdated || '')}
   `;
 }
 
@@ -115,7 +115,7 @@ function htmlDataFreshnessTable(sections) {
     '<div class="freshness-block"><h3>Data Freshness Summary</h3><div class="responsive-table"><table><thead><tr><th>Section</th><th>Last Updated</th><th>Source</th></tr></thead><tbody>'
   ];
   for (const s of sections) {
-    lines.push(`<tr><td>${s.label}</td><td>${formatTimestamp(s.lastUpdated) || ''}</td><td>${s.sourceName || ''}</td></tr>`);
+    lines.push(`<tr><td>${s.label}</td><td>${formatTimestamp(s.lastUpdated || '')}</td><td>${s.sourceName || ''}</td></tr>`);
   }
   lines.push('</tbody></table></div></div>');
   return lines.join('\n');
@@ -198,25 +198,25 @@ async function main() {
 
     // 0. S&P 500 Index Anchor (always at top)
     const spxObj = await getSP500IndexPrice();
-    html += `<div class="spx-index-block"><h2>Current S&P 500 Index Level</h2><div class="spx-index">${spxObj.price.toFixed(2)}</div><div class="source-block"><strong>Source:</strong> ${spxObj.sourceName}<br/><strong>URL:</strong> <a href="${spxObj.sourceUrl}">${spxObj.sourceUrl}</a><br/><strong>Last Update:</strong> ${formatTimestamp(spxObj.lastUpdated)}</div>${htmlStalenessWarning(spxObj.lastUpdated, 2, 'S&P 500 Index')}</div>`;
-    freshnessSections.push({ label: 'S&P 500 Index', lastUpdated: spxObj.lastUpdated, sourceName: spxObj.sourceName });
+    html += `<div class="spx-index-block"><h2>Current S&P 500 Index Level</h2><div class="spx-index">${spxObj.price.toFixed(2)}</div><div class="source-block"><strong>Source:</strong> ${spxObj.sourceName || 'N/A'}<br/><strong>URL:</strong> <a href="${spxObj.sourceUrl || ''}">${spxObj.sourceUrl || ''}</a><br/><strong>Last Update:</strong> ${formatTimestamp(spxObj.lastUpdated || '')}</div>${htmlStalenessWarning(spxObj.lastUpdated || '', 2, 'S&P 500 Index')}</div>`;
+    freshnessSections.push({ label: 'S&P 500 Index', lastUpdated: spxObj?.lastUpdated || '', sourceName: spxObj?.sourceName || 'N/A' });
 
     // 1. S&P 500 Trailing P/E
     const earningsObj = await getSP500Earnings();
     html += htmlSectionHeader('S&P 500 Trailing P/E Ratio');
     if (earningsObj && earningsObj.pe && earningsObj.sourceName && earningsObj.sourceUrl) {
-      html += htmlPERatioBlock(earningsObj.pe, earningsObj.sourceName, earningsObj.sourceUrl, earningsObj.lastUpdated);
+      html += htmlPERatioBlock(earningsObj.pe, earningsObj.sourceName || 'N/A', earningsObj.sourceUrl || '', earningsObj.lastUpdated || '');
       // Use Yahoo Finance public URL if the provider is Yahoo, otherwise use API doc URL
       let publicUrl = '';
       if (earningsObj.provider && earningsObj.provider.startsWith('yahoo')) {
         publicUrl = 'https://finance.yahoo.com/quote/%5EGSPC/key-statistics?p=%5EGSPC';
       }
       html += htmlSourceBlock(
-        earningsObj.sourceName,
-        publicUrl || earningsObj.sourceUrl,
-        earningsObj.lastUpdated
+        earningsObj.sourceName || 'N/A',
+        publicUrl || earningsObj.sourceUrl || '',
+        earningsObj.lastUpdated || ''
       );
-      freshnessSections.push({ label: 'Trailing P/E', lastUpdated: earningsObj.lastUpdated, sourceName: earningsObj.sourceName });
+      freshnessSections.push({ label: 'Trailing P/E', lastUpdated: earningsObj?.lastUpdated || '', sourceName: earningsObj?.sourceName || 'N/A' });
       // Use real-time historical P/E context if available, fallback to hardcoded
       html += htmlPEHistoryBlock(
         earningsObj.pe,
@@ -238,15 +238,15 @@ async function main() {
     const forwardDate = forwardEstimates[0]?.estimateDate || spxObj.lastUpdated;
     html += htmlSectionHeader('S&P 500 Forward EPS & Implied Index Values (2025 & 2026)');
     html += htmlForwardPETable(forwardEstimates, [15, 17, 20], spxObj.price);
-    html += htmlStalenessWarning(forwardDate, 10, 'Forward EPS');
-    freshnessSections.push({ label: 'Forward EPS', lastUpdated: forwardDate, sourceName: forwardEstimates[0]?.source });
+    html += htmlStalenessWarning(forwardDate || '', 10, 'Forward EPS');
+    freshnessSections.push({ label: 'Forward EPS', lastUpdated: forwardEstimates[0]?.estimateDate || spxObj?.lastUpdated || '', sourceName: forwardEstimates[0]?.source || 'N/A' });
 
     // 3. Market Path (RSI + trend confirmation)
     const pathObj = await getMarketPath();
     const maObj = await getSPYMovingAverages();
     html += htmlRSIBlock(pathObj, maObj);
-    html += htmlStalenessWarning(pathObj.lastUpdated, 2, 'RSI/Market Path');
-    freshnessSections.push({ label: 'Market Path (RSI)', lastUpdated: pathObj.lastUpdated, sourceName: pathObj.sourceName });
+    html += htmlStalenessWarning(pathObj.lastUpdated || '', 2, 'RSI/Market Path');
+    freshnessSections.push({ label: 'Market Path (RSI)', lastUpdated: pathObj?.lastUpdated || '', sourceName: pathObj?.sourceName || 'N/A' });
 
     // 4. Top 5 Weighted Stocks in SPY, QQQ, DIA (with harmonized freshness check)
     const indices = [
@@ -258,17 +258,17 @@ async function main() {
     for (const idx of indices) {
       const { holdings, sourceName, sourceUrl, lastUpdated } = await getTopHoldings(idx.symbol);
       html += htmlSectionHeader(`Top 5 Weighted Stocks in ${idx.name}`);
-      html += htmlHoldingsBlock(idx.name, idx.symbol, holdings, sourceName, sourceUrl, lastUpdated);
-      etfDates.push(lastUpdated);
-      freshnessSections.push({ label: `${idx.symbol} Holdings`, lastUpdated, sourceName });
+      html += htmlHoldingsBlock(idx.name, idx.symbol, holdings, sourceName || 'N/A', sourceUrl || '', lastUpdated || '');
+      etfDates.push(lastUpdated || '');
+      freshnessSections.push({ label: `${idx.symbol} Holdings`, lastUpdated: lastUpdated || '', sourceName: sourceName || 'N/A' });
     }
     html += htmlETFDateConsistencyWarning(etfDates);
 
     // 5. S&P 500 Total Earnings (Trailing 12M)
     html += htmlSectionHeader('S&P 500 Earnings Per Share (Trailing 12M)');
     html += htmlEarningsBlock(earningsObj, [15, 17, 20]);
-    html += htmlStalenessWarning(earningsObj.lastUpdated, 35, 'Trailing EPS');
-    freshnessSections.push({ label: 'Trailing EPS', lastUpdated: earningsObj.lastUpdated, sourceName: earningsObj.sourceName });
+    html += htmlStalenessWarning(earningsObj?.lastUpdated || '', 35, 'Trailing EPS');
+    freshnessSections.push({ label: 'Trailing EPS', lastUpdated: earningsObj?.lastUpdated || '', sourceName: earningsObj?.sourceName || 'N/A' });
 
     // 6. Data freshness summary table (always present)
     html += htmlDataFreshnessTable(freshnessSections);

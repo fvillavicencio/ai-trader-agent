@@ -49,8 +49,8 @@ async function downloadXlsxWithPlaywright(downloadPath) {
  * - If successful, uses it and overwrites /tmp copy.
  * - If all downloads fail, tries to use /tmp copy.
  * - If /tmp copy does not exist, copies bundled asset from deployment (read-only) dir to /tmp and uses it.
- * - If all fail, returns null.
- * Returns an array: [{ source, url, year, eps }], or null if all methods fail.
+ * - If all fail, returns an array with a single object containing error information.
+ * Returns an array of objects with lastUpdated (string).
  */
 export async function getForwardEpsEstimates() {
   // Paths
@@ -135,13 +135,13 @@ export async function getForwardEpsEstimates() {
     }
   }
 
-  if (!xlsBuffer) {
-    console.error('[EPS] All methods to obtain EPS XLSX failed. Returning null.');
-    return null;
-  }
-
-  // Now parse xlsBuffer with xlsx
   try {
+    // Now parse xlsBuffer with xlsx
+    if (!xlsBuffer) {
+      console.error('[EPS] All methods to obtain EPS XLSX failed. Returning error.');
+      return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
+    }
+
     workbook = XLSX.read(xlsBuffer, { type: 'buffer' });
     // Find the relevant sheet (usually first)
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -167,7 +167,7 @@ export async function getForwardEpsEstimates() {
     }
     if (estimatesStart === -1) {
       console.warn('[EPS] Could not find ESTIMATES section in XLSX. Fallback:', usedFallback);
-      return null;
+      return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
     }
     // Extract forward EPS for 2025 and 2026 (use column 0 = date, column 2 = operating EPS)
     const results = [];
@@ -180,23 +180,20 @@ export async function getForwardEpsEstimates() {
       // Only take the 12/31/20XX rows for 2025 and 2026
       if ((year === 2025 || year === 2026) && row[0].startsWith('12/31') && !isNaN(eps)) {
         results.push({
+          estimateDate: row[0],
+          value: eps,
           source: 'S&P Global',
-          url: fetchedRemote ? SPGLOBAL_XLSX_URL : (usedFallback === 'tmp' ? TMP_XLSX_PATH : BUNDLED_XLSX_PATH),
-          year,
-          eps,
-          fallback: usedFallback
+          lastUpdated: fetchedRemote ? new Date().toISOString().slice(0,10) : (usedFallback === 'tmp' ? fs.statSync(TMP_XLSX_PATH).mtime.toISOString().slice(0,10) : fs.statSync(BUNDLED_XLSX_PATH).mtime.toISOString().slice(0,10))
         });
       }
     }
     if (results.length === 0) {
       console.warn('[EPS] Could not extract EPS estimates from XLSX. Fallback:', usedFallback);
-      return null;
+      return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
     }
-    // Attach scenario labels (Base for now) and estimate date
-    results.forEach(r => { r.scenario = 'Base'; r.estimateDate = new Date().toISOString().slice(0,10); });
     return results;
   } catch (err) {
     console.error('[EPS] Failed to parse XLSX:', err && err.message);
-    return null;
+    return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
   }
 }
