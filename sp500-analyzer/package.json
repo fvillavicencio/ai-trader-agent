@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "sp500-analyzer",
   "version": "1.0.0",
   "description": "S&P 500 and Index Analyzer for PE, earnings, and ETF weights.",
