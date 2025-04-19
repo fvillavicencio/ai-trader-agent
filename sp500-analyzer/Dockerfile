@@ -10,7 +10,10 @@ RUN apt-get update && \
 RUN ls -l /app
 RUN npm install
 
-COPY lambda_function.js ./
+COPY lambda.js ./
+COPY analyzeSP500.js ./
+COPY services ./services
+COPY forward_eps_estimates.json ./
 
 # Stage 2: Use Playwright base image for Chromium/system deps
 FROM mcr.microsoft.com/playwright:v1.52.0-jammy
@@ -20,6 +23,9 @@ WORKDIR /var/task
 # Copy only the built node_modules, package.json, and handler from build stage
 COPY --from=build /app/node_modules ./node_modules
 COPY --from=build /app/package*.json ./
-COPY --from=build /app/lambda_function.js ./
+COPY --from=build /app/lambda.js ./
+COPY --from=build /app/analyzeSP500.js ./
+COPY --from=build /app/services ./services
+COPY --from=build /app/forward_eps_estimates.json ./
 
-CMD [ "node_modules/.bin/aws-lambda-ric", "lambda_function.handler" ]
+CMD [ "node_modules/.bin/aws-lambda-ric", "lambda.handler" ]
