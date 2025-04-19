@@ -1,6 +1,6 @@
 // test-api.js
-import axios from 'axios';
-import dotenv from 'dotenv';
+const axios = require('axios');
+const dotenv = require('dotenv');
 dotenv.config();
 
 const LAMBDA_SERVICE_URL = process.env.LAMBDA_SERVICE_URL;
