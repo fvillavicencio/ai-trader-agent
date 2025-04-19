@@ -1,3 +1,17 @@
+# Stage 1: Build with Node.js 20 (npm, npx, Playwright)
+FROM public.ecr.aws/lambda/nodejs:20 as build
+
+WORKDIR /app
+
+COPY package*.json ./
+RUN npm install
+
+# Install Playwright with Chromium
+RUN npx playwright install chromium --with-deps
+
+COPY lambda_function.js ./
+
+# Stage 2: Amazon Linux 2 Lambda runtime with yum for system deps
 FROM public.ecr.aws/lambda/provided:al2
 
 # Install system dependencies for Chromium/Playwright
@@ -42,13 +56,11 @@ ENV HOME=/tmp \
 
 WORKDIR ${LAMBDA_TASK_ROOT}
 
-COPY package*.json ./
-RUN npm install
-
-RUN npx playwright install chromium --with-deps \
-    && mv /root/.cache/ms-playwright /tmp/playwright-cache
-
-COPY lambda_function.js ./
+# Copy everything from the build stage
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/package*.json ./
+COPY --from=build /app/lambda_function.js ./
+COPY --from=build /root/.cache/ms-playwright /tmp/playwright-cache
 
 RUN ls -al /var/task
 
