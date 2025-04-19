@@ -181,8 +181,9 @@ export async function getTopHoldings(symbol) {
         lastUpdated = new Date('2025-04-16T19:49:29-04:00').toISOString();
         lastUpdatedSource = 'Fallback (now)';
       }
-      console.log(`[getTopHoldings] Using as-of date for ${symbol}: ${lastUpdated} (source: ${lastUpdatedSource})`);
-      return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated };
+      const safeLastUpdated = typeof lastUpdated === 'string' ? lastUpdated : '';
+      console.log(`[getTopHoldings] Using as-of date for ${symbol}: ${safeLastUpdated} (source: ${lastUpdatedSource})`);
+      return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated: safeLastUpdated };
     }
     // For SPY/DIA, use new web source
     if (symbol === 'SPY' || symbol === 'DIA') {
@@ -191,8 +192,9 @@ export async function getTopHoldings(symbol) {
         holdings = webData.holdings;
         lastUpdated = webData.asOf;
         lastUpdatedSource = 'State Street Web (Individual ETF)';
+        const safeLastUpdated = typeof lastUpdated === 'string' ? lastUpdated : '';
         console.log(`[getTopHoldings] Using new State Street page for ${symbol}`);
-        return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: '', lastUpdated };
+        return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: '', lastUpdated: safeLastUpdated };
       }
     }
     // If not found or not SPY/DIA, fallback to previous logic
@@ -220,7 +222,8 @@ export async function getTopHoldings(symbol) {
             lastUpdated = new Date(response.data.holdings.as_of_date).toISOString();
             lastUpdatedSource = 'Tradier API';
           }
-          return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated };
+          const safeLastUpdated = typeof lastUpdated === 'string' ? lastUpdated : '';
+          return { holdings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated: safeLastUpdated };
         }
       } catch (e) {
         console.log(`Error fetching holdings for ${symbol} from Tradier: ${e.message}`);
@@ -238,8 +241,9 @@ export async function getTopHoldings(symbol) {
       lastUpdated = new Date('2025-04-16T19:27:09-04:00').toISOString(); // fallback to current time
       lastUpdatedSource = 'Fallback (now)';
     }
-    console.log(`[getTopHoldings] Using as-of date for ${symbol}: ${lastUpdated} (source: ${lastUpdatedSource})`);
-    return { holdings: excelHoldings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated };
+    const safeLastUpdated = typeof lastUpdated === 'string' ? lastUpdated : '';
+    console.log(`[getTopHoldings] Using as-of date for ${symbol}: ${safeLastUpdated} (source: ${lastUpdatedSource})`);
+    return { holdings: excelHoldings, sourceName: ETF_SOURCES[symbol].name, sourceUrl: ETF_SOURCES[symbol].url, lastUpdated: safeLastUpdated };
   } catch (err) {
     console.error(`[getTopHoldings] Error for ${symbol}:`, err);
     return { holdings: [], sourceName: 'N/A', sourceUrl: '', lastUpdated: '' };
@@ -281,8 +285,9 @@ async function fetchTopHoldingsFromXlsx(symbol) {
     .sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight))
     .slice(0, 5);
   const lastUpdated = extractAsOfDate(rows, workbook);
+  const safeLastUpdated = typeof lastUpdated === 'string' ? lastUpdated : '';
   console.log(`Returned holdings for ${symbol} from Excel file`);
-  return { holdings, lastUpdated };
+  return { holdings, lastUpdated: safeLastUpdated };
 }
 
 // Scrape State Street site for SPY/DIA 'As of' date
