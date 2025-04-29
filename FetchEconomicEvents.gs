@@ -345,6 +345,34 @@ function decryptEventInfo(eventName, source) {
     'New Home Sales-Units': {
       name: 'New Home Sales (Number of Units, in Millions)',
       source: 'U.S. Department of Commerce'
+    },
+    'Non-Farm Payrolls': {
+      name: 'U.S. Non-Farm Payroll Employment Change',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'ISM Manufacturing PMI': {
+      name: 'Manufacturing Purchasing Managers Index',
+      source: 'Institute for Supply Management'
+    },
+    'Unemployment Rate': {
+      name: 'U.S. Unemployment Rate',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'GDP Advance': {
+      name: 'Gross Domestic Product - Advance Estimate (Quarterly)',
+      source: 'U.S. Department of Commerce'
+    },
+    'GDP Cons Spending Advance': {
+      name: 'Consumer Spending Component of GDP - Advance Estimate',
+      source: 'U.S. Department of Commerce'
+    },
+    'Employment Wages QQ': {
+      name: 'Employment Cost Index - Wages & Salaries (Quarterly)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Core PCE Price Index MM': {
+      name: 'Core Personal Consumption Expenditures Price Index (Month-over-Month)',
+      source: 'U.S. Department of Commerce'
     }
   };
 
