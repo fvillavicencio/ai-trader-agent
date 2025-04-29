@@ -295,7 +295,7 @@ function decryptEventInfo(eventName, source) {
       source: 'U.S. Bureau of Labor Statistics'
     },
     'House Starts MM: Change': {
-      name: 'Housing Starts Month-over-Month Change',
+      name: 'Housing Starts MoM Change',
       source: 'U.S. Department of Commerce'
     },
     'Housing Starts Number': {
@@ -303,7 +303,7 @@ function decryptEventInfo(eventName, source) {
       source: 'U.S. Department of Commerce'
     },
     'Build Permits: Change MM': {
-      name: 'Building Permits Month-over-Month Change',
+      name: 'Building Permits MoM Change',
       source: 'U.S. Department of Commerce'
     },
     'Build Permits: Number': {
@@ -329,6 +329,22 @@ function decryptEventInfo(eventName, source) {
     'Rich Fed, Services Index': {
       name: 'Richmond Fed Services Index',
       source: 'Federal Reserve Bank of Richmond'
+    },
+    'Build Permits R Chg MM': {
+      name: 'Building Permits MoM Change (Residential)',
+      source: 'U.S. Department of Commerce'
+    },
+    'Build Permits R Numb': {
+      name: 'Building Permits (Total Number, Residential)',
+      source: 'U.S. Department of Commerce'
+    },
+    'New Home Sales Chg MM': {
+      name: 'New Home Sales MoM Change',
+      source: 'U.S. Department of Commerce'
+    },
+    'New Home Sales-Units': {
+      name: 'New Home Sales (Number of Units, in Millions)',
+      source: 'U.S. Department of Commerce'
     }
   };
 

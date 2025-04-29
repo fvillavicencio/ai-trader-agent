@@ -186,6 +186,15 @@ function generateDataRetrievalText() {
           formattedText += "\n";
         }
         
+        // if available, add S&P 500 analysis (text formatted)
+        var sp500Data = SP500Analyzer();
+        if (sp500Data) {
+          formattedText += "**S&P 500 Analysis:**\n";
+          formattedText += formatSP500AnalysisText(sp500Data);
+          formattedText += "\n";
+        }
+
+
         // Format upcoming economic events
         if (keyMarketIndicatorsData.upcomingEconomicEvents && keyMarketIndicatorsData.upcomingEconomicEvents.length > 0) {
           formattedText += `* Upcoming Economic Events:\n`;
@@ -240,6 +249,8 @@ function generateDataRetrievalText() {
       // Format fundamental metrics
       if (allData.fundamentalMetrics && allData.fundamentalMetrics.success) {
         const fundamentalMetricsData = allData.fundamentalMetrics;
+        // we need to filter out deprecated symbols 
+
         formattedText += formatFundamentalMetricsData(fundamentalMetricsData);
       } else {
         formattedText += "**Fundamental Metrics:**\n";
@@ -301,23 +312,11 @@ function retrieveAllData() {
     const defaultSymbols = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
     const mentionedStocks = marketSentimentData.mentionedStocks || [];
     
-    // Get deprecated symbols from config
-    const deprecatedSymbols = DEPRECATED_SYMBOLS;
-    
-    // Filter out deprecated symbols from both default and mentioned stocks
-    const filteredDefaultSymbols = defaultSymbols.filter(symbol => !deprecatedSymbols.includes(symbol));
-    const filteredMentionedStocks = mentionedStocks.filter(symbol => !deprecatedSymbols.includes(symbol));
-    
-    // Combine and deduplicate symbols
-    const allSymbols = [...new Set([...filteredDefaultSymbols, ...filteredMentionedStocks])];
-    
-    // Log the symbols for debugging
-    Logger.log(`Filtered default symbols: ${filteredDefaultSymbols.join(', ')}`);
-    Logger.log(`Filtered mentioned stocks: ${filteredMentionedStocks.join(', ')}`);
-    Logger.log(`All symbols to retrieve metrics for: ${allSymbols.join(', ')}`);
-    
-    const fundamentalMetricsData = retrieveFundamentalMetrics(allSymbols);
-    
+    const allSymbolsRaw = [...defaultSymbols, ...mentionedStocks];
+
+    const cleanedSymbols = [...new Set(cleanAndReplaceSymbols(allSymbolsRaw))];
+    const fundamentalMetricsData = retrieveFundamentalMetrics(cleanedSymbols);
+
     // Log the metrics for debugging
     Logger.log(`Fundamental metrics data: ${JSON.stringify(fundamentalMetricsData, null, 2)}`);
     
@@ -681,6 +680,26 @@ function formatValue(value, fixedDecimals = false, decimals = 2) {
   return value.toString();
 }
 
+function cleanAndReplaceSymbols(symbols) {
+  const deprecatedSymbols = {
+    'FB': 'META',  // Facebook/Meta Platforms
+    'TWTR': 'X',   // Twitter/X
+    'VIX': 'VIX.X', // CBOE Volatility Index
+    'GOOG': 'GOOGL', // Google Class A shares
+  };
+  const deprecatedNamesLower = [
+    'S&P 500',
+    'S&P 400',
+    'Russell 2000',
+    'U.S. Treasuries'
+  ].map(n => n.toLowerCase());
+
+  // Replace deprecated symbols and filter out deprecated names
+  return symbols
+    .map(symbol => deprecatedSymbols[symbol] || symbol)
+    .filter(symbol => !deprecatedNamesLower.includes(symbol.trim().toLowerCase()));
+}
+
 /**
  * Formats fundamental metrics data
  * @param {Object} fundamentalMetricsData - Fundamental metrics data
@@ -701,8 +720,11 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
     const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
     const magnificentSeven = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
     const otherStocks = Object.keys(metricsObj).filter(
-      symbol => !majorIndices.includes(symbol) && !magnificentSeven.includes(symbol)
-    );
+  symbol =>
+    !majorIndices.includes(symbol) &&
+    !magnificentSeven.includes(symbol) &&
+    cleanAndReplaceSymbols([symbol])[0] === symbol
+);
     
     // Helper function to format a single stock
     function formatStock(symbol, metrics) {

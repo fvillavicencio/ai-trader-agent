@@ -189,7 +189,7 @@ function fetchMarketFuturesIfAfterHours(options) {
   var result = {
     asOf: new Date().toISOString(),
     source: {
-      name: 'Mixed',
+      name: 'Yahoo Finance',
       url: 'https://finance.yahoo.com/futures/'
     },
     consolidated: consolidatedData
