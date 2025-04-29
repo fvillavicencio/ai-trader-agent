@@ -372,7 +372,7 @@
                   <span style="overflow: hidden; line-height:1.4;">{{marketIndicators.fearGreed.description}}</span>
                 </div>
                 <div style="margin-top: 5px; font-size: 0.85rem; color: #888; width: 100%; text-align: right;">
-                   One Week Ago: {{marketIndicators.fearGreed.oneWeekAgo}} | One Month Ago: {{marketIndicators.fearGreed.oneMonthAgo}}
+                   Previous Day: {{marketIndicators.fearGreed.previousDay}} | One Week Ago: {{marketIndicators.fearGreed.oneWeekAgo}} | One Month Ago: {{marketIndicators.fearGreed.oneMonthAgo}}
                 </div>
               </div>
               <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
@@ -618,7 +618,7 @@
                           <tr>
                             <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">{{name}}</td>
                             <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
-                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{value}}
+                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{decodeHtml value}}
                             </td>
                           </tr>
                         {{/each}}
@@ -656,7 +656,7 @@
                           <tr>
                             <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">{{name}}</td>
                             <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
-                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{value}}
+                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{decodeHtml value}}
                             </td>
                           </tr>
                         {{/each}}
@@ -694,7 +694,7 @@
                           <tr>
                             <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">{{name}}</td>
                             <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
-                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{value}}
+                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{decodeHtml value}}
                             </td>
                           </tr>
                         {{/each}}
@@ -988,7 +988,7 @@
               <div style="font-weight: bold; margin-bottom: 5px;">{{#if title}}{{title}}{{else}}{{name}}{{/if}}</div>
               <div style="color: #555; margin-bottom: 5px;">{{#if description}}{{description}}{{/if}}</div>
               <div style="font-size: 10px; color: #757575;">
-                {{#if region}}Region: {{region}}{{/if}}{{#if source}} • Source: {{source}}{{/if}}
+                {{#if region}}Region: {{region}}{{/if}} {{#if source}} • Source: {{source}}{{/if}}
               </div>
             </div>
             <div style="width: 80px; text-align: center; background-color: {{#if (eq impactLevel 'High')}}#f44336{{else if (eq impactLevel 'Medium')}}#ff9800{{else if (eq impactLevel 'Severe')}}#800020{{else}}#4caf50{{/if}}; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">

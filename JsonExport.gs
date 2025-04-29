@@ -148,7 +148,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     
     // Create the full JSON dataset structure
     const fullJsonDataset = {
-      reportDate: formattedDate,
+      reportDate: new Date().toISOString(),
       isTest: debugMode,
       metadata: {
         title: newsletterName,
@@ -1607,7 +1607,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     Logger.log(`Error in generateFullJsonDataset: ${error}`);
     // Return a minimal dataset with error information
     return {
-      reportDate: Utilities.formatDate(new Date(), "America/New_York", "MMMM d, yyyy 'at' h:mm a z"),
+      reportDate: new Date().toISOString(),
       isTest: debugMode,
       error: {
         message: `Error generating full JSON dataset: ${error.message}`,
@@ -1615,7 +1615,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       },
       metadata: {
         title: PropertiesService.getScriptProperties().getProperty('NEWSLETTER_NAME') || 'Market Pulse Daily',
-        timestamp: Utilities.formatDate(new Date(), "America/New_York", "MMMM d, yyyy 'at' h:mm a z")
+        timestamp: new Date().toISOString()
       }
     };
   }

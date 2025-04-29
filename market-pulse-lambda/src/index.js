@@ -108,6 +108,17 @@ Handlebars.registerHelper('ifCond', function(v1, operator, v2, options) {
   }
 });
 
+// Helper to decode HTML entities
+Handlebars.registerHelper('decodeHtml', function(text) {
+  if (!text) return '';
+  return text
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;/g, "'");
+});
+
 // Check if a string starts with a specific substring
 Handlebars.registerHelper('startsWith', function(str, prefix) {
   if (typeof str !== 'string') return false;
@@ -566,6 +577,47 @@ function processData(data) {
     });
   }
   
+  // Process S&P 500 data if present
+  if (sampleData.sp500) {
+    // Format P/E ratio values
+    if (sampleData.sp500.peRatio) {
+      sampleData.sp500.peRatio.ttmFormatted = sampleData.sp500.peRatio.current ? sampleData.sp500.peRatio.current.toFixed(2) : 'N/A';
+      sampleData.sp500.peRatio.fiveYearAvgFormatted = sampleData.sp500.peRatio.fiveYearAvg ? sampleData.sp500.peRatio.fiveYearAvg.toFixed(2) : 'N/A';
+      sampleData.sp500.peRatio.tenYearAvgFormatted = sampleData.sp500.peRatio.tenYearAvg ? sampleData.sp500.peRatio.tenYearAvg.toFixed(2) : 'N/A';
+    }
+    
+    // Format EPS values
+    if (sampleData.sp500.eps) {
+      // Remove $ if present and convert to number for formatting
+      const formatCurrency = (val) => {
+        if (!val) return 'N/A';
+        const numVal = typeof val === 'string' ? parseFloat(val.replace(/[$,]/g, '')) : val;
+        return isNaN(numVal) ? val : `$${numVal.toFixed(2)}`;
+      };
+      
+      sampleData.sp500.eps.ttmFormatted = formatCurrency(sampleData.sp500.eps.ttm);
+      sampleData.sp500.eps.targetAt15xFormatted = formatCurrency(sampleData.sp500.eps.targetAt15x);
+      sampleData.sp500.eps.targetAt17xFormatted = formatCurrency(sampleData.sp500.eps.targetAt17x);
+      sampleData.sp500.eps.targetAt20xFormatted = formatCurrency(sampleData.sp500.eps.targetAt20x);
+    }
+    
+    // Format Forward EPS values
+    if (sampleData.sp500.forwardEps && Array.isArray(sampleData.sp500.forwardEps)) {
+      sampleData.sp500.forwardEps.forEach(yearData => {
+        const formatCurrency = (val) => {
+          if (!val) return 'N/A';
+          const numVal = typeof val === 'string' ? parseFloat(val.replace(/[$,]/g, '')) : val;
+          return isNaN(numVal) ? val : `$${numVal.toFixed(2)}`;
+        };
+        
+        yearData.epsFormatted = formatCurrency(yearData.eps);
+        yearData.targetAt15xFormatted = formatCurrency(yearData.targetAt15x);
+        yearData.targetAt17xFormatted = formatCurrency(yearData.targetAt17x);
+        yearData.targetAt20xFormatted = formatCurrency(yearData.targetAt20x);
+      });
+    }
+  }
+  
   // Ensure the fundamentalMetrics section is properly structured for the template
   if (!sampleData.fundamentalMetrics) {
     sampleData.fundamentalMetrics = {};
@@ -602,6 +654,11 @@ exports.handler = async (event) => {
     
     // Process the input data
     const processedData = processData(event);
+    
+    // Ensure reportDate is valid
+    if (!processedData.reportDate || isNaN(new Date(processedData.reportDate).getTime())) {
+      processedData.reportDate = new Date().toISOString();
+    }
     
     // Read the assembled template
     const templatePath = path.resolve(__dirname, 'assembled-template.html');
