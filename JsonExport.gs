@@ -148,7 +148,9 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     
     // Create the full JSON dataset structure
     const fullJsonDataset = {
-      reportDate: new Date().toISOString(),
+      reportDate: now.toISOString(),
+      reportDateFormatted: formattedDate,
+      reportDateDisplay: "As of " + formattedDate,
       isTest: debugMode,
       metadata: {
         title: newsletterName,
@@ -1148,7 +1150,26 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Add the Global Overview
         if (analysisJson?.analysis?.macroeconomicFactors?.geopoliticalRisks?.global) {
           Logger.log("Setting the geopolitical global analysis to: " + analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global);
-          fullJsonDataset.macroeconomicFactors.geopoliticalRisks.global = analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global;
+          // Remove any trailing ".." or "." from the global overview text
+          if (typeof analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global === 'string') {
+            let globalText = analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global;
+            // Remove trailing ".."
+            if (globalText.endsWith('..')) {
+              globalText = globalText.substring(0, globalText.length - 2);
+            } 
+            // Remove trailing single "."
+            else if (globalText.endsWith('.') && !globalText.endsWith('..')) {
+              // Only remove if it's not part of a proper sentence-ending period
+              // Check if the character before the period is not a space (indicating it might be an abbreviation)
+              const charBeforePeriod = globalText.charAt(globalText.length - 2);
+              if (charBeforePeriod !== ' ' && charBeforePeriod !== '.') {
+                globalText = globalText.substring(0, globalText.length - 1);
+              }
+            }
+            fullJsonDataset.macroeconomicFactors.geopoliticalRisks.global = globalText;
+          } else {
+            fullJsonDataset.macroeconomicFactors.geopoliticalRisks.global = analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global;
+          }
         }
         
         // Add risks if available
@@ -1608,6 +1629,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     // Return a minimal dataset with error information
     return {
       reportDate: new Date().toISOString(),
+      reportDateFormatted: formattedDate,
+      reportDateDisplay: "As of " + formattedDate,
       isTest: debugMode,
       error: {
         message: `Error generating full JSON dataset: ${error.message}`,
@@ -1679,8 +1702,7 @@ function testGenerateFullJsonDataset() {
     
     // Enable debug mode for this test
     const scriptProperties = PropertiesService.getScriptProperties();
-    const originalDebugMode = scriptProperties.getProperty('DEBUG_MODE');
-    scriptProperties.setProperty('DEBUG_MODE', 'true');
+    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
     
     // Get a sample analysis JSON (either from cache or generate a debug one)
     let analysisJson = null;
@@ -1692,19 +1714,20 @@ function testGenerateFullJsonDataset() {
       analysisJson = JSON.parse(cachedAnalysis);
     } else if (debugMode) {
         Logger.log("No cached analysis found, generating debug response");
-         analysisJson = generateDebugOpenAIResponse();
+        analysisJson = generateDebugOpenAIResponse();
     } else {
-      Logger.log("No JSON analysis available, no report to generate");
-      return {
-        success: false,
-        message: "No JSON analysis available, no report to generate"
-      };
+      Logger.log("No cached analysis found, getting OpenAI analysis");
+      analysisJson = getOpenAITradingAnalysis();
+      if (analysisJson.success === false) {
+        Logger.log("Failed to get OpenAI analysis, using debug response");
+        analysisJson = generateDebugOpenAIResponse();
+      }
     }
     
     // Generate the full JSON dataset
     Logger.log("Generating full JSON dataset...");
-    const fullJsonDataset = generateFullJsonDataset(analysisJson, true);
-    
+    const fullJsonDataset = generateFullJsonDataset(analysisJson, debugMode);
+     
     // Save the full JSON dataset to Google Drive
     const fullJsonFileName = "test-full-json-dataset.json";
     const jsonString = JSON.stringify(fullJsonDataset, null, 2);
@@ -1729,13 +1752,6 @@ function testGenerateFullJsonDataset() {
       }
     } catch (lambdaError) {
       Logger.log(`Error calling Lambda service: ${lambdaError}`);
-    }
-    
-    // Restore original debug mode setting
-    if (originalDebugMode) {
-      scriptProperties.setProperty('DEBUG_MODE', originalDebugMode);
-    } else {
-      scriptProperties.deleteProperty('DEBUG_MODE');
     }
     
     return {
@@ -1810,7 +1826,7 @@ function generateAndSaveFullJsonDataset(analysisJson, debugMode) {
         return fullJsonFileUrl;
       }
       
-      return generateHtmlUsingProvidedLambdaService(jsonString, fullJsonFileUrl, debugMode);
+      return generateHtmlUsingProvidedLambdaService(jsonString, fullJsonFileUrl, true);
     } catch (lambdaError) {
       if (debugMode) {
         Logger.log(`Error calling Lambda service: ${lambdaError}`);
@@ -1869,9 +1885,22 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
       
       // Check if the response is HTML (starts with <!DOCTYPE or <html)
       if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-        Logger.log('Received HTML response instead of JSON. This likely indicates an error page from the Lambda service.');
-        // Return just the JSON URL if we received an error page
-        return { jsonUrl: jsonFileUrl };
+        if (debugMode) {
+          Logger.log('Received direct HTML response from Lambda service.');
+        }
+        
+        // Save the HTML directly to Google Drive
+        const htmlFileName = 'MarketPulseDaily.html';
+        const htmlFileUrl = saveToGoogleDrive(htmlFileName, responseText);
+        
+        if (debugMode) {
+          Logger.log(`HTML saved to Google Drive: ${htmlFileUrl}`);
+        }
+        
+        return {
+          jsonUrl: jsonFileUrl,
+          htmlUrl: htmlFileUrl
+        };
       }
       
       try {
@@ -1883,14 +1912,26 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
         
         // Check if the response has the expected format
         if (responseJson.body) {
-          // The body is a string that needs to be parsed
-          const innerBody = JSON.parse(responseJson.body);
-          if (debugMode) {
-            Logger.log(`Inner body: ${JSON.stringify(innerBody).substring(0, 200)}...`);
-          }
-          
-          if (innerBody.html) {
-            htmlContent = innerBody.html;
+          // Check if body is already HTML
+          if (typeof responseJson.body === 'string' && 
+              (responseJson.body.trim().startsWith('<!DOCTYPE') || 
+               responseJson.body.trim().startsWith('<html'))) {
+            htmlContent = responseJson.body;
+          } else {
+            // Try to parse the body as JSON
+            try {
+              const innerBody = JSON.parse(responseJson.body);
+              if (debugMode) {
+                Logger.log(`Inner body: ${JSON.stringify(innerBody).substring(0, 200)}...`);
+              }
+              
+              if (innerBody.html) {
+                htmlContent = innerBody.html;
+              }
+            } catch (bodyError) {
+              // If parsing fails, use body directly
+              htmlContent = responseJson.body;
+            }
           }
         } else if (responseJson.html) {
           // Direct format
@@ -1919,6 +1960,22 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
         }
       } catch (error) {
         Logger.log(`Error parsing Lambda response: ${error}`);
+        
+        // If parsing failed but response looks like HTML, save it directly
+        if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
+          const htmlFileName = 'MarketPulseDaily.html';
+          const htmlFileUrl = saveToGoogleDrive(htmlFileName, responseText);
+          
+          if (debugMode) {
+            Logger.log(`Response appears to be HTML. Saving directly to: ${htmlFileUrl}`);
+          }
+          
+          return {
+            jsonUrl: jsonFileUrl,
+            htmlUrl: htmlFileUrl
+          };
+        }
+        
         // Return just the JSON URL if parsing failed
         return { jsonUrl: jsonFileUrl };
       }
@@ -1936,29 +1993,6 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
     
     // Return just the JSON URL if Lambda service call failed
     return { jsonUrl: jsonFileUrl };
-  }
-}
-
-/**
- * Test function to generate and save the full JSON dataset
- */
-function testGenerateAndSaveFullJsonDataset() {
-  const debugMode = true;
-  try {
-    // Get the analysis from OpenAI (will use cache if available)
-    const analysisJson = getOpenAITradingAnalysis();
-    
-    // Generate and save the full JSON dataset
-    const result = generateAndSaveFullJsonDataset(analysisJson, debugMode);
-    
-    if (typeof result === 'object' && result.jsonUrl && result.htmlUrl) {
-      Logger.log(`Full JSON dataset saved to: ${result.jsonUrl}`);
-      Logger.log(`HTML saved to: ${result.htmlUrl}`);
-    } else {
-      Logger.log(`Full JSON dataset saved to: ${result}`);
-    }
-  } catch (error) {
-    Logger.log(`Error in test: ${error}`);
   }
 }
 
@@ -2069,4 +2103,27 @@ function generateInflationAnalysis(inflation) {
   
   // If no trend is found, return a default message
   return "Inflation is currently at a level of " + inflation.currentValue + ", with a " + inflation.outlook + " outlook and " + inflation.marketImpact + " market impact.";
+}
+
+/**
+ * Test function to generate and save the full JSON dataset
+ */
+function testGenerateAndSaveFullJsonDataset() {
+  const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
+  try {
+    // Get the analysis from OpenAI (will use cache if available)
+    const analysisJson = getOpenAITradingAnalysis();
+    
+    // Generate and save the full JSON dataset
+    const result = generateAndSaveFullJsonDataset(analysisJson, debugMode);
+    
+    if (typeof result === 'object' && result.jsonUrl && result.htmlUrl) {
+      Logger.log(`Full JSON dataset saved to: ${result.jsonUrl}`);
+      Logger.log(`HTML saved to: ${result.htmlUrl}`);
+    } else {
+      Logger.log(`Full JSON dataset saved to: ${result}`);
+    }
+  } catch (error) {
+    Logger.log(`Error in test: ${error}`);
+  }
 }

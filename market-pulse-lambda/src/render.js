@@ -63,7 +63,11 @@ function registerHelpers() {
     if (!value) return 'Current Date';
     
     try {
-      const date = new Date(value);
+      // Ensure we're working with a string
+      const dateString = typeof value === 'object' ? value.toString() : String(value);
+      
+      // Create a new date object
+      const date = new Date(dateString);
       
       // Check if date is valid
       if (isNaN(date.getTime())) {
@@ -89,19 +93,25 @@ function registerHelpers() {
         else if (format.includes('d')) options.day = 'numeric';
         
         // Year formatting
-        if (format.includes('YYYY')) options.year = 'numeric';
-        else if (format.includes('YY')) options.year = '2-digit';
+        if (format.includes('YYYY') || format.includes('yyyy')) options.year = 'numeric';
+        else if (format.includes('YY') || format.includes('yy')) options.year = '2-digit';
         
-        // Time formatting
-        if (format.includes('h:mm')) {
+        // Time formatting - ensure we add hour and minute if the format includes them
+        if (format.includes('h:mm') || format.includes('h:m') || format.includes('hh:mm')) {
           options.hour = 'numeric';
           options.minute = '2-digit';
           options.hour12 = true;
         }
         
-        if (format.includes('A') || format.includes('a')) options.hour12 = true;
+        // AM/PM formatting
+        if (format.includes('A') || format.includes('a')) {
+          options.hour12 = true;
+        }
         
-        if (format.includes('z')) options.timeZoneName = 'short';
+        // Timezone formatting
+        if (format.includes('z')) {
+          options.timeZoneName = 'short';
+        }
         
         console.log(`Formatting date ${value} with options:`, options);
         return date.toLocaleString('en-US', options);
