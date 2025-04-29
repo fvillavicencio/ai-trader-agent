@@ -120,7 +120,7 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
       Logger.log("Publishing HTML content to Ghost"); 
       let ghostResult;
       try {
-        ghostResult = publishToGhost(file.getId(), folder.getId(), fileName);
+        ghostResult = GhostPublisher.publishToGhost(file.getId(), folder.getId(), fileName);
       } catch (e) {
         Logger.log("Warning: Failed to publish to Ghost: " + e);
       }
