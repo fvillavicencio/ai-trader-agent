@@ -568,9 +568,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     }
     
     // Populate fundamental metrics from allData if available
-    if (allData && allData.fundamentalMetrics && allData.fundamentalMetrics.metrics) {
-      const metrics = allData.fundamentalMetrics.metrics;
-      
+    if (allData && allData.fundamentalMetrics) {
       // Define major indices symbols
       const majorIndicesSymbols = ["SPY", "DIA", "QQQ", "IWM"];
       
@@ -584,14 +582,19 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       
       // Helper function to create stock object with metrics array format
       const createStockObject = (symbol, data) => {
+        // Skip if data is not a valid object or has an error
+        if (!data || typeof data !== 'object' || data.error) {
+          return null;
+        }
+        
         // Create the base stock object
         const stockObj = {
           symbol: symbol,
-          name: data.name || symbol,
-          price: data.price || 0,
-          priceChange: data.priceChange || 0,
-          percentChange: typeof data.percentChange === 'string' ? data.percentChange : 
-                        (typeof data.percentChange === 'number' ? data.percentChange.toFixed(2) + '%' : '0%'),
+          name: data.name || data.company || symbol,
+          price: typeof data.price === 'number' ? data.price : 0,
+          priceChange: typeof data.priceChange === 'number' ? data.priceChange : 0,
+          percentChange: typeof data.changesPercentage === 'string' ? data.changesPercentage : 
+                        (typeof data.changesPercentage === 'number' ? data.changesPercentage.toFixed(2) + '%' : '0%'),
           metrics: []
         };
         
@@ -693,18 +696,51 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         return stockObj;
       };
       
-      // Process all symbols in metrics
-      for (const symbol in metrics) {
-        if (metrics.hasOwnProperty(symbol)) {
-          const stockData = metrics[symbol];
+      // Get the metrics data from the correct location in the data structure
+      let metricsData = {};
+      
+      // Debug logging to see the structure of fundamentalMetrics
+      if (debugMode) {
+        Logger.log("fundamentalMetrics structure:");
+        Logger.log(JSON.stringify(allData.fundamentalMetrics, null, 2));
+      }
+      
+      // Check all possible paths where the metrics data could be located
+      if (allData.fundamentalMetrics.metrics && allData.fundamentalMetrics.metrics.metrics) {
+        // Path: allData.fundamentalMetrics.metrics.metrics
+        metricsData = allData.fundamentalMetrics.metrics.metrics;
+      } else if (allData.fundamentalMetrics.metrics) {
+        // Path: allData.fundamentalMetrics.metrics
+        metricsData = allData.fundamentalMetrics.metrics;
+      }
+      
+      // If we still don't have metrics data, try to retrieve it directly
+      if (Object.keys(metricsData).length === 0) {
+        try {
+          const fundamentalMetricsData = retrieveFundamentalMetrics();
+          if (fundamentalMetricsData && fundamentalMetricsData.metrics && fundamentalMetricsData.metrics.metrics) {
+            metricsData = fundamentalMetricsData.metrics.metrics;
+          }
+        } catch (error) {
+          Logger.log(`Error retrieving fundamental metrics directly: ${error}`);
+        }
+      }
+      
+      // Process each symbol in the metrics data
+      for (const symbol in metricsData) {
+        if (metricsData.hasOwnProperty(symbol) && typeof symbol === 'string' && symbol !== 'validSymbols' && symbol !== 'deprecatedSymbols') {
+          const stockData = metricsData[symbol];
           const stockObject = createStockObject(symbol, stockData);
           
-          if (majorIndicesSymbols.includes(symbol)) {
-            majorIndices.push(stockObject);
-          } else if (magSevenSymbols.includes(symbol)) {
-            magnificentSeven.push(stockObject);
-          } else {
-            otherStocks.push(stockObject);
+          // Only add valid stock objects
+          if (stockObject) {
+            if (majorIndicesSymbols.includes(symbol)) {
+              majorIndices.push(stockObject);
+            } else if (magSevenSymbols.includes(symbol)) {
+              magnificentSeven.push(stockObject);
+            } else {
+              otherStocks.push(stockObject);
+            }
           }
         }
       }
@@ -718,6 +754,50 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       fullJsonDataset.fundamentalMetrics.majorIndices = majorIndices;
       fullJsonDataset.fundamentalMetrics.magnificentSeven = magnificentSeven;
       fullJsonDataset.fundamentalMetrics.otherStocks = otherStocks;
+      
+      // If we have no data in any category, add some sample data for testing
+      if (debugMode && majorIndices.length === 0 && magnificentSeven.length === 0 && otherStocks.length === 0) {
+        Logger.log("No fundamental metrics data found. Adding sample data for testing.");
+        
+        // Add sample data for SPY
+        fullJsonDataset.fundamentalMetrics.majorIndices.push({
+          symbol: "SPY",
+          name: "SPDR S&P 500 ETF",
+          price: 502.18,
+          priceChange: 1.53,
+          percentChange: "0.31%",
+          metrics: [
+            { name: "P/E Ratio", value: "23.47" },
+            { name: "Dividend Yield", value: "1.32%" },
+            { name: "52W High", value: "$518.84" },
+            { name: "52W Low", value: "$420.16" },
+            { name: "Volume", value: "78.4M" },
+            { name: "Beta", value: "1.0" },
+            { name: "Sector", value: "Index ETF" },
+            { name: "Assets", value: "$482.5B" }
+          ]
+        });
+        
+        // Add sample data for AAPL
+        fullJsonDataset.fundamentalMetrics.magnificentSeven.push({
+          symbol: "AAPL",
+          name: "Apple Inc.",
+          price: 169.32,
+          priceChange: 0.87,
+          percentChange: "0.52%",
+          metrics: [
+            { name: "P/E Ratio", value: "28.22" },
+            { name: "Forward P/E", value: "26.8" },
+            { name: "PEG Ratio", value: "2.45" },
+            { name: "Price/Book", value: "35.7" },
+            { name: "Price/Sales", value: "7.82" },
+            { name: "Debt/Equity", value: "1.45" },
+            { name: "ROE", value: "147.8%" },
+            { name: "Sector", value: "Technology" },
+            { name: "Industry", value: "Consumer Electronics" }
+          ]
+        });
+      }
     }
     
     // Populate macroeconomic factors from allData if available
