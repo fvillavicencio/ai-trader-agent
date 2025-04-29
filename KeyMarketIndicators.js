@@ -938,11 +938,14 @@ function retrieveFearAndGreedIndex() {
       currentValue: currentValue,
       rating: rating,
       previousValue: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null,
+      previousClose: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null, // Add explicit previousClose field
+      previousDay: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null, // Add explicit previousDay field
       previousRating: data.fear_and_greed && data.fear_and_greed.previous_close ? getRatingFromValue(parseInt(data.fear_and_greed.previous_close)) : null,
       oneWeekAgo: data.fear_and_greed && data.fear_and_greed.previous_1_week ? parseInt(data.fear_and_greed.previous_1_week) : null,
       oneMonthAgo: data.fear_and_greed && data.fear_and_greed.previous_1_month ? parseInt(data.fear_and_greed.previous_1_month) : null,
       oneYearAgo: data.fear_and_greed && data.fear_and_greed.previous_1_year ? parseInt(data.fear_and_greed.previous_1_year) : null,
       components: data.fear_and_greed && data.fear_and_greed.rating_data ? data.fear_and_greed.rating_data : null,
+      analysis: data.fear_and_greed && data.fear_and_greed.analysis ? data.fear_and_greed.analysis : null,
       source: source,
       sourceUrl: sourceUrl,
       timestamp: new Date(),
@@ -1083,11 +1086,14 @@ function retrieveFearAndGreedIndexData() {
       currentValue: currentValue,
       rating: rating,
       previousValue: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null,
+      previousClose: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null, // Add explicit previousClose field
+      previousDay: data.fear_and_greed && data.fear_and_greed.previous_close ? parseInt(data.fear_and_greed.previous_close) : null, // Add explicit previousDay field
       previousRating: data.fear_and_greed && data.fear_and_greed.previous_close ? getRatingFromValue(parseInt(data.fear_and_greed.previous_close)) : null,
       oneWeekAgo: data.fear_and_greed && data.fear_and_greed.previous_1_week ? parseInt(data.fear_and_greed.previous_1_week) : null,
       oneMonthAgo: data.fear_and_greed && data.fear_and_greed.previous_1_month ? parseInt(data.fear_and_greed.previous_1_month) : null,
       oneYearAgo: data.fear_and_greed && data.fear_and_greed.previous_1_year ? parseInt(data.fear_and_greed.previous_1_year) : null,
       components: data.fear_and_greed && data.fear_and_greed.rating_data ? data.fear_and_greed.rating_data : null,
+      analysis: data.fear_and_greed && data.fear_and_greed.analysis ? data.fear_and_greed.analysis : null,
       source: source,
       sourceUrl: sourceUrl,
       timestamp: new Date(),
@@ -1206,17 +1212,68 @@ function fetchFearAndGreedIndexData() {
               const fearAndGreed = initialState.marketData.fearAndGreed;
               Logger.log("Successfully extracted Fear & Greed data from CNN HTML");
               
-              // Convert to the expected format
-              return {
+              // Extract the current score
+              const currentValue = fearAndGreed.score ? parseInt(fearAndGreed.score) : null;
+              
+              // Get previous values for trend analysis
+              const previousValue = fearAndGreed.previousClose ? parseInt(fearAndGreed.previousClose) : null;
+              const oneWeekAgo = fearAndGreed.oneWeekAgo ? parseInt(fearAndGreed.oneWeekAgo) : null;
+              
+              // Generate analysis based on the current value and trend
+              let analysis = null;
+              
+              if (currentValue !== null) {
+                // Determine trend direction
+                let trendDescription = "relatively unchanged";
+                if (previousValue !== null) {
+                  const change = currentValue - previousValue;
+                  const absChange = Math.abs(change);
+                  
+                  if (absChange >= 10) {
+                    trendDescription = change > 0 ? "significantly more greedy" : "significantly more fearful";
+                  } else if (absChange >= 5) {
+                    trendDescription = change > 0 ? "more greedy" : "more fearful";
+                  } else if (absChange >= 2) {
+                    trendDescription = change > 0 ? "slightly more greedy" : "slightly more fearful";
+                  }
+                }
+                
+                // Generate analysis based on classification and trend
+                if (currentValue <= 25) {
+                  analysis = `Investors are showing extreme fear, indicating a potential buying opportunity as markets may be oversold. Sentiment is ${trendDescription} compared to yesterday.`;
+                } else if (currentValue <= 40) {
+                  analysis = `Market sentiment reflects fear, suggesting caution among investors. Sentiment is ${trendDescription} compared to yesterday.`;
+                } else if (currentValue <= 60) {
+                  analysis = `Market sentiment is neutral, with a balanced outlook from investors. Sentiment is ${trendDescription} compared to yesterday.`;
+                } else if (currentValue <= 75) {
+                  analysis = `Investors are showing greed, indicating optimism in the markets. Sentiment is ${trendDescription} compared to yesterday.`;
+                } else {
+                  analysis = `Extreme greed suggests markets may be overvalued and due for a correction. Sentiment is ${trendDescription} compared to yesterday.`;
+                }
+                
+                // Add weekly comparison if available
+                if (oneWeekAgo !== null) {
+                  const weeklyChange = currentValue - oneWeekAgo;
+                  if (Math.abs(weeklyChange) >= 10) {
+                    analysis += ` Sentiment has ${weeklyChange > 0 ? "significantly improved" : "deteriorated considerably"} from last week.`;
+                  }
+                }
+              }
+              
+              // Create the result object
+              const result = {
                 fear_and_greed: {
-                  score: fearAndGreed.score,
-                  previous_close: fearAndGreed.previousClose,
-                  previous_1_week: fearAndGreed.oneWeekAgo,
+                  score: currentValue,
+                  previous_close: previousValue,
+                  previous_1_week: oneWeekAgo,
                   previous_1_month: fearAndGreed.oneMonthAgo,
                   previous_1_year: fearAndGreed.oneYearAgo,
-                  rating_data: fearAndGreed.indicators
+                  rating_data: fearAndGreed.indicators,
+                  analysis: analysis
                 }
               };
+              
+              return result;
             }
           } catch (parseError) {
             Logger.log(`Error parsing CNN HTML data: ${parseError}`);
@@ -1912,6 +1969,8 @@ function getCNNFearGreedIndexFromHTML() {
         currentValue: currentValue,
         rating: rating,
         previousValue: currentValue - 1, // Estimate previous value
+        previousClose: currentValue - 1, // Estimate previous close
+        previousDay: currentValue - 1, // Estimate previous day
         previousRating: getRatingFromValue(currentValue - 1),
         oneWeekAgo: Math.max(1, currentValue - 15), // Estimate one week ago
         oneMonthAgo: null,
@@ -1934,6 +1993,8 @@ function getCNNFearGreedIndexFromHTML() {
       currentValue: 47,
       rating: "Neutral",
       previousValue: 46,
+      previousClose: 46,
+      previousDay: 46,
       previousRating: "Fear",
       oneWeekAgo: 32,
       oneMonthAgo: null,

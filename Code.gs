@@ -36,52 +36,6 @@ function getOpenAITradingAnalysis() {
       throw new Error("Failed to retrieve essential trading data: Fundamental metrics data is empty");
     }
     
-    // Filter out deprecated symbols from fundamental metrics
-    if (allData.fundamentalMetrics && allData.fundamentalMetrics.metrics) {
-      // List of deprecated symbols and their replacements
-      const deprecatedSymbols = {
-        'FB': 'META',  // Facebook/Meta Platforms
-        'TWTR': 'X',   // Twitter/X
-        'VIX': 'VIX.X', // CBOE Volatility Index
-        'GOOG': 'GOOGL', // Google Class A shares
-        'BAC': 'BAC.PA', // Bank of America
-        'GE': 'GE.N',    // General Electric
-        'GM': 'GM.N',    // General Motors
-        'T': 'T.N',     // AT&T
-        'F': 'F.N',     // Ford Motor Company
-        'INTC': 'INTC.N', // Intel Corporation
-        'CSCO': 'CSCO.N', // Cisco Systems
-        'ORCL': 'ORCL.N', // Oracle Corporation
-        'AMZN': 'AMZN.N', // Amazon.com
-        'NFLX': 'NFLX.N', // Netflix
-        'AAPL': 'AAPL.N', // Apple Inc.
-        'MSFT': 'MSFT.N', // Microsoft Corporation
-        'GOOGL': 'GOOGL.N' // Google Class C shares
-      };
-      
-      // Process each symbol and mark deprecated ones
-      allData.fundamentalMetrics.metrics = Object.fromEntries(
-        Object.entries(allData.fundamentalMetrics.metrics).map(([symbol, metrics]) => {
-          if (deprecatedSymbols[symbol]) {
-            return [
-              symbol,
-              {
-                ...metrics,
-                message: `Note: ${symbol} is deprecated. Please use ${deprecatedSymbols[symbol]} instead.`,
-                success: false
-              }
-            ];
-          }
-          return [symbol, metrics];
-        })
-      );
-      
-      // Log the filtered metrics
-      Logger.log("Processed fundamental metrics (marked deprecated symbols): " + JSON.stringify(allData.fundamentalMetrics.metrics));
-    }
-    
-    Logger.log("Retrieved trading data with warnings or success");
-    
     // Cache the allData object for later use in email generation
     try {
       const cache = CacheService.getScriptCache();
@@ -153,7 +107,11 @@ function getOpenAITradingAnalysis() {
     // Check if DEBUG_MODE is enabled
     const scriptProperties = PropertiesService.getScriptProperties();
     const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-    
+
+    /**
+     * 
+     * If DEBUG_MODE is enabled, use generateDebugOpenAIResponse instead of submitting to OpenAI
+     */
     if (debugMode) {
       Logger.log("Debug mode enabled - using generateDebugOpenAIResponse");
       const debugResponse = generateDebugOpenAIResponse();
@@ -797,25 +755,6 @@ function mondayMorningTradingAnalysis() {
 }
 
 /**
- * Wrapper function to send the trading decision email
- * 
- * @param {Object} analysisJson - The analysis JSON object
- */
-function sendTradeDecisionEmailWrapper(analysisJson) {
-  try {
-    Logger.log("Sending trade decision email...");
-    
-    // Send the email with the trading decision
-    sendTradeDecisionEmail(analysisJson);
-    
-    Logger.log("Trade decision email sent successfully.");
-  } catch (error) {
-    Logger.log("Error in sendTradeDecisionEmailWrapper: " + error);
-    sendErrorEmail("Trade Decision Email Error", error.toString());
-  }
-}
-
-/**
  * Saves JSON data to a file in Google Drive
  * 
  * @param {Object} jsonData - The JSON data to save
@@ -876,50 +815,121 @@ function getOrCreateFolder(folderName) {
 }
 
 /**
- * Sends the trading decision email
- * 
- * @param {Object} analysisJson - The analysis JSON object
+ * Function sendTradeDecisionEmail removed as redundant. Now only defined in Email.gs
  */
-function sendTradeDecisionEmail(analysisJson) {
+
+/**
+ * Calculates the next scheduled analysis time based on the current time
+ * 
+ * @param {Date} currentTime - The current time
+ * @return {Date} The next scheduled analysis time
+ */
+function getNextScheduledAnalysisTime(currentTime) {
   try {
-    Logger.log("Preparing to send trade decision email...");
-    
-    // Retrieve key market indicators data
-    const keyMarketIndicators = retrieveKeyMarketIndicators();
-    
-    // Get the next scheduled time for the next analysis
+    // Get the schedule configuration
     const scheduleConfig = getScheduleConfig();
-    const nextScheduledTime = getNextScheduledTime(scheduleConfig);
     
-    // Generate HTML content
-    const htmlContent = generateHtmlFromAnalysisJson(analysisJson, nextScheduledTime);
+    // Create a new date object to avoid modifying the input
+    const nextTime = new Date(currentTime);
     
-    // Save HTML to Google Drive
-    const driveResult = saveHtmlToGoogleDrive(htmlContent);
+    // Get the current day of week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+    const currentDay = nextTime.getDay();
+    const currentHour = nextTime.getHours();
+    const currentMinute = nextTime.getMinutes();
     
-    // Publish to Ghost
-    const ghostResult = GhostPublisher.publishToGhost(
-      driveResult.fileId,
-      driveResult.folderId,
-      driveResult.fileName
-    );
+    // Morning schedule: Monday-Friday at 8:50 AM
+    // Evening schedule: Sunday-Thursday at 6:00 PM
     
-    // Send email
-    const emailResult = sendEmail(
-      "Trading Analysis - " + Utilities.formatDate(new Date(), TIME_ZONE, "MMM dd, yyyy"),
-      htmlContent,
-      props.getProperty('RECIPIENT_EMAILS'),
-      false
-    );
+    // Check if we're before the morning schedule today (and it's a weekday)
+    if (currentDay >= 1 && currentDay <= 5 && 
+        (currentHour < scheduleConfig.morningHour || 
+         (currentHour === scheduleConfig.morningHour && currentMinute < scheduleConfig.morningMinute))) {
+      // Set to today's morning schedule
+      nextTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
+      return nextTime;
+    }
+    
+    // Check if we're before the evening schedule today (and it's Sunday-Thursday)
+    if (currentDay >= 0 && currentDay <= 4 && 
+        (currentHour < scheduleConfig.eveningHour || 
+         (currentHour === scheduleConfig.eveningHour && currentMinute < scheduleConfig.eveningMinute))) {
+      // Set to today's evening schedule
+      nextTime.setHours(scheduleConfig.eveningHour, scheduleConfig.eveningMinute, 0, 0);
+      return nextTime;
+    }
+    
+    // If it's Friday after morning schedule or Saturday, next is Monday morning
+    if ((currentDay === 5 && (currentHour > scheduleConfig.morningHour || 
+                            (currentHour === scheduleConfig.morningHour && currentMinute >= scheduleConfig.morningMinute))) || 
+        currentDay === 6) {
+      // Calculate days until next Monday
+      const daysUntilMonday = (currentDay === 5) ? 3 : 1;
+      nextTime.setDate(nextTime.getDate() + daysUntilMonday);
+      nextTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
+      return nextTime;
+    }
+    
+    // If it's a weekday after morning but before evening, next is evening
+    if (currentDay >= 0 && currentDay <= 4 && 
+        (currentHour > scheduleConfig.morningHour || 
+         (currentHour === scheduleConfig.morningHour && currentMinute >= scheduleConfig.morningMinute))) {
+      // Set to today's evening schedule
+      nextTime.setHours(scheduleConfig.eveningHour, scheduleConfig.eveningMinute, 0, 0);
+      return nextTime;
+    }
+    
+    // Otherwise, next is tomorrow morning (if it's a weekday)
+    nextTime.setDate(nextTime.getDate() + 1);
+    const nextDay = nextTime.getDay();
+    
+    // If tomorrow is a weekend, adjust to Monday
+    if (nextDay === 0 || nextDay === 6) {
+      const daysUntilMonday = (nextDay === 0) ? 1 : 2;
+      nextTime.setDate(nextTime.getDate() + daysUntilMonday);
+    }
+    
+    // Set to morning schedule
+    nextTime.setHours(scheduleConfig.morningHour, scheduleConfig.morningMinute, 0, 0);
+    return nextTime;
+  } catch (error) {
+    Logger.log(`Error in getNextScheduledAnalysisTime: ${error}`);
+    // Return a default time (24 hours from now)
+    const defaultNext = new Date(currentTime);
+    defaultNext.setDate(defaultNext.getDate() + 1);
+    return defaultNext;
+  }
+}
+
+/**
+ * Gets the schedule configuration from script properties or defaults
+ * 
+ * @return {Object} The schedule configuration
+ */
+function getScheduleConfig() {
+  try {
+    // Get script properties
+    const props = PropertiesService.getScriptProperties();
+    
+    // Get schedule configuration from properties or use defaults
+    const morningHour = parseInt(props.getProperty('MORNING_SCHEDULE_HOUR') || '8');
+    const morningMinute = parseInt(props.getProperty('MORNING_SCHEDULE_MINUTE') || '50');
+    const eveningHour = parseInt(props.getProperty('EVENING_SCHEDULE_HOUR') || '18');
+    const eveningMinute = parseInt(props.getProperty('EVENING_SCHEDULE_MINUTE') || '0');
     
     return {
-      success: true,
-      driveResult: driveResult,
-      ghostResult: ghostResult,
-      emailResult: emailResult
+      morningHour,
+      morningMinute,
+      eveningHour,
+      eveningMinute
     };
   } catch (error) {
-    Logger.log("Error in sendTradeDecisionEmail: " + error);
-    throw error;
+    Logger.log(`Error getting schedule config: ${error}`);
+    // Return default schedule
+    return {
+      morningHour: 8,
+      morningMinute: 50,
+      eveningHour: 18,
+      eveningMinute: 0
+    };
   }
 }
