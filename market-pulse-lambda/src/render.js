@@ -73,26 +73,37 @@ function registerHelpers() {
       
       // If format is specified, use it
       if (format) {
-        const options = {};
-        if (format.includes('MMM')) options.month = 'short';
-        else if (format.includes('MMMM')) options.month = 'long';
-        else options.month = 'numeric';
+        // Create a comprehensive options object for date formatting
+        const options = {
+          timeZone: 'America/New_York'  // Ensure Eastern Time
+        };
         
+        // Month formatting
+        if (format.includes('MMMM')) options.month = 'long';
+        else if (format.includes('MMM')) options.month = 'short';
+        else if (format.includes('MM')) options.month = '2-digit';
+        else if (format.includes('M')) options.month = 'numeric';
+        
+        // Day formatting
         if (format.includes('DD')) options.day = '2-digit';
-        else options.day = 'numeric';
+        else if (format.includes('d')) options.day = 'numeric';
         
+        // Year formatting
         if (format.includes('YYYY')) options.year = 'numeric';
+        else if (format.includes('YY')) options.year = '2-digit';
         
+        // Time formatting
         if (format.includes('h:mm')) {
           options.hour = 'numeric';
           options.minute = '2-digit';
           options.hour12 = true;
         }
         
-        if (format.includes('A')) options.hour12 = true;
+        if (format.includes('A') || format.includes('a')) options.hour12 = true;
         
         if (format.includes('z')) options.timeZoneName = 'short';
         
+        console.log(`Formatting date ${value} with options:`, options);
         return date.toLocaleString('en-US', options);
       }
       

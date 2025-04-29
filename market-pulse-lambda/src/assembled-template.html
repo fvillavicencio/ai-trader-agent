@@ -206,7 +206,7 @@
     <!-- Header -->
     <div class="header" style="text-align: center;">
       <h1 class="title" style="font-size: 2.5rem;">{{metadata.title}}</h1>
-      <div class="subtitle" style="font-size: 1.1rem;">As of {{formatDate reportDate "MMMM DD, YYYY h:mm A z"}}</div>
+      <div class="subtitle" style="font-size: 1.1rem;">As of {{formatDate reportDate "MMMM d, YYYY h:mm A z"}}</div>
       {{#if isTest}}
         <div class="test-badge">TEST REPORT</div>
       {{/if}}
@@ -978,15 +978,15 @@
       
       <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
         <div style="font-weight: bold; margin-bottom: 5px;">Global Overview</div>
-        <div style="color: #333;">{{#if geopoliticalRisks.overview}}{{geopoliticalRisks.overview}}{{/if}}</div>
+        <div style="color: #333;">{{#if geopoliticalRisks.overview}}{{geopoliticalRisks.overview}}{{else}}{{#if macroeconomicFactors.geopoliticalRisks.global}}{{macroeconomicFactors.geopoliticalRisks.global}}{{/if}}{{/if}}</div>
       </div>
       
       {{#if geopoliticalRisks.items}}
         {{#each geopoliticalRisks.items}}
           <div style="display: flex; margin-bottom: 15px;">
             <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
-              <div style="font-weight: bold; margin-bottom: 5px;">{{#if title}}{{title}}{{else}}{{name}}{{/if}}</div>
-              <div style="color: #555; margin-bottom: 5px;">{{#if description}}{{description}}{{/if}}</div>
+              <div style="font-weight: bold; margin-bottom: 5px;">{{#if title}}{{title}}{{else}}{{#if name}}{{name}}{{else}}{{region}}{{/if}}{{/if}}</div>
+              <div style="color: #555; margin-bottom: 5px;">{{#if description}}{{description}}{{else}}{{risk}}{{/if}}</div>
               <div style="font-size: 10px; color: #757575;">
                 {{#if region}}Region: {{region}}{{/if}}{{#if source}}{{#if region}} • {{/if}}Source: {{source}}{{/if}}
               </div>
