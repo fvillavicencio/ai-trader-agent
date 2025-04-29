@@ -157,10 +157,10 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         timestamp: formattedDate
       },
       marketSentiment: {
-        overall: analysisJson && analysisJson.marketSentiment ? analysisJson.marketSentiment : "Neutral",
+        overall: analysisJson && analysisJson.analysis && analysisJson.analysis.marketSentiment && analysisJson.analysis.marketSentiment.overall ? analysisJson.analysis.marketSentiment.overall : "Neutral",
         analysts: [],
         source: "Aggregated from multiple financial news sources",
-        lastUpdated: formattedDate
+        lastUpdated: analysisJson && analysisJson.analysis && analysisJson.analysis.marketSentiment && analysisJson.analysis.marketSentiment.lastUpdated ? analysisJson.analysis.marketSentiment.lastUpdated : formattedDate
       },
       decision: {
         text: analysisJson && analysisJson.decision ? analysisJson.decision : "No Decision",
@@ -525,11 +525,27 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     // Populate market sentiment from allData if available
     if (allData && allData.marketSentiment && allData.marketSentiment.data) {
       const marketSentimentData = allData.marketSentiment.data;
-      fullJsonDataset.marketSentiment.overall = marketSentimentData.overall || marketSentimentData.overallSentiment || marketSentimentData.summary || "Neutral";
+      const newSentiment = marketSentimentData.overall || marketSentimentData.overallSentiment || marketSentimentData.summary || "Neutral";
+      
+      // Concatenate the new sentiment with the existing one if it exists
+      if (fullJsonDataset.marketSentiment.overall && fullJsonDataset.marketSentiment.overall !== "Neutral") {
+        fullJsonDataset.marketSentiment.overall = newSentiment + ". " + fullJsonDataset.marketSentiment.overall;
+      } else {
+        fullJsonDataset.marketSentiment.overall = newSentiment;
+      }
       
       // Check if analysts array exists and is not empty
       if (marketSentimentData.analysts && Array.isArray(marketSentimentData.analysts) && marketSentimentData.analysts.length > 0) {
-        fullJsonDataset.marketSentiment.analysts = marketSentimentData.analysts.map(analyst => {
+        // Create a copy of the analysts array to avoid modifying the original
+        const shuffledAnalysts = [...marketSentimentData.analysts];
+        
+        // Fisher-Yates shuffle algorithm
+        for (let i = shuffledAnalysts.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [shuffledAnalysts[i], shuffledAnalysts[j]] = [shuffledAnalysts[j], shuffledAnalysts[i]];
+        }
+        
+        fullJsonDataset.marketSentiment.analysts = shuffledAnalysts.map(analyst => {
           // Handle different field name possibilities
           const name = analyst.name || analyst.analyst || "Anonymous";
           const comment = analyst.comment || analyst.commentary || "";
@@ -630,7 +646,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           }
           
           // Format based on metric type
-          if (key === "peRatio" || key === "forwardPE" || key === "pegRatio" || key === "priceToBook" || key === "priceToSales") {
+          if (key === "peRatio" || key === "forwardPE" || key === "pegRatio" || key === "priceToBook" || key === "priceToSales" || key === "debtToEquity" || key === "beta") {
             return typeof value === 'number' ? value.toFixed(2) : value.toString();
           } else if (key === "returnOnEquity" || key === "returnOnAssets" || key === "profitMargin" || key === "dividendYield") {
             // Format as percentage
@@ -682,6 +698,9 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           }
           
           // Default case
+          if (typeof value === 'number') {
+            return value.toFixed(2);
+          }
           return value.toString();
         };
         
