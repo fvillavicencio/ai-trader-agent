@@ -2127,3 +2127,94 @@ function testGenerateAndSaveFullJsonDataset() {
     Logger.log(`Error in test: ${error}`);
   }
 }
+
+/**
+ * Generates HTML from a JSON dataset using the Lambda function
+ * 
+ * @param {Object} jsonData - The JSON data object
+ * @param {Boolean} debugMode - Whether to enable debug logging
+ * @return {String} The generated HTML content
+ */
+function generateHtmlFromJson(jsonData, debugMode = false) {
+  try {
+    // Get script properties
+    const props = PropertiesService.getScriptProperties();
+    if (!props.getProperty('DEBUG_MODE')) {
+      debugMode = false;
+    } else {
+      debugMode = props.getProperty('DEBUG_MODE') === 'true';
+    }
+    
+    if (debugMode) {
+      Logger.log("Generating HTML from JSON data using Lambda function");
+    }
+    
+    // Convert JSON data to string if it's an object
+    const jsonString = typeof jsonData === 'string' ? jsonData : JSON.stringify(jsonData, null, 2);
+    
+    // Get Lambda function details from script properties
+    const lambdaUrl = props.getProperty('MARKET_PULSE_LAMBDA_URL');
+    const apiKey = props.getProperty('MARKET_PULSE_LAMBDA_API_KEY');
+    
+    if (!lambdaUrl || !apiKey) {
+      throw new Error("Lambda URL or API Key not found in script properties");
+    }
+    
+    if (debugMode) {
+      Logger.log(`Using Lambda URL: ${lambdaUrl}`);
+    }
+    
+    // Set up the request options
+    const options = {
+      'method': 'post',
+      'contentType': 'application/json',
+      'payload': jsonString,
+      'headers': {
+        'x-api-key': apiKey
+      },
+      'muteHttpExceptions': true
+    };
+    
+    // Make the request to the Lambda function
+    if (debugMode) {
+      Logger.log("Sending request to Lambda function...");
+    }
+    
+    const response = UrlFetchApp.fetch(lambdaUrl, options);
+    const responseCode = response.getResponseCode();
+    
+    if (debugMode) {
+      Logger.log(`Lambda response code: ${responseCode}`);
+    }
+    
+    if (responseCode !== 200) {
+      throw new Error(`Lambda function returned error code: ${responseCode}`);
+    }
+    
+    // Get the HTML content from the response
+    const htmlContent = response.getContentText();
+    
+    if (!htmlContent || htmlContent.trim() === '') {
+      throw new Error("Lambda function returned empty HTML content");
+    }
+    
+    if (debugMode) {
+      Logger.log("Successfully generated HTML from Lambda function");
+      Logger.log(`HTML content length: ${htmlContent.length} characters`);
+    }
+    
+    return htmlContent;
+  } catch (error) {
+    Logger.log(`Error in generateHtmlFromJson: ${error}`);
+    throw error;
+  }
+}
+
+// Export the functions for use in other scripts
+var JsonExport = {
+  generateFullJsonDataset: generateFullJsonDataset,
+  generateAndSaveFullJsonDataset: generateAndSaveFullJsonDataset,
+  generateHtmlFromJson: generateHtmlFromJson,
+  testGenerateFullJsonDataset: testGenerateFullJsonDataset,
+  testGenerateAndSaveFullJsonDataset: testGenerateAndSaveFullJsonDataset
+};

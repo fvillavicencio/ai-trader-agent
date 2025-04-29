@@ -4,7 +4,7 @@
  * @param {Object} analysisJson - The analysis result JSON object
  * @return {Boolean} Success status
  */
-function sendTradeDecisionEmail(analysisJson) {
+function sendTradeDecisionEmail(analysisJson,newTemplate=false) {
   try {
     Logger.log("Preparing to send trade decision email...");
     
@@ -16,13 +16,76 @@ function sendTradeDecisionEmail(analysisJson) {
       Logger.log("Debug mode enabled - generating full JSON dataset with detailed logging");
     }
     
-    // Generate the HTML email content using the function from Utils.gs
-    const htmlContent = generateEmailTemplate(analysisJson, false);
+    let htmlContent = "";
+    let jsonUrl = "";
+    
+    if (newTemplate) {
+      // Generate the full JSON dataset using JsonExport
+      try {
+        Logger.log("Using new template approach with JSON export");
+        
+        // Generate the full JSON dataset
+        const fullJsonDataset = JsonExport.generateFullJsonDataset(analysisJson);
+        
+        // Save the JSON to Google Drive
+        const folderName = props.getProperty('GOOGLE_FOLDER_NAME') || 'Trading Analysis Emails';
+        const jsonFileName = props.getProperty('JSON_FILE_NAME') || 'market_pulse_data.json';
+        
+        // Find or create the folder
+        let folder;
+        const folderIterator = DriveApp.getFoldersByName(folderName);
+        
+        if (folderIterator.hasNext()) {
+          folder = folderIterator.next();
+          Logger.log(`Found existing folder: ${folderName}`);
+        } else {
+          folder = DriveApp.createFolder(folderName);
+          Logger.log(`Created new folder: ${folderName}`);
+        }
+        
+        // Create or update the JSON file
+        let jsonFile;
+        const jsonFileIterator = folder.getFilesByName(jsonFileName);
+        
+        if (jsonFileIterator.hasNext()) {
+          jsonFile = jsonFileIterator.next();
+          Logger.log(`Found existing JSON file: ${jsonFileName}`);
+          jsonFile.setContent(JSON.stringify(fullJsonDataset, null, 2));
+        } else {
+          jsonFile = folder.createFile(jsonFileName, JSON.stringify(fullJsonDataset, null, 2));
+          Logger.log(`Created new JSON file: ${jsonFileName}`);
+        }
+        
+        // Get the URL of the JSON file
+        jsonUrl = jsonFile.getUrl();
+        Logger.log(`JSON file saved to: ${jsonUrl}`);
+        
+        // Generate HTML using the Lambda function
+        try {
+          htmlContent = JsonExport.generateHtmlFromJson(fullJsonDataset);
+          Logger.log("Successfully generated HTML from JSON using Lambda function");
+        } catch (lambdaError) {
+          Logger.log(`Warning: Failed to generate HTML from Lambda: ${lambdaError}`);
+          // Fall back to the old template method if Lambda fails
+          htmlContent = generateEmailTemplate(analysisJson, false);
+          Logger.log("Falling back to old template method for HTML generation");
+        }
+      } catch (jsonExportError) {
+        Logger.log(`Error in JSON export process: ${jsonExportError}`);
+        // Fall back to the old template method if JSON export fails
+        htmlContent = generateEmailTemplate(analysisJson, false);
+        Logger.log("Falling back to old template method due to JSON export error");
+      }
+    } else {
+      // Use the old template method
+      htmlContent = generateEmailTemplate(analysisJson, false);
+      Logger.log("Using old template approach for HTML generation");
+    }
     
     // Save the HTML to Google Drive
     try {
       Logger.log("Saving HTML email to Google Drive...");
-      
+    
       // Get folder name from properties
       const folderName = props.getProperty('GOOGLE_FOLDER_NAME');
       const fileName = props.getProperty('GOOGLE_FILE_NAME');
@@ -50,7 +113,8 @@ function sendTradeDecisionEmail(analysisJson) {
       } else {
         file = folder.createFile(fileName, htmlContent);
         Logger.log(`Created new file: ${fileName}`);
-      }     
+      }    
+      
       // Publish to Ghost
       Logger.log("Publishing HTML content to Ghost"); 
       let ghostResult;
@@ -60,37 +124,15 @@ function sendTradeDecisionEmail(analysisJson) {
         Logger.log("Warning: Failed to publish to Ghost: " + e);
       }
       
-      // Generate and save the full JSON dataset right before returning
-      try {
-        const jsonExportResult = JsonExport.generateAndSaveFullJsonDataset(analysisJson);
-        
-        if (typeof jsonExportResult === 'string') {
-          // If result is just a string URL (JSON only)
-          Logger.log(`Full JSON dataset saved to: ${jsonExportResult}`);
-          // No longer using local lambda, just log the JSON URL
-          Logger.log(`HTML generation skipped, using JSON URL: ${jsonExportResult}`);
-        } else {
-          // If result is an object with jsonUrl and htmlUrl properties
-          Logger.log(`Full JSON dataset saved to: ${jsonExportResult.jsonUrl}`);
-          if (jsonExportResult.htmlUrl) {
-            Logger.log(`HTML saved to: ${jsonExportResult.htmlUrl}`);
-          } else {
-            // No longer using local lambda, just log the JSON URL
-            Logger.log(`HTML generation skipped, using JSON URL: ${jsonExportResult.jsonUrl}`);
-          }
-        }
-      } catch (jsonExportError) {
-        Logger.log(`Error generating and saving full JSON dataset: ${jsonExportError}`);
-      }
-      
       Logger.log("HTML content saved successfully to Google Drive and published to Ghost");
     } catch (error) {
-      Logger.log("Error saving HTML to Google Drive:", error.toString());
+      Logger.log("Error saving HTML to Google Drive: " + error.toString());
       throw error;
     }
 
     // Get the final recipients from Config.gs
     const recipients = getEmailRecipients();
+    
     // Compose email subject
     let newsletterName = 'Market Pulse Daily';
     try {
