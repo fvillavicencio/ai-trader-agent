@@ -1897,107 +1897,52 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
     }
     
     if (responseCode === 200) {
-      const responseText = response.getContentText();
-      if (debugMode) {
-        Logger.log(`Lambda service response: ${responseText.substring(0, 200)}...`);
+      const responseContent = response.getContentText();
+      
+      if (!responseContent || responseContent.trim() === '') {
+        throw new Error("Lambda function returned empty content");
       }
       
-      // Check if the response is HTML (starts with <!DOCTYPE or <html)
-      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-        if (debugMode) {
-          Logger.log('Received direct HTML response from Lambda service.');
-        }
-        
-        // Save the HTML directly to Google Drive
-        const htmlFileName = 'MarketPulseDaily.html';
-        const htmlFileUrl = saveToGoogleDrive(htmlFileName, responseText);
-        
-        if (debugMode) {
-          Logger.log(`HTML saved to Google Drive: ${htmlFileUrl}`);
-        }
-        
-        return {
-          jsonUrl: jsonFileUrl,
-          htmlUrl: htmlFileUrl
-        };
-      }
+      let htmlContent;
       
+      // Try to parse the response as JSON
       try {
-        // Parse the response
-        const responseJson = JSON.parse(responseText);
+        const jsonResponse = JSON.parse(responseContent);
         
-        // The Lambda function returns a nested response where the actual response is in the body property as a string
-        let htmlContent;
-        
-        // Check if the response has the expected format
-        if (responseJson.body) {
-          // Check if body is already HTML
-          if (typeof responseJson.body === 'string' && 
-              (responseJson.body.trim().startsWith('<!DOCTYPE') || 
-               responseJson.body.trim().startsWith('<html'))) {
-            htmlContent = responseJson.body;
-          } else {
-            // Try to parse the body as JSON
-            try {
-              const innerBody = JSON.parse(responseJson.body);
-              if (debugMode) {
-                Logger.log(`Inner body: ${JSON.stringify(innerBody).substring(0, 200)}...`);
-              }
-              
-              if (innerBody.html) {
-                htmlContent = innerBody.html;
-              }
-            } catch (bodyError) {
-              // If parsing fails, use body directly
-              htmlContent = responseJson.body;
-            }
-          }
-        } else if (responseJson.html) {
-          // Direct format
-          htmlContent = responseJson.html;
-        }
-        
-        if (htmlContent) {
-          // Save the HTML to Google Drive using the saveToGoogleDrive function
-          const htmlFileName = 'MarketPulseDaily.html';
-          const htmlFileUrl = saveToGoogleDrive(htmlFileName, htmlContent);
-          
+        // Check if the response has an html property
+        if (jsonResponse.html) {
+          htmlContent = jsonResponse.html;
           if (debugMode) {
-            Logger.log(`HTML saved to Google Drive: ${htmlFileUrl}`);
+            Logger.log("Extracted HTML content from JSON response");
           }
-          
-          return {
-            jsonUrl: jsonFileUrl,
-            htmlUrl: htmlFileUrl
-          };
         } else {
-          Logger.log('Error: HTML content not found in the response');
-          Logger.log(`Full response: ${responseText}`);
-          
-          // Return just the JSON URL if HTML content is not found
-          return { jsonUrl: jsonFileUrl };
-        }
-      } catch (error) {
-        Logger.log(`Error parsing Lambda response: ${error}`);
-        
-        // If parsing failed but response looks like HTML, save it directly
-        if (responseText.includes('<html') || responseText.includes('<!DOCTYPE')) {
-          const htmlFileName = 'MarketPulseDaily.html';
-          const htmlFileUrl = saveToGoogleDrive(htmlFileName, responseText);
-          
+          // If no html property, use the entire response as HTML
+          htmlContent = responseContent;
           if (debugMode) {
-            Logger.log(`Response appears to be HTML. Saving directly to: ${htmlFileUrl}`);
+            Logger.log("No html property found in JSON response, using full response");
           }
-          
-          return {
-            jsonUrl: jsonFileUrl,
-            htmlUrl: htmlFileUrl
-          };
         }
+      } catch (parseError) {
+        // If not valid JSON, assume the response is directly HTML
+        htmlContent = responseContent;
         
-        // Return just the JSON URL if parsing failed
-        return { jsonUrl: jsonFileUrl };
+        if (debugMode) {
+          Logger.log("Response is not JSON, using as direct HTML");
+        }
       }
+      
+      // Save the HTML directly to Google Drive
+      const htmlFileName = 'MarketPulseDaily.html';
+      const htmlFileUrl = saveToGoogleDrive(htmlFileName, htmlContent);
+      
+      if (debugMode) {
+        Logger.log(`HTML saved to Google Drive: ${htmlFileUrl}`);
+      }
+      
+      return {
+        jsonUrl: jsonFileUrl,
+        htmlUrl: htmlFileUrl
+      };
     } else {
       // Handle error response
       Logger.log(`Error calling Lambda service: ${responseCode}`);
@@ -2211,15 +2156,38 @@ function generateHtmlFromJson(jsonData, debugMode = false) {
     }
     
     // Get the HTML content from the response
-    const htmlContent = response.getContentText();
+    const responseContent = response.getContentText();
     
-    if (!htmlContent || htmlContent.trim() === '') {
+    if (!responseContent || responseContent.trim() === '') {
       throw new Error("Lambda function returned empty HTML content");
     }
     
-    if (debugMode) {
-      Logger.log("Successfully generated HTML from Lambda function");
-      Logger.log(`HTML content length: ${htmlContent.length} characters`);
+    let htmlContent;
+    
+    // Try to parse the response as JSON
+    try {
+      const jsonResponse = JSON.parse(responseContent);
+      
+      // Check if the response has an html property
+      if (jsonResponse.html) {
+        htmlContent = jsonResponse.html;
+        if (debugMode) {
+          Logger.log("Extracted HTML content from JSON response");
+        }
+      } else {
+        // If no html property, use the entire response as HTML
+        htmlContent = responseContent;
+        if (debugMode) {
+          Logger.log("No html property found in JSON response, using full response");
+        }
+      }
+    } catch (parseError) {
+      // If not valid JSON, assume the response is directly HTML
+      htmlContent = responseContent;
+      
+      if (debugMode) {
+        Logger.log("Response is not JSON, using as direct HTML");
+      }
     }
     
     return htmlContent;
