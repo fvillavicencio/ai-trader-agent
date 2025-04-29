@@ -44,7 +44,7 @@ function retrieveInflationExpectations() {
         if (data.observations && data.observations.length > 0) {
           const observation = data.observations[0];
           results[key] = {
-            value: parseFloat(observation.value),
+            value: key === 'oneYear' ? parseFloat(parseFloat(observation.value).toFixed(2)) : parseFloat(observation.value),
             lastUpdated: observation.date,
             source: {
               name: "FRED (Federal Reserve Economic Data)",
