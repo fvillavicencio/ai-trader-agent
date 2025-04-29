@@ -1071,8 +1071,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             fullJsonDataset.macroeconomicFactors.inflation.expectationsSource = {
               name: inflation.expectations.source.name || null,
               url: inflation.expectations.source.url || null,
-              lastUpdated: inflation.expectations.lastUpdated ? 
-                formatDate(new Date(inflation.expectations.lastUpdated)) : 
+              lastUpdated: inflation.expectations.source.timestamp ? 
+                formatDate(new Date(inflation.expectations.source.timestamp)) : 
                 formattedDate
             };
           }
