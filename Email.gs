@@ -2,9 +2,10 @@
  * Sends the trade decision email and saves the HTML to Google Drive
  * 
  * @param {Object} analysisJson - The analysis result JSON object
+ * @param {Boolean} newTemplate - Whether to use the new template approach
  * @return {Boolean} Success status
  */
-function sendTradeDecisionEmail(analysisJson,newTemplate=false) {
+function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
   try {
     Logger.log("Preparing to send trade decision email...");
     
@@ -174,126 +175,34 @@ function sendErrorEmail(subject, errorMessage) {
     const currentDate = new Date();
     const formattedDate = Utilities.formatDate(currentDate, timeZone, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
-    // Create HTML email template
+    // Get admin email from properties
+    const adminEmail = props.getProperty('ADMIN_EMAIL');
+    
+    if (!adminEmail) {
+      Logger.log("No admin email configured. Error notification not sent.");
+      return { success: false, error: "No admin email configured" };
+    }
+    
+    // Create HTML body
     const htmlBody = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${props.getProperty('NEWSLETTER_NAME')} - Error</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f9f9f9;
-    }
-    .container {
-      max-width: 650px;
-      margin: 0 auto;
-      padding: 25px;
-      background-color: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #f0f0f0;
-    }
-    .header h1 {
-      margin: 0;
-      color: #e74c3c;
-      font-size: 28px;
-    }
-    .header p {
-      color: #7f8c8d;
-      margin: 5px 0 0;
-    }
-    .error-box {
-      background-color: #ffebee;
-      padding: 20px;
-      border-radius: 8px;
-      border-left: 5px solid #e74c3c;
-      margin-bottom: 20px;
-    }
-    .error-title {
-      color: #c0392b;
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 0;
-      margin-bottom: 10px;
-    }
-    .error-message {
-      font-family: monospace;
-      white-space: pre-wrap;
-      overflow-x: auto;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #333;
-      padding: 15px;
-      background-color: #f9f9f9;
-      border-radius: 4px;
-      border: 1px solid #e0e0e0;
-    }
-    .footer {
-      margin-top: 30px;
-      text-align: center;
-      font-size: 14px;
-      color: #95a5a6;
-      padding-top: 15px;
-      border-top: 1px solid #eee;
-    }
-    .footer p {
-      margin: 5px 0;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>Error Notification</h1>
-      <p>Generated on ${formattedDate}</p>
-    </div>
-    
-    <div class="error-box">
-      <h2 class="error-title">Error Details</h2>
-      <div class="error-message">
-${errorMessage}
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #d32f2f;">Market Pulse Daily Error</h2>
+        <p><strong>Date:</strong> ${formattedDate}</p>
+        <p><strong>Error:</strong> ${subject}</p>
+        <div style="background-color: #f5f5f5; padding: 15px; border-left: 4px solid #d32f2f; margin: 15px 0; font-family: monospace; white-space: pre-wrap; overflow-x: auto;">
+          ${errorMessage}
+        </div>
+        <p style="font-size: 12px; color: #757575; margin-top: 30px;">
+          This is an automated error notification from Market Pulse Daily.
+        </p>
       </div>
-    </div>
-    
-    <div class="footer">
-      <p> ${props.getProperty('NEWSLETTER_NAME')}</p>
-      <p>This is an automated message. Please do not reply.</p>
-    </div>
-  </div>
-</body>
-</html>
     `;
     
-    // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, props.getProperty('TEST_EMAIL'), true); // Always send as test email
-    
-    if (!emailResult.success) {
-      throw new Error(`Failed to send error email: ${emailResult.error}`);
-    }
-    
-    return {
-      success: true,
-      result: emailResult.result
-    };
+    // Send email
+    return sendEmail(`[ERROR] ${subject}`, htmlBody, adminEmail, false, false);
   } catch (error) {
     Logger.log(`Error in sendErrorEmail: ${error}`);
-    return {
-      success: false,
-      error: error.toString()
-    };
+    return { success: false, error: error.toString() };
   }
 }
 
@@ -301,122 +210,51 @@ ${errorMessage}
  * Sends an email with the generated OpenAI prompt
  * 
  * @param {string} prompt - The prompt that will be sent to OpenAI
+ * @return {boolean} - Whether the email was sent successfully
  */
 function sendPromptEmail(prompt) {
   try {
+    // Get admin email from properties
     const props = PropertiesService.getScriptProperties();
-    const timeZone = props.getProperty('TIME_ZONE') || 'America/New_York'; // Default to Eastern Time if not set
+    const adminEmail = props.getProperty('ADMIN_EMAIL');
+    const debugMode = props.getProperty('DEBUG_MODE') === 'true';
     
-    // Validate the time zone
-    if (!timeZone || typeof timeZone !== 'string') {
-      Logger.log('Invalid or missing time zone configuration, defaulting to America/New_York');
-      timeZone = 'America/New_York';
+    // Only send the prompt email in debug mode or if explicitly configured
+    const sendPromptEmails = props.getProperty('SEND_PROMPT_EMAILS') === 'true';
+    
+    if (!debugMode && !sendPromptEmails) {
+      Logger.log("Not sending prompt email (debug mode off and SEND_PROMPT_EMAILS not enabled)");
+      return true; // Return true to indicate this is expected behavior
     }
-
+    
+    if (!adminEmail) {
+      Logger.log("No admin email configured. Prompt email not sent.");
+      return false;
+    }
+    
+    // Get the current date and time
+    const timeZone = props.getProperty('TIME_ZONE') || 'America/New_York';
     const currentDate = new Date();
     const formattedDate = Utilities.formatDate(currentDate, timeZone, "MMMM dd, yyyy 'at' hh:mm a 'ET'");
     
-    // Create HTML email template
+    // Create HTML body with the prompt
     const htmlBody = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Trader Agent - OpenAI Prompt</title>
-  <style>
-    body {
-      font-family: 'Segoe UI', Arial, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      margin: 0;
-      padding: 0;
-      background-color: #f9f9f9;
-    }
-    .container {
-      max-width: 850px;
-      margin: 0 auto;
-      padding: 25px;
-      background-color: #ffffff;
-      border: 1px solid #e0e0e0;
-      border-radius: 8px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-    }
-    .header {
-      text-align: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 2px solid #f0f0f0;
-    }
-    .header h1 {
-      margin: 0;
-      color: #2196f3;
-      font-size: 28px;
-    }
-    .header p {
-      color: #7f8c8d;
-      margin: 5px 0 0;
-    }
-    .content {
-      margin: 20px 0;
-      padding: 20px;
-      background-color: #f8f9fa;
-      border-radius: 8px;
-    }
-    .content pre {
-      white-space: pre-wrap;
-      background-color: #f8f9fa;
-      padding: 15px;
-      border-radius: 4px;
-      font-family: 'Courier New', monospace;
-      font-size: 14px;
-      line-height: 1.5;
-      color: #333;
-    }
-    .footer {
-      text-align: center;
-      margin-top: 30px;
-      padding-top: 20px;
-      border-top: 2px solid #f0f0f0;
-    }
-    .footer p {
-      margin: 5px 0;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>AI Trader Agent - OpenAI Prompt</h1>
-      <p>Generated on ${formattedDate}</p>
-    </div>
-    
-    <div class="content">
-      <h2>OpenAI Prompt</h2>
-      <pre>
-${prompt}
-      </pre>
-    </div>
-    
-    <div class="footer">
-      <p>${props.getProperty('NEWSLETTER_NAME')}</p>
-      <p>This is an automated message. Please do not reply.</p>
-    </div>
-  </div>
-</body>
-</html>
+      <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; border: 1px solid #ddd; border-radius: 5px;">
+        <h2 style="color: #1976d2;">Market Pulse Daily OpenAI Prompt</h2>
+        <p><strong>Date:</strong> ${formattedDate}</p>
+        <p><strong>Prompt Length:</strong> ${prompt.length} characters</p>
+        <div style="background-color: #f5f5f5; padding: 15px; border-left: 4px solid #1976d2; margin: 15px 0; font-family: monospace; white-space: pre-wrap; overflow-x: auto; max-height: 500px; overflow-y: auto;">
+          ${prompt.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+        </div>
+        <p style="font-size: 12px; color: #757575; margin-top: 30px;">
+          This is an automated email from Market Pulse Daily containing the prompt sent to OpenAI.
+        </p>
+      </div>
     `;
-
-    const subject = `AI Trader Agent - AI Prompt (${formattedDate})`;
-
-    // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, props.getProperty('TEST_EMAIL'), false); // Always send as test email
     
-    if (!emailResult.success) {
-      throw new Error(`Failed to send prompt email: ${emailResult.error}`);
-    }
-    
-    return true;
+    // Send email
+    const result = sendEmail("[DEBUG] OpenAI Prompt", htmlBody, adminEmail, false, false);
+    return result.success;
   } catch (error) {
     Logger.log(`Error in sendPromptEmail: ${error}`);
     return false;
@@ -435,189 +273,69 @@ ${prompt}
  */
 function sendEmail(subject, htmlBody, recipient, isTest = false, forceBcc = false) {
   try {
+    Logger.log(`Preparing to send email to: ${recipient}`);
+    
+    // Get script properties
     const props = PropertiesService.getScriptProperties();
-    // Get the test email address and validate it
-    const testEmail = props.getProperty('TEST_EMAIL');
-    if (!testEmail || !testEmail.includes('@')) {
-      throw new Error('Invalid test email address configured');
-    }
+    const debugMode = props.getProperty('DEBUG_MODE') === 'true';
     
-    // Determine the recipient based on test mode
-    const finalRecipient = isTest ? testEmail : recipient;
-    Logger.log(`Sending email to ${finalRecipient}${forceBcc ? ' (using BCC)' : ''}`);
-    
-    // Add test prefix if needed
+    // Add test prefix to subject if this is a test email
     if (isTest) {
-      subject = `[TEST] ${subject}`;
+      subject = "[TEST] " + subject;
     }
     
-    // Attempt to send the email with retry logic
-    let retryCount = 0;
-    const maxRetries = 3;
-    let result;
-    
-    while (retryCount < maxRetries) {
-      try {
-        if (forceBcc && !isTest) {
-          // Only BCC, blank To field
-          result = GmailApp.sendEmail(
-            '',
-            subject,
-            'This email requires an HTML-compatible client.',
-            {
-              bcc: finalRecipient,
-              htmlBody: htmlBody,
-              name: props.getProperty('NEWSLETTER_NAME'),
-              replyTo: 'market-pulse-daily@ghost.io'
-            }
-          );
-        } else if (forceBcc && isTest) {
-          // Send with BCC in test mode
-          result = GmailApp.sendEmail(
-            'market-pulse-daily@ghost.io',
-            subject,
-            'This email requires an HTML-compatible client.',
-            {
-              bcc: testEmail,
-              htmlBody: htmlBody,
-              name: props.getProperty('NEWSLETTER_NAME'),
-              replyTo: 'market-pulse-daily@ghost.io'
-            }
-          );
-        } else {
-          // Standard send
-          result = GmailApp.sendEmail(finalRecipient, subject, '', {
-            htmlBody: htmlBody,
-            name: props.getProperty('NEWSLETTER_NAME'),
-            replyTo: 'market-pulse-daily@ghost.io'
-          });
-        }
-        break;
-      } catch (sendError) {
-        retryCount++;
-        if (retryCount >= maxRetries) {
-          throw sendError;
-        }
-        Logger.log(`Email send attempt ${retryCount} failed for ${finalRecipient}: ${sendError}. Retrying...`);
-        Utilities.sleep(5000); // Wait 5 seconds between retries
-      }
+    // Add debug prefix to subject if in debug mode
+    if (debugMode && !subject.includes("[DEBUG]")) {
+      subject = "[DEBUG] " + subject;
     }
     
-    Logger.log(`Email sent successfully to ${finalRecipient}${forceBcc ? ' (using BCC)' : ''}`);
-    return {
-      success: true,
-      result: result,
-      recipient: finalRecipient
+    // Get the sender name and email from properties
+    let senderName = props.getProperty('SENDER_NAME') || 'Market Pulse Daily';
+    let senderEmail = props.getProperty('SENDER_EMAIL');
+    
+    // If sender email is not configured, use the user's email
+    if (!senderEmail) {
+      senderEmail = Session.getActiveUser().getEmail();
+      Logger.log(`No sender email configured, using active user email: ${senderEmail}`);
+    }
+    
+    // Parse recipients
+    const recipients = recipient.split(',').map(r => r.trim()).filter(r => r);
+    
+    if (recipients.length === 0) {
+      return { success: false, error: "No valid recipients specified" };
+    }
+    
+    // Create email options
+    const options = {
+      name: senderName,
+      htmlBody: htmlBody,
+      replyTo: senderEmail
     };
-  } catch (error) {
-    const errorMessage = `Failed to send email to ${recipient}: ${error}`;
-    Logger.log(errorMessage);
     
-    // Try to send the error to the test email as a fallback
-    if (recipient !== props.getProperty('TEST_EMAIL')) {
-      try {
-        GmailApp.sendEmail(props.getProperty('TEST_EMAIL'), `Email Sending Failed - ${subject}`, 
-          `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`, {
-            htmlBody: `Failed to send email to ${recipient}: ${error}\n\nEmail content:\n${htmlBody}`,
-            name: props.getProperty('NEWSLETTER_NAME')
-          });
-        Logger.log(`Error notification sent to test email ${props.getProperty('TEST_EMAIL')}`);
-      } catch (fallbackError) {
-        Logger.log(`Failed to send error notification to test email: ${fallbackError}`);
+    // Handle BCC vs direct recipients
+    if (forceBcc) {
+      // Use BCC for all recipients
+      options.bcc = recipients.join(',');
+      
+      // Send to self as the main recipient
+      GmailApp.sendEmail(senderEmail, subject, "This email contains HTML content. Please view in an HTML-compatible email client.", options);
+      Logger.log(`Email sent with subject "${subject}" to ${recipients.length} BCC recipients`);
+    } else {
+      // Send directly to the first recipient, BCC the rest if there are multiple
+      const mainRecipient = recipients[0];
+      
+      if (recipients.length > 1) {
+        options.bcc = recipients.slice(1).join(',');
       }
+      
+      GmailApp.sendEmail(mainRecipient, subject, "This email contains HTML content. Please view in an HTML-compatible email client.", options);
+      Logger.log(`Email sent with subject "${subject}" to ${mainRecipient} and ${recipients.length - 1} BCC recipients`);
     }
     
-    return {
-      success: false,
-      error: errorMessage,
-      recipient: recipient
-    };
-  }
-}
-
-/**
- * Generates a complete HTML email from a trading analysis JSON object
- * This function can be used for testing without making OpenAI API calls
- * 
- * @param {Object} analysisJson - The trading analysis JSON object
- * @param {Date} nextScheduledTime - The next scheduled analysis time
- * @param {Boolean} isTest - Whether this is a test email
- * @return {String} Complete HTML email as a string
- */
-function generateHtmlFromAnalysisJson(analysisJson, nextScheduledTime, isTest = false) {
-  // Call the generateEmailTemplate function from Utils.gs
-  return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
-}
-
-/**
- * Sends a trading analysis email
- * 
- * @param {String} recipient - Email address of the recipient
- * @param {Object} analysisJson - The analysis result JSON object
- * @param {Date} nextScheduledTime - When the next analysis is scheduled
- * @param {Boolean} isTest - Whether this is a test email
- * @return {Boolean} Success status
- */
-function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest = false) {
-  try {
-    Logger.log(`Sending trading analysis email to: ${recipient}`);
-    
-    // Extract data from analysis result
-    const decision = analysisJson.decision || 'No Decision';
-    const analysis = analysisJson.analysis || {};
-    const analysisTime = analysisJson.timestamp ? new Date(analysisJson.timestamp) : new Date();
-    
-    // Set email subject based on decision
-    let subject = `${props.getProperty('NEWSLETTER_NAME')}: ${decision}`;
-    if (isTest) {
-      subject = `[TEST] ${subject}`;
-    }
-    
-    // Generate HTML email body
-    const htmlBody = generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
-
-    // Send the email using our enhanced sendEmail function
-    const emailResult = sendEmail(subject, htmlBody, recipient, isTest);
-    
-    if (!emailResult.success) {
-      throw new Error(`Failed to send trading analysis email: ${emailResult.error}`);
-    }
-    
-    return true;
+    return { success: true };
   } catch (error) {
-    Logger.log(`Error in sendTradingAnalysisEmail: ${error}`);
-    return false;
-  }
-}
-
-/**
- * Formats the analysis result into an email and sends it to the user
- * 
- * @param {Object} analysisJson - The analysis result JSON object
- * @param {Date} nextScheduledTime - When the next analysis is scheduled
- * @param {Boolean} isTest - Whether this is a test email
- * @return {String} HTML email content
- */
-function formatAndSendAnalysisEmail(analysisJson, nextScheduledTime, isTest = false) {
-  try {
-    // Get the recipients
-    const recipients = getEmailRecipients();
-    Logger.log(`Sending trading analysis email to ${recipients.length} recipients: ${recipients.join(', ')}`);
-    
-    // Send the email to each recipient
-    for (const recipient of recipients) {
-      const success = sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, isTest);
-      if (!success) {
-        Logger.log(`Failed to send email to recipient: ${recipient}`);
-      } else {
-        Logger.log(`Successfully sent email to: ${recipient}`);
-      }
-    }
-    
-    // Return the HTML content for logging or debugging
-    return generateEmailTemplate(analysisJson, nextScheduledTime, isTest);
-  } catch (error) {
-    Logger.log(`Error in formatAndSendAnalysisEmail: ${error}`);
-    throw error;
+    Logger.log(`Error sending email: ${error}`);
+    return { success: false, error: error.toString() };
   }
 }
