@@ -582,27 +582,115 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       const magnificentSeven = [];
       const otherStocks = [];
       
-      // Helper function to create stock object
+      // Helper function to create stock object with metrics array format
       const createStockObject = (symbol, data) => {
-        return {
+        // Create the base stock object
+        const stockObj = {
           symbol: symbol,
           name: data.name || symbol,
           price: data.price || 0,
           priceChange: data.priceChange || 0,
-          percentChange: data.percentChange || 0,
-          marketCap: data.marketCap || "N/A",
-          peRatio: data.peRatio || "N/A",
-          forwardPE: data.forwardPE || "N/A",
-          pegRatio: data.pegRatio || "N/A",
-          priceToBook: data.priceToBook || "N/A",
-          priceToSales: data.priceToSales || "N/A",
-          debtToEquity: data.debtToEquity || "N/A",
-          returnOnEquity: data.returnOnEquity || "N/A",
-          beta: data.beta || "N/A",
-          dividendYield: data.dividendYield || "N/A",
-          averageVolume: data.averageVolume || "N/A",
-          lastUpdated: formattedDate
+          percentChange: typeof data.percentChange === 'string' ? data.percentChange : 
+                        (typeof data.percentChange === 'number' ? data.percentChange.toFixed(2) + '%' : '0%'),
+          metrics: []
         };
+        
+        // Map of metric keys to their display names
+        const metricMapping = {
+          peRatio: "P/E Ratio",
+          forwardPE: "Forward P/E",
+          pegRatio: "PEG Ratio",
+          priceToBook: "Price/Book",
+          priceToSales: "Price/Sales",
+          debtToEquity: "Debt/Equity",
+          returnOnEquity: "ROE",
+          returnOnAssets: "ROA",
+          profitMargin: "Profit Margin",
+          dividendYield: "Dividend Yield",
+          beta: "Beta",
+          volume: "Volume",
+          averageVolume: "Avg Volume",
+          marketCap: "Market Cap",
+          fiftyTwoWeekHigh: "52W High",
+          fiftyTwoWeekLow: "52W Low",
+          sector: "Sector",
+          industry: "Industry",
+          assets: "Assets"
+        };
+        
+        // Format values appropriately based on the metric type
+        const formatMetricValue = (key, value) => {
+          if (value === null || value === undefined || value === "N/A" || value === "") {
+            return "N/A";
+          }
+          
+          // Format based on metric type
+          if (key === "peRatio" || key === "forwardPE" || key === "pegRatio" || key === "priceToBook" || key === "priceToSales") {
+            return typeof value === 'number' ? value.toFixed(2) : value.toString();
+          } else if (key === "returnOnEquity" || key === "returnOnAssets" || key === "profitMargin" || key === "dividendYield") {
+            // Format as percentage
+            if (typeof value === 'number') {
+              return value.toFixed(2) + '%';
+            } else if (typeof value === 'string' && !value.includes('%')) {
+              const numValue = parseFloat(value);
+              return isNaN(numValue) ? value : numValue.toFixed(2) + '%';
+            }
+            return value.toString();
+          } else if (key === "fiftyTwoWeekHigh" || key === "fiftyTwoWeekLow") {
+            // Format as currency
+            if (typeof value === 'number') {
+              return '$' + value.toFixed(2);
+            } else if (typeof value === 'string' && !value.includes('$')) {
+              return '$' + value;
+            }
+            return value.toString();
+          } else if (key === "volume" || key === "averageVolume") {
+            // Format with suffix (M, B)
+            if (typeof value === 'number') {
+              if (value >= 1000000000) {
+                return (value / 1000000000).toFixed(1) + 'B';
+              } else if (value >= 1000000) {
+                return (value / 1000000).toFixed(1) + 'M';
+              } else if (value >= 1000) {
+                return (value / 1000).toFixed(1) + 'K';
+              }
+              return value.toString();
+            }
+            return value.toString();
+          } else if (key === "marketCap" || key === "assets") {
+            // Format with currency and suffix
+            if (typeof value === 'number') {
+              if (value >= 1000000000000) {
+                return '$' + (value / 1000000000000).toFixed(1) + 'T';
+              } else if (value >= 1000000000) {
+                return '$' + (value / 1000000000).toFixed(1) + 'B';
+              } else if (value >= 1000000) {
+                return '$' + (value / 1000000).toFixed(1) + 'M';
+              }
+              return '$' + value.toString();
+            } else if (typeof value === 'string') {
+              if (!value.includes('$') && !isNaN(parseFloat(value))) {
+                return '$' + value;
+              }
+            }
+            return value.toString();
+          }
+          
+          // Default case
+          return value.toString();
+        };
+        
+        // Add metrics to the array
+        for (const [key, displayName] of Object.entries(metricMapping)) {
+          if (data[key] !== undefined && data[key] !== null && data[key] !== "") {
+            stockObj.metrics.push({
+              name: displayName,
+              value: formatMetricValue(key, data[key])
+            });
+          }
+        }
+        
+        return stockObj;
       };
       
       // Process all symbols in metrics
@@ -1022,36 +1110,29 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Format index level with 2 decimal places
         const indexLevel = typeof sp500Data.sp500Index?.price === 'number' ? 
           parseFloat(sp500Data.sp500Index.price.toFixed(2)) : 
-          (typeof sp500Data.indexLevel === 'number' ? 
-            parseFloat(sp500Data.indexLevel.toFixed(2)) : null);
+          (typeof sp500Data.indexLevel === 'number' ? parseFloat(sp500Data.indexLevel.toFixed(2)) : null);
         
         // Format current PE ratio with 2 decimal places
         const currentPE = typeof sp500Data.trailingPE?.pe === 'number' ? 
           parseFloat(sp500Data.trailingPE.pe.toFixed(2)) : 
-          (typeof sp500Data.valuation?.currentPE === 'number' ? 
-            parseFloat(sp500Data.valuation.currentPE.toFixed(2)) : 
-            (typeof sp500Data.sp500Index?.pe === 'number' ? 
-              parseFloat(sp500Data.sp500Index.pe.toFixed(2)) : null));
+          (typeof sp500Data.valuation?.currentPE === 'number' ? parseFloat(sp500Data.valuation.currentPE.toFixed(2)) : 
+            (typeof sp500Data.sp500Index?.pe === 'number' ? parseFloat(sp500Data.sp500Index.pe.toFixed(2)) : null));
         
         // Format 5-year average PE with 2 decimal places
         const fiveYearAvgPE = typeof sp500Data.trailingPE?.history?.avg5 === 'number' ? 
           parseFloat(sp500Data.trailingPE.history.avg5.toFixed(2)) : 
-          (typeof sp500Data.valuation?.fiveYearAvgPE === 'number' ? 
-            parseFloat(sp500Data.valuation.fiveYearAvgPE.toFixed(2)) : 
-            (typeof sp500Data.valuation?.historicalAvgPE === 'number' ? 
-              parseFloat(sp500Data.valuation.historicalAvgPE.toFixed(2)) : null));
+          (typeof sp500Data.valuation?.fiveYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.fiveYearAvgPE.toFixed(2)) : 
+            (typeof sp500Data.valuation?.historicalAvgPE === 'number' ? parseFloat(sp500Data.valuation.historicalAvgPE.toFixed(2)) : null));
         
         // Format 10-year average PE with 2 decimal places
         const tenYearAvgPE = typeof sp500Data.trailingPE?.history?.avg10 === 'number' ? 
           parseFloat(sp500Data.trailingPE.history.avg10.toFixed(2)) : 
-          (typeof sp500Data.valuation?.tenYearAvgPE === 'number' ? 
-            parseFloat(sp500Data.valuation.tenYearAvgPE.toFixed(2)) : null);
+          (typeof sp500Data.valuation?.tenYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.tenYearAvgPE.toFixed(2)) : null);
         
         // Format TTM EPS with 2 decimal places
         const ttmEPS = typeof sp500Data.earnings?.eps === 'number' ? 
           parseFloat(sp500Data.earnings.eps.toFixed(2)) : 
-          (typeof sp500Data.earnings?.ttmEPS === 'number' ? 
-            parseFloat(sp500Data.earnings.ttmEPS.toFixed(2)) : null);
+          (typeof sp500Data.earnings?.ttmEPS === 'number' ? parseFloat(sp500Data.earnings.ttmEPS.toFixed(2)) : null);
         
         // Calculate target prices at different PE multiples
         const targetAt15x = ttmEPS !== null ? parseFloat((ttmEPS * 15).toFixed(2)) : null;
@@ -1072,8 +1153,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
               // Get the EPS value from eps or value property
               const eps = typeof estimate.eps === 'number' ? 
                 parseFloat(estimate.eps.toFixed(2)) : 
-                (typeof estimate.value === 'number' ? 
-                  parseFloat(estimate.value.toFixed(2)) : null);
+                (typeof estimate.value === 'number' ? parseFloat(estimate.value.toFixed(2)) : null);
               
               // Only add the estimate if we have both year and eps
               if (year && eps !== null) {
