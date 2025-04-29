@@ -1708,8 +1708,8 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
       // Check if the response is HTML (starts with <!DOCTYPE or <html)
       if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
         Logger.log('Received HTML response instead of JSON. This likely indicates an error page from the Lambda service.');
-        // Try to generate HTML using local Lambda as a fallback
-        return generateHtmlUsingLocalLambda(jsonString, jsonFileUrl, debugMode);
+        // Return just the JSON URL if we received an error page
+        return { jsonUrl: jsonFileUrl };
       }
       
       try {
@@ -1752,13 +1752,13 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
           Logger.log('Error: HTML content not found in the response');
           Logger.log(`Full response: ${responseText}`);
           
-          // Try to generate HTML using local Lambda as a fallback
-          return generateHtmlUsingLocalLambda(jsonString, jsonFileUrl, debugMode);
+          // Return just the JSON URL if HTML content is not found
+          return { jsonUrl: jsonFileUrl };
         }
       } catch (error) {
         Logger.log(`Error parsing Lambda response: ${error}`);
-        // Try to generate HTML using local Lambda as a fallback
-        return generateHtmlUsingLocalLambda(jsonString, jsonFileUrl, debugMode);
+        // Return just the JSON URL if parsing failed
+        return { jsonUrl: jsonFileUrl };
       }
     } else {
       // Handle error response
@@ -1766,14 +1766,14 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
       Logger.log(`Response content: ${response.getContentText()}`);
       
       // Return just the JSON URL if Lambda service call failed
-      return jsonFileUrl;
+      return { jsonUrl: jsonFileUrl };
     }
   } catch (error) {
     // Handle any exceptions
     Logger.log(`Exception calling Lambda service: ${error.toString()}`);
     
     // Return just the JSON URL if Lambda service call failed
-    return jsonFileUrl;
+    return { jsonUrl: jsonFileUrl };
   }
 }
 

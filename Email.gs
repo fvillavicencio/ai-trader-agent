@@ -67,18 +67,16 @@ function sendTradeDecisionEmail(analysisJson) {
         if (typeof jsonExportResult === 'string') {
           // If result is just a string URL (JSON only)
           Logger.log(`Full JSON dataset saved to: ${jsonExportResult}`);
-          // Generate instructions for HTML generation as a fallback
-          const instructionsUrl = JsonExport.generateHtmlUsingLocalLambda(jsonExportResult);
-          Logger.log(`Instructions for HTML generation: ${instructionsUrl}`);
+          // No longer using local lambda, just log the JSON URL
+          Logger.log(`HTML generation skipped, using JSON URL: ${jsonExportResult}`);
         } else {
           // If result is an object with jsonUrl and htmlUrl properties
           Logger.log(`Full JSON dataset saved to: ${jsonExportResult.jsonUrl}`);
           if (jsonExportResult.htmlUrl) {
             Logger.log(`HTML saved to: ${jsonExportResult.htmlUrl}`);
           } else {
-            // Generate instructions for HTML generation as a fallback
-            const instructionsUrl = JsonExport.generateHtmlUsingLocalLambda(jsonExportResult.jsonUrl);
-            Logger.log(`Instructions for HTML generation: ${instructionsUrl}`);
+            // No longer using local lambda, just log the JSON URL
+            Logger.log(`HTML generation skipped, using JSON URL: ${jsonExportResult.jsonUrl}`);
           }
         }
       } catch (jsonExportError) {
