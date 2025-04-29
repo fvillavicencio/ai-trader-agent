@@ -892,7 +892,9 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Add the new fedPolicy structure
         fullJsonDataset.macroeconomicFactors.fedPolicy = {
           futuresPrice: parseFloat(futuresPrice) ? parseFloat(futuresPrice).toFixed(2) : null,
-          impliedRate: parseFloat(impliedRate) ? `${parseFloat(impliedRate).toFixed(2)}%` : `${impliedRate}%`,
+          impliedRate: parseFloat(impliedRate) ? 
+                      (impliedRate.toString().includes('%') ? parseFloat(impliedRate).toFixed(2) : parseFloat(impliedRate).toFixed(2) + '%') : 
+                      (impliedRate.toString().includes('%') ? impliedRate : impliedRate + '%'),
           cutProbability: parseFloat(cutProbability) || 0,
           holdProbability: parseFloat(holdProbability) || 0,
           hikeProbability: parseFloat(hikeProbability) || 0,
@@ -904,7 +906,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           meetingSource: meetingSource,
           meetingSourceUrl: meetingSourceUrl,
           meetingAsOf: meetingAsOf,
-          currentRate: `${currentRateValue}%`,
+          currentRate: currentRateValue.toString().includes('%') ? currentRateValue : `${currentRateValue}%`,
           rateRange: rateRange,
           guidance: guidance,
           guidanceSource: guidanceSource,
@@ -918,7 +920,9 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Add the fedWatch structure
         fullJsonDataset.macroeconomicFactors.fedWatch = {
           currentPrice: parseFloat(futuresPrice) ? parseFloat(futuresPrice).toFixed(2) : null,
-          impliedRate: parseFloat(impliedRate) ? `${parseFloat(impliedRate).toFixed(2)}%` : `${impliedRate}%`,
+          impliedRate: parseFloat(impliedRate) ? 
+                      (impliedRate.toString().includes('%') ? parseFloat(impliedRate).toFixed(2) : parseFloat(impliedRate).toFixed(2) + '%') : 
+                      (impliedRate.toString().includes('%') ? impliedRate : impliedRate + '%'),
           probabilities: {
             cut: parseFloat(cutProbability) || 0,
             hold: parseFloat(holdProbability) || 0,
