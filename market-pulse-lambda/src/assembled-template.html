@@ -988,7 +988,7 @@
               <div style="font-weight: bold; margin-bottom: 5px;">{{#if title}}{{title}}{{else}}{{name}}{{/if}}</div>
               <div style="color: #555; margin-bottom: 5px;">{{#if description}}{{description}}{{/if}}</div>
               <div style="font-size: 10px; color: #757575;">
-                {{#if region}}Region: {{region}}{{/if}} {{#if source}} • Source: {{source}}{{/if}}
+                {{#if region}}Region: {{region}}{{/if}}{{#if source}}{{#if region}} • {{/if}}Source: {{source}}{{/if}}
               </div>
             </div>
             <div style="width: 80px; text-align: center; background-color: {{#if (eq impactLevel 'High')}}#f44336{{else if (eq impactLevel 'Medium')}}#ff9800{{else if (eq impactLevel 'Severe')}}#800020{{else}}#4caf50{{/if}}; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
