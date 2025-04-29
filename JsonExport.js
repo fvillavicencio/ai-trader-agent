@@ -1256,11 +1256,15 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
                 forwardEpsEstimates.push({
                   year: year.toString(),
                   eps: eps,
+                  epsFormatted: `$${eps.toFixed(2)}`,
                   targetAt15x: targetAt15x.toFixed(2),
+                  targetAt15xFormatted: `$${targetAt15x.toFixed(2)}`,
                   percentVsIndex15x: percentVsIndex15x,
                   targetAt17x: targetAt17x.toFixed(2),
+                  targetAt17xFormatted: `$${targetAt17x.toFixed(2)}`,
                   percentVsIndex17x: percentVsIndex17x,
                   targetAt20x: targetAt20x.toFixed(2),
+                  targetAt20xFormatted: `$${targetAt20x.toFixed(2)}`,
                   percentVsIndex20x: percentVsIndex20x
                 });
               }
@@ -1278,11 +1282,15 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           forwardEpsEstimates.push({
             year: nextYear.toString(),
             eps: nextYearEPS,
+            epsFormatted: nextYearEPS !== null ? `$${nextYearEPS.toFixed(2)}` : null,
             targetAt15x: nextYearEPS !== null ? (nextYearEPS * 15).toFixed(2) : null,
+            targetAt15xFormatted: nextYearEPS !== null ? `$${(nextYearEPS * 15).toFixed(2)}` : null,
             percentVsIndex15x: indexLevel > 0 ? ((nextYearEPS * 15 / indexLevel - 1) * 100).toFixed(1) : "0.0",
             targetAt17x: nextYearEPS !== null ? (nextYearEPS * 17).toFixed(2) : null,
+            targetAt17xFormatted: nextYearEPS !== null ? `$${(nextYearEPS * 17).toFixed(2)}` : null,
             percentVsIndex17x: indexLevel > 0 ? ((nextYearEPS * 17 / indexLevel - 1) * 100).toFixed(1) : "0.0",
             targetAt20x: nextYearEPS !== null ? (nextYearEPS * 20).toFixed(2) : null,
+            targetAt20xFormatted: nextYearEPS !== null ? `$${(nextYearEPS * 20).toFixed(2)}` : null,
             percentVsIndex20x: indexLevel > 0 ? ((nextYearEPS * 20 / indexLevel - 1) * 100).toFixed(1) : "0.0"
           });
           
@@ -1291,11 +1299,15 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           forwardEpsEstimates.push({
             year: yearAfter.toString(),
             eps: yearAfterEPS,
+            epsFormatted: yearAfterEPS !== null ? `$${yearAfterEPS.toFixed(2)}` : null,
             targetAt15x: yearAfterEPS !== null ? (yearAfterEPS * 15).toFixed(2) : null,
+            targetAt15xFormatted: yearAfterEPS !== null ? `$${(yearAfterEPS * 15).toFixed(2)}` : null,
             percentVsIndex15x: indexLevel > 0 ? ((yearAfterEPS * 15 / indexLevel - 1) * 100).toFixed(1) : "0.0",
             targetAt17x: yearAfterEPS !== null ? (yearAfterEPS * 17).toFixed(2) : null,
+            targetAt17xFormatted: yearAfterEPS !== null ? `$${(yearAfterEPS * 17).toFixed(2)}` : null,
             percentVsIndex17x: indexLevel > 0 ? ((yearAfterEPS * 17 / indexLevel - 1) * 100).toFixed(1) : "0.0",
             targetAt20x: yearAfterEPS !== null ? (yearAfterEPS * 20).toFixed(2) : null,
+            targetAt20xFormatted: yearAfterEPS !== null ? `$${(yearAfterEPS * 20).toFixed(2)}` : null,
             percentVsIndex20x: indexLevel > 0 ? ((yearAfterEPS * 20 / indexLevel - 1) * 100).toFixed(1) : "0.0"
           });
         }
@@ -1336,9 +1348,13 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           },
           eps: {
             ttm: ttmEPS,
+            ttmFormatted: ttmEPS !== null ? `$${ttmEPS.toFixed(2)}` : null,
             targetAt15x: targetAt15x,
+            targetAt15xFormatted: targetAt15x !== null ? `$${targetAt15x.toFixed(2)}` : null,
             targetAt17x: targetAt17x,
+            targetAt17xFormatted: targetAt17x !== null ? `$${targetAt17x.toFixed(2)}` : null,
             targetAt20x: targetAt20x,
+            targetAt20xFormatted: targetAt20x !== null ? `$${targetAt20x.toFixed(2)}` : null,
             source: sourceName,
             sourceUrl: sourceUrl,
             asOf: epsAsOf || asOf
@@ -1479,9 +1495,13 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           },
           eps: {
             ttm: null,
+            ttmFormatted: null,
             targetAt15x: null,
+            targetAt15xFormatted: null,
             targetAt17x: null,
+            targetAt17xFormatted: null,
             targetAt20x: null,
+            targetAt20xFormatted: null,
             source: "Yahoo Finance",
             sourceUrl: "https://finance.yahoo.com/quote/%5EGSPC/analysis/",
             asOf: formattedDate
@@ -1490,21 +1510,29 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             {
               year: (new Date().getFullYear() + 1).toString(),
               eps: null,
+              epsFormatted: null,
               targetAt15x: null,
+              targetAt15xFormatted: null,
               percentVsIndex15x: "0.0",
               targetAt17x: null,
+              targetAt17xFormatted: null,
               percentVsIndex17x: "0.0",
               targetAt20x: null,
+              targetAt20xFormatted: null,
               percentVsIndex20x: "0.0"
             },
             {
               year: (new Date().getFullYear() + 2).toString(),
               eps: null,
+              epsFormatted: null,
               targetAt15x: null,
+              targetAt15xFormatted: null,
               percentVsIndex15x: "0.0",
               targetAt17x: null,
+              targetAt17xFormatted: null,
               percentVsIndex17x: "0.0",
               targetAt20x: null,
+              targetAt20xFormatted: null,
               percentVsIndex20x: "0.0"
             }
           ],
@@ -1536,9 +1564,13 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         },
         eps: {
           ttm: null,
+          ttmFormatted: null,
           targetAt15x: null,
+          targetAt15xFormatted: null,
           targetAt17x: null,
+          targetAt17xFormatted: null,
           targetAt20x: null,
+          targetAt20xFormatted: null,
           source: "Yahoo Finance",
           sourceUrl: "https://finance.yahoo.com/quote/%5EGSPC/analysis/",
           asOf: formattedDate
@@ -1547,21 +1579,29 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           {
             year: (new Date().getFullYear() + 1).toString(),
             eps: null,
+            epsFormatted: null,
             targetAt15x: null,
+            targetAt15xFormatted: null,
             percentVsIndex15x: "0.0",
             targetAt17x: null,
+            targetAt17xFormatted: null,
             percentVsIndex17x: "0.0",
             targetAt20x: null,
+            targetAt20xFormatted: null,
             percentVsIndex20x: "0.0"
           },
           {
             year: (new Date().getFullYear() + 2).toString(),
             eps: null,
+            epsFormatted: null,
             targetAt15x: null,
+            targetAt15xFormatted: null,
             percentVsIndex15x: "0.0",
             targetAt17x: null,
+            targetAt17xFormatted: null,
             percentVsIndex17x: "0.0",
             targetAt20x: null,
+            targetAt20xFormatted: null,
             percentVsIndex20x: "0.0"
           }
         ],
