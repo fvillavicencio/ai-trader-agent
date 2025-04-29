@@ -1,4 +1,126 @@
 /**
+ * Sends the trade decision email and saves the HTML to Google Drive
+ * 
+ * @param {Object} analysisJson - The analysis result JSON object
+ * @return {Boolean} Success status
+ */
+function sendTradeDecisionEmail(analysisJson) {
+  try {
+    Logger.log("Preparing to send trade decision email...");
+    
+    // Check if DEBUG_MODE is enabled
+    const props = PropertiesService.getScriptProperties();
+    const debugMode = props.getProperty('DEBUG_MODE') === 'true';
+    
+    if (debugMode) {
+      Logger.log("Debug mode enabled - generating full JSON dataset with detailed logging");
+    }
+    
+    // Generate the HTML email content using the function from Utils.gs
+    const htmlContent = generateEmailTemplate(analysisJson, false);
+    
+    // Save the HTML to Google Drive
+    try {
+      Logger.log("Saving HTML email to Google Drive...");
+      
+      // Get folder name from properties
+      const folderName = props.getProperty('GOOGLE_FOLDER_NAME');
+      const fileName = props.getProperty('GOOGLE_FILE_NAME');
+      
+      // Find or create the folder
+      let folder;
+      const folderIterator = DriveApp.getFoldersByName(folderName);
+      
+      if (folderIterator.hasNext()) {
+        folder = folderIterator.next();
+        Logger.log(`Found existing folder: ${folderName}`);
+      } else {
+        folder = DriveApp.createFolder(folderName);
+        Logger.log(`Created new folder: ${folderName}`);
+      }
+      
+      // Create or update the file
+      let file;
+      const fileIterator = folder.getFilesByName(fileName);
+      
+      if (fileIterator.hasNext()) {
+        file = fileIterator.next();
+        Logger.log(`Found existing file: ${fileName}`);
+        file.setContent(htmlContent);
+      } else {
+        file = folder.createFile(fileName, htmlContent);
+        Logger.log(`Created new file: ${fileName}`);
+      }     
+      // Publish to Ghost
+      Logger.log("Publishing HTML content to Ghost"); 
+      let ghostResult;
+      try {
+        ghostResult = publishToGhost(file.getId(), folder.getId(), fileName);
+      } catch (e) {
+        Logger.log("Warning: Failed to publish to Ghost: " + e);
+      }
+      
+      // Generate and save the full JSON dataset right before returning
+      try {
+        const jsonExportResult = JsonExport.generateAndSaveFullJsonDataset(analysisJson);
+        
+        if (typeof jsonExportResult === 'string') {
+          // If result is just a string URL (JSON only)
+          Logger.log(`Full JSON dataset saved to: ${jsonExportResult}`);
+          // Generate instructions for HTML generation as a fallback
+          const instructionsUrl = JsonExport.generateHtmlUsingLocalLambda(jsonExportResult);
+          Logger.log(`Instructions for HTML generation: ${instructionsUrl}`);
+        } else {
+          // If result is an object with jsonUrl and htmlUrl properties
+          Logger.log(`Full JSON dataset saved to: ${jsonExportResult.jsonUrl}`);
+          if (jsonExportResult.htmlUrl) {
+            Logger.log(`HTML saved to: ${jsonExportResult.htmlUrl}`);
+          } else {
+            // Generate instructions for HTML generation as a fallback
+            const instructionsUrl = JsonExport.generateHtmlUsingLocalLambda(jsonExportResult.jsonUrl);
+            Logger.log(`Instructions for HTML generation: ${instructionsUrl}`);
+          }
+        }
+      } catch (jsonExportError) {
+        Logger.log(`Error generating and saving full JSON dataset: ${jsonExportError}`);
+      }
+      
+      Logger.log("HTML content saved successfully to Google Drive and published to Ghost");
+    } catch (error) {
+      Logger.log("Error saving HTML to Google Drive:", error.toString());
+      throw error;
+    }
+
+    // Get the final recipients from Config.gs
+    const recipients = getEmailRecipients();
+    // Compose email subject
+    let newsletterName = 'Market Pulse Daily';
+    try {
+      const propName = props.getProperty('NEWSLETTER_NAME');
+      if (propName && propName.trim() !== '') {
+        newsletterName = propName.trim();
+      }
+    } catch (e) {}
+    const subject = `${newsletterName} - ${analysisJson.decision}`;
+
+    // Send the email using our enhanced sendEmail function
+    const recipientList = recipients.join(",");
+    const emailResult = sendEmail(subject, htmlContent, recipientList, false, true); // true for forceBcc
+    if (!emailResult.success) {
+      Logger.log(`Failed to send email to recipients: ${recipientList}`);
+      sendErrorEmail("Trade Decision Email Error", emailResult.error || "Unknown error");
+      return false;
+    }
+    Logger.log("Trade decision email process completed.");
+    return true;
+  } catch (error) {
+    Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
+    sendErrorEmail("Trade Decision Email Error", error.toString());
+    return false;
+  }
+}
+
+/**
  * Sends an error notification email
  * 
  * @param {string} subject - The email subject
@@ -136,112 +258,6 @@ ${errorMessage}
 }
 
 /**
- * Sends the trade decision email and saves the HTML to Google Drive
- * 
- * @param {Object} analysisJson - The analysis result JSON object
- * @return {Boolean} Success status
- */
-function sendTradeDecisionEmail(analysisJson) {
-  try {
-    Logger.log("Preparing to send trade decision email...");
-    
-    // Generate the HTML email content using the function from Utils.gs
-    const htmlContent = generateEmailTemplate(analysisJson, false);
-    
-    // Save the HTML to Google Drive
-    try {
-      Logger.log("Saving HTML email to Google Drive...");
-      
-      // Get folder name from properties
-      const props = PropertiesService.getScriptProperties();
-      const folderName = props.getProperty('GOOGLE_FOLDER_NAME');
-      const fileName = props.getProperty('GOOGLE_FILE_NAME');
-      
-      // Find or create the folder
-      let folder;
-      const folderIterator = DriveApp.getFoldersByName(folderName);
-      
-      if (folderIterator.hasNext()) {
-        folder = folderIterator.next();
-        Logger.log(`Found existing folder: ${folderName}`);
-      } else {
-        folder = DriveApp.createFolder(folderName);
-        Logger.log(`Created new folder: ${folderName}`);
-      }
-      
-      // Create or update the file
-      let file;
-      const fileIterator = folder.getFilesByName(fileName);
-      
-      if (fileIterator.hasNext()) {
-        file = fileIterator.next();
-        Logger.log(`Found existing file: ${fileName}`);
-        file.setContent(htmlContent);
-      } else {
-        file = folder.createFile(fileName, htmlContent);
-        Logger.log(`Created new file: ${fileName}`);
-      }
-      
-      // Publish to Ghost
-      try {
-        const ghostResult = publishToGhost(file.getId(), folder.getId(), fileName);
-      } catch (error) {
-        Logger.log("Error publishing to Ghost:", error.toString());
-        throw error;
-      }
-      
-      Logger.log("Email content saved successfully to Google Drive and published to Ghost");
-    } catch (error) {
-      Logger.log("Error saving HTML to Google Drive:", error.toString());
-      throw error;
-    }
-    
-    // Get the final recipients from Config.gs
-    const recipients = getEmailRecipients();
-    
-    // Send the email to each recipient
-    let allSuccessful = true;
-    for (const recipient of recipients) {
-        const success = sendTradingAnalysisEmail(recipient, analysisJson, false);
-        if (!success) {
-          allSuccessful = false;
-          Logger.log(`Failed to send email to recipient: ${recipient}`);
-        }
-    }
-    Logger.log("Trade decision email process completed.");
-    return allSuccessful;
-  } catch (error) {
-    Logger.log(`Error in sendTradeDecisionEmail: ${error}`);
-    sendErrorEmail("Trade Decision Email Error", error.toString());
-    return false;
-  }
-}
-
-/**
- * Publishes the HTML content to Ghost CMS
- * 
- * @param {string} fileId - The ID of the HTML file in Google Drive
- * @param {string} folderId - The ID of the folder containing the HTML file
- * @param {string} fileName - The name of the HTML file
- * @return {Object} The result of the Ghost publishing operation
- */
-function publishToGhost(fileId, folderId, fileName) {
-  try {
-    Logger.log("Publishing to Ghost...");
-    const ghostResult = GhostPublisher.runGhostPublisher({
-      fileId: fileId,
-      folderId: folderId,
-      fileName: fileName
-    });
-    Logger.log("Ghost publishing result:", JSON.stringify(ghostResult, null, 2));
-    return ghostResult;
-  } catch (error) {
-    Logger.log("Error publishing to Ghost:", error.toString());
-    throw error;
-  }
-}
-
-/**
  * Sends an email with the generated OpenAI prompt
  * 
  * @param {string} prompt - The prompt that will be sent to OpenAI
@@ -374,9 +390,10 @@ ${prompt}
  * @param {string} htmlBody - The HTML body of the email
  * @param {string} recipient - The email address of the recipient
  * @param {boolean} isTest - Whether this is a test email
+ * @param {boolean} forceBcc - Whether to send the email using BCC only (no direct recipient)
  * @return {Object} - The result of the email sending operation
  */
-function sendEmail(subject, htmlBody, recipient, isTest = false) {
+function sendEmail(subject, htmlBody, recipient, isTest = false, forceBcc = false) {
   try {
     const props = PropertiesService.getScriptProperties();
     // Get the test email address and validate it
@@ -387,7 +404,7 @@ function sendEmail(subject, htmlBody, recipient, isTest = false) {
     
     // Determine the recipient based on test mode
     const finalRecipient = isTest ? testEmail : recipient;
-    Logger.log(`Sending email to ${finalRecipient}`);
+    Logger.log(`Sending email to ${finalRecipient}${forceBcc ? ' (using BCC)' : ''}`);
     
     // Add test prefix if needed
     if (isTest) {
@@ -401,11 +418,40 @@ function sendEmail(subject, htmlBody, recipient, isTest = false) {
     
     while (retryCount < maxRetries) {
       try {
-        result = GmailApp.sendEmail(finalRecipient, subject, '', {
-          htmlBody: htmlBody,
-          name: props.getProperty('NEWSLETTER_NAME'),
-          replyTo: 'noreply@marketpulsedaily.com'
-        });
+        if (forceBcc && !isTest) {
+          // Only BCC, blank To field
+          result = GmailApp.sendEmail(
+            '',
+            subject,
+            'This email requires an HTML-compatible client.',
+            {
+              bcc: finalRecipient,
+              htmlBody: htmlBody,
+              name: props.getProperty('NEWSLETTER_NAME'),
+              replyTo: 'market-pulse-daily@ghost.io'
+            }
+          );
+        } else if (forceBcc && isTest) {
+          // Send with BCC in test mode
+          result = GmailApp.sendEmail(
+            'market-pulse-daily@ghost.io',
+            subject,
+            'This email requires an HTML-compatible client.',
+            {
+              bcc: testEmail,
+              htmlBody: htmlBody,
+              name: props.getProperty('NEWSLETTER_NAME'),
+              replyTo: 'market-pulse-daily@ghost.io'
+            }
+          );
+        } else {
+          // Standard send
+          result = GmailApp.sendEmail(finalRecipient, subject, '', {
+            htmlBody: htmlBody,
+            name: props.getProperty('NEWSLETTER_NAME'),
+            replyTo: 'market-pulse-daily@ghost.io'
+          });
+        }
         break;
       } catch (sendError) {
         retryCount++;
@@ -417,7 +463,7 @@ function sendEmail(subject, htmlBody, recipient, isTest = false) {
       }
     }
     
-    Logger.log(`Email sent successfully to ${finalRecipient}`);
+    Logger.log(`Email sent successfully to ${finalRecipient}${forceBcc ? ' (using BCC)' : ''}`);
     return {
       success: true,
       result: result,
@@ -482,7 +528,7 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
     const analysisTime = analysisJson.timestamp ? new Date(analysisJson.timestamp) : new Date();
     
     // Set email subject based on decision
-    let subject = `Trading Analysis: ${decision}`;
+    let subject = `${props.getProperty('NEWSLETTER_NAME')}: ${decision}`;
     if (isTest) {
       subject = `[TEST] ${subject}`;
     }
@@ -500,26 +546,6 @@ function sendTradingAnalysisEmail(recipient, analysisJson, nextScheduledTime, is
     return true;
   } catch (error) {
     Logger.log(`Error in sendTradingAnalysisEmail: ${error}`);
-    return false;
-  }
-}
-
-/**
- * Sends a test trading analysis email to the current user
- * 
- * @param {Object} analysisJson - The analysis result JSON object
- * @return {Boolean} Success status
- */
-function sendTestTradingAnalysisEmail(analysisJson) {
-  try {
-    const props = PropertiesService.getScriptProperties();
-    const userEmail = Session.getEffectiveUser().getEmail();
-    const nextScheduledTime = new Date();
-    nextScheduledTime.setDate(nextScheduledTime.getDate() + 1); // Next day
-    
-    return sendTradingAnalysisEmail(userEmail, analysisJson, nextScheduledTime, true);
-  } catch (error) {
-    Logger.log(`Error sending test trading analysis email: ${error}`);
     return false;
   }
 }
