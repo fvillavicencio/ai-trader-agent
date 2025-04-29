@@ -1879,21 +1879,28 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
       Logger.log(`Using API key: ${lambdaApiKey.substring(0, 5)}...`);
     }
     
-    // Call the Lambda service with the JSON data
-    const response = UrlFetchApp.fetch(lambdaUrl, {
-      method: 'post',
-      contentType: 'application/json',
-      payload: jsonString,
-      headers: {
+    // Set up the request options
+    const options = {
+      'method': 'post',
+      'contentType': 'application/json',
+      'payload': jsonString,
+      'headers': {
         'x-api-key': lambdaApiKey
       },
-      muteHttpExceptions: true
-    });
+      'muteHttpExceptions': true
+    };
+    
+    // Make the request to the Lambda function
+    if (debugMode) {
+      Logger.log("Sending request to Lambda function...");
+    }
+    
+    const response = UrlFetchApp.fetch(lambdaUrl, options);
     const responseCode = response.getResponseCode();
     
     if (debugMode) {
-      Logger.log(`Lambda service response code: ${responseCode}`);
-      Logger.log(`Lambda service response headers: ${JSON.stringify(response.getAllHeaders())}`);
+      Logger.log(`Lambda response code: ${responseCode}`);
+      Logger.log(`Lambda response headers: ${JSON.stringify(response.getAllHeaders())}`);
     }
     
     if (responseCode === 200) {
@@ -1905,21 +1912,53 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
       
       let htmlContent;
       
+      if (debugMode) {
+        Logger.log(`Lambda response (first 200 chars): ${responseContent.substring(0, 200)}...`);
+      }
+      
       // Try to parse the response as JSON
       try {
         const jsonResponse = JSON.parse(responseContent);
         
-        // Check if the response has an html property
-        if (jsonResponse.html) {
+        // AWS Lambda typically returns a response with statusCode, headers, and body
+        if (jsonResponse.body) {
+          // The body could be HTML directly or another JSON string
+          try {
+            // Try to parse the body as JSON
+            const bodyJson = JSON.parse(jsonResponse.body);
+            
+            // If body is JSON and has an html property, use that
+            if (bodyJson.html) {
+              htmlContent = bodyJson.html;
+              if (debugMode) {
+                Logger.log("Extracted HTML from nested JSON response body.html");
+              }
+            } else {
+              // Body is JSON but no html property, use stringified body
+              htmlContent = jsonResponse.body;
+              if (debugMode) {
+                Logger.log("No html property in nested JSON, using full body");
+              }
+            }
+          } catch (bodyParseError) {
+            // If body is not JSON, assume it's HTML directly
+            htmlContent = jsonResponse.body;
+            if (debugMode) {
+              Logger.log("Response body is not JSON, using as direct HTML");
+            }
+          }
+        } 
+        // Direct response format (no AWS Lambda wrapper)
+        else if (jsonResponse.html) {
           htmlContent = jsonResponse.html;
           if (debugMode) {
-            Logger.log("Extracted HTML content from JSON response");
+            Logger.log("Extracted HTML from direct JSON response");
           }
         } else {
-          // If no html property, use the entire response as HTML
+          // No recognizable structure, use the entire response
           htmlContent = responseContent;
           if (debugMode) {
-            Logger.log("No html property found in JSON response, using full response");
+            Logger.log("No recognizable structure in JSON response, using full response");
           }
         }
       } catch (parseError) {
@@ -1929,6 +1968,16 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
         if (debugMode) {
           Logger.log("Response is not JSON, using as direct HTML");
         }
+      }
+      
+      if (!htmlContent || htmlContent.trim() === '') {
+        throw new Error("Could not extract HTML content from Lambda response");
+      }
+      
+      if (debugMode) {
+        Logger.log("Successfully extracted HTML content");
+        Logger.log(`HTML content length: ${htmlContent.length} characters`);
+        Logger.log(`HTML content starts with: ${htmlContent.substring(0, 100)}...`);
       }
       
       // Save the HTML directly to Google Drive
@@ -2149,51 +2198,87 @@ function generateHtmlFromJson(jsonData, debugMode = false) {
     
     if (debugMode) {
       Logger.log(`Lambda response code: ${responseCode}`);
+      Logger.log(`Lambda response headers: ${JSON.stringify(response.getAllHeaders())}`);
     }
     
-    if (responseCode !== 200) {
-      throw new Error(`Lambda function returned error code: ${responseCode}`);
-    }
-    
-    // Get the HTML content from the response
-    const responseContent = response.getContentText();
-    
-    if (!responseContent || responseContent.trim() === '') {
-      throw new Error("Lambda function returned empty HTML content");
-    }
-    
-    let htmlContent;
-    
-    // Try to parse the response as JSON
-    try {
-      const jsonResponse = JSON.parse(responseContent);
+    if (responseCode === 200) {
+      const responseContent = response.getContentText();
       
-      // Check if the response has an html property
-      if (jsonResponse.html) {
-        htmlContent = jsonResponse.html;
-        if (debugMode) {
-          Logger.log("Extracted HTML content from JSON response");
+      if (!responseContent || responseContent.trim() === '') {
+        throw new Error("Lambda function returned empty HTML content");
+      }
+      
+      let htmlContent;
+      
+      // Try to parse the response as JSON
+      try {
+        const jsonResponse = JSON.parse(responseContent);
+        
+        // AWS Lambda typically returns a response with statusCode, headers, and body
+        if (jsonResponse.body) {
+          // The body could be HTML directly or another JSON string
+          try {
+            // Try to parse the body as JSON
+            const bodyJson = JSON.parse(jsonResponse.body);
+            
+            // If body is JSON and has an html property, use that
+            if (bodyJson.html) {
+              htmlContent = bodyJson.html;
+              if (debugMode) {
+                Logger.log("Extracted HTML from nested JSON response body.html");
+              }
+            } else {
+              // Body is JSON but no html property, use stringified body
+              htmlContent = jsonResponse.body;
+              if (debugMode) {
+                Logger.log("No html property in nested JSON, using full body");
+              }
+            }
+          } catch (bodyParseError) {
+            // If body is not JSON, assume it's HTML directly
+            htmlContent = jsonResponse.body;
+            if (debugMode) {
+              Logger.log("Response body is not JSON, using as direct HTML");
+            }
+          }
+        } 
+        // Direct response format (no AWS Lambda wrapper)
+        else if (jsonResponse.html) {
+          htmlContent = jsonResponse.html;
+          if (debugMode) {
+            Logger.log("Extracted HTML from direct JSON response");
+          }
+        } else {
+          // No recognizable structure, use the entire response
+          htmlContent = responseContent;
+          if (debugMode) {
+            Logger.log("No recognizable structure in JSON response, using full response");
+          }
         }
-      } else {
-        // If no html property, use the entire response as HTML
+      } catch (parseError) {
+        // If not valid JSON, assume the response is directly HTML
         htmlContent = responseContent;
+        
         if (debugMode) {
-          Logger.log("No html property found in JSON response, using full response");
+          Logger.log("Response is not JSON, using as direct HTML");
         }
       }
-    } catch (parseError) {
-      // If not valid JSON, assume the response is directly HTML
-      htmlContent = responseContent;
       
-      if (debugMode) {
-        Logger.log("Response is not JSON, using as direct HTML");
-      }
+      return htmlContent;
+    } else {
+      // Handle error response
+      Logger.log(`Error calling Lambda service: ${responseCode}`);
+      Logger.log(`Response content: ${response.getContentText()}`);
+      
+      // Return just the JSON URL if Lambda service call failed
+      return { jsonUrl: jsonFileUrl };
     }
-    
-    return htmlContent;
   } catch (error) {
-    Logger.log(`Error in generateHtmlFromJson: ${error}`);
-    throw error;
+    // Handle any exceptions
+    Logger.log(`Exception calling Lambda service: ${error.toString()}`);
+    
+    // Return just the JSON URL if Lambda service call failed
+    return { jsonUrl: jsonFileUrl };
   }
 }
 
