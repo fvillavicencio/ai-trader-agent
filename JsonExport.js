@@ -892,9 +892,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Add the new fedPolicy structure
         fullJsonDataset.macroeconomicFactors.fedPolicy = {
           futuresPrice: parseFloat(futuresPrice) ? parseFloat(futuresPrice).toFixed(2) : null,
-          impliedRate: parseFloat(impliedRate) ? 
-                      (impliedRate.toString().includes('%') ? parseFloat(impliedRate).toFixed(2) : parseFloat(impliedRate).toFixed(2) + '%') : 
-                      (impliedRate.toString().includes('%') ? impliedRate : impliedRate + '%'),
+          impliedRate: parseFloat(impliedRate) ? parseFloat(impliedRate).toFixed(2) : (impliedRate || ''),
           cutProbability: parseFloat(cutProbability) || 0,
           holdProbability: parseFloat(holdProbability) || 0,
           hikeProbability: parseFloat(hikeProbability) || 0,
@@ -920,9 +918,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Add the fedWatch structure
         fullJsonDataset.macroeconomicFactors.fedWatch = {
           currentPrice: parseFloat(futuresPrice) ? parseFloat(futuresPrice).toFixed(2) : null,
-          impliedRate: parseFloat(impliedRate) ? 
-                      (impliedRate.toString().includes('%') ? parseFloat(impliedRate).toFixed(2) : parseFloat(impliedRate).toFixed(2) + '%') : 
-                      (impliedRate.toString().includes('%') ? impliedRate : impliedRate + '%'),
+          impliedRate: parseFloat(impliedRate) ? parseFloat(impliedRate).toFixed(2) : (impliedRate || ''),
           probabilities: {
             cut: parseFloat(cutProbability) || 0,
             hold: parseFloat(holdProbability) || 0,
@@ -1140,13 +1136,20 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         
         // Create the geopolitical risks structure
         fullJsonDataset.macroeconomicFactors.geopoliticalRisks = {
-          global: geoRisks.geopoliticalRiskIndex ? 
-            (geoRisks.geopoliticalRiskIndex > 70 ? "High" : 
-             geoRisks.geopoliticalRiskIndex > 40 ? "Moderate to High" : 
-             geoRisks.geopoliticalRiskIndex > 20 ? "Moderate" : "Low") : 
-            "Moderate to High",
+          global: geoRisks.global || "Global geopolitical risk level is currently Moderate to High.",
           risks: []
         };
+        
+        if (debugMode) {
+          Logger.log("Global geopolitical risk analysis from the AI response: \n"+JSON.stringify(analysisJson, null, 2));
+          Logger.log("Geopolitical risks processed successfully: \n" + JSON.stringify(geoRisks, null, 2));
+        }
+        
+        // Add the Global Overview
+        if (analysisJson?.analysis?.macroeconomicFactors?.geopoliticalRisks?.global) {
+          Logger.log("Setting the geopolitical global analysis to: " + analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global);
+          fullJsonDataset.macroeconomicFactors.geopoliticalRisks.global = analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global;
+        }
         
         // Add risks if available
         if (Array.isArray(geoRisks.risks)) {
@@ -1255,16 +1258,12 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
                 
                 forwardEpsEstimates.push({
                   year: year.toString(),
-                  eps: eps,
-                  epsFormatted: `$${eps.toFixed(2)}`,
-                  targetAt15x: targetAt15x.toFixed(2),
-                  targetAt15xFormatted: `$${targetAt15x.toFixed(2)}`,
+                  eps: `$${eps.toFixed(2)}`,
+                  targetAt15x: `$${targetAt15x.toFixed(2)}`,
                   percentVsIndex15x: percentVsIndex15x,
-                  targetAt17x: targetAt17x.toFixed(2),
-                  targetAt17xFormatted: `$${targetAt17x.toFixed(2)}`,
+                  targetAt17x: `$${targetAt17x.toFixed(2)}`,
                   percentVsIndex17x: percentVsIndex17x,
-                  targetAt20x: targetAt20x.toFixed(2),
-                  targetAt20xFormatted: `$${targetAt20x.toFixed(2)}`,
+                  targetAt20x: `$${targetAt20x.toFixed(2)}`,
                   percentVsIndex20x: percentVsIndex20x
                 });
               }
@@ -1272,45 +1271,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           });
         }
         
-        // If no estimates were found, create some default ones
-        if (forwardEpsEstimates.length === 0) {
-          const nextYear = new Date().getFullYear() + 1;
-          const yearAfter = nextYear + 1;
-          
-          // Add next year estimate
-          const nextYearEPS = ttmEPS !== null ? parseFloat((ttmEPS * 1.1).toFixed(2)) : null;
-          forwardEpsEstimates.push({
-            year: nextYear.toString(),
-            eps: nextYearEPS,
-            epsFormatted: nextYearEPS !== null ? `$${nextYearEPS.toFixed(2)}` : null,
-            targetAt15x: nextYearEPS !== null ? (nextYearEPS * 15).toFixed(2) : null,
-            targetAt15xFormatted: nextYearEPS !== null ? `$${(nextYearEPS * 15).toFixed(2)}` : null,
-            percentVsIndex15x: indexLevel > 0 ? ((nextYearEPS * 15 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt17x: nextYearEPS !== null ? (nextYearEPS * 17).toFixed(2) : null,
-            targetAt17xFormatted: nextYearEPS !== null ? `$${(nextYearEPS * 17).toFixed(2)}` : null,
-            percentVsIndex17x: indexLevel > 0 ? ((nextYearEPS * 17 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt20x: nextYearEPS !== null ? (nextYearEPS * 20).toFixed(2) : null,
-            targetAt20xFormatted: nextYearEPS !== null ? `$${(nextYearEPS * 20).toFixed(2)}` : null,
-            percentVsIndex20x: indexLevel > 0 ? ((nextYearEPS * 20 / indexLevel - 1) * 100).toFixed(1) : "0.0"
-          });
-          
-          // Add year after estimate
-          const yearAfterEPS = nextYearEPS !== null ? parseFloat((nextYearEPS * 1.1).toFixed(2)) : null;
-          forwardEpsEstimates.push({
-            year: yearAfter.toString(),
-            eps: yearAfterEPS,
-            epsFormatted: yearAfterEPS !== null ? `$${yearAfterEPS.toFixed(2)}` : null,
-            targetAt15x: yearAfterEPS !== null ? (yearAfterEPS * 15).toFixed(2) : null,
-            targetAt15xFormatted: yearAfterEPS !== null ? `$${(yearAfterEPS * 15).toFixed(2)}` : null,
-            percentVsIndex15x: indexLevel > 0 ? ((yearAfterEPS * 15 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt17x: yearAfterEPS !== null ? (yearAfterEPS * 17).toFixed(2) : null,
-            targetAt17xFormatted: yearAfterEPS !== null ? `$${(yearAfterEPS * 17).toFixed(2)}` : null,
-            percentVsIndex17x: indexLevel > 0 ? ((yearAfterEPS * 17 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt20x: yearAfterEPS !== null ? (yearAfterEPS * 20).toFixed(2) : null,
-            targetAt20xFormatted: yearAfterEPS !== null ? `$${(yearAfterEPS * 20).toFixed(2)}` : null,
-            percentVsIndex20x: indexLevel > 0 ? ((yearAfterEPS * 20 / indexLevel - 1) * 100).toFixed(1) : "0.0"
-          });
-        }
+        // Sort forward EPS estimates by year in ascending order
+        forwardEpsEstimates.sort((a, b) => parseInt(a.year) - parseInt(b.year));
         
         // Get source information
         const sourceName = sp500Data.sp500Index?.sourceName || "Yahoo Finance";
@@ -1347,14 +1309,10 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             asOf: peAsOf || asOf
           },
           eps: {
-            ttm: ttmEPS,
-            ttmFormatted: ttmEPS !== null ? `$${ttmEPS.toFixed(2)}` : null,
-            targetAt15x: targetAt15x,
-            targetAt15xFormatted: targetAt15x !== null ? `$${targetAt15x.toFixed(2)}` : null,
-            targetAt17x: targetAt17x,
-            targetAt17xFormatted: targetAt17x !== null ? `$${targetAt17x.toFixed(2)}` : null,
-            targetAt20x: targetAt20x,
-            targetAt20xFormatted: targetAt20x !== null ? `$${targetAt20x.toFixed(2)}` : null,
+            ttm: ttmEPS !== null ? `$${ttmEPS.toFixed(2)}` : null,
+            targetAt15x: targetAt15x !== null ? `$${targetAt15x.toFixed(2)}` : null,
+            targetAt17x: targetAt17x !== null ? `$${targetAt17x.toFixed(2)}` : null,
+            targetAt20x: targetAt20x !== null ? `$${targetAt20x.toFixed(2)}` : null,
             source: sourceName,
             sourceUrl: sourceUrl,
             asOf: epsAsOf || asOf

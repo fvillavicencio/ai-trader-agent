@@ -1136,13 +1136,20 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         
         // Create the geopolitical risks structure
         fullJsonDataset.macroeconomicFactors.geopoliticalRisks = {
-          global: geoRisks.geopoliticalRiskIndex ? 
-            (geoRisks.geopoliticalRiskIndex > 70 ? "High" : 
-             geoRisks.geopoliticalRiskIndex > 40 ? "Moderate to High" : 
-             geoRisks.geopoliticalRiskIndex > 20 ? "Moderate" : "Low") : 
-            "Moderate to High",
+          global: geoRisks.global || "Global geopolitical risk level is currently Moderate to High.",
           risks: []
         };
+        
+        if (debugMode) {
+          Logger.log("Global geopolitical risk analysis from the AI response: \n"+JSON.stringify(analysisJson, null, 2));
+          Logger.log("Geopolitical risks processed successfully: \n" + JSON.stringify(geoRisks, null, 2));
+        }
+        
+        // Add the Global Overview
+        if (analysisJson?.analysis?.macroeconomicFactors?.geopoliticalRisks?.global) {
+          Logger.log("Setting the geopolitical global analysis to: " + analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global);
+          fullJsonDataset.macroeconomicFactors.geopoliticalRisks.global = analysisJson.analysis.macroeconomicFactors.geopoliticalRisks.global;
+        }
         
         // Add risks if available
         if (Array.isArray(geoRisks.risks)) {
