@@ -1,0 +1,1410 @@
+{
+  "reportDate": "2025-04-29T21:04:18.933Z",
+  "reportDateFormatted": "April 29, 2025 at 5:04 PM EDT",
+  "reportDateDisplay": "As of April 29, 2025 at 5:04 PM EDT",
+  "isTest": false,
+  "metadata": {
+    "title": "Market Pulse Daily",
+    "timestamp": "April 29, 2025 at 5:04 PM EDT"
+  },
+  "marketSentiment": {
+    "overall": "Bearish",
+    "analysts": [
+      {
+        "name": "Financial Analyst",
+        "comment": "Markets started the year on a strong note, with the S&P 500 reaching yet another all-time high on February 19th. However, enthusiasm eventually gave way to renewed concerns around trade, debt, and mixed policy signals out of Washington. Suggestions from the White House that short-term economic pain—or even a mild recession—might be a worthwhile tradeoff for long-term strategic gains left investors wary.",
+        "mentionedSymbols": [],
+        "source": "Legacy Financial Strategies Market Commentary"
+      },
+      {
+        "name": "Economic Analyst",
+        "comment": "As the first quarter of 2025 ended, the U.S. economy and financial markets were showing signs of strain following a robust 2024. Recent data suggest the outlook for the remainder of this year has grown more uncertain, as inflation trends reaccelerate, consumer sentiment softens and economic growth moderates.",
+        "mentionedSymbols": [],
+        "source": "Mutual of America Economic & Market Perspective"
+      },
+      {
+        "name": "Dana Guichard",
+        "comment": "High financial market volatility in April pushed consumers' views about the stock market deeper into negative territory, with 48.5% expecting stock prices to decline over the next 12 months (the highest share since October 2011). Meanwhile, average 12-month inflation expectations reached 7% in April—the highest since November 2022, when the US was experiencing extremely high inflation.",
+        "mentionedSymbols": [],
+        "source": "PR Newswire"
+      }
+    ],
+    "source": "Aggregated from multiple financial news sources",
+    "lastUpdated": "2025-04-29T20:04:13.298Z"
+  },
+  "decision": {
+    "text": "Watch for Better Price Action",
+    "summary": "Markets teeter on the edge of uncertainty amid mixed signals.",
+    "color": "#f59e0b",
+    "icon": "⚠️"
+  },
+  "justification": "The market is currently experiencing high volatility with a forward P/E ratio of 24.67, indicating overvaluation. The Fear & Greed Index is at 38, suggesting a fearful market sentiment. The VIX is above 20, advising caution and the potential to sell calls for income. Despite a normal yield curve, geopolitical tensions and reaccelerating inflation contribute to uncertainty. As such, it is prudent to watch for better price action before making significant investment decisions.",
+  "marketIndicators": {
+    "majorIndices": [
+      {
+        "name": "S&P 500",
+        "change": 32.08,
+        "isPositive": true
+      },
+      {
+        "name": "Dow Jones Industrial Average",
+        "change": 300.03,
+        "isPositive": true
+      },
+      {
+        "name": "NASDAQ Composite",
+        "change": 95.18,
+        "isPositive": true
+      },
+      {
+        "name": "Russell 2000",
+        "change": 9.49,
+        "isPositive": true
+      }
+    ],
+    "sectorPerformance": [
+      {
+        "name": "Financials",
+        "change": "1"
+      },
+      {
+        "name": "Materials",
+        "change": "0.82"
+      },
+      {
+        "name": "Real Estate",
+        "change": "0.81"
+      },
+      {
+        "name": "Consumer Staples",
+        "change": "0.81"
+      },
+      {
+        "name": "Utilities",
+        "change": "0.72"
+      },
+      {
+        "name": "Consumer Discretionary",
+        "change": "0.69"
+      },
+      {
+        "name": "Communication Services",
+        "change": "0.69"
+      },
+      {
+        "name": "Industrials",
+        "change": "0.63"
+      },
+      {
+        "name": "Technology",
+        "change": "0.48"
+      },
+      {
+        "name": "Healthcare",
+        "change": "0.47"
+      },
+      {
+        "name": "Energy",
+        "change": "-0.37"
+      }
+    ],
+    "fearAndGreed": {
+      "current": 0,
+      "previousClose": 0,
+      "oneWeekAgo": 0,
+      "oneMonthAgo": 0,
+      "oneYearAgo": 0,
+      "source": "CNN Money",
+      "url": "https://money.cnn.com/data/fear-and-greed/",
+      "lastUpdated": "April 29, 2025 at 5:04 PM EDT"
+    },
+    "volatilityIndices": [
+      {
+        "name": "CBOE Volatility Index",
+        "value": 24.36,
+        "change": -0.7899999999999991,
+        "trend": "Falling"
+      },
+      {
+        "name": "NASDAQ Volatility Index",
+        "value": 27.64,
+        "change": -0.8999999999999986,
+        "trend": "Falling"
+      }
+    ],
+    "economicEvents": [
+      {
+        "date": "May 2, 2025",
+        "time": "8:30 AM EDT",
+        "country": "US",
+        "name": "Non-Farm Payrolls",
+        "event": "Non-Farm Payrolls",
+        "source": "BLS",
+        "actual": "N/A",
+        "forecast": "130",
+        "previous": "228",
+        "importance": 3
+      },
+      {
+        "date": "May 1, 2025",
+        "time": "10:00 AM EDT",
+        "country": "US",
+        "name": "ISM Manufacturing PMI",
+        "event": "ISM Manufacturing PMI",
+        "source": "ISM",
+        "actual": "N/A",
+        "forecast": "48",
+        "previous": "49",
+        "importance": 3
+      },
+      {
+        "date": "May 2, 2025",
+        "time": "8:30 AM EDT",
+        "country": "US",
+        "name": "Unemployment Rate",
+        "event": "Unemployment Rate",
+        "source": "BLS",
+        "actual": "N/A",
+        "forecast": "4.20%",
+        "previous": "4.20%",
+        "importance": 3
+      },
+      {
+        "date": "Apr 30, 2025",
+        "time": "8:30 AM EDT",
+        "country": "US",
+        "name": "GDP Advance",
+        "event": "GDP Advance",
+        "source": "Dept of Commerce",
+        "actual": "N/A",
+        "forecast": "0.30%",
+        "previous": "2.30%",
+        "importance": 3
+      },
+      {
+        "date": "Apr 30, 2025",
+        "time": "8:30 AM EDT",
+        "country": "US",
+        "name": "GDP Cons Spending Advance",
+        "event": "GDP Cons Spending Advance",
+        "source": "Dept of Commerce",
+        "actual": "N/A",
+        "forecast": "N/A",
+        "previous": "4.20%",
+        "importance": 3
+      },
+      {
+        "date": "Apr 30, 2025",
+        "time": "8:30 AM EDT",
+        "country": "US",
+        "name": "Employment Wages QQ",
+        "event": "Employment Wages QQ",
+        "source": "BLS",
+        "actual": "N/A",
+        "forecast": "N/A",
+        "previous": "0.90%",
+        "importance": 3
+      },
+      {
+        "date": "Apr 30, 2025",
+        "time": "10:00 AM EDT",
+        "country": "US",
+        "name": "Core PCE Price Index MM",
+        "event": "Core PCE Price Index MM",
+        "source": "Dept of Commerce",
+        "actual": "N/A",
+        "forecast": "0.10%",
+        "previous": "0.40%",
+        "importance": 3
+      }
+    ],
+    "indicesSource": "Yahoo Finance",
+    "indicesSourceUrl": "https://finance.yahoo.com/quote/^GSPC/",
+    "indicesAsOf": "April 29, 2025 at 5:04 PM EDT",
+    "sectorSource": "Yahoo Finance",
+    "sectorSourceUrl": "https://finance.yahoo.com/quote/XLF/",
+    "sectorAsOf": "April 29, 2025 at 5:04 PM EDT",
+    "marketFutures": [
+      {
+        "name": "S&P 500 E-mini Futures",
+        "change": 0.32,
+        "isPositive": true
+      },
+      {
+        "name": "Crude Oil Futures",
+        "change": 1.37,
+        "isPositive": true
+      },
+      {
+        "name": "Natural Gas Futures",
+        "change": 0.03,
+        "isPositive": true
+      },
+      {
+        "name": "Soybean Futures",
+        "change": 3.99,
+        "isPositive": true
+      },
+      {
+        "name": "Coffee Futures",
+        "change": 0.19,
+        "isPositive": true
+      },
+      {
+        "name": "German DAX Index",
+        "change": 0.17,
+        "isPositive": true
+      },
+      {
+        "name": "France CAC 40 Index",
+        "change": 0.45,
+        "isPositive": true
+      }
+    ],
+    "futuresSource": "Yahoo Finance",
+    "futuresSourceUrl": "https://finance.yahoo.com/futures/",
+    "futuresAsOf": "April 29, 2025 at 5:04 PM EDT",
+    "volatilitySource": "Yahoo Finance",
+    "volatilitySourceUrl": "https://finance.yahoo.com/quote/^VIX/",
+    "volatilityAsOf": "April 29, 2025 at 5:04 PM EDT",
+    "fearGreedIndex": {
+      "currentValue": 38,
+      "currentClassification": "Fear",
+      "previousDay": {
+        "value": 36,
+        "classification": "Fear"
+      },
+      "oneWeekAgo": {
+        "value": 26,
+        "classification": "Fear"
+      },
+      "oneMonthAgo": {
+        "value": 21,
+        "classification": "Extreme Fear"
+      },
+      "oneYearAgo": null,
+      "source": "Fear and Greed Index API (RapidAPI)",
+      "sourceUrl": "https://fear-and-greed-index.p.rapidapi.com/v1/fgi",
+      "asOf": "April 29, 2025 at 4:04 PM EDT",
+      "timestamp": "2025-04-29T20:04:16.517Z",
+      "analysis": null
+    },
+    "fearGreed": {
+      "value": 38,
+      "category": "Fear",
+      "description": "The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.",
+      "oneWeekAgo": 26,
+      "oneMonthAgo": 21,
+      "previousClose": 36,
+      "previousDay": 36,
+      "previousValue": 36,
+      "color": "#ff9800",
+      "source": "Fear and Greed Index API (RapidAPI)",
+      "sourceUrl": "https://fear-and-greed-index.p.rapidapi.com/v1/fgi",
+      "asOf": "April 29, 2025 at 4:04 PM EDT"
+    },
+    "source": "Yahoo Finance",
+    "sourceUrl": "https://finance.yahoo.com",
+    "asOf": "April 29, 2025 at 5:04 PM EDT",
+    "topHoldings": [
+      {
+        "name": "S&P 500",
+        "symbol": "SPY",
+        "holdings": [
+          {
+            "symbol": "AAPL",
+            "name": "APPLE INC",
+            "weight": 6.73
+          },
+          {
+            "symbol": "MSFT",
+            "name": "MICROSOFT CORP",
+            "weight": 6.2
+          },
+          {
+            "symbol": "NVDA",
+            "name": "NVIDIA CORP",
+            "weight": 5.68
+          },
+          {
+            "symbol": "AMZN",
+            "name": "AMAZON.COM INC",
+            "weight": 3.78
+          },
+          {
+            "symbol": "META",
+            "name": "META PLATFORMS INC CLASS A",
+            "weight": 2.57
+          }
+        ],
+        "source": "State Street Global Advisors",
+        "sourceUrl": "https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx",
+        "asOf": "April 16, 2025 at 7:49 PM EDT"
+      },
+      {
+        "name": "NASDAQ 100",
+        "symbol": "QQQ",
+        "holdings": [
+          {
+            "symbol": "AAPL",
+            "name": "Apple Inc",
+            "weight": 8.82
+          },
+          {
+            "symbol": "MSFT",
+            "name": "Microsoft Corp",
+            "weight": 8.13
+          },
+          {
+            "symbol": "NVDA",
+            "name": "NVIDIA Corp",
+            "weight": 7.42
+          },
+          {
+            "symbol": "AMZN",
+            "name": "Amazon.com Inc",
+            "weight": 5.56
+          },
+          {
+            "symbol": "AVGO",
+            "name": "Broadcom Inc",
+            "weight": 4.17
+          }
+        ],
+        "source": "Invesco",
+        "sourceUrl": "https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ",
+        "asOf": "April 16, 2025 at 7:27 PM EDT"
+      },
+      {
+        "name": "Dow Jones 30",
+        "symbol": "DIA",
+        "holdings": [
+          {
+            "symbol": "GS",
+            "name": "GOLDMAN SACHS GROUP INC",
+            "weight": 8.35
+          },
+          {
+            "symbol": "UNH",
+            "name": "UNITEDHEALTH GROUP INC",
+            "weight": 6.42
+          },
+          {
+            "symbol": "MSFT",
+            "name": "MICROSOFT CORP",
+            "weight": 5.97
+          },
+          {
+            "symbol": "HD",
+            "name": "HOME DEPOT INC",
+            "weight": 5.45
+          },
+          {
+            "symbol": "V",
+            "name": "VISA INC CLASS A SHARES",
+            "weight": 5.16
+          }
+        ],
+        "source": "State Street Global Advisors",
+        "sourceUrl": "https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx",
+        "asOf": "April 16, 2025 at 7:49 PM EDT"
+      }
+    ],
+    "rsi": {
+      "value": 68.3,
+      "source": "Tradier (RSI)",
+      "sourceUrl": "https://developer.tradier.com/documentation/markets/get-timesales",
+      "asOf": "April 29, 2025 at 4:05 PM EDT"
+    }
+  },
+  "fundamentalMetrics": {
+    "majorIndices": [
+      {
+        "symbol": "DIA",
+        "name": "SPDR Dow Jones Industrial Average ETF",
+        "price": 405.21,
+        "priceChange": 2.94,
+        "percentChange": "73.08%",
+        "metrics": [
+          {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "0.89"
+          },
+          {
+            "name": "Volume",
+            "value": "1.8M"
+          },
+          {
+            "name": "52W High",
+            "value": "$451.55"
+          },
+          {
+            "name": "52W Low",
+            "value": "$366.32"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
+          }
+        ]
+      },
+      {
+        "symbol": "IWM",
+        "name": "iShares Russell 2000 ETF",
+        "price": 196.11,
+        "priceChange": 1.17,
+        "percentChange": "60.02%",
+        "metrics": [
+          {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.17"
+          },
+          {
+            "name": "Volume",
+            "value": "19.4M"
+          },
+          {
+            "name": "52W High",
+            "value": "$244.98"
+          },
+          {
+            "name": "52W Low",
+            "value": "$171.73"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
+          }
+        ]
+      },
+      {
+        "symbol": "QQQ",
+        "name": "Invesco QQQ Trust, Series 1",
+        "price": 475.53,
+        "priceChange": 3.12,
+        "percentChange": "66.04%",
+        "metrics": [
+          {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.17"
+          },
+          {
+            "name": "Volume",
+            "value": "29.1M"
+          },
+          {
+            "name": "52W High",
+            "value": "$540.81"
+          },
+          {
+            "name": "52W Low",
+            "value": "$402.39"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
+          }
+        ]
+      },
+      {
+        "symbol": "SPY",
+        "name": "SPDR S&P 500",
+        "price": 554.26,
+        "priceChange": 3.41,
+        "percentChange": "61.90%",
+        "metrics": [
+          {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1"
+          },
+          {
+            "name": "Volume",
+            "value": "43.4M"
+          },
+          {
+            "name": "52W High",
+            "value": "$613.23"
+          },
+          {
+            "name": "52W Low",
+            "value": "$481.80"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
+          }
+        ]
+      }
+    ],
+    "magnificentSeven": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc",
+        "price": 211.21,
+        "priceChange": 1.07,
+        "percentChange": "50.92%",
+        "metrics": [
+          {
+            "name": "Price/Book",
+            "value": "47.72"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "8.94"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "1.4499985020521886"
+          },
+          {
+            "name": "ROE",
+            "value": "145.35%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.26%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.24%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.259"
+          },
+          {
+            "name": "Volume",
+            "value": "34.9M"
+          },
+          {
+            "name": "52W High",
+            "value": "$260.10"
+          },
+          {
+            "name": "52W Low",
+            "value": "$169.11"
+          },
+          {
+            "name": "Sector",
+            "value": "Technology"
+          },
+          {
+            "name": "Industry",
+            "value": "Consumer Electronics"
+          }
+        ]
+      },
+      {
+        "symbol": "AMZN",
+        "name": "Amazon.com Inc",
+        "price": 187.39,
+        "priceChange": -0.31,
+        "percentChange": "-16.52%",
+        "metrics": [
+          {
+            "name": "Price/Book",
+            "value": "6.86"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "3.60"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.45774032241144175"
+          },
+          {
+            "name": "ROE",
+            "value": "23.74%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.09%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.09%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.393"
+          },
+          {
+            "name": "Volume",
+            "value": "41.4M"
+          },
+          {
+            "name": "52W High",
+            "value": "$242.52"
+          },
+          {
+            "name": "52W Low",
+            "value": "$151.61"
+          },
+          {
+            "name": "Sector",
+            "value": "Consumer Cyclical"
+          },
+          {
+            "name": "Industry",
+            "value": "Specialty Retail"
+          }
+        ]
+      },
+      {
+        "symbol": "GOOGL",
+        "name": "Alphabet Inc",
+        "price": 160.16,
+        "priceChange": -0.45,
+        "percentChange": "-28.02%",
+        "metrics": [
+          {
+            "name": "Price/Book",
+            "value": "5.77"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "6.73"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.06535232153666583"
+          },
+          {
+            "name": "ROE",
+            "value": "34.55%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.22%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.29%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.035"
+          },
+          {
+            "name": "Volume",
+            "value": "26.6M"
+          },
+          {
+            "name": "52W High",
+            "value": "$207.05"
+          },
+          {
+            "name": "52W Low",
+            "value": "$140.53"
+          },
+          {
+            "name": "Sector",
+            "value": "Communication Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Internet Content & Information"
+          }
+        ]
+      },
+      {
+        "symbol": "META",
+        "name": "Meta Platforms Inc",
+        "price": 554.44,
+        "priceChange": 4.7,
+        "percentChange": "85.50%",
+        "metrics": [
+          {
+            "name": "Price/Book",
+            "value": "7.69"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "9.02"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.2686202686202686"
+          },
+          {
+            "name": "ROE",
+            "value": "38.17%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.23%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.38%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.279"
+          },
+          {
+            "name": "Volume",
+            "value": "11.4M"
+          },
+          {
+            "name": "52W High",
+            "value": "$740.91"
+          },
+          {
+            "name": "52W Low",
+            "value": "$427.11"
+          },
+          {
+            "name": "Sector",
+            "value": "Communication Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Internet Content & Information"
+          }
+        ]
+      },
+      {
+        "symbol": "MSFT",
+        "name": "Microsoft Corp",
+        "price": 394.04,
+        "priceChange": 2.88,
+        "percentChange": "73.63%",
+        "metrics": [
+          {
+            "name": "Price/Book",
+            "value": "9.68"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "13.85"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.20556665950874642"
+          },
+          {
+            "name": "ROE",
+            "value": "33.36%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.17%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.36%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.01%"
+          },
+          {
+            "name": "Beta",
+            "value": "1"
+          },
+          {
+            "name": "Volume",
+            "value": "14.3M"
+          },
+          {
+            "name": "52W High",
+            "value": "$468.35"
+          },
+          {
+            "name": "52W Low",
+            "value": "$344.79"
+          },
+          {
+            "name": "Sector",
+            "value": "Technology"
+          },
+          {
+            "name": "Industry",
+            "value": "Software - Infrastructure"
+          }
+        ]
+      },
+      {
+        "symbol": "NVDA",
+        "name": "NVIDIA Corp",
+        "price": 108.91,
+        "priceChange": 0.18,
+        "percentChange": "16.55%",
+        "metrics": [
+          {
+            "name": "Price/Book",
+            "value": "33.62"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "22.28"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.1294641168832806"
+          },
+          {
+            "name": "ROE",
+            "value": "115.44%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.65%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.56%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.958"
+          },
+          {
+            "name": "Volume",
+            "value": "162.8M"
+          },
+          {
+            "name": "52W High",
+            "value": "$153.13"
+          },
+          {
+            "name": "52W Low",
+            "value": "$81.25"
+          },
+          {
+            "name": "Sector",
+            "value": "Technology"
+          },
+          {
+            "name": "Industry",
+            "value": "Semiconductors"
+          }
+        ]
+      },
+      {
+        "symbol": "TSLA",
+        "name": "Tesla Inc",
+        "price": 292.03,
+        "priceChange": 6.15,
+        "percentChange": "215.13%",
+        "metrics": [
+          {
+            "name": "Price/Book",
+            "value": "12.59"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "13.28"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.10085328118093044"
+          },
+          {
+            "name": "ROE",
+            "value": "9.03%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.06%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.07%"
+          },
+          {
+            "name": "Beta",
+            "value": "2.58"
+          },
+          {
+            "name": "Volume",
+            "value": "105.7M"
+          },
+          {
+            "name": "52W High",
+            "value": "$488.54"
+          },
+          {
+            "name": "52W Low",
+            "value": "$167.41"
+          },
+          {
+            "name": "Sector",
+            "value": "Consumer Cyclical"
+          },
+          {
+            "name": "Industry",
+            "value": "Auto - Manufacturers"
+          }
+        ]
+      }
+    ],
+    "otherStocks": []
+  },
+  "macroeconomicFactors": {
+    "federalReserve": {
+      "forwardGuidance": "Recent indicators suggest that economic activity has continued to expand at a solid pace. The unemployment rate has stabilized at a low level in recent months, and labor market conditions remain solid. Inflation remains somewhat elevated.",
+      "forwardGuidanceSource": {
+        "name": "Federal Reserve Press Releases",
+        "url": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20250319a.htm",
+        "lastUpdated": "March 19, 2025 at 2:00 PM EDT"
+      },
+      "currentRate": {
+        "target": "4.25% - 4.50%",
+        "effectiveRate": "4.33%",
+        "lastUpdated": "April 29, 2025 at 4:04 PM EDT"
+      },
+      "nextMeeting": {
+        "date": "May 6-7 2025",
+        "probabilities": {
+          "increase": "0.0",
+          "decrease": "67.4",
+          "noChange": "32.6"
+        },
+        "lastUpdated": "April 29, 2025 at 4:04 PM EDT"
+      }
+    },
+    "treasuryYields": {
+      "current": [
+        {
+          "maturity": "3-Month",
+          "rate": 4.32,
+          "change": 0,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "1-Year",
+          "rate": 3.95,
+          "change": -0.020000000000000018,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "2-Year",
+          "rate": 3.74,
+          "change": -0.029999999999999805,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "5-Year",
+          "rate": 3.88,
+          "change": -0.03000000000000025,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "10-Year",
+          "rate": 4.29,
+          "change": -0.03000000000000025,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "30-Year",
+          "rate": 4.74,
+          "change": -0.02999999999999936,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        }
+      ],
+      "yieldCurve": {
+        "status": "Normal",
+        "inverted": false,
+        "tenYearTwoYearSpread": 0.5499999999999998,
+        "lastUpdated": "April 29, 2025 at 5:04 PM EDT",
+        "color": "#4caf50",
+        "description": "The yield curve has a normal positive slope with the 10Y-2Y spread at 0.55%. This typically indicates expectations of economic growth."
+      },
+      "yields": [
+        {
+          "maturity": "3-Month",
+          "rate": 4.32,
+          "change": 0,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "1-Year",
+          "rate": 3.95,
+          "change": -0.020000000000000018,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "2-Year",
+          "rate": 3.74,
+          "change": -0.029999999999999805,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "5-Year",
+          "rate": 3.88,
+          "change": -0.03000000000000025,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "10-Year",
+          "rate": 4.29,
+          "change": -0.03000000000000025,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        },
+        {
+          "maturity": "30-Year",
+          "rate": 4.74,
+          "change": -0.02999999999999936,
+          "timestamp": "2025-04-25T00:00:00.000Z"
+        }
+      ],
+      "source": "Federal Reserve Economic Data (FRED)",
+      "sourceUrl": "https://fred.stlouisfed.org/",
+      "asOf": "April 29, 2025 at 4:04 PM EDT"
+    },
+    "inflation": {
+      "cpi": {
+        "headline": 2.4,
+        "core": 2.8,
+        "fiveYear": null,
+        "tenYear": null,
+        "asOf": "April 29, 2025 at 4:04 PM EDT"
+      },
+      "pce": {
+        "headline": 2.5,
+        "core": 2.8,
+        "lastUpdated": "April 29, 2025 at 4:04 PM EDT"
+      },
+      "expectations": [
+        {
+          "period": "1-Year",
+          "value": 2.89,
+          "asOf": "March 31, 2025 at 8:00 PM EDT"
+        },
+        {
+          "period": "5-Year",
+          "value": 2.32,
+          "asOf": "April 27, 2025 at 8:00 PM EDT"
+        },
+        {
+          "period": "10-Year",
+          "value": 2.25,
+          "asOf": "April 27, 2025 at 8:00 PM EDT"
+        }
+      ],
+      "trendAnalysis": {
+        "analysis": "Inflation is currently at a level of undefined, with a undefined outlook and undefined market impact.",
+        "color": "#ff9800",
+        "source": "Bureau of Labor Statistics",
+        "sourceUrl": "https://www.bls.gov/cpi/",
+        "asOf": "April 29, 2025 at 4:04 PM EDT"
+      },
+      "trend": {
+        "direction": "Stable",
+        "outlook": "Inflation is being closely monitored by the Federal Reserve for potential policy adjustments.",
+        "marketImpact": "Changes in inflation may impact interest rates and asset valuations across markets.",
+        "asOf": "April 29, 2025 at 4:04 PM EDT",
+        "source": "Bureau of Labor Statistics",
+        "sourceUrl": "https://www.bls.gov/cpi/"
+      },
+      "source": "Bureau of Labor Statistics",
+      "sourceUrl": "https://www.bls.gov/cpi/",
+      "lastUpdated": "April 29, 2025 at 4:04 PM EDT",
+      "expectationsSource": {
+        "name": "St. Louis Fed (FRED API)",
+        "url": "https://fred.stlouisfed.org/series/EXPINF1YR",
+        "lastUpdated": "April 29, 2025 at 4:04 PM EDT"
+      }
+    },
+    "geopoliticalRisks": {
+      "global": "Ongoing conflicts and trade tensions are contributing to market volatility",
+      "risks": [
+        {
+          "name": "Russia-Ukraine War Escalation",
+          "description": "The ongoing conflict between Russia and Ukraine continues to disrupt regional stability, with recent escalations in military activity and sanctions impacting energy and food security. The war has led to persistent supply chain disruptions, higher commodity prices, and increased inflation, particularly in Europe and emerging markets.",
+          "region": "Eastern Europe",
+          "impactLevel": "Severe",
+          "source": "S&P Global",
+          "sourceUrl": "https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk"
+        },
+        {
+          "name": "Israel-Hamas and Broader Middle East Tensions",
+          "description": "Renewed hostilities between Israel and Hamas, alongside rising tensions involving Iran and regional actors, have heightened the risk of a broader Middle East conflict. This instability threatens global energy supply routes and increases the risk of further escalation.",
+          "region": "Middle East",
+          "impactLevel": "High",
+          "source": "S&P Global",
+          "sourceUrl": "https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk"
+        },
+        {
+          "name": "Global Financial Market Volatility from Geopolitical Shocks",
+          "description": "Heightened geopolitical risks, including wars and diplomatic tensions, have increased the likelihood of sharp corrections in global financial markets. These shocks can disrupt cross-border trade and investment, raise sovereign risk premiums, and challenge financial stability.",
+          "region": "Global",
+          "impactLevel": "High",
+          "source": "IMF Global Financial Stability Report",
+          "sourceUrl": "https://www.imf.org/en/Publications/GFSR/Issues/2025/04/22/global-financial-stability-report-april-2025"
+        },
+        {
+          "name": "US-China Strategic and Economic Tensions",
+          "description": "US-China relations remain strained over issues including trade, technology, and security in the Asia-Pacific. Recent policy moves and rhetoric have increased the risk of tariffs, export controls, and restrictions on critical minerals, impacting global supply chains and investment flows.",
+          "region": "Asia-Pacific, Global",
+          "impactLevel": "High",
+          "source": "S&P Global",
+          "sourceUrl": "https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk"
+        },
+        {
+          "name": "Tariff and Trade Policy Uncertainty",
+          "description": "Mounting geopolitical risks have led to increased use of tariffs and trade barriers, particularly among major economies. This policy uncertainty is weighing on global growth prospects and complicating investment decisions for multinational firms.",
+          "region": "Global",
+          "impactLevel": "High",
+          "source": "CFA Institute",
+          "sourceUrl": "https://blogs.cfainstitute.org/investor/2025/04/14/how-tariffs-and-geopolitics-are-shaping-the-2025-global-economic-outlook/"
+        }
+      ],
+      "source": "IMF, S&P Global, CFA Institute",
+      "sourceUrl": "https://www.imf.org/en/Publications/GFSR/Issues/2025/04/22/global-financial-stability-report-april-2025",
+      "lastUpdated": "April 29, 2025 at 4:05 PM EDT"
+    },
+    "fedPolicy": {
+      "futuresPrice": "96.06",
+      "impliedRate": "3.94",
+      "cutProbability": 67.4,
+      "holdProbability": 32.6,
+      "hikeProbability": 0,
+      "futuresSource": "Yahoo Finance",
+      "futuresSourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F",
+      "futuresAsOf": "April 29, 2025 at 3:54 PM EDT",
+      "nextMeeting": "May 6-7 2025",
+      "lastMeeting": "March 18-19 2025",
+      "meetingSource": "Federal Reserve Meeting Calendar",
+      "meetingSourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "meetingAsOf": "April 29, 2025 at 4:04 PM EDT",
+      "currentRate": "4.33%",
+      "rateRange": "4.25% - 4.50%",
+      "guidance": "Recent indicators suggest that economic activity has continued to expand at a solid pace. The unemployment rate has stabilized at a low level in recent months, and labor market conditions remain solid. Inflation remains somewhat elevated.",
+      "guidanceSource": "Federal Reserve Press Releases",
+      "guidanceSourceUrl": "https://www.federalreserve.gov/newsevents/pressreleases/monetary20250319a.htm",
+      "guidanceAsOf": "March 19, 2025 at 2:00 PM EDT",
+      "rateSource": "Federal Reserve Bank of St. Louis",
+      "rateSourceUrl": "https://fred.stlouisfed.org/series/FEDFUNDS",
+      "rateAsOf": "April 29, 2025 at 4:04 PM EDT"
+    },
+    "fedWatch": {
+      "currentPrice": "96.06",
+      "impliedRate": "3.94",
+      "probabilities": {
+        "cut": 67.4,
+        "hold": 32.6,
+        "hike": 0
+      },
+      "source": "Yahoo Finance",
+      "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F",
+      "asOf": "April 29, 2025 at 3:54 PM EDT"
+    },
+    "meetingSchedule": {
+      "lastMeeting": "March 18-19 2025",
+      "nextMeeting": "May 6-7 2025",
+      "source": "Federal Reserve Meeting Calendar",
+      "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
+      "asOf": "April 29, 2025 at 4:04 PM EDT"
+    }
+  },
+  "sp500": {
+    "indexLevel": 5560.83,
+    "source": {
+      "name": "Yahoo Finance",
+      "url": "https://finance.yahoo.com/quote/%5EGSPC/",
+      "asOf": "April 29, 2025 at 4:05 PM EDT"
+    },
+    "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
+    "asOf": "April 29, 2025 at 4:05 PM EDT",
+    "peRatio": {
+      "current": 24.67,
+      "fiveYearAvg": 26.61,
+      "tenYearAvg": 24.79,
+      "source": "Yahoo Finance",
+      "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
+      "asOf": "April 29, 2025 at 4:05 PM EDT"
+    },
+    "eps": {
+      "ttm": "$22.47",
+      "targetAt15x": "$337.05",
+      "targetAt17x": "$381.99",
+      "targetAt20x": "$449.40",
+      "source": "Yahoo Finance",
+      "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
+      "asOf": "April 29, 2025 at 4:05 PM EDT"
+    },
+    "forwardEps": [
+      {
+        "year": "2025",
+        "eps": "$70.58",
+        "targetAt15x": "$1058.70",
+        "percentVsIndex15x": "-81.0",
+        "targetAt17x": "$1199.86",
+        "percentVsIndex17x": "-78.4",
+        "targetAt20x": "$1411.60",
+        "percentVsIndex20x": "-74.6"
+      },
+      {
+        "year": "2026",
+        "eps": "$80.09",
+        "targetAt15x": "$1201.35",
+        "percentVsIndex15x": "-78.4",
+        "targetAt17x": "$1361.53",
+        "percentVsIndex17x": "-75.5",
+        "targetAt20x": "$1601.80",
+        "percentVsIndex20x": "-71.2"
+      }
+    ],
+    "forwardEpsSource": {
+      "name": "S&P Global",
+      "url": "https://www.spglobal.com/spdji/en/indices/equity/sp-500/",
+      "asOf": "April 28, 2025 at 8:00 PM EDT"
+    },
+    "topHoldings": [
+      {
+        "name": "S&P 500",
+        "symbol": "SPY",
+        "holdings": [
+          {
+            "symbol": "AAPL",
+            "name": "APPLE INC",
+            "weight": 6.73
+          },
+          {
+            "symbol": "MSFT",
+            "name": "MICROSOFT CORP",
+            "weight": 6.2
+          },
+          {
+            "symbol": "NVDA",
+            "name": "NVIDIA CORP",
+            "weight": 5.68
+          },
+          {
+            "symbol": "AMZN",
+            "name": "AMAZON.COM INC",
+            "weight": 3.78
+          },
+          {
+            "symbol": "META",
+            "name": "META PLATFORMS INC CLASS A",
+            "weight": 2.57
+          }
+        ],
+        "source": "State Street Global Advisors",
+        "sourceUrl": "https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-spy.xlsx",
+        "asOf": "April 16, 2025 at 7:49 PM EDT"
+      },
+      {
+        "name": "NASDAQ 100",
+        "symbol": "QQQ",
+        "holdings": [
+          {
+            "symbol": "AAPL",
+            "name": "Apple Inc",
+            "weight": 8.82
+          },
+          {
+            "symbol": "MSFT",
+            "name": "Microsoft Corp",
+            "weight": 8.13
+          },
+          {
+            "symbol": "NVDA",
+            "name": "NVIDIA Corp",
+            "weight": 7.42
+          },
+          {
+            "symbol": "AMZN",
+            "name": "Amazon.com Inc",
+            "weight": 5.56
+          },
+          {
+            "symbol": "AVGO",
+            "name": "Broadcom Inc",
+            "weight": 4.17
+          }
+        ],
+        "source": "Invesco",
+        "sourceUrl": "https://www.invesco.com/us/financial-products/etfs/holdings/main/holdings/0?audienceType=Investor&action=download&ticker=QQQ",
+        "asOf": "April 16, 2025 at 7:27 PM EDT"
+      },
+      {
+        "name": "Dow Jones 30",
+        "symbol": "DIA",
+        "holdings": [
+          {
+            "symbol": "GS",
+            "name": "GOLDMAN SACHS GROUP INC",
+            "weight": 8.35
+          },
+          {
+            "symbol": "UNH",
+            "name": "UNITEDHEALTH GROUP INC",
+            "weight": 6.42
+          },
+          {
+            "symbol": "MSFT",
+            "name": "MICROSOFT CORP",
+            "weight": 5.97
+          },
+          {
+            "symbol": "HD",
+            "name": "HOME DEPOT INC",
+            "weight": 5.45
+          },
+          {
+            "symbol": "V",
+            "name": "VISA INC CLASS A SHARES",
+            "weight": 5.16
+          }
+        ],
+        "source": "State Street Global Advisors",
+        "sourceUrl": "https://www.ssga.com/library-content/products/fund-data/etfs/us/holdings-daily-us-en-dia.xlsx",
+        "asOf": "April 16, 2025 at 7:49 PM EDT"
+      }
+    ]
+  }
+}

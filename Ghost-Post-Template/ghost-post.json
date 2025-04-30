@@ -1,0 +1,444 @@
+{
+  "version": "0.3.1",
+  "atoms": [],
+  "cards": [
+    [
+      "heading",
+      {
+        "level": 1,
+        "text": "Market Pulse Daily"
+      }
+    ],
+    [
+      "paragraph",
+      {
+        "markdown": "*As of April 29, 2025 at 5:04 PM EDT*"
+      }
+    ],
+    [
+      "hr",
+      {}
+    ],
+    [
+      "html",
+      {
+        "html": "\n    <div style=\"background-color: #f59e0b; color: white; padding: 15px; border-radius: 8px; margin-bottom: 20px; text-align: center;\">\n      <div style=\"font-size: 1.5rem; font-weight: bold; margin-bottom: 5px;\">\n        👀 Watch for Better Price Action\n      </div>\n      <div style=\"font-size: 1.1rem;\">\n        Markets teeter on the edge of uncertainty amid mixed signals.\n      </div>\n    </div>\n  "
+      }
+    ],
+    [
+      "paragraph",
+      {
+        "markdown": "The market is currently experiencing high volatility with a forward P/E ratio of 24.67, indicating overvaluation. The Fear & Greed Index is at 38, suggesting a fearful market sentiment. The VIX is above 20, advising caution and the potential to sell calls for income. Despite a normal yield curve, geopolitical tensions and reaccelerating inflation contribute to uncertainty. As such, it is prudent to watch for better price action before making significant investment decisions."
+      }
+    ],
+    [
+      "hr",
+      {}
+    ],
+    [
+      "heading",
+      {
+        "level": 2,
+        "text": "Market Sentiment"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n    <div style=\"margin-bottom: 15px;\">\n      <div style=\"font-weight: bold; margin-bottom: 5px;\">Overall Sentiment:</div>\n      <div style=\"font-size: 1.2rem; font-weight: bold; color: #ef4444;\">\n        Bearish\n      </div>\n    </div>\n  "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Analyst Commentary"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n        <div style=\"margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n          <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">Financial Analyst:</div>\n          <div style=\"line-height: 1.5;\">\n            Markets started the year on a strong note, with the S&P 500 reaching yet another all-time high on February 19th. However, enthusiasm eventually gave way to renewed concerns around trade, debt, and mixed policy signals out of Washington. Suggestions from the White House that short-term economic pain—or even a mild recession—might be a worthwhile tradeoff for long-term strategic gains left investors wary.\n            \n          </div>\n          <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n            Source: Legacy Financial Strategies Market Commentary\n          </div>\n        </div>\n      "
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n        <div style=\"margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n          <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">Economic Analyst:</div>\n          <div style=\"line-height: 1.5;\">\n            As the first quarter of 2025 ended, the U.S. economy and financial markets were showing signs of strain following a robust 2024. Recent data suggest the outlook for the remainder of this year has grown more uncertain, as inflation trends reaccelerate, consumer sentiment softens and economic growth moderates.\n            \n          </div>\n          <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n            Source: Mutual of America Economic & Market Perspective\n          </div>\n        </div>\n      "
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n        <div style=\"margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n          <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">Dana Guichard:</div>\n          <div style=\"line-height: 1.5;\">\n            High financial market volatility in April pushed consumers' views about the stock market deeper into negative territory, with 48.5% expecting stock prices to decline over the next 12 months (the highest share since October 2011). Meanwhile, average 12-month inflation expectations reached 7% in April—the highest since November 2022, when the US was experiencing extremely high inflation.\n            \n          </div>\n          <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n            Source: PR Newswire\n          </div>\n        </div>\n      "
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n        Source: Aggregated from multiple financial news sources<br>\n        Last Updated: April 29, 2025 at 04:04 PM\n      </div>\n    "
+      }
+    ],
+    [
+      "hr",
+      {}
+    ],
+    [
+      "heading",
+      {
+        "level": 2,
+        "text": "Key Market Indicators"
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Major Indices"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px;\">\n        \n            <div style=\"flex: 1; min-width: 200px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;\">S&P 500</div>\n              <div style=\"font-size: 1.2rem; font-weight: bold; color: #10b981;\">\n                ↑ 32.08\n              </div>\n            </div>\n          \n            <div style=\"flex: 1; min-width: 200px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;\">Dow Jones Industrial Average</div>\n              <div style=\"font-size: 1.2rem; font-weight: bold; color: #10b981;\">\n                ↑ 300.03\n              </div>\n            </div>\n          \n            <div style=\"flex: 1; min-width: 200px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;\">NASDAQ Composite</div>\n              <div style=\"font-size: 1.2rem; font-weight: bold; color: #10b981;\">\n                ↑ 95.18\n              </div>\n            </div>\n          \n            <div style=\"flex: 1; min-width: 200px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 5px;\">Russell 2000</div>\n              <div style=\"font-size: 1.2rem; font-weight: bold; color: #10b981;\">\n                ↑ 9.49\n              </div>\n            </div>\n          \n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Sector Performance"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"margin-bottom: 20px;\">\n        <div style=\"overflow-x: auto;\">\n          <table style=\"width: 100%; border-collapse: collapse; margin-bottom: 10px;\">\n            <thead>\n              <tr style=\"background-color: #f1f5f9;\">\n                <th style=\"padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0;\">Sector</th>\n                <th style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0;\">Change</th>\n              </tr>\n            </thead>\n            <tbody>\n              \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Financials</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      1%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Materials</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.82%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Real Estate</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.81%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Consumer Staples</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.81%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Utilities</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.72%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Consumer Discretionary</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.69%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Communication Services</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.69%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Industrials</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.63%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Technology</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.48%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Healthcare</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      0.47%\n                    </td>\n                  </tr>\n                \n                  <tr>\n                    <td style=\"padding: 10px; border-bottom: 1px solid #e2e8f0;\">Energy</td>\n                    <td style=\"padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #ef4444;\">\n                      -0.37%\n                    </td>\n                  </tr>\n                \n            </tbody>\n          </table>\n        </div>\n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Fear & Greed Index"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n        <div style=\"display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;\">\n          <div style=\"font-weight: bold; font-size: 1.1rem;\">Current Value:</div>\n          <div style=\"font-size: 1.2rem; font-weight: bold; color: #ff9800;\">38 - undefined</div>\n        </div>\n        \n        <div style=\"margin-bottom: 15px;\">\n          <div style=\"height: 20px; background-color: #f1f5f9; border-radius: 10px; overflow: hidden; position: relative;\">\n            <div style=\"position: absolute; top: 0; left: 0; height: 100%; width: 100%; display: flex;\">\n              <div style=\"flex: 1; background-color: #ef4444; border-radius: 10px 0 0 10px;\"></div>\n              <div style=\"flex: 1; background-color: #f97316;\"></div>\n              <div style=\"flex: 1; background-color: #f59e0b;\"></div>\n              <div style=\"flex: 1; background-color: #10b981;\"></div>\n              <div style=\"flex: 1; background-color: #10b981; border-radius: 0 10px 10px 0;\"></div>\n            </div>\n            <div style=\"position: absolute; top: 0; left: 38%; height: 100%; width: 4px; background-color: #000; transform: translateX(-50%);\"></div>\n          </div>\n          <div style=\"display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.8rem; color: #666;\">\n            <div>Extreme Fear</div>\n            <div>Fear</div>\n            <div>Neutral</div>\n            <div>Greed</div>\n            <div>Extreme Greed</div>\n          </div>\n        </div>\n        \n        <div style=\"font-size: 0.9rem; color: #333;\">\n          <div style=\"margin-bottom: 5px;\"><strong>Previous Close:</strong> 36 - undefined</div>\n          <div style=\"margin-bottom: 5px;\"><strong>One Week Ago:</strong> 26 - undefined</div>\n          <div><strong>One Month Ago:</strong> 21 - undefined</div>\n        </div>\n        \n        <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n          Source: CNN Business Fear & Greed Index\n        </div>\n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Volatility Indices"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"margin-bottom: 20px;\">\n        \n            <div style=\"margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; margin-bottom: 5px;\">CBOE Volatility Index: <span style=\"color: #10b981;\">24.36 ↓</span></div>\n              <div style=\"font-size: 0.9rem; color: #333; margin-bottom: 5px;\">\n                <strong>Trend:</strong> <span style=\"color: #10b981;\">Falling</span>\n              </div>\n              <div style=\"font-size: 0.9rem; color: #333;\">undefined</div>\n            </div>\n          \n            <div style=\"margin-bottom: 15px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; margin-bottom: 5px;\">NASDAQ Volatility Index: <span style=\"color: #10b981;\">27.64 ↓</span></div>\n              <div style=\"font-size: 0.9rem; color: #333; margin-bottom: 5px;\">\n                <strong>Trend:</strong> <span style=\"color: #10b981;\">Falling</span>\n              </div>\n              <div style=\"font-size: 0.9rem; color: #333;\">undefined</div>\n            </div>\n          \n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Top 5 Weighted Stocks in Major Indices"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;\">\n        \n            <div style=\"flex: 1 1 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #2c5282;\">\n                S&P 500 (SPY)\n              </div>\n              <div>\n                \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: bold;\">\n                        <span style=\"color: #2563eb;\">AAPL</span> APPLE INC\n                      </div>\n                      <div>6.73%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #f1f5f9; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">MSFT</span> MICROSOFT CORP\n                      </div>\n                      <div>6.2%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">NVDA</span> NVIDIA CORP\n                      </div>\n                      <div>5.68%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #f1f5f9; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">AMZN</span> AMAZON.COM INC\n                      </div>\n                      <div>3.78%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">META</span> META PLATFORMS INC CLASS A\n                      </div>\n                      <div>2.57%</div>\n                    </div>\n                  \n              </div>\n            </div>\n          \n            <div style=\"flex: 1 1 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #2c5282;\">\n                NASDAQ 100 (QQQ)\n              </div>\n              <div>\n                \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: bold;\">\n                        <span style=\"color: #2563eb;\">AAPL</span> Apple Inc\n                      </div>\n                      <div>8.82%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #f1f5f9; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">MSFT</span> Microsoft Corp\n                      </div>\n                      <div>8.13%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">NVDA</span> NVIDIA Corp\n                      </div>\n                      <div>7.42%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #f1f5f9; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">AMZN</span> Amazon.com Inc\n                      </div>\n                      <div>5.56%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">AVGO</span> Broadcom Inc\n                      </div>\n                      <div>4.17%</div>\n                    </div>\n                  \n              </div>\n            </div>\n          \n            <div style=\"flex: 1 1 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n              <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #2c5282;\">\n                Dow Jones 30 (DIA)\n              </div>\n              <div>\n                \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: bold;\">\n                        <span style=\"color: #2563eb;\">GS</span> GOLDMAN SACHS GROUP INC\n                      </div>\n                      <div>8.35%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #f1f5f9; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">UNH</span> UNITEDHEALTH GROUP INC\n                      </div>\n                      <div>6.42%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">MSFT</span> MICROSOFT CORP\n                      </div>\n                      <div>5.97%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #f1f5f9; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">HD</span> HOME DEPOT INC\n                      </div>\n                      <div>5.45%</div>\n                    </div>\n                  \n                    <div style=\"display: flex; justify-content: space-between; padding: 8px; background-color: #fff; border-radius: 4px; margin-bottom: 5px;\">\n                      <div style=\"font-weight: normal;\">\n                        <span style=\"color: #2563eb;\">V</span> VISA INC CLASS A SHARES\n                      </div>\n                      <div>5.16%</div>\n                    </div>\n                  \n              </div>\n            </div>\n          \n      </div>\n    "
+      }
+    ],
+    [
+      "hr",
+      {}
+    ],
+    [
+      "heading",
+      {
+        "level": 2,
+        "text": "Fundamental Metrics"
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Major Indices"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;\">\n        \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">DIA</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">SPDR Dow Jones Industrial Average ETF</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$405.21</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +2.94 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">IWM</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">iShares Russell 2000 ETF</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$196.11</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +1.17 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">QQQ</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">Invesco QQQ Trust, Series 1</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$475.53</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +3.12 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">SPY</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">SPDR S&P 500</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$554.26</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +3.41 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Magnificent Seven"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;\">\n        \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">AAPL</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">Apple Inc</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$211.21</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +1.07 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">7</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">8</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">9</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">10</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">11</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">12</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #ef4444; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">AMZN</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">Amazon.com Inc</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$187.39</div>\n            <div style=\"color: #ef4444; font-weight: bold;\">\n              ↓ 0.31 (NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">7</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">8</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">9</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">10</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">11</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #ef4444; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">GOOGL</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">Alphabet Inc</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$160.16</div>\n            <div style=\"color: #ef4444; font-weight: bold;\">\n              ↓ 0.45 (NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">7</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">8</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">9</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">10</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">11</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">12</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">META</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">Meta Platforms Inc</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$554.44</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +4.70 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">7</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">8</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">9</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">10</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">11</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">12</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">MSFT</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">Microsoft Corp</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$394.04</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +2.88 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">7</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">8</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">9</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">10</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">11</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">12</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">NVDA</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">NVIDIA Corp</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$108.91</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +0.18 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">7</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">8</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">9</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">10</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">11</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">12</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      <div style=\"flex: 1 1 calc(50% - 10px); min-width: 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 5px solid #10b981; margin-bottom: 15px;\">\n        <div style=\"display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;\">\n          <div>\n            <div style=\"font-weight: bold; font-size: 1.2rem; color: #2c5282;\">TSLA</div>\n            <div style=\"font-size: 0.9rem; color: #4a5568;\">Tesla Inc</div>\n          </div>\n          <div style=\"text-align: right;\">\n            <div style=\"font-weight: bold; font-size: 1.1rem;\">$292.03</div>\n            <div style=\"color: #10b981; font-weight: bold;\">\n              ↑ +6.15 (+NaN%)\n            </div>\n          </div>\n        </div>\n        \n        <div style=\"display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 10px; margin-bottom: 10px;\">\n          \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">0</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">1</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">2</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">3</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">4</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">5</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">6</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">7</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">8</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">9</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">10</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n              <div>\n                <div style=\"font-size: 0.8rem; color: #718096;\">11</div>\n                <div style=\"font-weight: bold;\">[object Object]</div>\n              </div>\n            \n        </div>\n        \n        \n        \n        \n      </div>\n    \n      </div>\n    "
+      }
+    ],
+    [
+      "hr",
+      {}
+    ],
+    [
+      "heading",
+      {
+        "level": 2,
+        "text": "Macroeconomic Factors"
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Treasury Yields"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n        <div style=\"display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 15px;\">\n          \n              <div style=\"flex: 1 1 200px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                <div style=\"font-weight: bold; margin-bottom: 5px;\">0 Treasury Yield</div>\n                <div style=\"font-size: 1.1rem; font-weight: bold;\">[object Object]%</div>\n                <div style=\"font-size: 0.9rem; color: #10b981;\">\n                  Change: +0.00%\n                </div>\n              </div>\n            \n              <div style=\"flex: 1 1 200px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                <div style=\"font-weight: bold; margin-bottom: 5px;\">1 Treasury Yield</div>\n                <div style=\"font-size: 1.1rem; font-weight: bold;\">[object Object]%</div>\n                <div style=\"font-size: 0.9rem; color: #10b981;\">\n                  Change: +0.00%\n                </div>\n              </div>\n            \n              <div style=\"flex: 1 1 200px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                <div style=\"font-weight: bold; margin-bottom: 5px;\">2 Treasury Yield</div>\n                <div style=\"font-size: 1.1rem; font-weight: bold;\">[object Object]%</div>\n                <div style=\"font-size: 0.9rem; color: #10b981;\">\n                  Change: +0.00%\n                </div>\n              </div>\n            \n              <div style=\"flex: 1 1 200px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                <div style=\"font-weight: bold; margin-bottom: 5px;\">3 Treasury Yield</div>\n                <div style=\"font-size: 1.1rem; font-weight: bold;\">[object Object]%</div>\n                <div style=\"font-size: 0.9rem; color: #10b981;\">\n                  Change: +0.00%\n                </div>\n              </div>\n            \n              <div style=\"flex: 1 1 200px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                <div style=\"font-weight: bold; margin-bottom: 5px;\">4 Treasury Yield</div>\n                <div style=\"font-size: 1.1rem; font-weight: bold;\">[object Object]%</div>\n                <div style=\"font-size: 0.9rem; color: #10b981;\">\n                  Change: +0.00%\n                </div>\n              </div>\n            \n              <div style=\"flex: 1 1 200px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                <div style=\"font-weight: bold; margin-bottom: 5px;\">5 Treasury Yield</div>\n                <div style=\"font-size: 1.1rem; font-weight: bold;\">[object Object]%</div>\n                <div style=\"font-size: 0.9rem; color: #10b981;\">\n                  Change: +0.00%\n                </div>\n              </div>\n            \n        </div>\n        \n        <div style=\"margin-bottom: 15px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n          <div style=\"font-weight: bold; margin-bottom: 5px;\">Yield Curve Status</div>\n          <div style=\"display: flex; flex-wrap: wrap; gap: 15px;\">\n            <div>\n              <div style=\"font-size: 0.9rem; color: #718096;\">Status</div>\n              <div style=\"font-weight: bold;\">Normal</div>\n            </div>\n            <div>\n              <div style=\"font-size: 0.9rem; color: #718096;\">10Y-2Y Spread</div>\n              <div style=\"font-weight: bold;\">\n                N/A\n              </div>\n            </div>\n            <div>\n              <div style=\"font-size: 0.9rem; color: #718096;\">Inverted</div>\n              <div style=\"font-weight: bold;\">No</div>\n            </div>\n          </div>\n        </div>\n        \n        \n        \n        <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n          Source: Federal Reserve Economic Data (FRED)\n        </div>\n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Federal Reserve Policy"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n        <div style=\"margin-bottom: 15px;\">\n          <div style=\"font-weight: bold; margin-bottom: 5px;\">Current Policy Rate</div>\n          <div style=\"font-size: 1.2rem; font-weight: bold;\">\n            [object Object]%\n          </div>\n          <div style=\"font-size: 0.9rem; color: #718096;\">\n            Range: N/A\n          </div>\n        </div>\n        \n        <div style=\"margin-bottom: 15px;\">\n          <div style=\"font-weight: bold; margin-bottom: 5px;\">Forward Guidance</div>\n          <div style=\"font-size: 0.9rem; color: #333; line-height: 1.5;\">\n            Recent indicators suggest that economic activity has continued to expand at a solid pace. The unemployment rate has stabilized at a low level in recent months, and labor market conditions remain solid. Inflation remains somewhat elevated.\n          </div>\n        </div>\n        \n        <div style=\"margin-bottom: 15px;\">\n          <div style=\"font-weight: bold; margin-bottom: 5px;\">Meeting Schedule</div>\n          <div style=\"display: flex; flex-wrap: wrap; gap: 10px;\">\n            <div style=\"flex: 1;\">\n              <div style=\"font-size: 0.9rem; color: #718096;\">Last Meeting</div>\n              <div style=\"font-weight: bold;\">N/A</div>\n            </div>\n            <div style=\"flex: 1;\">\n              <div style=\"font-size: 0.9rem; color: #718096;\">Next Meeting</div>\n              <div style=\"font-weight: bold;\">[object Object]</div>\n            </div>\n          </div>\n        </div>\n        \n        \n          <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n            Source: Federal Reserve Press Releases\n            <br><a href=\"https://www.federalreserve.gov/newsevents/pressreleases/monetary20250319a.htm\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.federalreserve.gov/newsevents/pressreleases/monetary20250319a.htm</a>\n          </div>\n        \n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Inflation"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;\">\n        <!-- CPI Card -->\n        \n          <div style=\"flex: 1 1 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n            <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #2c5282;\">Consumer Price Index (CPI)</div>\n            \n            <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px;\">\n              <div style=\"flex: 1; min-width: 120px;\">\n                <div style=\"font-size: 0.9rem; color: #718096;\">Headline CPI</div>\n                <div style=\"font-size: 1.2rem; font-weight: bold;\">2.4%</div>\n              </div>\n              \n              <div style=\"flex: 1; min-width: 120px;\">\n                <div style=\"font-size: 0.9rem; color: #718096;\">Core CPI</div>\n                <div style=\"font-size: 1.2rem; font-weight: bold;\">2.8%</div>\n              </div>\n            </div>\n            \n            \n          </div>\n        \n        \n        <!-- PCE Card -->\n        \n          <div style=\"flex: 1 1 300px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n            <div style=\"font-weight: bold; font-size: 1.1rem; margin-bottom: 10px; color: #2c5282;\">Personal Consumption Expenditures (PCE)</div>\n            \n            <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 10px;\">\n              <div style=\"flex: 1; min-width: 120px;\">\n                <div style=\"font-size: 0.9rem; color: #718096;\">Headline PCE</div>\n                <div style=\"font-size: 1.2rem; font-weight: bold;\">2.5%</div>\n              </div>\n              \n              <div style=\"flex: 1; min-width: 120px;\">\n                <div style=\"font-size: 0.9rem; color: #718096;\">Core PCE</div>\n                <div style=\"font-size: 1.2rem; font-weight: bold;\">2.8%</div>\n              </div>\n            </div>\n            \n            \n          </div>\n        \n      </div>\n    "
+      }
+    ],
+    [
+      "heading",
+      {
+        "level": 3,
+        "text": "Geopolitical Risks"
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n      <div style=\"margin-bottom: 20px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);\">\n        <div style=\"font-size: 0.9rem; color: #333; line-height: 1.5; margin-bottom: 15px;\">\n          Ongoing conflicts and trade tensions are contributing to market volatility\n        </div>\n        \n        \n          <div>\n            \n                <div style=\"margin-bottom: 15px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                  <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">Russia-Ukraine War Escalation</div>\n                  <div style=\"font-size: 0.9rem; color: #333; margin-bottom: 5px;\">\n                    The ongoing conflict between Russia and Ukraine continues to disrupt regional stability, with recent escalations in military activity and sanctions impacting energy and food security. The war has led to persistent supply chain disruptions, higher commodity prices, and increased inflation, particularly in Europe and emerging markets.\n                  </div>\n                  <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;\">\n                    \n                      <div>\n                        <div style=\"font-size: 0.8rem; color: #718096;\">Region</div>\n                        <div style=\"font-weight: bold;\">Eastern Europe</div>\n                      </div>\n                    \n                    \n                    <div>\n                      <div style=\"font-size: 0.8rem; color: #718096;\">Impact Level</div>\n                      <div style=\"font-weight: bold; color: #10b981;\">\n                        Severe\n                      </div>\n                    </div>\n                  </div>\n                  \n                  \n                    <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n                      Source: S&P Global\n                       (<a href=\"https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk</a>)\n                    </div>\n                  \n                </div>\n              \n                <div style=\"margin-bottom: 15px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                  <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">Israel-Hamas and Broader Middle East Tensions</div>\n                  <div style=\"font-size: 0.9rem; color: #333; margin-bottom: 5px;\">\n                    Renewed hostilities between Israel and Hamas, alongside rising tensions involving Iran and regional actors, have heightened the risk of a broader Middle East conflict. This instability threatens global energy supply routes and increases the risk of further escalation.\n                  </div>\n                  <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;\">\n                    \n                      <div>\n                        <div style=\"font-size: 0.8rem; color: #718096;\">Region</div>\n                        <div style=\"font-weight: bold;\">Middle East</div>\n                      </div>\n                    \n                    \n                    <div>\n                      <div style=\"font-size: 0.8rem; color: #718096;\">Impact Level</div>\n                      <div style=\"font-weight: bold; color: #ef4444;\">\n                        High\n                      </div>\n                    </div>\n                  </div>\n                  \n                  \n                    <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n                      Source: S&P Global\n                       (<a href=\"https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk</a>)\n                    </div>\n                  \n                </div>\n              \n                <div style=\"margin-bottom: 15px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                  <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">Global Financial Market Volatility from Geopolitical Shocks</div>\n                  <div style=\"font-size: 0.9rem; color: #333; margin-bottom: 5px;\">\n                    Heightened geopolitical risks, including wars and diplomatic tensions, have increased the likelihood of sharp corrections in global financial markets. These shocks can disrupt cross-border trade and investment, raise sovereign risk premiums, and challenge financial stability.\n                  </div>\n                  <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;\">\n                    \n                      <div>\n                        <div style=\"font-size: 0.8rem; color: #718096;\">Region</div>\n                        <div style=\"font-weight: bold;\">Global</div>\n                      </div>\n                    \n                    \n                    <div>\n                      <div style=\"font-size: 0.8rem; color: #718096;\">Impact Level</div>\n                      <div style=\"font-weight: bold; color: #ef4444;\">\n                        High\n                      </div>\n                    </div>\n                  </div>\n                  \n                  \n                    <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n                      Source: IMF Global Financial Stability Report\n                       (<a href=\"https://www.imf.org/en/Publications/GFSR/Issues/2025/04/22/global-financial-stability-report-april-2025\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.imf.org/en/Publications/GFSR/Issues/2025/04/22/global-financial-stability-report-april-2025</a>)\n                    </div>\n                  \n                </div>\n              \n                <div style=\"margin-bottom: 15px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                  <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">US-China Strategic and Economic Tensions</div>\n                  <div style=\"font-size: 0.9rem; color: #333; margin-bottom: 5px;\">\n                    US-China relations remain strained over issues including trade, technology, and security in the Asia-Pacific. Recent policy moves and rhetoric have increased the risk of tariffs, export controls, and restrictions on critical minerals, impacting global supply chains and investment flows.\n                  </div>\n                  <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;\">\n                    \n                      <div>\n                        <div style=\"font-size: 0.8rem; color: #718096;\">Region</div>\n                        <div style=\"font-weight: bold;\">Asia-Pacific, Global</div>\n                      </div>\n                    \n                    \n                    <div>\n                      <div style=\"font-size: 0.8rem; color: #718096;\">Impact Level</div>\n                      <div style=\"font-weight: bold; color: #ef4444;\">\n                        High\n                      </div>\n                    </div>\n                  </div>\n                  \n                  \n                    <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n                      Source: S&P Global\n                       (<a href=\"https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk</a>)\n                    </div>\n                  \n                </div>\n              \n                <div style=\"margin-bottom: 15px; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);\">\n                  <div style=\"font-weight: bold; margin-bottom: 5px; color: #2c5282;\">Tariff and Trade Policy Uncertainty</div>\n                  <div style=\"font-size: 0.9rem; color: #333; margin-bottom: 5px;\">\n                    Mounting geopolitical risks have led to increased use of tariffs and trade barriers, particularly among major economies. This policy uncertainty is weighing on global growth prospects and complicating investment decisions for multinational firms.\n                  </div>\n                  <div style=\"display: flex; flex-wrap: wrap; gap: 15px; margin-top: 10px;\">\n                    \n                      <div>\n                        <div style=\"font-size: 0.8rem; color: #718096;\">Region</div>\n                        <div style=\"font-weight: bold;\">Global</div>\n                      </div>\n                    \n                    \n                    <div>\n                      <div style=\"font-size: 0.8rem; color: #718096;\">Impact Level</div>\n                      <div style=\"font-weight: bold; color: #ef4444;\">\n                        High\n                      </div>\n                    </div>\n                  </div>\n                  \n                  \n                    <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n                      Source: CFA Institute\n                       (<a href=\"https://blogs.cfainstitute.org/investor/2025/04/14/how-tariffs-and-geopolitics-are-shaping-the-2025-global-economic-outlook/\" target=\"_blank\" rel=\"noopener noreferrer\">https://blogs.cfainstitute.org/investor/2025/04/14/how-tariffs-and-geopolitics-are-shaping-the-2025-global-economic-outlook/</a>)\n                    </div>\n                  \n                </div>\n              \n          </div>\n        \n        \n        \n          <div style=\"font-size: 0.8rem; color: #666; margin-top: 10px; text-align: right;\">\n            Source: IMF, S&P Global, CFA Institute\n             (<a href=\"https://www.imf.org/en/Publications/GFSR/Issues/2025/04/22/global-financial-stability-report-april-2025\" target=\"_blank\" rel=\"noopener noreferrer\">https://www.imf.org/en/Publications/GFSR/Issues/2025/04/22/global-financial-stability-report-april-2025</a>)\n            <br>Last Updated: Invalid Date\n          </div>\n        \n      </div>\n    "
+      }
+    ],
+    [
+      "hr",
+      {}
+    ],
+    [
+      "html",
+      {
+        "html": "\n    <div style=\"margin-top: 30px; padding: 15px; background-color: #e6f2ff; border-radius: 8px; font-size: 0.8rem; color: #666; line-height: 1.4;\">\n      <p><strong>Disclaimer:</strong> The information provided in this report is for informational purposes only and does not constitute investment advice. Market Pulse Daily does not guarantee the accuracy, completeness, or timeliness of the information provided. The content should not be construed as an offer to sell or the solicitation of an offer to buy any security. Market Pulse Daily is not responsible for any investment decisions made based on the information provided in this report.</p>\n      <p>Past performance is not indicative of future results. Investing in securities involves risks, including the potential loss of principal. Market data and analysis are sourced from third parties believed to be reliable, but Market Pulse Daily makes no representations regarding the accuracy or completeness of such information.</p>\n      <p>Market Pulse Daily may hold positions in securities mentioned in this report. Readers should conduct their own due diligence before making any investment decisions.</p>\n    </div>\n  "
+      }
+    ]
+  ],
+  "markups": [],
+  "sections": [
+    [
+      10,
+      0
+    ],
+    [
+      10,
+      1
+    ],
+    [
+      10,
+      2
+    ],
+    [
+      10,
+      3
+    ],
+    [
+      10,
+      4
+    ],
+    [
+      10,
+      5
+    ],
+    [
+      10,
+      6
+    ],
+    [
+      10,
+      7
+    ],
+    [
+      10,
+      8
+    ],
+    [
+      10,
+      9
+    ],
+    [
+      10,
+      10
+    ],
+    [
+      10,
+      11
+    ],
+    [
+      10,
+      12
+    ],
+    [
+      10,
+      13
+    ],
+    [
+      10,
+      14
+    ],
+    [
+      10,
+      15
+    ],
+    [
+      10,
+      16
+    ],
+    [
+      10,
+      17
+    ],
+    [
+      10,
+      18
+    ],
+    [
+      10,
+      19
+    ],
+    [
+      10,
+      20
+    ],
+    [
+      10,
+      21
+    ],
+    [
+      10,
+      22
+    ],
+    [
+      10,
+      23
+    ],
+    [
+      10,
+      24
+    ],
+    [
+      10,
+      25
+    ],
+    [
+      10,
+      26
+    ],
+    [
+      10,
+      27
+    ],
+    [
+      10,
+      28
+    ],
+    [
+      10,
+      29
+    ],
+    [
+      10,
+      30
+    ],
+    [
+      10,
+      31
+    ],
+    [
+      10,
+      32
+    ],
+    [
+      10,
+      33
+    ],
+    [
+      10,
+      34
+    ],
+    [
+      10,
+      35
+    ],
+    [
+      10,
+      36
+    ],
+    [
+      10,
+      37
+    ],
+    [
+      10,
+      38
+    ],
+    [
+      10,
+      39
+    ],
+    [
+      10,
+      40
+    ],
+    [
+      10,
+      41
+    ],
+    [
+      10,
+      42
+    ]
+  ]
+}
