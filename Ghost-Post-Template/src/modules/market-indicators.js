@@ -273,8 +273,8 @@ const addFearGreedIndex = (mobiledoc, data) => {
   
   const chartHtml = `
     <div style="margin-top: 20px;">
-      <!-- Slider visualization with thinner height and proper gradient -->
-      <div style="position: relative; height: 5px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #718096 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+      <!-- Slider visualization with thicker height and adjusted gradient -->
+      <div style="position: relative; height: 8px; background: linear-gradient(to right, #e53935 0%, #fb8c00 20%, #ffeb3b 35%, #ffeb3b 65%, #7cb342 80%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
         <!-- Thumb -->
         <div style="position: absolute; top: 50%; left: ${current}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
       </div>
