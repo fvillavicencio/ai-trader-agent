@@ -249,8 +249,8 @@ const addFearGreedIndex = (mobiledoc, data) => {
   
   const chartHtml = `
     <div style="margin-top: 20px;">
-      <!-- Slider visualization similar to HTML format -->
-      <div style="position: relative; height: 8px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+      <!-- Slider visualization with thinner height and proper gradient -->
+      <div style="position: relative; height: 5px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #718096 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
         <!-- Thumb -->
         <div style="position: absolute; top: 50%; left: ${current}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
       </div>
@@ -363,7 +363,7 @@ const addRSI = (mobiledoc, data) => {
           <div style="font-size: 0.95rem; margin-left: 8px; color: ${rsiColor}">${rsiValue} (${rsiCategory})</div>
         </div>
         
-        <div style="position: relative; height: 20px; background: linear-gradient(to right, #e53e3e 0%, #e53e3e 30%, #718096 30%, #718096 70%, #38a169 70%, #38a169 100%); border-radius: 10px; margin-bottom: 5px;">
+        <div style="position: relative; height: 20px; background: linear-gradient(to right, #c53030 0%, #ed8936 30%, #48bb78 70%, #2f855a 100%); border-radius: 10px; margin-bottom: 5px;">
           <div style="position: absolute; top: 50%; left: calc(${rsiValue}% - 8px); transform: translateY(-50%); width: 16px; height: 16px; background-color: white; border: 2px solid #2d3748; border-radius: 50%;"></div>
         </div>
         
@@ -381,7 +381,7 @@ const addRSI = (mobiledoc, data) => {
       </p>
       
       <div style="margin-top: 10px; font-size: 0.8rem; color: #718096; text-align: right;">
-        Source: <a href="${sourceUrl}" target="_blank" style="color: #4299e1; text-decoration: none;">${source}</a>, as of ${asOf}
+        Source: <a href="${sourceUrl}" target="_blank" style="color: #4299e1; text-decoration: none;">${source}</a> as of ${asOf}
       </div>
     </div>
   `;
