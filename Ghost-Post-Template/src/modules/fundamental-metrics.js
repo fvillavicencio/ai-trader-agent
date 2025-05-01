@@ -43,11 +43,11 @@ const addFundamentalMetrics = (mobiledoc, data) => {
   // Create the collapsible section with a blue background
   const fundamentalMetricsHtml = `
     <div class="market-pulse-section fundamental-metrics-container" style="margin-bottom: 20px;">
-      <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+      <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%;">
         <!-- Section Header with blue background -->
-        <div class="collapsible-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background-color: #3182ce; color: white; cursor: pointer;">
-          <div class="collapsible-title" style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.25rem);">Fundamental Metrics</div>
-          <div class="collapsible-icon" style="font-size: 1.25rem; transition: transform 0.3s ease;">▼</div>
+        <div class="collapsible-header" style="display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background-color: #3182ce; color: white; cursor: pointer; width: 100%;">
+          <div class="collapsible-title" style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.25rem); color: white;">Fundamental Metrics</div>
+          <div class="collapsible-icon" style="font-size: 1.25rem; transition: transform 0.3s ease; color: white;">▼</div>
         </div>
         
         <!-- Collapsible Content -->
