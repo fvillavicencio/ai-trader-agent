@@ -537,7 +537,7 @@ const addMarketIndicators = (mobiledoc, data) => {
   const html = `
     <div class="market-pulse-section market-indicators-container" style="margin: 0; padding: 0;">
       <div class="collapsible-section" data-section="market-indicators">
-        <div class="collapsible-header" style="background-color: #e2e8f0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
+        <div class="collapsible-header" style="background-color: #f1f5f9; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
             <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: black;">Key Market Indicators</h2>
             <div class="collapsible-icon" style="font-size: 14px; color: black;">▼</div>
