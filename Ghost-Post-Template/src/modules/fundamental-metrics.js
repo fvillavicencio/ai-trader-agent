@@ -439,7 +439,7 @@ const addFundamentalMetrics = (mobiledoc, data) => {
   const html = `
     <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%; margin-bottom: 20px;">
       <!-- Section Header with blue background -->
-      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer;">
+      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; margin-bottom: 0; width: 100%;">
         <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
           <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
           <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
@@ -452,14 +452,12 @@ const addFundamentalMetrics = (mobiledoc, data) => {
       </div>
       
       <!-- Collapsible Content -->
-      <div class="collapsible-content" style="display: none; padding: 15px; background-color: #f8f9fa;">
-        <div class="fundamental-metrics-container">
-          ${addSP500AnalysisContent(data)}
-          ${addTopHoldingsContent(data)}
-          ${addMajorIndicesContent(data)}
-          ${addMagnificentSevenContent(data)}
-          ${addOtherStocksContent(data)}
-        </div>
+      <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
+        ${addSP500AnalysisContent(data)}
+        ${addTopHoldingsContent(data)}
+        ${addMajorIndicesContent(data)}
+        ${addMagnificentSevenContent(data)}
+        ${addOtherStocksContent(data)}
       </div>
     </div>
     
@@ -473,11 +471,11 @@ const addFundamentalMetrics = (mobiledoc, data) => {
             const icon = this.querySelector('.collapsible-icon');
             
             // Toggle display
-            if (content.style.display === 'none' || content.style.display === '') {
-              content.style.display = 'block';
+            if (content.style.maxHeight === '0px' || content.style.maxHeight === '') {
+              content.style.maxHeight = '1000px';
               icon.style.transform = 'rotate(180deg)';
             } else {
-              content.style.display = 'none';
+              content.style.maxHeight = '0px';
               icon.style.transform = 'rotate(0deg)';
             }
           });

@@ -549,7 +549,7 @@ const addMarketIndicators = (mobiledoc, data) => {
             <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span></span>
           </div>
         </div>
-        <div class="collapsible-content">
+        <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
   `;
   
   addHTML(mobiledoc, html);
@@ -567,6 +567,28 @@ const addMarketIndicators = (mobiledoc, data) => {
         </div>
       </div>
     </div>
+    
+    <script>
+      // Add click event to toggle collapsible sections
+      document.addEventListener('DOMContentLoaded', function() {
+        const headers = document.querySelectorAll('.collapsible-header');
+        headers.forEach(header => {
+          header.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const icon = this.querySelector('.collapsible-icon');
+            
+            // Toggle display
+            if (content.style.maxHeight === '0px' || content.style.maxHeight === '') {
+              content.style.maxHeight = '1000px';
+              icon.style.transform = 'rotate(180deg)';
+            } else {
+              content.style.maxHeight = '0px';
+              icon.style.transform = 'rotate(0deg)';
+            }
+          });
+        });
+      });
+    </script>
   `;
   
   addHTML(mobiledoc, closingHtml);

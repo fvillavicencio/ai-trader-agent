@@ -235,6 +235,9 @@ const addJustification = (mobiledoc, data) => {
  * @param {object} data - The data object containing disclaimer information
  */
 const addDisclaimer = (mobiledoc, data) => {
+  // Add a horizontal line before the disclaimer
+  addDivider(mobiledoc);
+  
   // Use the exact disclaimer format from the HTML template
   const disclaimerHtml = `
     <div style="margin-top: 15px; padding: 15px; background-color: #e6f2ff; border-radius: 8px; font-size: 11px; color: #666; line-height: 1.4;">
