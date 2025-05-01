@@ -32,390 +32,253 @@ const formatCurrency = (value) => {
 };
 
 /**
- * Adds the S&P 500 Analysis section to the mobiledoc
+ * Adds the Fundamental Metrics section to the mobiledoc
  * @param {object} mobiledoc - The mobiledoc object to add content to
- * @param {object} data - The data object containing S&P 500 analysis information
- */
-const addSP500Analysis = (mobiledoc, data) => {
-  if (!data.sp500Analysis) return;
-  
-  addHeading(mobiledoc, 'S&P 500 Analysis', 2);
-  
-  const sp500Analysis = data.sp500Analysis;
-  
-  const sp500Html = `
-    <div class="market-pulse-section sp500-analysis-container collapsible-section" data-section="sp500-analysis">
-      <div class="collapsible-header">
-        <div class="collapsible-title">S&P 500: <span style="color: ${sp500Analysis.change >= 0 ? '#48bb78' : '#e53e3e'};">${sp500Analysis.price.toFixed(2)} ${sp500Analysis.change >= 0 ? '↑' : '↓'} ${Math.abs(sp500Analysis.change).toFixed(2)}%</span></div>
-        <div class="collapsible-icon">▼</div>
-      </div>
-      <div class="collapsible-content">
-        <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
-          <!-- Left column - Technical Analysis -->
-          <div style="flex: 1 1 400px; min-width: 0;">
-            <div style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce; margin-bottom: 20px;">
-              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282; margin-bottom: 10px;">
-                Technical Analysis
-              </div>
-              
-              <!-- Support & Resistance Levels -->
-              <div style="margin-bottom: 15px;">
-                <div style="font-weight: 500; margin-bottom: 5px;">Support & Resistance Levels:</div>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px;">
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 0.9rem; color: #718096;">Support</div>
-                    <div style="display: flex; flex-direction: column;">
-                      ${sp500Analysis.supportLevels ? sp500Analysis.supportLevels.map(level => `
-                        <div style="margin-top: 5px; font-weight: 500;">${level}</div>
-                      `).join('') : ''}
-                    </div>
-                  </div>
-                  <div style="flex: 1; min-width: 0;">
-                    <div style="font-size: 0.9rem; color: #718096;">Resistance</div>
-                    <div style="display: flex; flex-direction: column;">
-                      ${sp500Analysis.resistanceLevels ? sp500Analysis.resistanceLevels.map(level => `
-                        <div style="margin-top: 5px; font-weight: 500;">${level}</div>
-                      `).join('') : ''}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- Moving Averages -->
-              <div style="margin-bottom: 15px;">
-                <div style="font-weight: 500; margin-bottom: 5px;">Moving Averages:</div>
-                <div style="display: flex; flex-wrap: wrap; gap: 10px;">
-                  ${sp500Analysis.movingAverages ? Object.entries(sp500Analysis.movingAverages).map(([period, value]) => `
-                    <div style="flex: 1 1 100px; min-width: 0; background-color: white; padding: 8px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                      <div style="font-size: 0.9rem; color: #718096;">${period}</div>
-                      <div style="font-weight: 500; margin-top: 3px;">${value}</div>
-                    </div>
-                  `).join('') : ''}
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          <!-- Right column - Market Breadth -->
-          <div style="flex: 1 1 400px; min-width: 0;">
-            <div style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce; margin-bottom: 20px;">
-              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282; margin-bottom: 10px;">
-                Market Breadth
-              </div>
-              
-              <!-- Advance/Decline -->
-              <div style="margin-bottom: 15px;">
-                <div style="font-weight: 500; margin-bottom: 5px;">Advance/Decline:</div>
-                <div style="display: flex; gap: 15px;">
-                  <div style="flex: 1; min-width: 0; background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    <div style="font-size: 0.9rem; color: #718096;">Advancing</div>
-                    <div style="font-weight: 500; margin-top: 3px; color: #48bb78;">${sp500Analysis.marketBreadth?.advancing || 'N/A'}</div>
-                  </div>
-                  <div style="flex: 1; min-width: 0; background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    <div style="font-size: 0.9rem; color: #718096;">Declining</div>
-                    <div style="font-weight: 500; margin-top: 3px; color: #e53e3e;">${sp500Analysis.marketBreadth?.declining || 'N/A'}</div>
-                  </div>
-                </div>
-              </div>
-              
-              <!-- New Highs/Lows -->
-              <div style="margin-bottom: 15px;">
-                <div style="font-weight: 500; margin-bottom: 5px;">New Highs/Lows:</div>
-                <div style="display: flex; gap: 15px;">
-                  <div style="flex: 1; min-width: 0; background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    <div style="font-size: 0.9rem; color: #718096;">New Highs</div>
-                    <div style="font-weight: 500; margin-top: 3px; color: #48bb78;">${sp500Analysis.marketBreadth?.newHighs || 'N/A'}</div>
-                  </div>
-                  <div style="flex: 1; min-width: 0; background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
-                    <div style="font-size: 0.9rem; color: #718096;">New Lows</div>
-                    <div style="font-weight: 500; margin-top: 3px; color: #e53e3e;">${sp500Analysis.marketBreadth?.newLows || 'N/A'}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Source Information -->
-        <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${sp500Analysis.sourceUrl || '#'}" target="_blank">${sp500Analysis.source || 'Market Data Providers'}</a> as of ${sp500Analysis.asOf || new Date().toLocaleDateString()}
-        </div>
-      </div>
-    </div>
-  `;
-  
-  addHTML(mobiledoc, sp500Html);
-  addDivider(mobiledoc);
-};
-
-/**
- * Adds the Top 5 Weighted Stocks section to the mobiledoc
- * @param {object} mobiledoc - The mobiledoc object to add content to
- * @param {object} data - The data object containing top holdings information
- */
-const addTopWeightedStocks = (mobiledoc, data) => {
-  if (!data.marketIndicators || !data.marketIndicators.topHoldings || data.marketIndicators.topHoldings.length === 0) return;
-  
-  addHeading(mobiledoc, 'Top 5 Weighted Stocks in Major Indices', 3);
-  
-  const topHoldingsHtml = `
-    <div class="market-pulse-section top-holdings-container collapsible-section" data-section="top-holdings" style="width: 100%; margin: 0; padding: 0;">
-      <div class="collapsible-header" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
-        <div class="collapsible-title">Top 5 Weighted Stocks in Major Indices</div>
-        <div class="collapsible-icon">▼</div>
-      </div>
-      <div class="collapsible-content" style="max-height: 0px; overflow: hidden; transition: max-height 0.3s ease-out;">
-        <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between;">
-          <div style="flex: 1 1 300px; min-width: 0; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282;">
-                S&P 500 (SPY)
-              </div>
-              <div style="font-weight: 500; color: #4a5568;">Top 5 Holdings:</div>
-            </div>
-            <div style="margin-top: 10px;">
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${data.marketIndicators.topHoldings
-                  .filter(etf => etf.index === 'S&P 500' || etf.symbol === 'SPY')
-                  .flatMap(etf => etf.holdings || [])
-                  .slice(0, 5)
-                  .map(holding => `
-                    <div style="display: flex; align-items: center;">
-                      <div style="width: 60px; min-width: 60px;">
-                        <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
-                      </div>
-                      <div style="flex-grow: 1; font-size: 0.9rem;">${holding.name}</div>
-                      <div style="width: 60px; text-align: right; font-weight: 500;">${holding.weight}%</div>
-                    </div>
-                  `).join('')}
-              </div>
-              <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
-                Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'State Street Global Advisors'}</a> as of ${data.marketIndicators.topHoldings[0]?.asOf || new Date().toLocaleDateString()}
-              </div>
-            </div>
-          </div>
-          
-          <div style="flex: 1 1 300px; min-width: 0; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282;">
-                NASDAQ 100 (QQQ)
-              </div>
-              <div style="font-weight: 500; color: #4a5568;">Top 5 Holdings:</div>
-            </div>
-            <div style="margin-top: 10px;">
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${data.marketIndicators.topHoldings
-                  .filter(etf => etf.index === 'NASDAQ 100' || etf.symbol === 'QQQ')
-                  .flatMap(etf => etf.holdings || [])
-                  .slice(0, 5)
-                  .map(holding => `
-                    <div style="display: flex; align-items: center;">
-                      <div style="width: 60px; min-width: 60px;">
-                        <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
-                      </div>
-                      <div style="flex-grow: 1; font-size: 0.9rem;">${holding.name}</div>
-                      <div style="width: 60px; text-align: right; font-weight: 500;">${holding.weight}%</div>
-                    </div>
-                  `).join('')}
-              </div>
-              <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
-                Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'Invesco'}</a> as of ${data.marketIndicators.topHoldings[0]?.asOf || new Date().toLocaleDateString()}
-              </div>
-            </div>
-          </div>
-          
-          <div style="flex: 1 1 300px; min-width: 0; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282;">
-                Dow Jones 30 (DIA)
-              </div>
-              <div style="font-weight: 500; color: #4a5568;">Top 5 Holdings:</div>
-            </div>
-            <div style="margin-top: 10px;">
-              <div style="display: flex; flex-direction: column; gap: 8px;">
-                ${data.marketIndicators.topHoldings
-                  .filter(etf => etf.index === 'Dow Jones' || etf.symbol === 'DIA')
-                  .flatMap(etf => etf.holdings || [])
-                  .slice(0, 5)
-                  .map(holding => `
-                    <div style="display: flex; align-items: center;">
-                      <div style="width: 60px; min-width: 60px;">
-                        <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
-                      </div>
-                      <div style="flex-grow: 1; font-size: 0.9rem;">${holding.name}</div>
-                      <div style="width: 60px; text-align: right; font-weight: 500;">${holding.weight}%</div>
-                    </div>
-                  `).join('')}
-              </div>
-              <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
-                Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'State Street Global Advisors'}</a> as of ${data.marketIndicators.topHoldings[0]?.asOf || new Date().toLocaleDateString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  `;
-  
-  addHTML(mobiledoc, topHoldingsHtml);
-};
-
-/**
- * Adds the Stock Cards section to the mobiledoc
- * @param {object} mobiledoc - The mobiledoc object to add content to
- * @param {object} data - The data object containing stock information
- */
-const addStockCards = (mobiledoc, data) => {
-  // Add Top Stocks
-  if (data.marketIndicators && data.marketIndicators.topStocks && data.marketIndicators.topStocks.length > 0) {
-    addHeading(mobiledoc, 'Top Performing Stocks', 3);
-    
-    const topStocksHtml = `
-      <div class="market-pulse-section">
-        <div class="stock-cards-grid">
-          ${data.marketIndicators.topStocks.map(stock => {
-            const changeColor = stock.change >= 0 ? '#38a169' : '#e53e3e';
-            const changeClass = stock.change >= 0 ? 'positive' : 'negative';
-            const changeSign = stock.change >= 0 ? '+' : '';
-            const changeIcon = stock.change >= 0 ? '↑' : '↓';
-            
-            return `
-              <div class="stock-card ${changeClass}">
-                <div class="stock-header">
-                  <div>
-                    <div class="stock-symbol">${stock.symbol}</div>
-                    <div class="stock-name">${stock.name || ''}</div>
-                  </div>
-                  <div class="stock-price">
-                    <div>${stock.price ? `$${stock.price.toFixed(2)}` : 'N/A'}</div>
-                    <div style="color: ${changeColor};">${changeSign}${stock.change ? `${stock.change.toFixed(2)}%` : 'N/A'} ${changeIcon}</div>
-                  </div>
-                </div>
-                
-                <div class="stock-metrics">
-                  ${stock.volume ? `
-                    <div class="metric-item">
-                      <div class="metric-label">Volume</div>
-                      <div class="metric-value">${formatNumber(stock.volume)}</div>
-                    </div>
-                  ` : ''}
-                  
-                  ${stock.marketCap ? `
-                    <div class="metric-item">
-                      <div class="metric-label">Market Cap</div>
-                      <div class="metric-value">${formatCurrency(stock.marketCap)}</div>
-                    </div>
-                  ` : ''}
-                  
-                  ${stock.pe ? `
-                    <div class="metric-item">
-                      <div class="metric-label">P/E Ratio</div>
-                      <div class="metric-value">${stock.pe.toFixed(2)}</div>
-                    </div>
-                  ` : ''}
-                  
-                  ${stock.sector ? `
-                    <div class="metric-item">
-                      <div class="metric-label">Sector</div>
-                      <div class="metric-value">${stock.sector}</div>
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-    
-    addHTML(mobiledoc, topStocksHtml);
-  }
-  
-  // Add Bottom Stocks
-  if (data.marketIndicators && data.marketIndicators.bottomStocks && data.marketIndicators.bottomStocks.length > 0) {
-    addHeading(mobiledoc, 'Bottom Performing Stocks', 3);
-    
-    const bottomStocksHtml = `
-      <div class="market-pulse-section">
-        <div class="stock-cards-grid">
-          ${data.marketIndicators.bottomStocks.map(stock => {
-            const changeColor = stock.change >= 0 ? '#38a169' : '#e53e3e';
-            const changeClass = stock.change >= 0 ? 'positive' : 'negative';
-            const changeSign = stock.change >= 0 ? '+' : '';
-            const changeIcon = stock.change >= 0 ? '↑' : '↓';
-            
-            return `
-              <div class="stock-card ${changeClass}">
-                <div class="stock-header">
-                  <div>
-                    <div class="stock-symbol">${stock.symbol}</div>
-                    <div class="stock-name">${stock.name || ''}</div>
-                  </div>
-                  <div class="stock-price">
-                    <div>${stock.price ? `$${stock.price.toFixed(2)}` : 'N/A'}</div>
-                    <div style="color: ${changeColor};">${changeSign}${stock.change ? `${stock.change.toFixed(2)}%` : 'N/A'} ${changeIcon}</div>
-                  </div>
-                </div>
-                
-                <div class="stock-metrics">
-                  ${stock.volume ? `
-                    <div class="metric-item">
-                      <div class="metric-label">Volume</div>
-                      <div class="metric-value">${formatNumber(stock.volume)}</div>
-                    </div>
-                  ` : ''}
-                  
-                  ${stock.marketCap ? `
-                    <div class="metric-item">
-                      <div class="metric-label">Market Cap</div>
-                      <div class="metric-value">${formatCurrency(stock.marketCap)}</div>
-                    </div>
-                  ` : ''}
-                  
-                  ${stock.pe ? `
-                    <div class="metric-item">
-                      <div class="metric-label">P/E Ratio</div>
-                      <div class="metric-value">${stock.pe.toFixed(2)}</div>
-                    </div>
-                  ` : ''}
-                  
-                  ${stock.sector ? `
-                    <div class="metric-item">
-                      <div class="metric-label">Sector</div>
-                      <div class="metric-value">${stock.sector}</div>
-                    </div>
-                  ` : ''}
-                </div>
-              </div>
-            `;
-          }).join('')}
-        </div>
-      </div>
-    `;
-    
-    addHTML(mobiledoc, bottomStocksHtml);
-  }
-};
-
-/**
- * Adds all Fundamental Metrics sections to the mobiledoc
- * @param {object} mobiledoc - The mobiledoc object to add content to
- * @param {object} data - The data object containing all fundamental metrics information
+ * @param {object} data - The data object containing fundamental metrics information
  */
 const addFundamentalMetrics = (mobiledoc, data) => {
+  // Add section heading
   addHeading(mobiledoc, 'Fundamental Metrics', 2);
   
-  // Add each section in order
-  addSP500Analysis(mobiledoc, data);
-  addTopWeightedStocks(mobiledoc, data);
-  addStockCards(mobiledoc, data);
+  // Create the collapsible section with a blue background
+  const fundamentalMetricsHtml = `
+    <div class="market-pulse-section fundamental-metrics-container" style="margin-bottom: 20px;">
+      <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden;">
+        <!-- Section Header with blue background -->
+        <div class="collapsible-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 15px; background-color: #3182ce; color: white; cursor: pointer;">
+          <div class="collapsible-title" style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.25rem);">Fundamental Metrics</div>
+          <div class="collapsible-icon" style="font-size: 1.25rem; transition: transform 0.3s ease;">▼</div>
+        </div>
+        
+        <!-- Collapsible Content -->
+        <div class="collapsible-content" style="display: none; padding: 15px; background-color: #f8f9fa;">
+          <!-- S&P 500 Analysis -->
+          ${addSP500AnalysisContent(data)}
+          
+          <!-- Top Holdings -->
+          ${addTopHoldingsContent(data)}
+          
+          <!-- Stock Cards -->
+          ${addStockCardsContent(data)}
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      // Add click event to toggle collapsible sections
+      document.addEventListener('DOMContentLoaded', function() {
+        const headers = document.querySelectorAll('.collapsible-header');
+        headers.forEach(header => {
+          header.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const icon = this.querySelector('.collapsible-icon');
+            
+            // Toggle display
+            if (content.style.display === 'none' || content.style.display === '') {
+              content.style.display = 'block';
+              icon.style.transform = 'rotate(180deg)';
+            } else {
+              content.style.display = 'none';
+              icon.style.transform = 'rotate(0deg)';
+            }
+          });
+        });
+      });
+    </script>
+  `;
   
-  addDivider(mobiledoc);
+  addHTML(mobiledoc, fundamentalMetricsHtml);
+};
+
+/**
+ * Generates the S&P 500 Analysis content
+ * @param {object} data - The data object containing S&P 500 analysis information
+ * @returns {string} - The HTML content for the S&P 500 Analysis section
+ */
+const addSP500AnalysisContent = (data) => {
+  if (!data.sp500) return '';
+  
+  const sp500 = data.sp500;
+  
+  return `
+    <div class="sp500-analysis-section" style="margin-bottom: 20px;">
+      <h3 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center; font-size: 1.5rem;">S&P 500 Analysis</h3>
+      
+      <div class="row" style="display: flex; flex-direction: row; gap: 12px; justify-content: flex-start; align-items: stretch; margin-bottom: 24px; flex-wrap: wrap;">
+        <!-- Current S&P 500 Index Level -->
+        <div class="index-card" style="flex:1.15; min-width:220px; max-width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-right:8px; gap:0; width:100%; position: relative; padding-bottom: 20px; border: 1px solid #e2e8f0;">
+          <div class="index-card-header" style="font-weight: 700; font-size: clamp(1rem,2vw,1.1rem); color: #1e293b; margin-bottom: 14px; text-align:center; letter-spacing:0.01em;">Current S&P 500 Index Level</div>
+          <div class="index-card-value" style="font-size: clamp(2rem, 5vw, 2.4em); font-weight: bold; color: #2563eb; letter-spacing:0.01em; line-height:1; margin-bottom: 7px;">${sp500.indexLevel.toFixed(2)}</div>
+          <div class="index-card-source" style="font-size: 10px; color: #888; position: absolute; bottom: 6px; right: 10px; line-height:1.35;">
+            Source: <a href="${sp500.sourceUrl}" target="_blank" style="color:#2563eb; text-decoration:underline;">${sp500.source.name}</a>, as of ${sp500.asOf}
+          </div>
+        </div>
+      
+        <!-- S&P 500 Trailing P/E Ratio -->
+        <div class="pe-card" style="flex:1; min-width:220px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px 24px 18px 24px; display: flex; flex-direction: column; justify-content: center; border: 1px solid #e2e8f0; max-width:100%; width:100%; position: relative; padding-bottom: 24px;">
+          <div class="pe-card-header" style="font-weight: bold; font-size: clamp(1rem,2vw,1.1rem); margin-bottom: 8px;">S&P 500 Trailing P/E Ratio</div>
+          <div class="pe-card-table" style="overflow-x:auto;">
+            <table style="width: 100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
+              <thead>
+                <tr style="background:#4B2991; text-align:center; font-weight:600; color:#fff; font-size:0.9em;">
+                  <th style="padding:16px 0 12px 0;">Current</th>
+                  <th>5-Year Avg</th>
+                  <th>10-Year Avg</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
+                  <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${sp500.peRatio.current.toFixed(2)}</td>
+                  <td style="color:#111; font-size: 0.85rem;">${sp500.peRatio.fiveYearAvg.toFixed(2)}</td>
+                  <td style="color:#111; font-size: 0.85rem;">${sp500.peRatio.tenYearAvg.toFixed(2)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="pe-card-source" style="font-size: 10px; color: #888; position: absolute; bottom: 6px; right: 10px; line-height:1.35;">
+            Source: <a href="${sp500.peRatio.sourceUrl}" target="_blank" style="color:#2563eb; text-decoration:underline;">${sp500.peRatio.source}</a>, as of ${sp500.peRatio.asOf}
+          </div>
+        </div>
+      </div>
+
+      <!-- S&P 500 Earnings Per Share (Trailing 12M) -->
+      <div class="earnings-container" style="margin-bottom: 15px; padding: 28px 32px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div class="earnings-header label-col" style="font-weight: bold; font-size: clamp(1.1rem,2vw,1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">S&P 500 Earnings Per Share (Trailing 12M)</div>
+        <div class="earnings-table" style="overflow-x:auto;">
+          <table style="width:100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
+            <thead>
+              <tr style="background:#B91C1C; text-align:center; font-weight:600; color:#fff; font-size:0.9em;">
+                <th style="padding:16px 0 12px 0;">S&P 500 EPS (TTM)</th>
+                <th>Target at 15x</th>
+                <th>Target at 17x</th>
+                <th>Target at 20x</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
+                <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${sp500.eps.ttm}</td>
+                <td style="color:#111; font-size: 0.85rem;">${sp500.eps.targetAt15x}</td>
+                <td style="color:#111; font-size: 0.85rem;">${sp500.eps.targetAt17x}</td>
+                <td style="color:#111; font-size: 0.85rem;">${sp500.eps.targetAt20x}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="earnings-source" style="font-size: 10px; color: #888; margin-top: 8px; text-align: right;">
+          Source: <a href="${sp500.eps.sourceUrl}" target="_blank" style="color:#2563eb; text-decoration:underline;">${sp500.eps.source}</a>, as of ${sp500.eps.asOf}
+        </div>
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Generates the Top Holdings content
+ * @param {object} data - The data object containing top holdings information
+ * @returns {string} - The HTML content for the Top Holdings section
+ */
+const addTopHoldingsContent = (data) => {
+  if (!data.sp500 || !data.sp500.topHoldings || data.sp500.topHoldings.length === 0) return '';
+  
+  const topHoldings = data.sp500.topHoldings;
+  
+  return `
+    <div class="top-holdings-section" style="margin-bottom: 20px;">
+      <h3 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 20px; text-align: center; font-size: 1.5rem;">Top Holdings</h3>
+      
+      ${topHoldings.map(index => {
+        return `
+          <div class="index-holdings" style="margin-bottom: 20px;">
+            <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">${index.name} (${index.symbol})</div>
+            <div class="holdings-table" style="overflow-x:auto;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+                <thead>
+                  <tr style="background-color: #f1f5f9;">
+                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">Symbol</th>
+                    <th style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">Name</th>
+                    <th style="padding: 8px; text-align: right; border-bottom: 1px solid #e2e8f0;">Weight (%)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${index.holdings.map(holding => {
+                    return `
+                      <tr>
+                        <td style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0; font-weight: bold;">${holding.symbol}</td>
+                        <td style="padding: 8px; text-align: left; border-bottom: 1px solid #e2e8f0;">${holding.name}</td>
+                        <td style="padding: 8px; text-align: right; border-bottom: 1px solid #e2e8f0;">${holding.weight.toFixed(2)}%</td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+            <div style="font-size: 10px; color: #888; margin-top: 5px; text-align: right;">
+              Source: <a href="${index.sourceUrl}" target="_blank" style="color:#2563eb; text-decoration:underline;">${index.source}</a>, as of ${index.asOf}
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `;
+};
+
+/**
+ * Generates the Stock Cards content
+ * @param {object} data - The data object containing stock information
+ * @returns {string} - The HTML content for the Stock Cards section
+ */
+const addStockCardsContent = (data) => {
+  if (!data.stocks || !data.stocks.magnificentSeven || data.stocks.magnificentSeven.length === 0) return '';
+  
+  const magnificentSeven = data.stocks.magnificentSeven;
+  
+  return `
+    <div class="stocks-section" style="margin-bottom: 20px;">
+      <h3 style="margin-top: 30px; color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; text-align: center; font-size: 1.5rem;">Magnificent Seven</h3>
+      <div class="stocks-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px 20px; align-items: stretch; justify-items: stretch;">
+        ${magnificentSeven.map(stock => {
+          const isPositive = parseFloat(stock.priceChange) >= 0;
+          const color = isPositive ? '#4CAF50' : '#f44336';
+          const arrow = isPositive ? '↑' : '↓';
+          
+          return `
+            <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+                <!-- Left: Symbol and Company Name -->
+                <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+                  <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">${stock.symbol}</div>
+                  <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${stock.name}</div>
+                </div>
+                <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+                <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+                  <div style="font-weight: bold; font-size: 0.95em; color: ${color}; margin-bottom: 2px; white-space: nowrap;">$${stock.price.toFixed(2)} <span style="color: ${color};">${arrow}</span> <span style="color: ${color}; font-weight: normal;">$${Math.abs(stock.priceChange).toFixed(2)}</span> <span style="color: ${color}; font-weight: normal;">(${stock.percentChange})</span></div>
+                </div>
+              </div>
+              <!-- Metrics Table -->
+              <div style="padding: 10px 12px; background-color: white;">
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                  <tbody>
+                    ${stock.metrics.slice(0, 4).map(metric => {
+                      return `
+                        <tr>
+                          <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">${metric.name}</td>
+                          <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
+                            ${metric.value}
+                          </td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `;
 };
 
 module.exports = {
-  addFundamentalMetrics,
-  addSP500Analysis,
-  addTopWeightedStocks,
-  addStockCards
+  addFundamentalMetrics
 };
