@@ -141,7 +141,13 @@
     [
       "html",
       {
-        "html": "\n    <div class=\"market-pulse-section disclaimer\">\n      <p class=\"disclaimer-text\">\n        The information provided in this report is for informational purposes only and does not constitute investment advice. Market data and analysis are based on sources believed to be reliable, but we make no representation as to their accuracy or completeness. Past performance is not indicative of future results. All investments involve risk, including the loss of principal.\n      </p>\n    </div>\n  "
+        "html": "\n    <div style=\"margin-top: 15px; padding: 15px; background-color: #e6f2ff; border-radius: 8px; font-size: 11px; color: #666; line-height: 1.4;\">\n      <p><strong>Disclaimer:</strong> The information provided in this report is for informational purposes only and does not constitute investment advice. Market Pulse Daily does not guarantee the accuracy, completeness, or timeliness of the information provided. The content should not be construed as an offer to sell or the solicitation of an offer to buy any security. Market Pulse Daily is not responsible for any investment decisions made based on the information provided in this report.</p>\n      <p>Past performance is not indicative of future results. Investing in securities involves risks, including the potential loss of principal. Market data and analysis are sourced from third parties believed to be reliable, but Market Pulse Daily makes no representations regarding the accuracy or completeness of such information.</p>\n      <p>Market Pulse Daily may hold positions in securities mentioned in this report. Readers should conduct their own due diligence before making any investment decisions.</p>\n    </div>\n  "
+      }
+    ],
+    [
+      "html",
+      {
+        "html": "\n    <div style=\"margin-top: 15px; padding: 20px; background-color: #1a365d; color: white; text-align: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);\">\n      <div style=\"font-weight: bold; margin-bottom: 10px;\">Market Pulse Daily - Actionable Trading Insights</div>\n      <div style=\"font-size: 12px; color: #e2e8f0;\">&copy; 2025 Market Pulse Daily. All rights reserved.</div>\n    </div>\n  "
       }
     ],
     [
@@ -340,18 +346,6 @@
       23
     ],
     [
-      1,
-      "h2",
-      [
-        [
-          0,
-          [],
-          0,
-          "Disclaimer"
-        ]
-      ]
-    ],
-    [
       10,
       24
     ],
@@ -362,6 +356,10 @@
     [
       10,
       26
+    ],
+    [
+      10,
+      27
     ]
   ]
 }

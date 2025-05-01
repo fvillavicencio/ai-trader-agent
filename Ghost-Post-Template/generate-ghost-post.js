@@ -230,29 +230,41 @@ const addJustification = (mobiledoc, data) => {
 };
 
 /**
- * Add the disclaimer section to the mobiledoc
+ * Add disclaimer to the mobiledoc
  * @param {object} mobiledoc - The mobiledoc object to add content to
  * @param {object} data - The data object containing disclaimer information
  */
 const addDisclaimer = (mobiledoc, data) => {
-  addHeading(mobiledoc, 'Disclaimer', 2);
-  
-  // Use disclaimer from data if available, otherwise use a standard disclaimer
-  // This ensures we have a disclaimer even if it's not in the JSON
-  const disclaimerText = data.disclaimer || 
-    'The information provided in this report is for informational purposes only and does not constitute investment advice. ' +
-    'Market data and analysis are based on sources believed to be reliable, but we make no representation as to their accuracy or completeness. ' +
-    'Past performance is not indicative of future results. All investments involve risk, including the loss of principal.';
-  
+  // Use the exact disclaimer format from the HTML template
   const disclaimerHtml = `
-    <div class="market-pulse-section disclaimer">
-      <p class="disclaimer-text">
-        ${disclaimerText}
-      </p>
+    <div style="margin-top: 15px; padding: 15px; background-color: #e6f2ff; border-radius: 8px; font-size: 11px; color: #666; line-height: 1.4;">
+      <p><strong>Disclaimer:</strong> The information provided in this report is for informational purposes only and does not constitute investment advice. Market Pulse Daily does not guarantee the accuracy, completeness, or timeliness of the information provided. The content should not be construed as an offer to sell or the solicitation of an offer to buy any security. Market Pulse Daily is not responsible for any investment decisions made based on the information provided in this report.</p>
+      <p>Past performance is not indicative of future results. Investing in securities involves risks, including the potential loss of principal. Market data and analysis are sourced from third parties believed to be reliable, but Market Pulse Daily makes no representations regarding the accuracy or completeness of such information.</p>
+      <p>Market Pulse Daily may hold positions in securities mentioned in this report. Readers should conduct their own due diligence before making any investment decisions.</p>
     </div>
   `;
   
   addHTML(mobiledoc, disclaimerHtml);
+};
+
+/**
+ * Add footer to the mobiledoc
+ * @param {object} mobiledoc - The mobiledoc object to add content to
+ * @param {object} data - The data object containing footer information
+ */
+const addFooter = (mobiledoc, data) => {
+  // Get the current year for the copyright
+  const year = new Date().getFullYear();
+  
+  // Use the exact footer format from the HTML template
+  const footerHtml = `
+    <div style="margin-top: 15px; padding: 20px; background-color: #1a365d; color: white; text-align: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <div style="font-weight: bold; margin-bottom: 10px;">Market Pulse Daily - Actionable Trading Insights</div>
+      <div style="font-size: 12px; color: #e2e8f0;">&copy; ${year} Market Pulse Daily. All rights reserved.</div>
+    </div>
+  `;
+  
+  addHTML(mobiledoc, footerHtml);
 };
 
 /**
@@ -355,8 +367,9 @@ const generateGhostPost = () => {
     addMacroeconomicFactors(mobiledoc, data);
     addGeopoliticalRisks(mobiledoc, data);
     
-    // Add disclaimer and JavaScript
+    // Add disclaimer, footer and JavaScript
     addDisclaimer(mobiledoc, data);
+    addFooter(mobiledoc, data);
     addCollapsibleSectionsScript(mobiledoc);
     addWrapperEnd(mobiledoc);
     
