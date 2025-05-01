@@ -422,6 +422,18 @@ const addRSI = (mobiledoc, data) => {
 };
 
 /**
+ * Get the RSI color based on the value
+ * @param {number} value - The RSI value
+ * @returns {string} - The color
+ */
+const getRSIColor = (value) => {
+  if (!value) return '#718096';  // Gray for unknown
+  if (value <= 30) return '#c53030';  // Dark red for oversold
+  if (value >= 70) return '#2f855a';  // Dark green for overbought
+  return '#718096';  // Gray for neutral (30-70)
+};
+
+/**
  * Adds the header with key market data
  * @param {object} mobiledoc - The mobiledoc object to add content to
  * @param {object} data - The data object containing market data
@@ -445,6 +457,7 @@ const addMarketHeader = (mobiledoc, data) => {
   
   // Determine the color based on the value
   const getFearGreedColor = (value) => {
+    if (value <= 0) return '#718096';  // Gray for unknown
     if (value <= 25) return '#b91c1c';  // Dark red for extreme fear
     if (value <= 40) return '#ed8936';  // Orange for Fear
     if (value <= 60) return '#ecc94b';  // Yellow for Neutral
@@ -596,19 +609,6 @@ const getRSICategory = (value) => {
   if (value <= 50) return 'Downtrend';
   if (value <= 70) return 'Uptrend';
   return 'Overbought';
-};
-
-/**
- * Get the RSI color based on the value
- * @param {number} value - The RSI value
- * @returns {string} - The color
- */
-const getRSIColor = (value) => {
-  if (!value) return '#718096';  // Gray for unknown
-  if (value <= 30) return '#c53030';  // Dark red for oversold
-  if (value <= 50) return '#ed8936';  // Orange for downtrend
-  if (value <= 70) return '#48bb78';  // Green for uptrend
-  return '#2f855a';  // Dark green for overbought
 };
 
 module.exports = { 
