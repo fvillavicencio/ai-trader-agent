@@ -361,10 +361,7 @@ const addRSI = (mobiledoc, data) => {
   if (!rsi) return;
   
   const rsiValue = rsi.value || 0;
-  const rsiCategory = getRSICategory(rsiValue);
-  const rsiColor = getRSIColor(rsiValue);
   const rsiSource = rsi.source || 'Tradier (RSI)';
-  const rsiSourceUrl = rsi.sourceUrl || 'https://developer.tradier.com/documentation/markets/get-timesales';
   const rsiTimestamp = rsi.asOf || new Date().toLocaleDateString('en-US', { 
     month: 'long', 
     day: 'numeric', 
@@ -374,28 +371,52 @@ const addRSI = (mobiledoc, data) => {
     timeZoneName: 'short'
   });
   
-  const html = `
-    <div class="market-pulse-section rsi-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
-      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
-        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Relative Strength Index (RSI): <span style="color: ${rsiColor};">${rsiValue} (${rsiCategory})</span></div>
+  // Determine the position of the marker (as a percentage)
+  const position = rsiValue;
+  
+  // Determine the sentiment text and color
+  let sentiment = 'Neutral';
+  let sentimentColor = '#718096';
+  
+  if (rsiValue >= 70) {
+    sentiment = 'Overbought';
+    sentimentColor = '#2f855a';
+  } else if (rsiValue <= 30) {
+    sentiment = 'Oversold';
+    sentimentColor = '#c53030';
+  }
+  
+  const rsiHtml = `
+    <div style="margin-top: 20px;">
+      <h3 style="font-size: 1.25rem; font-weight: bold; color: #2d3748; margin-bottom: 10px;">Path of Least Resistance</h3>
+      
+      <div style="font-size: 1rem; margin-bottom: 10px;">
+        <span style="font-weight: bold;">14-day Relative Strength Index (RSI):</span> 
+        <span style="color: ${sentimentColor};">${rsiValue} (${sentiment})</span>
       </div>
-      <div style="margin-top: 10px;">
-        <div style="position: relative; height: 5px; background: linear-gradient(to right, #c53030 0%, #c53030 30%, #718096 30%, #718096 70%, #2f855a 70%, #2f855a 100%); border-radius: 5px; margin-bottom: 5px;">
-          <div style="position: absolute; top: 50%; left: ${rsiValue}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #718096;">
-          <div>Oversold (0-30)</div>
-          <div>Neutral (30-70)</div>
-          <div>Overbought (70-100)</div>
-        </div>
-        <div style="margin-top: 10px; font-size: 0.8rem; color: #718096; text-align: right;">
-          Source: <a href="${rsiSourceUrl}" target="_blank" style="color: #4299e1; text-decoration: none;">${rsiSource}</a> as of ${rsiTimestamp}
-        </div>
+      
+      <!-- RSI Slider with thicker height and expanded gray range -->
+      <div style="position: relative; height: 8px; background: linear-gradient(to right, #c53030 0%, #c53030 30%, #718096 30%, #718096 70%, #2f855a 70%, #2f855a 100%); border-radius: 5px; margin-bottom: 5px;">
+        <div style="position: absolute; top: 50%; left: ${position}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #718096; margin-bottom: 15px;">
+        <div>Oversold</div>
+        <div>Neutral</div>
+        <div>Overbought</div>
+      </div>
+      
+      <div style="font-size: 0.9rem; color: #4a5568; margin-bottom: 15px; line-height: 1.5;">
+        Developed by J. Welles Wilder Jr. in 1978, the <a href="https://www.investopedia.com/terms/r/rsi.asp" target="_blank" style="color: #3182ce; text-decoration: none;">Relative Strength Index (RSI)</a> is a 0-100 momentum oscillator: readings > 70 signal overbought, < 30 oversold, and 30-70 neutral (with 50 marking "no trend"). Values above 50 imply bullish momentum; below 50, bearish momentum.
+      </div>
+      
+      <div style="font-size: 0.8rem; color: #718096; text-align: right; margin-top: 10px;">
+        Source: <a href="${rsiSource}" target="_blank" style="color: #3182ce; text-decoration: none;">Tradier (RSI)</a> as of ${rsiTimestamp}
       </div>
     </div>
   `;
   
-  addHTML(mobiledoc, html);
+  addHTML(mobiledoc, rsiHtml);
 };
 
 /**
