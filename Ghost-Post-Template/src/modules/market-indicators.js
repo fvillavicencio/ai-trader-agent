@@ -244,7 +244,10 @@ const addFearGreedIndex = (mobiledoc, data) => {
   
   // Calculate proper Y-axis position based on value (0-100 scale)
   const getYPosition = (value) => {
-    return 130 - (value * 1.3); // 130px height, scaled by 1.3 to fit
+    // Chart height is 130px, so we need to map 0-100 to 130-0
+    // For a value of 0, we want y=130 (bottom)
+    // For a value of 100, we want y=0 (top)
+    return 130 - ((value / 100) * 130);
   };
   
   const chartHtml = `
