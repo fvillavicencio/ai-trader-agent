@@ -109,14 +109,26 @@
       }
     ],
     "fearAndGreed": {
-      "current": 0,
-      "previousClose": 0,
-      "oneWeekAgo": 0,
-      "oneMonthAgo": 0,
-      "oneYearAgo": 0,
-      "source": "CNN Money",
-      "url": "https://money.cnn.com/data/fear-and-greed/",
-      "lastUpdated": "April 29, 2025 at 5:04 PM EDT"
+      "value": 38,
+      "category": "Fear",
+      "description": "The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.",
+      "oneWeekAgo": 26,
+      "oneMonthAgo": 21,
+      "previousClose": 36,
+      "previousDay": 36,
+      "previousValue": 36,
+      "color": "#ff9800",
+      "source": "Fear and Greed Index API (RapidAPI)",
+      "sourceUrl": "https://fear-and-greed-index.p.rapidapi.com/v1/fgi",
+      "asOf": "April 29, 2025 at 4:04 PM EDT"
+    },
+    "fearGreedIndex": {
+      "value": 39,
+      "previousDay": 37,
+      "oneWeekAgo": 28,
+      "oneMonthAgo": 21,
+      "source": "CNN Money Fear & Greed Index",
+      "asOf": "April 29, 2025 at 4:05 PM EDT"
     },
     "volatilityIndices": [
       {
@@ -267,28 +279,6 @@
     "volatilitySource": "Yahoo Finance",
     "volatilitySourceUrl": "https://finance.yahoo.com/quote/^VIX/",
     "volatilityAsOf": "April 29, 2025 at 5:04 PM EDT",
-    "fearGreedIndex": {
-      "currentValue": 38,
-      "currentClassification": "Fear",
-      "previousDay": {
-        "value": 36,
-        "classification": "Fear"
-      },
-      "oneWeekAgo": {
-        "value": 26,
-        "classification": "Fear"
-      },
-      "oneMonthAgo": {
-        "value": 21,
-        "classification": "Extreme Fear"
-      },
-      "oneYearAgo": null,
-      "source": "Fear and Greed Index API (RapidAPI)",
-      "sourceUrl": "https://fear-and-greed-index.p.rapidapi.com/v1/fgi",
-      "asOf": "April 29, 2025 at 4:04 PM EDT",
-      "timestamp": "2025-04-29T20:04:16.517Z",
-      "analysis": null
-    },
     "fearGreed": {
       "value": 38,
       "category": "Fear",

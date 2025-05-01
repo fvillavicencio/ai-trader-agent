@@ -149,7 +149,7 @@ const addMarketFutures = (mobiledoc, data) => {
  * @param {object} data - The data object containing volatility information
  */
 const addVolatilityIndices = (mobiledoc, data) => {
-  if (!data.marketIndicators || !data.marketIndicators.volatility || data.marketIndicators.volatility.length === 0) return;
+  if (!data.marketIndicators || !data.marketIndicators.volatilityIndices || data.marketIndicators.volatilityIndices.length === 0) return;
   
   const volatilityHtml = `
     <div class="market-pulse-section volatility-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
@@ -158,19 +158,21 @@ const addVolatilityIndices = (mobiledoc, data) => {
       </div>
       <div style="margin-top: 10px;">
         <div class="volatility-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100%, 1fr)); gap: 8px; width: 100%;">
-          ${data.marketIndicators.volatility.map(index => {
-            const isPositive = index.isPositive !== undefined ? index.isPositive : parseFloat(index.change) >= 0;
+          ${data.marketIndicators.volatilityIndices.map(index => {
+            // For volatility indices, rising is typically considered negative (red)
+            const isPositive = index.trend ? index.trend.toLowerCase() === 'falling' : index.change < 0;
             const changeColor = isPositive ? '#48bb78' : '#f56565';
-            const changeSign = isPositive ? '+' : '';
-            const changeIcon = isPositive ? '↑' : '↓';
+            const changeIcon = isPositive ? '↓' : '↑';
+            const trendText = index.trend || (isPositive ? 'Falling' : 'Rising');
+            
             return `
               <div class="volatility-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <div class="volatility-name" style="font-size: 0.95rem; color: #2d3748;">${index.name}</div>
                   <div style="display: flex; align-items: center; gap: 15px;">
-                    <div style="font-size: 0.95rem;">${index.price || index.value || ''}</div>
+                    <div style="font-size: 0.95rem;">${formatNumber(index.value)}</div>
                     <div class="volatility-change" style="color: ${changeColor}; font-weight: 500; font-size: 0.95rem;">
-                      ${changeIcon} ${changeSign}${index.change}%
+                      ${changeIcon} ${trendText}
                     </div>
                   </div>
                 </div>
@@ -179,7 +181,7 @@ const addVolatilityIndices = (mobiledoc, data) => {
           }).join('')}
         </div>
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${data.marketIndicators.volatilitySourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${data.marketIndicators.volatilitySource || 'CBOE'}</a> as of ${data.marketIndicators.volatilityAsOf || new Date().toLocaleDateString()}
+          Source: <a href="${data.marketIndicators.volatilitySourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${data.marketIndicators.volatilitySource || 'Yahoo Finance'}</a> as of ${data.marketIndicators.volatilityAsOf || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -234,7 +236,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
   const chartHtml = `
     <div style="margin-top: 40px;">
       <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-        <h4 style="font-size: 1rem; margin: 0; color: #2d3748;">Historical Trend</h4>
+        <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
         <div style="font-size: 0.9rem; color: #718096;">${fgData.description || ''}</div>
       </div>
       <div style="position: relative; height: 150px; background-color: #fff; border-radius: 8px; padding: 10px;">
@@ -300,119 +302,50 @@ const addFearGreedIndex = (mobiledoc, data) => {
  * @param {object} data - The data object containing RSI information
  */
 const addRSI = (mobiledoc, data) => {
-  // Check for RSI in the correct location in marketIndicators
-  const rsiData = data.marketIndicators?.rsi;
-  
-  // Also check for RSI directly in data (different structure)
-  const altRsiData = data.rsi;
-  
-  // Use whichever data is available
-  const rsi = rsiData || altRsiData;
-  
+  const rsi = data.rsi || data.marketIndicators?.rsi;
   if (!rsi) return;
-  
+
   const rsiValue = rsi.value;
+  const rsiCategory = rsi.category;  // Use category directly from JSON, no fallback calculation
+  const rsiColor = getRSIColor(rsiValue);
   
-  const getRSICategory = (value) => {
-    if (value <= 30) return 'Oversold';
-    if (value <= 40) return 'Weakening';
-    if (value <= 60) return 'Neutral';
-    if (value <= 70) return 'Strengthening';
-    return 'Overbought';
-  };
-  
-  const getRSIColor = (value) => {
-    if (value <= 25) return '#c53030'; // Darker red
-    if (value <= 40) return '#ed8936'; // Orange
-    if (value <= 60) return '#ecc94b'; // Yellow
-    if (value <= 75) return '#48bb78'; // Green
-    return '#2f855a'; // Darker green
-  };
-  
-  const rsiCategory = rsi.category || getRSICategory(rsiValue);
-  const rsiColor = rsi.color || getRSIColor(rsiValue);
-  
-  const chartHtml = `
-    <div style="margin-top: 40px;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-        <h4 style="font-size: 1rem; margin: 0; color: #2d3748;">Historical Trend</h4>
-        <div style="font-size: 0.9rem; color: #718096;">${rsi.description || ''}</div>
-      </div>
-      <div style="position: relative; height: 150px; background-color: #fff; border-radius: 8px; padding: 10px;">
-        <!-- Background color bands -->
-        <div style="position: absolute; top: 30px; left: 0; right: 0; height: 40px; display: flex;">
-          <div style="flex: 1; background-color: rgba(197, 48, 48, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(237, 137, 54, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(236, 201, 75, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(72, 187, 120, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(47, 133, 90, 0.1);"></div>
-        </div>
-        
-        <!-- X-axis labels -->
-        <div style="position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: space-between;">
-          <div style="font-size: 0.8rem; color: #718096;">One Month Ago</div>
-          <div style="font-size: 0.8rem; color: #718096;">One Week Ago</div>
-          <div style="font-size: 0.8rem; color: #718096;">Previous Close</div>
-          <div style="font-size: 0.8rem; color: #718096; font-weight: bold;">Current</div>
-        </div>
-        
-        <!-- SVG Chart -->
-        <svg width="100%" height="100" style="overflow: visible; position: relative; z-index: 2;">
-          <!-- Line connecting points with curve -->
-          <path d="M30,${100 - rsi.oneMonthAgo} C90,${100 - (rsi.oneMonthAgo + rsi.oneWeekAgo) / 2} 150,${100 - rsi.oneWeekAgo} 210,${100 - (rsi.oneWeekAgo + rsi.previousClose) / 2} C270,${100 - rsi.previousClose} 330,${100 - (rsi.previousClose + rsiValue) / 2} 370,${100 - rsiValue}" stroke="#3182ce" stroke-width="3" fill="none"></path>
-          
-          <!-- Data points with values -->
-          <circle cx="30" cy="${100 - rsi.oneMonthAgo}" r="5" fill="${getRSIColor(rsi.oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="30" y="${90 - rsi.oneMonthAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${rsi.oneMonthAgo}</text>
-          
-          <circle cx="150" cy="${100 - rsi.oneWeekAgo}" r="5" fill="${getRSIColor(rsi.oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="150" y="${90 - rsi.oneWeekAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${rsi.oneWeekAgo}</text>
-          
-          <circle cx="270" cy="${100 - rsi.previousClose}" r="5" fill="${getRSIColor(rsi.previousClose)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="270" y="${90 - rsi.previousClose}" text-anchor="middle" font-size="10" fill="#4a5568">${rsi.previousClose}</text>
-          
-          <circle cx="370" cy="${100 - rsiValue}" r="7" fill="${getRSIColor(rsiValue)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="370" y="${90 - rsiValue}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${rsiValue}</text>
-        </svg>
-      </div>
-    </div>
-  `;
-  
+  const source = rsi.source || 'Tradier (RSI)';
+  const sourceUrl = rsi.sourceUrl || 'https://developer.tradier.com/documentation/markets/get-timesales';
+  const asOf = rsi.asOf || '';
+
   const html = `
-    <div class="market-pulse-section rsi-container" style="width: 100%; margin: 0;">
-      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
-        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568; background-color: white;">Path of Least Resistance: <span style="color: ${rsiColor};">${rsiValue} (${rsiCategory})</span></div>
+    <div style="margin-top: 20px; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+      <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 1.25rem; font-weight: bold; color: #2d3748;">Path of Least Resistance</h3>
+      
+      <div style="margin-bottom: 10px;">
+        <div style="display: flex; align-items: center; margin-bottom: 5px;">
+          <div style="font-weight: bold; font-size: 0.95rem;">14-day Relative Strength Index (RSI):</div>
+          <div style="font-size: 0.95rem; margin-left: 8px; color: ${rsiColor}">${rsiValue} (${rsiCategory})</div>
+        </div>
+        
+        <div style="position: relative; height: 20px; background: linear-gradient(to right, #e53e3e 0%, #e53e3e 30%, #718096 30%, #718096 70%, #38a169 70%, #38a169 100%); border-radius: 10px; margin-bottom: 5px;">
+          <div style="position: absolute; top: 50%; left: calc(${rsiValue}% - 8px); transform: translateY(-50%); width: 16px; height: 16px; background-color: white; border: 2px solid #2d3748; border-radius: 50%;"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 0.9rem; color: #4a5568;">
+          <div>Oversold</div>
+          <div>Neutral</div>
+          <div>Overbought</div>
+        </div>
       </div>
-      <div style="margin-top: 10px;">
-        <div style="text-align: center; margin-bottom: 10px; font-size: 1.2rem; font-weight: normal;">
-          Current RSI: <span style="color: ${rsiValue > 70 ? '#c53030' : (rsiValue < 30 ? '#c53030' : (rsiValue > 50 ? '#48bb78' : '#ed8936'))};">${rsiValue.toFixed(1)}</span>
-        </div>
-        
-        <div class="rsi-meter" style="position: relative; height: 20px; margin: 15px 0; border-radius: 10px; background: linear-gradient(to right, #c53030 0%, #c53030 30%, #ecc94b 30%, #ecc94b 50%, #ecc94b 70%, #48bb78 70%, #48bb78 100%);">
-          <div class="rsi-indicator" style="position: absolute; top: -10px; left: ${rsiValue}%; width: 20px; height: 20px; background-color: #333; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-          </div>
-          <div style="position: absolute; top: -30px; left: ${rsiValue}%; transform: translateX(-50%); background-color: #2d3748; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;">
-            ${rsiValue.toFixed(1)}
-          </div>
-        </div>
-        
-        <div class="rsi-labels" style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.9rem; color: #718096;">
-          <div class="rsi-label">Oversold (<30)</div>
-          <div class="rsi-label">Neutral</div>
-          <div class="rsi-label">Overbought (>70)</div>
-        </div>
-        
-        <div style="margin-top: 1rem; line-height: 1.5;">
-          <p>Developed by J. Welles Wilder Jr. in 1978, the <a href="https://www.investopedia.com/terms/r/rsi.asp" target="_blank">Relative Strength Index (RSI)</a> is a 0–100 momentum oscillator: readings > 70 signal overbought, < 30 oversold, and 30–70 neutral (with 50 marking "no trend"). Values above 50 imply bullish momentum; below 50, bearish momentum.</p>
-        </div>
-        
-        <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${rsi.sourceUrl || '#'}" target="_blank">${rsi.source || 'Tradier (RSI)'}</a> as of ${rsi.asOf || new Date().toLocaleDateString()}
-        </div>
+      
+      <p style="margin-top: 15px; font-size: 0.85rem; line-height: 1.5; color: #4a5568;">
+        Developed by J. Welles Wilder Jr. in 1978, the <a href="${sourceUrl}" target="_blank" style="color: #3182ce; text-decoration: none;">Relative Strength Index (RSI)</a> is a 0-100 momentum oscillator: 
+        readings > 70 signal overbought, < 30 oversold, and 30-70 neutral (with 50 marking "no trend"). Values above 
+        50 imply bullish momentum; below 50, bearish momentum.
+      </p>
+      
+      <div style="margin-top: 10px; font-size: 0.8rem; color: #718096; text-align: right;">
+        Source: <a href="${sourceUrl}" target="_blank" style="color: #4299e1; text-decoration: none;">${source}</a>, as of ${asOf}
       </div>
     </div>
   `;
-  
+
   addHTML(mobiledoc, html);
 };
 
@@ -440,8 +373,8 @@ const getFearGreedColor = (value) => {
   if (value <= 20) return '#b91c1c';  // Dark red for extreme fear
   if (value <= 40) return '#ed8936';  // Orange for fear
   if (value <= 60) return '#ecc94b';  // Yellow for neutral
-  if (value <= 80) return '#84cc16';  // Light green for greed
-  return '#15803d';  // Dark green for extreme greed
+  if (value <= 75) return '#48bb78';  // Green
+  return '#2f855a';  // Darker green
 };
 
 /**
@@ -464,10 +397,10 @@ const getRSICategory = (value) => {
  */
 const getRSIColor = (value) => {
   if (!value) return '#718096';  // Gray for unknown
-  if (value <= 30) return '#b91c1c';  // Dark red for oversold
+  if (value <= 30) return '#c53030';  // Dark red for oversold
   if (value <= 50) return '#ed8936';  // Orange for downtrend
-  if (value <= 70) return '#84cc16';  // Light green for uptrend
-  return '#15803d';  // Dark green for overbought
+  if (value <= 70) return '#48bb78';  // Green for uptrend
+  return '#2f855a';  // Dark green for overbought
 };
 
 /**
@@ -493,25 +426,38 @@ const addMarketHeader = (mobiledoc, data) => {
   const fearGreedCategory = getFearGreedCategory(fearGreedValue);
   
   // Determine the color based on the value
+  const getFearGreedColor = (value) => {
+    if (value <= 25) return '#b91c1c'; // Dark red for extreme fear
+    if (value <= 40) return '#ed8936'; // Orange for fear
+    if (value <= 60) return '#ecc94b'; // Yellow for neutral
+    if (value <= 75) return '#48bb78'; // Green
+    return '#2f855a'; // Darker green
+  };
+  
   const fearGreedColor = getFearGreedColor(fearGreedValue);
 
   // Get VIX data
-  const vix = data.marketIndicators?.volatility?.find(index => index.symbol === '^VIX' || index.name.includes('VIX'));
-  const vixValue = vix ? formatNumber(vix.price || vix.value) : '';
+  const vix = data.marketIndicators?.volatilityIndices?.find(index => index.symbol === '^VIX' || index.name.includes('VIX'));
+  const vixValue = vix ? formatNumber(vix.value) : '';
+  const vixTrend = vix?.trend || '';
+  const vixColor = vixTrend.toLowerCase() === 'rising' ? '#f56565' : '#48bb78';
   
   // Get RSI data
   const rsi = data.rsi || data.marketIndicators?.rsi;
   const rsiValue = rsi ? rsi.value : '';
-  const rsiCategory = getRSICategory(rsiValue);
+  const rsiCategory = rsi?.category || '';  // Use category directly from JSON, no fallback calculation
   const rsiColor = getRSIColor(rsiValue);
-  
+
   const headerHtml = `
-    <div class="market-pulse-header" style="background-color: #2d3748; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
+    <div class="market-pulse-header" style="background-color: #e2e8f0; color: black; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
       <div style="font-size: 1.8rem; font-weight: bold; margin-bottom: 5px;">
         Market Pulse Daily
       </div>
-      <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
-        S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change}%)</span> . Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span> . VIX: <span>${vixValue}</span> . RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span>
+      <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+        <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change}%)</span></span> | 
+        <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
+        <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span> | 
+        <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span></span>
       </div>
     </div>
   `;
@@ -539,40 +485,35 @@ const addMarketIndicators = (mobiledoc, data) => {
   // Get Fear & Greed data
   const fearGreedData = data.fearGreed || data.marketIndicators?.fearGreed;
   const fearGreedValue = fearGreedData?.value || 50;
-  const fearGreedCategory = fearGreedData?.category || 'Neutral';
-  
-  // Determine the color based on the value
-  const getFearGreedColor = (value) => {
-    if (value <= 25) return '#b91c1c'; // Dark red for extreme fear
-    if (value <= 40) return '#ed8936'; // Orange for fear
-    if (value <= 60) return '#ecc94b'; // Yellow for neutral
-    if (value <= 75) return '#48bb78'; // Green
-    return '#2f855a'; // Darker green
-  };
-  
+  const fearGreedCategory = fearGreedData?.category || getFearGreedCategory(fearGreedValue);
   const fearGreedColor = getFearGreedColor(fearGreedValue);
-
+  
   // Get VIX data
-  const vix = data.marketIndicators?.volatility?.find(index => index.symbol === '^VIX' || index.name.includes('VIX'));
-  const vixValue = vix ? formatNumber(vix.price || vix.value) : '';
+  const vix = data.marketIndicators?.volatilityIndices?.find(index => index.name.includes('CBOE'));
+  const vixValue = vix ? formatNumber(vix.value) : '';
+  const vixTrend = vix?.trend || '';
+  const vixColor = vixTrend.toLowerCase() === 'rising' ? '#f56565' : '#48bb78';
   
   // Get RSI data
   const rsi = data.rsi || data.marketIndicators?.rsi;
   const rsiValue = rsi ? rsi.value : '';
-  const rsiCategory = getRSICategory(rsiValue);
+  const rsiCategory = rsi?.category || '';  // Use category directly from JSON, no fallback calculation
   const rsiColor = getRSIColor(rsiValue);
 
   // Create the main container with collapsible header
   const html = `
     <div class="market-pulse-section market-indicators-container" style="margin: 0; padding: 0;">
       <div class="collapsible-section" data-section="market-indicators">
-        <div class="collapsible-header" style="background-color: #333333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
+        <div class="collapsible-header" style="background-color: #e2e8f0; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.5rem; color: white;">Key Market Indicators</h2>
-            <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: black;">Key Market Indicators</h2>
+            <div class="collapsible-icon" style="font-size: 14px; color: black;">▼</div>
           </div>
-          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
-            S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change})</span> . Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span> . VIX: <span>${vixValue}</span> . RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span>
+          <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+            <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change})</span></span> | 
+            <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
+            <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span> | 
+            <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span></span>
           </div>
         </div>
         <div class="collapsible-content">
@@ -580,71 +521,22 @@ const addMarketIndicators = (mobiledoc, data) => {
   
   addHTML(mobiledoc, html);
 
-  // Add sections in the requested order
-  
-  // 1. Major Indices
+  // Add individual sections
   addMajorIndices(mobiledoc, data);
-  
-  // 2. Sector Performance
   addSectorPerformance(mobiledoc, data);
-  
-  // 3. Market Futures
   addMarketFutures(mobiledoc, data);
-  
-  // 4. Fear and Greed Index with slider
-  if (fearGreedData) {
-    const current = fearGreedData.value || 0;
-    const fearGreedColor = getFearGreedColor(current);
-    
-    const sliderHtml = `
-      <div class="market-pulse-section fear-greed-slider" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
-        <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
-          <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Fear & Greed Index: <span style="color: ${fearGreedColor};">${current} (${fearGreedCategory})</span></div>
-        </div>
-        <div style="margin-top: 10px;">
-          <!-- Slider -->
-          <div style="width: 100%; background: linear-gradient(to right, #b91c1c, #fb923c, #fbbf24, #84cc16, #15803d); height: 30px; border-radius: 15px; position: relative; margin-bottom: 10px;">
-            <!-- Marker -->
-            <div style="position: absolute; top: -10px; left: ${current}%; transform: translateX(-50%); width: 10px; height: 50px; background-color: #1e293b; border-radius: 5px;">
-              <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background-color: #1e293b; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.9rem; white-space: nowrap;">${current}</div>
-            </div>
-          </div>
-          
-          <!-- Labels -->
-          <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.8rem; font-weight: 500;">
-            <div style="color: #b91c1c;">Extreme Fear</div>
-            <div style="color: #fb923c;">Fear</div>
-            <div style="color: #fbbf24;">Neutral</div>
-            <div style="color: #84cc16;">Greed</div>
-            <div style="color: #15803d;">Extreme Greed</div>
-          </div>
-          
-          <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-            Source: <a href="${fearGreedData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fearGreedData.source || 'CNN Business Fear & Greed Index'}</a> as of ${fearGreedData.timestamp || new Date().toLocaleDateString()}
-          </div>
-        </div>
-      </div>
-    `;
-    
-    addHTML(mobiledoc, sliderHtml);
-  }
-  
-  addFearGreedIndex(mobiledoc, data);
-  
-  // 5. Volatility
   addVolatilityIndices(mobiledoc, data);
-  
-  // 6. RSI
+  addFearGreedIndex(mobiledoc, data);
   addRSI(mobiledoc, data);
-  
-  // Close the main container
-  addHTML(mobiledoc, `
+
+  // Close the container
+  const closingHtml = `
         </div>
       </div>
     </div>
-  `);
+  `;
   
-  addDivider(mobiledoc);
+  addHTML(mobiledoc, closingHtml);
 };
 
 module.exports = { 
@@ -654,6 +546,5 @@ module.exports = {
   addMarketFutures,
   addFearGreedIndex,
   addVolatilityIndices,
-  addRSI,
-  addMarketHeader
+  addRSI
 };

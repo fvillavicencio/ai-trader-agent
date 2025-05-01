@@ -1,0 +1,40 @@
+{{#if marketSentiment}}
+  <div class="sentiment-section">
+    <h2 class="section-title">Market Sentiment</h2>
+
+    {{#if marketSentiment.overall}}
+      <div class="overall-sentiment">
+        <div class="sentiment-label">Overall:</div>
+        <div class="sentiment-value">{{marketSentiment.overall}}</div>
+      </div>
+    {{/if}}
+
+    {{#if marketSentiment.analysts}}
+      <div class="analyst-list">
+        {{#each marketSentiment.analysts}}
+          <div class="analyst-item">
+            <div class="analyst-name">{{name}}</div>
+            <div class="analyst-comment">"{{comment}}"</div>
+            
+            {{#if mentionedSymbols.length}}
+              <div class="mentioned-symbols">
+                <div class="mentioned-label">Mentioned:</div>
+                <div class="symbol-tags">
+                  {{#each mentionedSymbols}}
+                    <span class="symbol-tag">{{this}}</span>
+                  {{/each}}
+                </div>
+              </div>
+            {{/if}}
+            
+            {{#if source}}
+              <div class="analyst-source">Source: {{source}}</div>
+            {{/if}}
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <div class="no-data-message">No analyst commentary available</div>
+    {{/if}}
+  </div>
+{{/if}}

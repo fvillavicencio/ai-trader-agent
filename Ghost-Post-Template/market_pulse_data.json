@@ -1,98 +1,73 @@
 {
-  "reportDate": "2025-04-30T22:55:27.576Z",
-  "reportDateFormatted": "April 30, 2025 at 6:55 PM EDT",
-  "reportDateDisplay": "As of April 30, 2025 at 6:55 PM EDT",
+  "reportDate": "2025-05-01T04:33:15.308Z",
+  "reportDateFormatted": "May 1, 2025 at 12:33 AM EDT",
+  "reportDateDisplay": "As of May 1, 2025 at 12:33 AM EDT",
   "isTest": false,
   "metadata": {
     "title": "Market Pulse Daily",
-    "timestamp": "April 30, 2025 at 6:55 PM EDT"
+    "timestamp": "May 1, 2025 at 12:33 AM EDT"
   },
   "marketSentiment": {
-    "overall": "Bearish. Cautious sentiment with defensive positioning amid volatility and valuation concerns.",
+    "overall": "Bearish. Investor sentiment is deteriorating with increased expectations of a market downturn.",
     "analysts": [
       {
-        "name": "Dan Nathan",
-        "comment": "Dan Nathan recently highlighted increased volatility and investor caution, noting that the S&P 500's correction has led to more defensive positioning among traders. He expressed concern about the sustainability of AI-driven gains and pointed to profit-taking as a sign of waning enthusiasm.",
-        "mentionedSymbols": [
-          "NVDA",
-          "AAPL",
-          "MSFT"
-        ],
-        "source": "Legacy Financial Strategies"
-      },
-      {
-        "name": "Josh Brown",
-        "comment": "Josh Brown observed that while corrections are a normal part of market cycles, the speed and depth of the recent pullback have made investors nervous. He emphasized the importance of maintaining a long-term perspective, especially as historical data suggests strong rebounds after similar corrections.",
-        "mentionedSymbols": [
-          "SPY",
-          "QQQ"
-        ],
-        "source": "Legacy Financial Strategies"
-      },
-      {
-        "name": "Joe Terranova",
-        "comment": "Joe Terranova noted that while the Federal Reserve's cautious stance on rate cuts has unsettled markets, he sees potential opportunities in international equities and select U.S. sectors that are less sensitive to domestic policy uncertainty.",
-        "mentionedSymbols": [
-          "EEM",
-          "INDA"
-        ],
-        "source": "Park Avenue Securities"
-      },
-      {
-        "name": "Dan Niles",
-        "comment": "Dan Niles has warned about the risks of overvaluation in large-cap tech and highlighted the vulnerability of the market to earnings disappointments, especially as analysts revise S&P 500 earnings lower for 2025.",
-        "mentionedSymbols": [
-          "AAPL",
-          "MSFT",
-          "NVDA"
-        ],
-        "source": "Mutual of America"
-      },
-      {
-        "name": "Mohamed El-Erian",
-        "comment": "Mohamed El-Erian has commented on the growing divergence between economic data and market expectations, warning that persistent inflation and policy uncertainty could lead to further volatility. He advocates for a cautious approach until there is more clarity from the Federal Reserve.",
+        "name": "Economic Research Team",
+        "comment": "Financial markets are unsettled. Stocks are in a correction, the dollar is depreciating, and the spread of ten-year Treasury yields above [benchmark] is widening.",
         "mentionedSymbols": [],
-        "source": "Comerica"
+        "source": "Comerica Economic Insights"
       },
       {
-        "name": "Steve Weiss",
-        "comment": "Steve Weiss has expressed caution, citing persistent inflation and policy uncertainty as reasons to remain defensive. He pointed to the underperformance of small caps and the challenges facing consumer sentiment as key risks.",
-        "mentionedSymbols": [
-          "IWM",
-          "RUT"
-        ],
-        "source": "Mutual of America"
+        "name": "Economic Research Team",
+        "comment": "Analysts have begun revising full-year 2025 S&P 500 earnings lower, and are now expecting $269.53 in earnings per share with growth slowing. The U.S. economy and financial markets were showing signs of strain following a robust 2024.",
+        "mentionedSymbols": [],
+        "source": "Mutual of America Economic & Market Perspective"
+      },
+      {
+        "name": "Market Analysis Team",
+        "comment": "The S&P 500 Index entered a correction in mid-March as it declined -10% from its February 19th high. Slowing economic growth, stubborn inflation, and policy uncertainty all contributed to the decline.",
+        "mentionedSymbols": [],
+        "source": "Park Avenue Securities Monthly Market Commentary"
+      },
+      {
+        "name": "Financial Analyst Team",
+        "comment": "Investor sentiment has shifted sharply. In just one month, the percentage of investors who expect stock prices to fall rose from 22% to 45%. Markets started the year strong with S&P 500 reaching all-time high on February 19th, but enthusiasm gave way to renewed concerns around trade, debt, and mixed policy signals out of Washington.",
+        "mentionedSymbols": [],
+        "source": "Legacy Financial Strategies Market Commentary"
       }
     ],
     "source": "Aggregated from multiple financial news sources",
-    "lastUpdated": "2025-04-30T22:53:58.790Z"
+    "lastUpdated": "2025-05-01T03:49:08.316Z"
   },
   "decision": {
-    "text": "Watch for Better Price Action",
-    "summary": "Market jitters persist as volatility and valuation concerns loom.",
-    "color": "#f59e0b",
-    "icon": "⚠️"
+    "text": "Sell Calls",
+    "summary": "Market jitters signal a stormy outlook—brace for impact.",
+    "color": "#ef4444",
+    "icon": "📉"
   },
-  "justification": "The current market environment is characterized by high volatility and cautious sentiment amid concerns about overvaluation, especially in large-cap tech stocks. The forward P/E ratio of 18.18 indicates overvaluation, and the rising VIX suggests heightened market uncertainty. With the Fear & Greed Index at 35, investor sentiment is fearful, supporting a cautious approach. Geopolitical risks and persistent inflation further contribute to market instability. Given these factors, it is prudent to watch for better price action and consider selling calls to capitalize on high volatility.",
+  "justification": "The current market environment is characterized by high volatility, as indicated by a rising VIX, and bearish sentiment, reflected in the Fear & Greed Index. The forward P/E ratio is elevated at 24.68, suggesting overvaluation, while geopolitical tensions and economic uncertainties further exacerbate market risks. Selling calls is recommended to capitalize on high option premiums in this volatile environment. The composite sentiment score is bearish, reflecting the confluence of these factors.",
   "marketIndicators": {
     "majorIndices": [
       {
         "name": "S&P 500",
+        "price": 5569.06,
         "change": 8.23,
         "isPositive": true
       },
       {
         "name": "Dow Jones Industrial Average",
+        "price": 40669.36,
         "change": 141.74,
         "isPositive": true
       },
       {
         "name": "NASDAQ Composite",
+        "price": 17446.34,
         "change": -14.98,
         "isPositive": false
       },
       {
         "name": "Russell 2000",
+        "price": 1964.12,
         "change": -12.4,
         "isPositive": false
       }
@@ -143,15 +118,18 @@
         "change": "-2.7"
       }
     ],
-    "fearAndGreed": {
-      "current": 0,
-      "previousClose": 0,
-      "oneWeekAgo": 0,
-      "oneMonthAgo": 0,
-      "oneYearAgo": 0,
-      "source": "CNN Money",
-      "url": "https://money.cnn.com/data/fear-and-greed/",
-      "lastUpdated": "April 30, 2025 at 6:55 PM EDT"
+    "fearGreed": {
+      "value": 35,
+      "category": "Fear",
+      "description": "The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.",
+      "oneWeekAgo": 28,
+      "oneMonthAgo": 21,
+      "previousDay": 37,
+      "previousValue": 37,
+      "color": "#ff9800",
+      "source": "Fear and Greed Index API (RapidAPI)",
+      "sourceUrl": "https://fear-and-greed-index.p.rapidapi.com/v1/fgi",
+      "asOf": "April 30, 2025 at 11:49 PM EDT"
     },
     "volatilityIndices": [
       {
@@ -255,10 +233,10 @@
     ],
     "indicesSource": "Yahoo Finance",
     "indicesSourceUrl": "https://finance.yahoo.com/quote/^GSPC/",
-    "indicesAsOf": "April 30, 2025 at 6:55 PM EDT",
+    "indicesAsOf": "May 1, 2025 at 12:33 AM EDT",
     "sectorSource": "Yahoo Finance",
     "sectorSourceUrl": "https://finance.yahoo.com/quote/XLV/",
-    "sectorAsOf": "April 30, 2025 at 6:55 PM EDT",
+    "sectorAsOf": "May 1, 2025 at 12:33 AM EDT",
     "marketFutures": [
       {
         "name": "S&P 500 E-mini Futures",
@@ -287,60 +265,24 @@
       },
       {
         "name": "German DAX Index",
-        "change": -0.07,
+        "change": -0.04,
         "isPositive": false
       },
       {
         "name": "France CAC 40 Index",
-        "change": -0.72,
+        "change": -0.7,
         "isPositive": false
       }
     ],
     "futuresSource": "Yahoo Finance",
     "futuresSourceUrl": "https://finance.yahoo.com/futures/",
-    "futuresAsOf": "April 30, 2025 at 6:55 PM EDT",
+    "futuresAsOf": "May 1, 2025 at 12:33 AM EDT",
     "volatilitySource": "Yahoo Finance",
     "volatilitySourceUrl": "https://finance.yahoo.com/quote/^VIX/",
-    "volatilityAsOf": "April 30, 2025 at 6:55 PM EDT",
-    "fearGreedIndex": {
-      "currentValue": 35,
-      "currentClassification": "Fear",
-      "previousDay": {
-        "value": 37,
-        "classification": "Fear"
-      },
-      "oneWeekAgo": {
-        "value": 28,
-        "classification": "Fear"
-      },
-      "oneMonthAgo": {
-        "value": 21,
-        "classification": "Extreme Fear"
-      },
-      "oneYearAgo": null,
-      "source": "Fear and Greed Index API (RapidAPI)",
-      "sourceUrl": "https://fear-and-greed-index.p.rapidapi.com/v1/fgi",
-      "asOf": "April 30, 2025 at 6:54 PM EDT",
-      "timestamp": "2025-04-30T22:54:01.813Z",
-      "analysis": null
-    },
-    "fearGreed": {
-      "value": 35,
-      "category": "Fear",
-      "description": "The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.",
-      "oneWeekAgo": 28,
-      "oneMonthAgo": 21,
-      "previousClose": 37,
-      "previousDay": 37,
-      "previousValue": 37,
-      "color": "#ff9800",
-      "source": "Fear and Greed Index API (RapidAPI)",
-      "sourceUrl": "https://fear-and-greed-index.p.rapidapi.com/v1/fgi",
-      "asOf": "April 30, 2025 at 6:54 PM EDT"
-    },
+    "volatilityAsOf": "May 1, 2025 at 12:33 AM EDT",
     "source": "Yahoo Finance",
     "sourceUrl": "https://finance.yahoo.com",
-    "asOf": "April 30, 2025 at 6:55 PM EDT",
+    "asOf": "May 1, 2025 at 12:33 AM EDT",
     "topHoldings": [
       {
         "name": "S&P 500",
@@ -447,9 +389,10 @@
     ],
     "rsi": {
       "value": 52.8,
+      "category": "Neutral",
       "source": "Tradier (RSI)",
       "sourceUrl": "https://developer.tradier.com/documentation/markets/get-timesales",
-      "asOf": "April 30, 2025 at 6:54 PM EDT"
+      "asOf": "April 30, 2025 at 11:49 PM EDT"
     }
   },
   "fundamentalMetrics": {
@@ -459,19 +402,11 @@
         "name": "SPDR Dow Jones Industrial Average ETF",
         "price": 406.34,
         "priceChange": 1.13,
-        "percentChange": "27.89%",
+        "percentChange": "0.28%",
         "metrics": [
           {
-            "name": "ROE",
-            "value": "0.00%"
-          },
-          {
-            "name": "Beta",
-            "value": "0.89"
-          },
-          {
             "name": "Volume",
-            "value": "2.3M"
+            "value": "2.5M"
           },
           {
             "name": "52W High",
@@ -480,14 +415,6 @@
           {
             "name": "52W Low",
             "value": "$366.32"
-          },
-          {
-            "name": "Sector",
-            "value": "Financial Services"
-          },
-          {
-            "name": "Industry",
-            "value": "Asset Management"
           }
         ]
       },
@@ -609,43 +536,11 @@
         "name": "Apple Inc",
         "price": 212.5,
         "priceChange": 1.29,
-        "percentChange": "61.08%",
+        "percentChange": "0.62%",
         "metrics": [
           {
-            "name": "Price/Book",
-            "value": "48.01"
-          },
-          {
-            "name": "Price/Sales",
-            "value": "8.94"
-          },
-          {
-            "name": "Debt/Equity",
-            "value": "1.45"
-          },
-          {
-            "name": "ROE",
-            "value": "145.35%"
-          },
-          {
-            "name": "ROA",
-            "value": "0.26%"
-          },
-          {
-            "name": "Profit Margin",
-            "value": "0.24%"
-          },
-          {
-            "name": "Dividend Yield",
-            "value": "0.00%"
-          },
-          {
-            "name": "Beta",
-            "value": "1.26"
-          },
-          {
             "name": "Volume",
-            "value": "50.4M"
+            "value": "52.3M"
           },
           {
             "name": "52W High",
@@ -654,10 +549,6 @@
           {
             "name": "52W Low",
             "value": "$169.11"
-          },
-          {
-            "name": "Sector",
-            "value": "Technology"
           },
           {
             "name": "Industry",
@@ -670,39 +561,11 @@
         "name": "Amazon.com Inc",
         "price": 184.42,
         "priceChange": -2.97,
-        "percentChange": "-158.49%",
+        "percentChange": "-1.59%",
         "metrics": [
           {
-            "name": "Price/Book",
-            "value": "6.75"
-          },
-          {
-            "name": "Price/Sales",
-            "value": "3.60"
-          },
-          {
-            "name": "Debt/Equity",
-            "value": "0.46"
-          },
-          {
-            "name": "ROE",
-            "value": "23.74%"
-          },
-          {
-            "name": "ROA",
-            "value": "0.09%"
-          },
-          {
-            "name": "Profit Margin",
-            "value": "0.09%"
-          },
-          {
-            "name": "Beta",
-            "value": "1.39"
-          },
-          {
             "name": "Volume",
-            "value": "51.7M"
+            "value": "55.2M"
           },
           {
             "name": "52W High",
@@ -713,12 +576,8 @@
             "value": "$151.61"
           },
           {
-            "name": "Sector",
-            "value": "Consumer Cyclical"
-          },
-          {
             "name": "Industry",
-            "value": "Specialty Retail"
+            "value": "Internet Retail"
           }
         ]
       },
@@ -727,43 +586,11 @@
         "name": "Alphabet Inc",
         "price": 158.8,
         "priceChange": -1.36,
-        "percentChange": "-84.91%",
+        "percentChange": "-0.85%",
         "metrics": [
           {
-            "name": "Price/Book",
-            "value": "5.72"
-          },
-          {
-            "name": "Price/Sales",
-            "value": "6.73"
-          },
-          {
-            "name": "Debt/Equity",
-            "value": "0.07"
-          },
-          {
-            "name": "ROE",
-            "value": "34.55%"
-          },
-          {
-            "name": "ROA",
-            "value": "0.22%"
-          },
-          {
-            "name": "Profit Margin",
-            "value": "0.29%"
-          },
-          {
-            "name": "Dividend Yield",
-            "value": "0.00%"
-          },
-          {
-            "name": "Beta",
-            "value": "1.03"
-          },
-          {
             "name": "Volume",
-            "value": "33.7M"
+            "value": "35.0M"
           },
           {
             "name": "52W High",
@@ -772,10 +599,6 @@
           {
             "name": "52W Low",
             "value": "$140.53"
-          },
-          {
-            "name": "Sector",
-            "value": "Communication Services"
           },
           {
             "name": "Industry",
@@ -788,43 +611,11 @@
         "name": "Meta Platforms Inc",
         "price": 549,
         "priceChange": -5.44,
-        "percentChange": "-98.12%",
+        "percentChange": "-0.99%",
         "metrics": [
           {
-            "name": "Price/Book",
-            "value": "7.50"
-          },
-          {
-            "name": "Price/Sales",
-            "value": "9.02"
-          },
-          {
-            "name": "Debt/Equity",
-            "value": "0.27"
-          },
-          {
-            "name": "ROE",
-            "value": "38.69%"
-          },
-          {
-            "name": "ROA",
-            "value": "0.23%"
-          },
-          {
-            "name": "Profit Margin",
-            "value": "0.38%"
-          },
-          {
-            "name": "Dividend Yield",
-            "value": "0.00%"
-          },
-          {
-            "name": "Beta",
-            "value": "1.28"
-          },
-          {
             "name": "Volume",
-            "value": "26.9M"
+            "value": "29.2M"
           },
           {
             "name": "52W High",
@@ -833,10 +624,6 @@
           {
             "name": "52W Low",
             "value": "$427.11"
-          },
-          {
-            "name": "Sector",
-            "value": "Communication Services"
           },
           {
             "name": "Industry",
@@ -849,43 +636,11 @@
         "name": "Microsoft Corp",
         "price": 395.26,
         "priceChange": 1.22,
-        "percentChange": "30.96%",
+        "percentChange": "0.31%",
         "metrics": [
           {
-            "name": "Price/Book",
-            "value": "9.71"
-          },
-          {
-            "name": "Price/Sales",
-            "value": "13.85"
-          },
-          {
-            "name": "Debt/Equity",
-            "value": "0.21"
-          },
-          {
-            "name": "ROE",
-            "value": "33.36%"
-          },
-          {
-            "name": "ROA",
-            "value": "0.17%"
-          },
-          {
-            "name": "Profit Margin",
-            "value": "0.36%"
-          },
-          {
-            "name": "Dividend Yield",
-            "value": "0.01%"
-          },
-          {
-            "name": "Beta",
-            "value": "1.00"
-          },
-          {
             "name": "Volume",
-            "value": "32.2M"
+            "value": "36.5M"
           },
           {
             "name": "52W High",
@@ -896,12 +651,8 @@
             "value": "$344.79"
           },
           {
-            "name": "Sector",
-            "value": "Technology"
-          },
-          {
             "name": "Industry",
-            "value": "Software - Infrastructure"
+            "value": "Software—Infrastructure"
           }
         ]
       },
@@ -910,43 +661,11 @@
         "name": "NVIDIA Corp",
         "price": 108.92,
         "priceChange": -0.1,
-        "percentChange": "-9.17%",
+        "percentChange": "-0.10%",
         "metrics": [
           {
-            "name": "Price/Book",
-            "value": "33.62"
-          },
-          {
-            "name": "Price/Sales",
-            "value": "22.28"
-          },
-          {
-            "name": "Debt/Equity",
-            "value": "0.13"
-          },
-          {
-            "name": "ROE",
-            "value": "115.44%"
-          },
-          {
-            "name": "ROA",
-            "value": "0.65%"
-          },
-          {
-            "name": "Profit Margin",
-            "value": "0.56%"
-          },
-          {
-            "name": "Dividend Yield",
-            "value": "0.00%"
-          },
-          {
-            "name": "Beta",
-            "value": "1.96"
-          },
-          {
             "name": "Volume",
-            "value": "217.2M"
+            "value": "235.0M"
           },
           {
             "name": "52W High",
@@ -955,10 +674,6 @@
           {
             "name": "52W Low",
             "value": "$81.25"
-          },
-          {
-            "name": "Sector",
-            "value": "Technology"
           },
           {
             "name": "Industry",
@@ -971,39 +686,11 @@
         "name": "Tesla Inc",
         "price": 282.16,
         "priceChange": -9.87,
-        "percentChange": "-337.98%",
+        "percentChange": "-3.38%",
         "metrics": [
           {
-            "name": "Price/Book",
-            "value": "12.16"
-          },
-          {
-            "name": "Price/Sales",
-            "value": "13.28"
-          },
-          {
-            "name": "Debt/Equity",
-            "value": "0.10"
-          },
-          {
-            "name": "ROE",
-            "value": "9.03%"
-          },
-          {
-            "name": "ROA",
-            "value": "0.06%"
-          },
-          {
-            "name": "Profit Margin",
-            "value": "0.07%"
-          },
-          {
-            "name": "Beta",
-            "value": "2.58"
-          },
-          {
             "name": "Volume",
-            "value": "125.7M"
+            "value": "129.0M"
           },
           {
             "name": "52W High",
@@ -1014,113 +701,13 @@
             "value": "$167.41"
           },
           {
-            "name": "Sector",
-            "value": "Consumer Cyclical"
-          },
-          {
             "name": "Industry",
-            "value": "Auto - Manufacturers"
+            "value": "Auto Manufacturers"
           }
         ]
       }
     ],
-    "otherStocks": [
-      {
-        "symbol": "EEM",
-        "name": "iShares MSCI Emerging Index Fund",
-        "price": 43.76,
-        "priceChange": 0.11,
-        "percentChange": "25.20%",
-        "metrics": [
-          {
-            "name": "ROE",
-            "value": "0.00%"
-          },
-          {
-            "name": "Beta",
-            "value": "0.98"
-          },
-          {
-            "name": "Volume",
-            "value": "19.4M"
-          },
-          {
-            "name": "52W High",
-            "value": "$47.44"
-          },
-          {
-            "name": "52W Low",
-            "value": "$38.19"
-          },
-          {
-            "name": "Sector",
-            "value": "Financial Services"
-          },
-          {
-            "name": "Industry",
-            "value": "Asset Management"
-          }
-        ]
-      },
-      {
-        "symbol": "INDA",
-        "name": "Ishares MSCI India ETF",
-        "price": 53.57,
-        "priceChange": 0.03,
-        "percentChange": "5.60%",
-        "metrics": [
-          {
-            "name": "ROE",
-            "value": "0.00%"
-          },
-          {
-            "name": "Beta",
-            "value": "0.48"
-          },
-          {
-            "name": "Volume",
-            "value": "6.9M"
-          },
-          {
-            "name": "52W High",
-            "value": "$59.49"
-          },
-          {
-            "name": "52W Low",
-            "value": "$47.60"
-          },
-          {
-            "name": "Sector",
-            "value": "Financial Services"
-          },
-          {
-            "name": "Industry",
-            "value": "Asset Management"
-          }
-        ]
-      },
-      {
-        "symbol": "RUT",
-        "name": "Russell 2000",
-        "price": 0,
-        "priceChange": 0,
-        "percentChange": "0%",
-        "metrics": [
-          {
-            "name": "Volume",
-            "value": "0"
-          },
-          {
-            "name": "52W High",
-            "value": "$0.00"
-          },
-          {
-            "name": "52W Low",
-            "value": "$0.00"
-          }
-        ]
-      }
-    ]
+    "otherStocks": []
   },
   "macroeconomicFactors": {
     "federalReserve": {
@@ -1188,7 +775,7 @@
         "status": "Normal",
         "inverted": false,
         "tenYearTwoYearSpread": 0.5400000000000005,
-        "lastUpdated": "April 30, 2025 at 6:55 PM EDT",
+        "lastUpdated": "May 1, 2025 at 12:33 AM EDT",
         "color": "#4caf50",
         "description": "The yield curve has a normal positive slope with the 10Y-2Y spread at 0.54%. This typically indicates expectations of economic growth."
       },
@@ -1289,7 +876,7 @@
       }
     },
     "geopoliticalRisks": {
-      "global": "High geopolitical tensions with potential market impacts",
+      "global": "Geopolitical risks are at their highest level in decades, impacting market stability",
       "risks": [
         {
           "name": "Heightened Global Geopolitical Tensions",
@@ -1385,17 +972,17 @@
     "source": {
       "name": "Yahoo Finance",
       "url": "https://finance.yahoo.com/quote/%5EGSPC/",
-      "asOf": "April 30, 2025 at 5:07 PM EDT"
+      "asOf": "April 30, 2025 at 9:30 AM EDT"
     },
     "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
-    "asOf": "April 30, 2025 at 5:07 PM EDT",
+    "asOf": "April 30, 2025 at 9:30 AM EDT",
     "peRatio": {
       "current": 24.68,
       "fiveYearAvg": 26.61,
       "tenYearAvg": 24.79,
       "source": "Yahoo Finance",
       "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
-      "asOf": "April 30, 2025 at 6:55 PM EDT"
+      "asOf": "April 30, 2025 at 11:49 PM EDT"
     },
     "eps": {
       "ttm": "$22.47",
@@ -1404,7 +991,7 @@
       "targetAt20x": "$449.40",
       "source": "Yahoo Finance",
       "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
-      "asOf": "April 30, 2025 at 6:55 PM EDT"
+      "asOf": "April 30, 2025 at 11:49 PM EDT"
     },
     "forwardEps": [
       {
@@ -1431,7 +1018,7 @@
     "forwardEpsSource": {
       "name": "S&P Global",
       "url": "https://www.spglobal.com/spdji/en/indices/equity/sp-500/",
-      "asOf": "April 29, 2025 at 8:00 PM EDT"
+      "asOf": "April 30, 2025 at 8:00 PM EDT"
     },
     "topHoldings": [
       {
