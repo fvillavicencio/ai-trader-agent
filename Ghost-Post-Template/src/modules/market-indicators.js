@@ -408,7 +408,7 @@ const addRSI = (mobiledoc, data) => {
         <div>Overbought</div>
       </div>
       
-      <div style="font-size: 0.9rem; color: #4a5568; margin-bottom: 15px; line-height: 1.5;">
+      <div style="font-size: 0.8rem; color: #4a5568; margin-bottom: 15px; line-height: 1.5;">
         Developed by J. Welles Wilder Jr. in 1978, the <a href="https://www.investopedia.com/terms/r/rsi.asp" target="_blank" style="color: #3182ce; text-decoration: none;">Relative Strength Index (RSI)</a> is a 0-100 momentum oscillator: readings > 70 signal overbought, < 30 oversold, and 30-70 neutral (with 50 marking "no trend"). Values above 50 imply bullish momentum; below 50, bearish momentum.
       </div>
       
