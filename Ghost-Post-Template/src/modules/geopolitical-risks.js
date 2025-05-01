@@ -45,10 +45,14 @@ const getRiskLevelColor = (impactLevel) => {
  * @param {object} data - The data object containing geopolitical risks information
  */
 const addGeopoliticalRisks = (mobiledoc, data) => {
-  if (!data.geopoliticalRisks) return;
+  // Check if geopolitical risks data exists in the expected location
+  const geopoliticalData = data.macroeconomicFactors?.geopoliticalRisks;
+  
+  if (!geopoliticalData) {
+    return;
+  }
   
   // Extract data
-  const geopoliticalData = data.geopoliticalRisks;
   const risks = geopoliticalData.risks || [];
   const globalOverview = geopoliticalData.global || 'Geopolitical risks are impacting market stability.';
   const source = geopoliticalData.source || 'Global Risk Assessment';
