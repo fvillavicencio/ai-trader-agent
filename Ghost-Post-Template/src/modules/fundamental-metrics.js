@@ -138,8 +138,7 @@ const addSP500Analysis = (mobiledoc, data) => {
         
         <!-- Source Information -->
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${sp500Analysis.sourceUrl || '#'}" target="_blank">${sp500Analysis.source || 'Market Data Providers'}</a>
-          ${sp500Analysis.asOf ? `<br>As of: ${sp500Analysis.asOf}` : ''}
+          Source: <a href="${sp500Analysis.sourceUrl || '#'}" target="_blank">${sp500Analysis.source || 'Market Data Providers'}</a> as of ${sp500Analysis.asOf || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -160,88 +159,97 @@ const addTopWeightedStocks = (mobiledoc, data) => {
   addHeading(mobiledoc, 'Top 5 Weighted Stocks in Major Indices', 3);
   
   const topHoldingsHtml = `
-    <div class="market-pulse-section top-holdings-container collapsible-section" data-section="top-holdings">
-      <div class="collapsible-header">
+    <div class="market-pulse-section top-holdings-container collapsible-section" data-section="top-holdings" style="width: 100%; margin: 0; padding: 0;">
+      <div class="collapsible-header" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
         <div class="collapsible-title">Top 5 Weighted Stocks in Major Indices</div>
         <div class="collapsible-icon">▼</div>
       </div>
-      <div class="collapsible-content">
+      <div class="collapsible-content" style="max-height: 0px; overflow: hidden; transition: max-height 0.3s ease-out;">
         <div style="display: flex; flex-wrap: wrap; gap: 15px; justify-content: space-between;">
           <div style="flex: 1 1 300px; min-width: 0; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce;">
-            <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282; margin-bottom: 10px;">
-              S&P 500 (SPY)
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282;">
+                S&P 500 (SPY)
+              </div>
+              <div style="font-weight: 500; color: #4a5568;">Top 5 Holdings:</div>
             </div>
-            <div style="font-weight: 500; margin-bottom: 5px;">Top 5 Holdings:</div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${data.marketIndicators.topHoldings
-                .filter(etf => etf.index === 'S&P 500' || etf.symbol === 'SPY')
-                .flatMap(etf => etf.holdings || [])
-                .slice(0, 5)
-                .map(holding => `
-                  <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                      <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
-                      <span style="margin-left: 5px; font-size: 0.9rem;">${holding.name}</span>
+            <div style="margin-top: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${data.marketIndicators.topHoldings
+                  .filter(etf => etf.index === 'S&P 500' || etf.symbol === 'SPY')
+                  .flatMap(etf => etf.holdings || [])
+                  .slice(0, 5)
+                  .map(holding => `
+                    <div style="display: flex; align-items: center;">
+                      <div style="width: 60px; min-width: 60px;">
+                        <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
+                      </div>
+                      <div style="flex-grow: 1; font-size: 0.9rem;">${holding.name}</div>
+                      <div style="width: 60px; text-align: right; font-weight: 500;">${holding.weight}%</div>
                     </div>
-                    <div style="font-weight: 500;">${holding.weight}%</div>
-                  </div>
-                `).join('')}
-            </div>
-            <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
-              Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'State Street Global Advisors'}</a>
-              ${data.marketIndicators.topHoldings[0]?.asOf ? `<br>As of: ${data.marketIndicators.topHoldings[0].asOf}` : ''}
+                  `).join('')}
+              </div>
+              <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
+                Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'State Street Global Advisors'}</a> as of ${data.marketIndicators.topHoldings[0]?.asOf || new Date().toLocaleDateString()}
+              </div>
             </div>
           </div>
           
           <div style="flex: 1 1 300px; min-width: 0; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce;">
-            <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282; margin-bottom: 10px;">
-              NASDAQ 100 (QQQ)
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282;">
+                NASDAQ 100 (QQQ)
+              </div>
+              <div style="font-weight: 500; color: #4a5568;">Top 5 Holdings:</div>
             </div>
-            <div style="font-weight: 500; margin-bottom: 5px;">Top 5 Holdings:</div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${data.marketIndicators.topHoldings
-                .filter(etf => etf.index === 'NASDAQ 100' || etf.symbol === 'QQQ')
-                .flatMap(etf => etf.holdings || [])
-                .slice(0, 5)
-                .map(holding => `
-                  <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                      <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
-                      <span style="margin-left: 5px; font-size: 0.9rem;">${holding.name}</span>
+            <div style="margin-top: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${data.marketIndicators.topHoldings
+                  .filter(etf => etf.index === 'NASDAQ 100' || etf.symbol === 'QQQ')
+                  .flatMap(etf => etf.holdings || [])
+                  .slice(0, 5)
+                  .map(holding => `
+                    <div style="display: flex; align-items: center;">
+                      <div style="width: 60px; min-width: 60px;">
+                        <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
+                      </div>
+                      <div style="flex-grow: 1; font-size: 0.9rem;">${holding.name}</div>
+                      <div style="width: 60px; text-align: right; font-weight: 500;">${holding.weight}%</div>
                     </div>
-                    <div style="font-weight: 500;">${holding.weight}%</div>
-                  </div>
-                `).join('')}
-            </div>
-            <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
-              Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'Invesco'}</a>
-              ${data.marketIndicators.topHoldings[0]?.asOf ? `<br>As of: ${data.marketIndicators.topHoldings[0].asOf}` : ''}
+                  `).join('')}
+              </div>
+              <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
+                Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'Invesco'}</a> as of ${data.marketIndicators.topHoldings[0]?.asOf || new Date().toLocaleDateString()}
+              </div>
             </div>
           </div>
           
           <div style="flex: 1 1 300px; min-width: 0; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; border-left: 4px solid #3182ce;">
-            <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282; margin-bottom: 10px;">
-              Dow Jones 30 (DIA)
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <div style="font-weight: bold; font-size: 1.1rem; color: #2c5282;">
+                Dow Jones 30 (DIA)
+              </div>
+              <div style="font-weight: 500; color: #4a5568;">Top 5 Holdings:</div>
             </div>
-            <div style="font-weight: 500; margin-bottom: 5px;">Top 5 Holdings:</div>
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-              ${data.marketIndicators.topHoldings
-                .filter(etf => etf.index === 'Dow Jones' || etf.symbol === 'DIA')
-                .flatMap(etf => etf.holdings || [])
-                .slice(0, 5)
-                .map(holding => `
-                  <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div>
-                      <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
-                      <span style="margin-left: 5px; font-size: 0.9rem;">${holding.name}</span>
+            <div style="margin-top: 10px;">
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                ${data.marketIndicators.topHoldings
+                  .filter(etf => etf.index === 'Dow Jones' || etf.symbol === 'DIA')
+                  .flatMap(etf => etf.holdings || [])
+                  .slice(0, 5)
+                  .map(holding => `
+                    <div style="display: flex; align-items: center;">
+                      <div style="width: 60px; min-width: 60px;">
+                        <span style="color: #3182ce; font-weight: 500;">${holding.symbol}</span>
+                      </div>
+                      <div style="flex-grow: 1; font-size: 0.9rem;">${holding.name}</div>
+                      <div style="width: 60px; text-align: right; font-weight: 500;">${holding.weight}%</div>
                     </div>
-                    <div style="font-weight: 500;">${holding.weight}%</div>
-                  </div>
-                `).join('')}
-            </div>
-            <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
-              Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'State Street Global Advisors'}</a>
-              ${data.marketIndicators.topHoldings[0]?.asOf ? `<br>As of: ${data.marketIndicators.topHoldings[0].asOf}` : ''}
+                  `).join('')}
+              </div>
+              <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
+                Source: <a href="${data.marketIndicators.topHoldings[0]?.sourceUrl || '#'}" target="_blank">${data.marketIndicators.topHoldings[0]?.source || 'State Street Global Advisors'}</a> as of ${data.marketIndicators.topHoldings[0]?.asOf || new Date().toLocaleDateString()}
+              </div>
             </div>
           </div>
         </div>

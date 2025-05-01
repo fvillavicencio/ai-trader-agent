@@ -17,47 +17,40 @@ const formatNumber = (num) => {
 /**
  * Adds the Major Indices section to the mobiledoc
  * @param {object} mobiledoc - The mobiledoc object to add content to
- * @param {object} data - The data object containing market indices information
+ * @param {object} data - The data object containing major indices information
  */
 const addMajorIndices = (mobiledoc, data) => {
   if (!data.marketIndicators || !data.marketIndicators.majorIndices || data.marketIndicators.majorIndices.length === 0) return;
   
   const indicesHtml = `
-    <div class="market-pulse-section indices-container collapsible-section" data-section="indices">
-      <div class="collapsible-header">
-        <div class="collapsible-title">Major Indices</div>
-        <div class="collapsible-icon">▼</div>
+    <div class="market-pulse-section major-indices-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Major Indices</div>
       </div>
-      <div class="collapsible-content">
-        <div class="market-indices-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; width: 100%;">
+      <div style="margin-top: 10px;">
+        <div class="major-indices-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100%, 1fr)); gap: 8px; width: 100%;">
           ${data.marketIndicators.majorIndices.map(index => {
             const isPositive = index.isPositive !== undefined ? index.isPositive : parseFloat(index.change) >= 0;
             const changeColor = isPositive ? '#48bb78' : '#f56565';
             const changeSign = isPositive ? '+' : '';
             const changeIcon = isPositive ? '↑' : '↓';
             return `
-              <div class="market-index-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
-                <div style="font-weight: bold; font-size: 1.1rem; color: #2d3748;">${index.name}</div>
-                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px;">
-                  <div style="font-size: 1.2rem; font-weight: 600;">${index.value || ''}</div>
-                  <div style="color: ${changeColor}; font-weight: 500;">
-                    ${changeIcon} ${changeSign}${index.change}${index.percentChange ? ` (${index.percentChange})` : '%'}
+              <div class="market-index-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div style="font-size: 1.1rem; color: #2d3748;">${index.name}</div>
+                  <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 1.1rem;">${formatNumber(index.price)}</div>
+                    <div style="color: ${changeColor}; font-weight: 500;">
+                      ${changeIcon} ${changeSign}${index.percentChange || index.change + '%'}
+                    </div>
                   </div>
                 </div>
               </div>
             `;
           }).join('')}
         </div>
-        
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="https://finance.yahoo.com" target="_blank" style="color: #3182ce; text-decoration: none;">Yahoo Finance</a>
-          <br>As of: ${new Date().toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
+          Source: <a href="${data.marketIndicators.indicesSourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${data.marketIndicators.indicesSource || 'Yahoo Finance'}</a> as of ${data.marketIndicators.indicesAsOf || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -75,38 +68,31 @@ const addSectorPerformance = (mobiledoc, data) => {
   if (!data.marketIndicators || !data.marketIndicators.sectorPerformance || data.marketIndicators.sectorPerformance.length === 0) return;
   
   const sectorsHtml = `
-    <div class="market-pulse-section sector-performance-container collapsible-section" data-section="sector-performance">
-      <div class="collapsible-header">
-        <div class="collapsible-title">Sector Performance</div>
-        <div class="collapsible-icon">▼</div>
+    <div class="market-pulse-section sector-performance-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Sector Performance</div>
       </div>
-      <div class="collapsible-content">
-        <div class="sector-performance-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; width: 100%;">
+      <div style="margin-top: 10px;">
+        <div class="sector-performance-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100%, 1fr)); gap: 8px; width: 100%;">
           ${data.marketIndicators.sectorPerformance.map(sector => {
             const isPositive = sector.isPositive !== undefined ? sector.isPositive : parseFloat(sector.change) >= 0;
             const changeColor = isPositive ? '#48bb78' : '#f56565';
             const changeSign = isPositive ? '+' : '';
             const changeIcon = isPositive ? '↑' : '↓';
             return `
-              <div class="sector-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
-                <div class="sector-name" style="font-weight: 600; color: #2d3748; margin-bottom: 5px;">${sector.name}</div>
-                <div class="sector-change" style="color: ${changeColor}; font-weight: 500;">
-                  ${changeIcon} ${changeSign}${sector.change}%
+              <div class="sector-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div class="sector-name" style="font-size: 1.1rem; color: #2d3748;">${sector.name}</div>
+                  <div class="sector-change" style="color: ${changeColor}; font-weight: 500;">
+                    ${changeIcon} ${changeSign}${sector.change}%
+                  </div>
                 </div>
               </div>
             `;
           }).join('')}
         </div>
-        
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="https://finance.yahoo.com/quote/XLV/" target="_blank" style="color: #3182ce; text-decoration: none;">Yahoo Finance</a>
-          <br>As of: ${new Date().toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
+          Source: <a href="${data.marketIndicators.sectorSourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${data.marketIndicators.sectorSource || 'Yahoo Finance'}</a> as of ${data.marketIndicators.sectorAsOf || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -124,41 +110,31 @@ const addMarketFutures = (mobiledoc, data) => {
   if (!data.marketIndicators || !data.marketIndicators.marketFutures || data.marketIndicators.marketFutures.length === 0) return;
   
   const futuresHtml = `
-    <div class="market-pulse-section futures-container collapsible-section" data-section="futures">
-      <div class="collapsible-header">
-        <div class="collapsible-title">Market Futures</div>
-        <div class="collapsible-icon">▼</div>
+    <div class="market-pulse-section futures-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Market Futures</div>
       </div>
-      <div class="collapsible-content">
-        <div class="market-futures-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; width: 100%;">
+      <div style="margin-top: 10px;">
+        <div class="market-futures-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100%, 1fr)); gap: 8px; width: 100%;">
           ${data.marketIndicators.marketFutures.map(future => {
             const isPositive = future.isPositive !== undefined ? future.isPositive : parseFloat(future.change) >= 0;
             const changeColor = isPositive ? '#48bb78' : '#f56565';
             const changeSign = isPositive ? '+' : '';
             const changeIcon = isPositive ? '↑' : '↓';
             return `
-              <div class="market-future-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
-                <div style="font-weight: bold; font-size: 1.1rem; color: #2d3748;">${future.name}</div>
-                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px;">
-                  <div style="font-size: 1.2rem; font-weight: 600;">${future.value || future.price || ''}</div>
-                  <div style="color: ${changeColor}; font-weight: 500;">
-                    ${changeIcon} ${changeSign}${future.change}${future.percentChange ? ` (${future.percentChange})` : '%'}
+              <div class="future-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div class="future-name" style="font-size: 1.1rem; color: #2d3748;">${future.name}</div>
+                  <div class="future-change" style="color: ${changeColor}; font-weight: 500;">
+                    ${changeIcon} ${changeSign}${future.change}%
                   </div>
                 </div>
               </div>
             `;
           }).join('')}
         </div>
-        
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="https://finance.yahoo.com/futures/" target="_blank" style="color: #3182ce; text-decoration: none;">Yahoo Finance</a>
-          <br>As of: ${new Date().toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
+          Source: <a href="${data.marketIndicators.futuresSourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${data.marketIndicators.futuresSource || 'CNBC'}</a> as of ${data.marketIndicators.futuresAsOf || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -176,41 +152,34 @@ const addVolatilityIndices = (mobiledoc, data) => {
   if (!data.marketIndicators || !data.marketIndicators.volatility || data.marketIndicators.volatility.length === 0) return;
   
   const volatilityHtml = `
-    <div class="market-pulse-section volatility-container collapsible-section" data-section="volatility">
-      <div class="collapsible-header">
-        <div class="collapsible-title">Volatility</div>
-        <div class="collapsible-icon">▼</div>
+    <div class="market-pulse-section volatility-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Volatility Indices</div>
       </div>
-      <div class="collapsible-content">
-        <div class="volatility-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; width: 100%;">
+      <div style="margin-top: 10px;">
+        <div class="volatility-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(100%, 1fr)); gap: 8px; width: 100%;">
           ${data.marketIndicators.volatility.map(index => {
             const isPositive = index.isPositive !== undefined ? index.isPositive : parseFloat(index.change) >= 0;
             const changeColor = isPositive ? '#48bb78' : '#f56565';
             const changeSign = isPositive ? '+' : '';
             const changeIcon = isPositive ? '↑' : '↓';
             return `
-              <div class="volatility-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
-                <div style="font-weight: bold; font-size: 1.1rem; color: #2d3748;">${index.name}</div>
-                <div style="display: flex; justify-content: space-between; align-items: baseline; margin-top: 10px;">
-                  <div style="font-size: 1.2rem; font-weight: 600;">${index.value || ''}</div>
-                  <div style="color: ${changeColor}; font-weight: 500;">
-                    ${changeIcon} ${changeSign}${index.change}${index.percentChange ? ` (${index.percentChange})` : '%'}
+              <div class="volatility-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div class="volatility-name" style="font-size: 1.1rem; color: #2d3748;">${index.name}</div>
+                  <div style="display: flex; align-items: center; gap: 15px;">
+                    <div style="font-size: 1.1rem;">${index.price || index.value || ''}</div>
+                    <div class="volatility-change" style="color: ${changeColor}; font-weight: 500;">
+                      ${changeIcon} ${changeSign}${index.change}%
+                    </div>
                   </div>
                 </div>
               </div>
             `;
           }).join('')}
         </div>
-        
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="https://finance.yahoo.com/quote/%5EVIX/" target="_blank" style="color: #3182ce; text-decoration: none;">Yahoo Finance</a>
-          <br>As of: ${new Date().toLocaleString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-          })}
+          Source: <a href="${data.marketIndicators.volatilitySourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${data.marketIndicators.volatilitySource || 'CBOE'}</a> as of ${data.marketIndicators.volatilityAsOf || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -225,14 +194,21 @@ const addVolatilityIndices = (mobiledoc, data) => {
  * @param {object} data - The data object containing fear & greed index information
  */
 const addFearGreedIndex = (mobiledoc, data) => {
-  // Check for fearGreed in the correct location
+  // Check for fearGreed in the correct location in marketIndicators
   const fearGreedData = data.marketIndicators?.fearGreed;
-  if (!fearGreedData) return;
   
-  const current = fearGreedData.value || 0;
-  const previousClose = fearGreedData.previousClose || 0;
-  const oneWeekAgo = fearGreedData.oneWeekAgo || 0;
-  const oneMonthAgo = fearGreedData.oneMonthAgo || 0;
+  // Also check for fearGreed directly in data (different structure)
+  const altFearGreedData = data.fearGreed;
+  
+  // Use whichever data is available
+  const fgData = fearGreedData || altFearGreedData;
+  
+  if (!fgData) return;
+  
+  const current = fgData.value || 0;
+  const previousClose = fgData.previousValue || fgData.previousClose || 0;
+  const oneWeekAgo = fgData.oneWeekAgo || 0;
+  const oneMonthAgo = fgData.oneMonthAgo || 0;
   
   // Determine the category based on the value
   const getCategory = (value) => {
@@ -244,85 +220,72 @@ const addFearGreedIndex = (mobiledoc, data) => {
   };
   
   const getColor = (value) => {
-    if (value <= 25) return '#e53e3e';
-    if (value <= 40) return '#f56565';
-    if (value <= 60) return '#718096';
-    if (value <= 75) return '#68d391';
-    return '#48bb78';
+    if (value <= 25) return '#c53030'; // Darker red
+    if (value <= 40) return '#ed8936'; // Orange for Fear
+    if (value <= 60) return '#ecc94b'; // Yellow
+    if (value <= 75) return '#48bb78'; // Green
+    return '#2f855a'; // Darker green
   };
   
   // Use category from data if available
-  const fearGreedCategory = fearGreedData.category || getCategory(current);
-  const fearGreedColor = fearGreedData.color || getColor(current);
+  const fearGreedCategory = fgData.category || getCategory(current);
+  const fearGreedColor = fgData.color || getColor(current);
   
-  const html = `
-    <div class="market-pulse-section fear-greed-container collapsible-section" data-section="fear-greed">
-      <div class="collapsible-header">
-        <div class="collapsible-title">Fear & Greed Index: <span style="color: ${fearGreedColor};">${current} (${fearGreedCategory})</span></div>
-        <div class="collapsible-icon">▼</div>
+  const chartHtml = `
+    <div style="margin-top: 40px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+        <h4 style="font-size: 1rem; margin: 0; color: #2d3748;">Historical Trend</h4>
+        <div style="font-size: 0.9rem; color: #718096;">${fgData.description || ''}</div>
       </div>
-      <div class="collapsible-content">
-        <!-- Slider -->
-        <div style="margin: 20px 0; padding: 15px; background-color: #f8f9fa; border-radius: 8px;">
-          <div style="position: relative; height: 40px; margin: 10px 0 30px;">
-            <!-- Gradient background -->
-            <div style="position: absolute; top: 0; left: 0; right: 0; height: 10px; border-radius: 5px; background: linear-gradient(to right, #e53e3e 0%, #f56565 25%, #718096 50%, #68d391 75%, #48bb78 100%);"></div>
-            
-            <!-- Indicator -->
-            <div style="position: absolute; top: -5px; left: ${current}%; transform: translateX(-50%); width: 20px; height: 20px; background-color: #333; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);"></div>
-            
-            <!-- Labels -->
-            <div style="position: absolute; top: 15px; left: 0; font-size: 0.8rem; color: #e53e3e;">Extreme Fear</div>
-            <div style="position: absolute; top: 15px; left: 25%; transform: translateX(-50%); font-size: 0.8rem; color: #f56565;">Fear</div>
-            <div style="position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; color: #718096;">Neutral</div>
-            <div style="position: absolute; top: 15px; left: 75%; transform: translateX(-50%); font-size: 0.8rem; color: #68d391;">Greed</div>
-            <div style="position: absolute; top: 15px; right: 0; font-size: 0.8rem; color: #48bb78;">Extreme Greed</div>
-          </div>
-          
-          <!-- Historical trend chart -->
-          <div style="margin-top: 40px;">
-            <h4 style="font-size: 1rem; margin-bottom: 15px; color: #2d3748;">Historical Trend</h4>
-            <div style="position: relative; height: 120px; background-color: #fff; border-radius: 8px; padding: 15px; border: 1px solid #e2e8f0;">
-              <!-- Background color zones -->
-              <div style="position: absolute; top: 0; left: 0; width: 25%; height: 100%; background-color: rgba(229, 62, 62, 0.1); z-index: 1;"></div>
-              <div style="position: absolute; top: 0; left: 25%; width: 15%; height: 100%; background-color: rgba(245, 101, 101, 0.1); z-index: 1;"></div>
-              <div style="position: absolute; top: 0; left: 40%; width: 20%; height: 100%; background-color: rgba(113, 128, 150, 0.1); z-index: 1;"></div>
-              <div style="position: absolute; top: 0; left: 60%; width: 15%; height: 100%; background-color: rgba(104, 211, 145, 0.1); z-index: 1;"></div>
-              <div style="position: absolute; top: 0; left: 75%; width: 25%; height: 100%; background-color: rgba(72, 187, 120, 0.1); z-index: 1;"></div>
-              
-              <!-- Chart line -->
-              <svg width="100%" height="70" style="overflow: visible; position: relative; z-index: 2;">
-                <!-- Line connecting points -->
-                <path d="M50,${100 - oneMonthAgo} L150,${100 - oneWeekAgo} L250,${100 - previousClose} L350,${100 - current}" 
-                      stroke="#3182ce" stroke-width="3" fill="none" />
-                
-                <!-- Data points -->
-                <circle cx="50" cy="${100 - oneMonthAgo}" r="5" fill="${getColor(oneMonthAgo)}" stroke="#fff" stroke-width="2" />
-                <circle cx="150" cy="${100 - oneWeekAgo}" r="5" fill="${getColor(oneWeekAgo)}" stroke="#fff" stroke-width="2" />
-                <circle cx="250" cy="${100 - previousClose}" r="5" fill="${getColor(previousClose)}" stroke="#fff" stroke-width="2" />
-                <circle cx="350" cy="${100 - current}" r="7" fill="${getColor(current)}" stroke="#fff" stroke-width="2" />
-              </svg>
-              
-              <!-- X-axis labels -->
-              <div style="display: flex; justify-content: space-between; margin-top: 10px;">
-                <div style="font-size: 0.8rem; color: #718096;">1 Month Ago</div>
-                <div style="font-size: 0.8rem; color: #718096;">1 Week Ago</div>
-                <div style="font-size: 0.8rem; color: #718096;">Yesterday</div>
-                <div style="font-size: 0.8rem; color: #718096; font-weight: bold;">Today</div>
-              </div>
-            </div>
-          </div>
+      <div style="position: relative; height: 150px; background-color: #fff; border-radius: 8px; padding: 10px;">
+        <!-- Background color bands -->
+        <div style="position: absolute; top: 30px; left: 0; right: 0; height: 40px; display: flex;">
+          <div style="flex: 1; background-color: rgba(197, 48, 48, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(237, 137, 54, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(236, 201, 75, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(72, 187, 120, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(47, 133, 90, 0.1);"></div>
         </div>
         
-        ${fearGreedData.description ? `
-          <div style="margin-top: 15px; line-height: 1.5; color: #4a5568; background-color: #f8f9fa; padding: 15px; border-radius: 8px;">
-            ${fearGreedData.description}
-          </div>
-        ` : ''}
+        <!-- X-axis labels -->
+        <div style="position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: space-between;">
+          <div style="font-size: 0.8rem; color: #718096;">One Month Ago</div>
+          <div style="font-size: 0.8rem; color: #718096;">One Week Ago</div>
+          <div style="font-size: 0.8rem; color: #718096;">Previous Close</div>
+          <div style="font-size: 0.8rem; color: #718096; font-weight: bold;">Current</div>
+        </div>
         
+        <!-- SVG Chart -->
+        <svg width="100%" height="100" style="overflow: visible; position: relative; z-index: 2;">
+          <!-- Line connecting points with curve -->
+          <path d="M30,${100 - oneMonthAgo} C90,${100 - (oneMonthAgo + oneWeekAgo) / 2} 150,${100 - oneWeekAgo} 210,${100 - (oneWeekAgo + previousClose) / 2} C270,${100 - previousClose} 330,${100 - (previousClose + current) / 2} 370,${100 - current}" stroke="#3182ce" stroke-width="3" fill="none"></path>
+          
+          <!-- Data points with values -->
+          <circle cx="30" cy="${100 - oneMonthAgo}" r="5" fill="${getColor(oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="30" y="${90 - oneMonthAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${oneMonthAgo}</text>
+          
+          <circle cx="150" cy="${100 - oneWeekAgo}" r="5" fill="${getColor(oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="150" y="${90 - oneWeekAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${oneWeekAgo}</text>
+          
+          <circle cx="270" cy="${100 - previousClose}" r="5" fill="${getColor(previousClose)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="270" y="${90 - previousClose}" text-anchor="middle" font-size="10" fill="#4a5568">${previousClose}</text>
+          
+          <circle cx="370" cy="${100 - current}" r="7" fill="${getColor(current)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="370" y="${90 - current}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${current}</text>
+        </svg>
+      </div>
+    </div>
+  `;
+  
+  const html = `
+    <div class="market-pulse-section fear-greed-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Fear & Greed Index: <span style="color: ${fearGreedColor};">${current} (${fearGreedCategory})</span></div>
+      </div>
+      <div style="margin-top: 10px;">
+        ${chartHtml}
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${fearGreedData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fearGreedData.source || 'CNN Business Fear & Greed Index'}</a>
-          ${fearGreedData.asOf ? `<br>As of: ${fearGreedData.asOf}` : ''}
+          Source: <a href="${fgData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fgData.source || 'CNN Business Fear & Greed Index'}</a> as of ${fgData.timestamp || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
@@ -337,26 +300,96 @@ const addFearGreedIndex = (mobiledoc, data) => {
  * @param {object} data - The data object containing RSI information
  */
 const addRSI = (mobiledoc, data) => {
-  if (!data.marketIndicators || !data.marketIndicators.rsi) return;
+  // Check for RSI in the correct location in marketIndicators
+  const rsiData = data.marketIndicators?.rsi;
   
-  const rsi = data.marketIndicators.rsi;
+  // Also check for RSI directly in data (different structure)
+  const altRsiData = data.rsi;
+  
+  // Use whichever data is available
+  const rsi = rsiData || altRsiData;
+  
+  if (!rsi) return;
+  
   const rsiValue = rsi.value;
   
-  addHeading(mobiledoc, 'Path of Least Resistance', 3);
+  const getRSICategory = (value) => {
+    if (value <= 30) return 'Oversold';
+    if (value <= 40) return 'Weakening';
+    if (value <= 60) return 'Neutral';
+    if (value <= 70) return 'Strengthening';
+    return 'Overbought';
+  };
   
-  const rsiHtml = `
-    <div class="market-pulse-section rsi-container collapsible-section" data-section="rsi">
-      <div class="collapsible-header">
-        <div class="collapsible-title">Relative Strength Index (14-day)</div>
-        <div class="collapsible-icon">▼</div>
+  const getRSIColor = (value) => {
+    if (value <= 25) return '#c53030'; // Darker red
+    if (value <= 40) return '#ed8936'; // Orange
+    if (value <= 60) return '#ecc94b'; // Yellow
+    if (value <= 75) return '#48bb78'; // Green
+    return '#2f855a'; // Darker green
+  };
+  
+  const rsiCategory = rsi.category || getRSICategory(rsiValue);
+  const rsiColor = rsi.color || getRSIColor(rsiValue);
+  
+  const chartHtml = `
+    <div style="margin-top: 40px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+        <h4 style="font-size: 1rem; margin: 0; color: #2d3748;">Historical Trend</h4>
+        <div style="font-size: 0.9rem; color: #718096;">${rsi.description || ''}</div>
       </div>
-      <div class="collapsible-content">
-        <div style="text-align: center; margin-bottom: 10px; font-size: 1.2rem; font-weight: bold;">
-          Current RSI: <span style="color: ${rsiValue > 70 ? '#e53e3e' : (rsiValue < 30 ? '#e53e3e' : (rsiValue > 50 ? '#48bb78' : '#718096'))};">${rsiValue.toFixed(1)}</span>
+      <div style="position: relative; height: 150px; background-color: #fff; border-radius: 8px; padding: 10px;">
+        <!-- Background color bands -->
+        <div style="position: absolute; top: 30px; left: 0; right: 0; height: 40px; display: flex;">
+          <div style="flex: 1; background-color: rgba(197, 48, 48, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(237, 137, 54, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(236, 201, 75, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(72, 187, 120, 0.1);"></div>
+          <div style="flex: 1; background-color: rgba(47, 133, 90, 0.1);"></div>
         </div>
         
-        <div class="rsi-meter" style="position: relative; height: 20px; margin: 15px 0; border-radius: 10px; background: linear-gradient(to right, #e53e3e 0%, #e53e3e 30%, #718096 30%, #718096 50%, #718096 70%, #48bb78 70%, #48bb78 100%);">
-          <div class="rsi-indicator" style="position: absolute; top: -10px; left: ${rsiValue}%; width: 0; height: 0; border-left: 10px solid transparent; border-right: 10px solid transparent; border-top: 10px solid #2d3748; transform: translateX(-10px);">
+        <!-- X-axis labels -->
+        <div style="position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: space-between;">
+          <div style="font-size: 0.8rem; color: #718096;">One Month Ago</div>
+          <div style="font-size: 0.8rem; color: #718096;">One Week Ago</div>
+          <div style="font-size: 0.8rem; color: #718096;">Previous Close</div>
+          <div style="font-size: 0.8rem; color: #718096; font-weight: bold;">Current</div>
+        </div>
+        
+        <!-- SVG Chart -->
+        <svg width="100%" height="100" style="overflow: visible; position: relative; z-index: 2;">
+          <!-- Line connecting points with curve -->
+          <path d="M30,${100 - rsi.oneMonthAgo} C90,${100 - (rsi.oneMonthAgo + rsi.oneWeekAgo) / 2} 150,${100 - rsi.oneWeekAgo} 210,${100 - (rsi.oneWeekAgo + rsi.previousClose) / 2} C270,${100 - rsi.previousClose} 330,${100 - (rsi.previousClose + rsiValue) / 2} 370,${100 - rsiValue}" stroke="#3182ce" stroke-width="3" fill="none"></path>
+          
+          <!-- Data points with values -->
+          <circle cx="30" cy="${100 - rsi.oneMonthAgo}" r="5" fill="${getRSIColor(rsi.oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="30" y="${90 - rsi.oneMonthAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${rsi.oneMonthAgo}</text>
+          
+          <circle cx="150" cy="${100 - rsi.oneWeekAgo}" r="5" fill="${getRSIColor(rsi.oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="150" y="${90 - rsi.oneWeekAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${rsi.oneWeekAgo}</text>
+          
+          <circle cx="270" cy="${100 - rsi.previousClose}" r="5" fill="${getRSIColor(rsi.previousClose)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="270" y="${90 - rsi.previousClose}" text-anchor="middle" font-size="10" fill="#4a5568">${rsi.previousClose}</text>
+          
+          <circle cx="370" cy="${100 - rsiValue}" r="7" fill="${getRSIColor(rsiValue)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="370" y="${90 - rsiValue}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${rsiValue}</text>
+        </svg>
+      </div>
+    </div>
+  `;
+  
+  const html = `
+    <div class="market-pulse-section rsi-container" style="width: 100%; margin: 0;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568; background-color: white;">Path of Least Resistance: <span style="color: ${rsiColor};">${rsiValue} (${rsiCategory})</span></div>
+      </div>
+      <div style="margin-top: 10px;">
+        <div style="text-align: center; margin-bottom: 10px; font-size: 1.2rem; font-weight: normal;">
+          Current RSI: <span style="color: ${rsiValue > 70 ? '#c53030' : (rsiValue < 30 ? '#c53030' : (rsiValue > 50 ? '#48bb78' : '#ed8936'))};">${rsiValue.toFixed(1)}</span>
+        </div>
+        
+        <div class="rsi-meter" style="position: relative; height: 20px; margin: 15px 0; border-radius: 10px; background: linear-gradient(to right, #c53030 0%, #c53030 30%, #ecc94b 30%, #ecc94b 50%, #ecc94b 70%, #48bb78 70%, #48bb78 100%);">
+          <div class="rsi-indicator" style="position: absolute; top: -10px; left: ${rsiValue}%; width: 20px; height: 20px; background-color: #333; border: 3px solid #fff; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
           </div>
           <div style="position: absolute; top: -30px; left: ${rsiValue}%; transform: translateX(-50%); background-color: #2d3748; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.9rem;">
             ${rsiValue.toFixed(1)}
@@ -374,14 +407,13 @@ const addRSI = (mobiledoc, data) => {
         </div>
         
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${rsi.sourceUrl || '#'}" target="_blank">${rsi.source || 'Tradier (RSI)'}</a>
-          ${rsi.asOf ? `<br>As of: ${rsi.asOf}` : ''}
+          Source: <a href="${rsi.sourceUrl || '#'}" target="_blank">${rsi.source || 'Tradier (RSI)'}</a> as of ${rsi.asOf || new Date().toLocaleDateString()}
         </div>
       </div>
     </div>
   `;
   
-  addHTML(mobiledoc, rsiHtml);
+  addHTML(mobiledoc, html);
 };
 
 /**
@@ -392,17 +424,42 @@ const addRSI = (mobiledoc, data) => {
 const addMarketIndicators = (mobiledoc, data) => {
   if (!data.marketIndicators) return;
 
+  // Find S&P 500 data
+  const sp500 = data.marketIndicators.majorIndices?.find(i => i.name === 'S&P 500');
+  const sp500Price = sp500?.price ? formatNumber(sp500.price) : '0';
+  const sp500Change = sp500?.percentChange || (sp500?.change ? sp500.change + '%' : '0%');
+  const sp500IsPositive = sp500?.isPositive !== undefined ? sp500.isPositive : (parseFloat(sp500?.change || 0) >= 0);
+  const sp500ChangeIcon = sp500IsPositive ? '↑' : '↓';
+  const sp500ChangeSign = sp500IsPositive ? '+' : '';
+  const sp500Color = sp500IsPositive ? '#48bb78' : '#f56565';
+
+  // Get Fear & Greed data
+  const fearGreedData = data.fearGreed || data.marketIndicators?.fearGreed;
+  const fearGreedValue = fearGreedData?.value || 50;
+  const fearGreedCategory = fearGreedData?.category || 'Neutral';
+  
+  // Determine the color based on the value
+  const getFearGreedColor = (value) => {
+    if (value <= 25) return '#c53030'; // Darker red
+    if (value <= 40) return '#ed8936'; // Orange for Fear
+    if (value <= 60) return '#ecc94b'; // Yellow
+    if (value <= 75) return '#48bb78'; // Green
+    return '#2f855a'; // Darker green
+  };
+  
+  const fearGreedColor = getFearGreedColor(fearGreedValue);
+
   // Create the main container with collapsible header
   const html = `
-    <div class="market-pulse-section market-indicators-container">
+    <div class="market-pulse-section market-indicators-container" style="margin: 0; padding: 0;">
       <div class="collapsible-section" data-section="market-indicators">
         <div class="collapsible-header" style="background-color: #333333; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
             <h2 style="margin: 0; font-size: 1.5rem; color: white;">Key Market Indicators</h2>
             <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
           </div>
-          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal;">
-            ${data.marketIndicators.summary || 'Market indicators showing current market conditions and trends.'}
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+            S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change})</span> . Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span>
           </div>
         </div>
         <div class="collapsible-content">
@@ -419,17 +476,50 @@ const addMarketIndicators = (mobiledoc, data) => {
   addSectorPerformance(mobiledoc, data);
   
   // 3. Market Futures
-  if (data.marketIndicators.marketFutures && data.marketIndicators.marketFutures.length > 0) {
-    addMarketFutures(mobiledoc, data);
+  addMarketFutures(mobiledoc, data);
+  
+  // 4. Fear and Greed Index with slider
+  if (fearGreedData) {
+    const current = fearGreedData.value || 0;
+    const fearGreedColor = getFearGreedColor(current);
+    
+    const sliderHtml = `
+      <div class="market-pulse-section fear-greed-slider" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
+        <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+          <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Fear & Greed Index: <span style="color: ${fearGreedColor};">${current} (${fearGreedCategory})</span></div>
+        </div>
+        <div style="margin-top: 10px;">
+          <!-- Slider -->
+          <div style="width: 100%; background: linear-gradient(to right, #b91c1c, #fb923c, #fbbf24, #84cc16, #15803d); height: 30px; border-radius: 15px; position: relative; margin-bottom: 10px;">
+            <!-- Marker -->
+            <div style="position: absolute; top: -10px; left: ${current}%; transform: translateX(-50%); width: 10px; height: 50px; background-color: #1e293b; border-radius: 5px;">
+              <div style="position: absolute; top: -25px; left: 50%; transform: translateX(-50%); background-color: #1e293b; color: white; padding: 2px 8px; border-radius: 10px; font-size: 0.9rem; white-space: nowrap;">${current}</div>
+            </div>
+          </div>
+          
+          <!-- Labels -->
+          <div style="display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.8rem; font-weight: 500;">
+            <div style="color: #b91c1c;">Extreme Fear</div>
+            <div style="color: #fb923c;">Fear</div>
+            <div style="color: #fbbf24;">Neutral</div>
+            <div style="color: #84cc16;">Greed</div>
+            <div style="color: #15803d;">Extreme Greed</div>
+          </div>
+          
+          <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
+            Source: <a href="${fearGreedData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fearGreedData.source || 'CNN Business Fear & Greed Index'}</a> as of ${fearGreedData.timestamp || new Date().toLocaleDateString()}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    addHTML(mobiledoc, sliderHtml);
   }
   
-  // 4. Volatility
-  if (data.marketIndicators.volatility && data.marketIndicators.volatility.length > 0) {
-    addVolatilityIndices(mobiledoc, data);
-  }
-  
-  // 5. Fear and Greed Index
   addFearGreedIndex(mobiledoc, data);
+  
+  // 5. Volatility
+  addVolatilityIndices(mobiledoc, data);
   
   // 6. RSI
   addRSI(mobiledoc, data);
