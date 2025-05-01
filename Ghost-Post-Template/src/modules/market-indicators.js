@@ -243,12 +243,33 @@ const addFearGreedIndex = (mobiledoc, data) => {
   });
   
   // Calculate proper Y-axis position based on value (0-100 scale)
+  // Chart height is 130px
+  const chartHeight = 130;
   const getYPosition = (value) => {
-    // Chart height is 130px, so we need to map 0-100 to 130-0
-    // For a value of 0, we want y=130 (bottom)
+    // For a value of 0, we want y=chartHeight (bottom)
     // For a value of 100, we want y=0 (top)
-    return 130 - ((value / 100) * 130);
+    return chartHeight - (value * chartHeight / 100);
   };
+  
+  // Create data points array for easier handling
+  const dataPoints = [
+    { label: 'One Month Ago', value: oneMonthAgo, x: 10, isCurrent: false },
+    { label: 'One Week Ago', value: oneWeekAgo, x: 35, isCurrent: false },
+    { label: 'Previous Close', value: previousClose, x: 65, isCurrent: false },
+    { label: 'Current', value: current, x: 90, isCurrent: true }
+  ];
+  
+  // Create SVG path for the line connecting data points
+  let pathD = '';
+  dataPoints.forEach((point, index) => {
+    const x = `${point.x}%`;
+    const y = getYPosition(point.value);
+    if (index === 0) {
+      pathD += `M${x},${y}`;
+    } else {
+      pathD += ` L${x},${y}`;
+    }
+  });
   
   const chartHtml = `
     <div style="margin-top: 20px;">
@@ -293,30 +314,22 @@ const addFearGreedIndex = (mobiledoc, data) => {
         </div>
         
         <!-- SVG Chart - aligned with bottom of chart area -->
-        <svg width="calc(100% - 30px)" height="130" style="overflow: visible; position: absolute; z-index: 2; left: 30px; bottom: 35px;">
-          <!-- Line connecting points with curve -->
-          <path d="M${10}%,${getYPosition(oneMonthAgo)} C${20}%,${getYPosition((oneMonthAgo + oneWeekAgo) / 2)} ${35}%,${getYPosition(oneWeekAgo)} ${50}%,${getYPosition((oneWeekAgo + previousClose) / 2)} C${65}%,${getYPosition(previousClose)} ${80}%,${getYPosition((previousClose + current) / 2)} ${90}%,${getYPosition(current)}" stroke="#333333" stroke-width="1.5" fill="none"></path>
+        <svg width="calc(100% - 30px)" height="${chartHeight}" style="overflow: visible; position: absolute; z-index: 2; left: 30px; bottom: 40px;">
+          <!-- Straight black line connecting data points -->
+          <path d="${pathD}" stroke="#000000" stroke-width="2" fill="none"></path>
           
           <!-- Data points with values -->
-          <circle cx="${10}%" cy="${getYPosition(oneMonthAgo)}" r="5" fill="${getColor(oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${10}%" y="${getYPosition(oneMonthAgo) - 10}" text-anchor="middle" font-size="10" fill="#4a5568">${oneMonthAgo}</text>
-          
-          <circle cx="${35}%" cy="${getYPosition(oneWeekAgo)}" r="5" fill="${getColor(oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${35}%" y="${getYPosition(oneWeekAgo) - 10}" text-anchor="middle" font-size="10" fill="#4a5568">${oneWeekAgo}</text>
-          
-          <circle cx="${65}%" cy="${getYPosition(previousClose)}" r="5" fill="${getColor(previousClose)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${65}%" y="${getYPosition(previousClose) - 10}" text-anchor="middle" font-size="10" fill="#4a5568">${previousClose}</text>
-          
-          <circle cx="${90}%" cy="${getYPosition(current)}" r="7" fill="${getColor(current)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${90}%" y="${getYPosition(current) - 10}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${current}</text>
+          ${dataPoints.map(point => `
+            <circle cx="${point.x}%" cy="${getYPosition(point.value)}" r="${point.isCurrent ? 7 : 5}" fill="${getColor(point.value)}" stroke="#fff" stroke-width="2"></circle>
+            <text x="${point.x}%" y="${getYPosition(point.value) - 10}" text-anchor="middle" font-size="10" ${point.isCurrent ? 'font-weight="bold"' : ''} fill="#4a5568">${point.value}</text>
+          `).join('')}
         </svg>
         
         <!-- X-axis labels aligned with data points - all condensed to two lines -->
         <div style="position: absolute; bottom: 15px; left: 30px; right: 20px; display: flex; height: 25px;">
-          <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: 10%; transform: translateX(-50%); line-height: 1.2;">One Month<br>Ago</div>
-          <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: 35%; transform: translateX(-50%); line-height: 1.2;">One Week<br>Ago</div>
-          <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: 65%; transform: translateX(-50%); line-height: 1.2;">Previous<br>Close</div>
-          <div style="font-size: 0.65rem; color: #718096; font-weight: bold; width: 10%; text-align: center; position: absolute; left: 90%; transform: translateX(-50%);">Current</div>
+          ${dataPoints.map(point => `
+            <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: ${point.x}%; transform: translateX(-50%); line-height: 1.2; ${point.isCurrent ? 'font-weight: bold;' : ''}">${point.label.includes(' ') ? point.label.replace(' ', '<br>') : point.label}</div>
+          `).join('')}
         </div>
       </div>
     </div>
@@ -419,8 +432,8 @@ const addMarketHeader = (mobiledoc, data) => {
   // Determine the color based on the value
   const getFearGreedColor = (value) => {
     if (value <= 25) return '#b91c1c';  // Dark red for extreme fear
-    if (value <= 40) return '#ed8936';  // Orange for fear
-    if (value <= 60) return '#ecc94b';  // Yellow for neutral
+    if (value <= 40) return '#ed8936';  // Orange for Fear
+    if (value <= 60) return '#ecc94b';  // Yellow for Neutral
     if (value <= 75) return '#48bb78';  // Green
     return '#2f855a';  // Darker green
   };
