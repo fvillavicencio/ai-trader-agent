@@ -48,6 +48,27 @@ const formatCurrency = (value) => {
 };
 
 /**
+ * Helper function to format currency values with commas
+ * @param {string} value - The currency value to format
+ * @returns {string} - Formatted currency value
+ */
+const formatCurrencyWithCommas = (value) => {
+  if (!value) return 'N/A';
+  
+  // If the value already has a dollar sign, remove it
+  const numericValue = value.replace(/^\$/, '');
+  
+  // Split by decimal point to handle dollars and cents separately
+  const parts = numericValue.split('.');
+  
+  // Format the dollars part with commas
+  parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  
+  // Return with dollar sign and join back with decimal if it exists
+  return '$' + (parts.length > 1 ? parts.join('.') : parts[0]);
+};
+
+/**
  * Adds the Fundamental Metrics section to the mobiledoc
  * @param {object} mobiledoc - The mobiledoc object to add content to
  * @param {object} data - The data object containing fundamental metrics information
@@ -199,7 +220,7 @@ const addSP500AnalysisContent = (data) => {
       
       <!-- S&P 500 Forward EPS & Implied Index Values -->
       <div class="forward-eps-container" style="margin: 20px 0; padding: 28px 32px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-        <div class="forward-eps-header label-col" style="font-weight: bold; font-size: clamp(1.1rem,2vw,1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">S&P 500 Forward EPS & Implied Index Values (2025 & 2026)</div>
+        <div class="forward-eps-header label-col" style="font-weight: bold; font-size: clamp(1.1rem,2vw,1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">S&P 500 Forward EPS & Implied Index Values</div>
         <div class="forward-eps-table" style="overflow-x:auto;">
           <table style="width:100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
             <thead>
@@ -220,11 +241,11 @@ const addSP500AnalysisContent = (data) => {
                   <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
                     <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${item.year}</td>
                     <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${item.eps}</td>
-                    <td style="color:#111; font-size: 0.85rem;">${item.targetAt15x}</td>
+                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt15x)}</td>
                     <td style="color:#111; font-size: 0.85rem;">${item.percentVsIndex15x}%</td>
-                    <td style="color:#111; font-size: 0.85rem;">${item.targetAt17x}</td>
+                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt17x)}</td>
                     <td style="color:#111; font-size: 0.85rem;">${item.percentVsIndex17x}%</td>
-                    <td style="color:#111; font-size: 0.85rem;">${item.targetAt20x}</td>
+                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt20x)}</td>
                     <td style="color:#111; font-size: 0.85rem;">${item.percentVsIndex20x}%</td>
                   </tr>
                 `;
@@ -245,52 +266,42 @@ const addSP500AnalysisContent = (data) => {
 };
 
 /**
- * Generates the Top Holdings content
- * @param {object} data - The data object containing top holdings information
- * @returns {string} - The HTML content for the Top Holdings section
+ * Adds the Top Holdings content
+ * @param {object} data - The data object
+ * @returns {string} - HTML content
  */
 const addTopHoldingsContent = (data) => {
-  const topHoldings = data.full?.topHoldings || [];
+  const topHoldings = data.sp500?.topHoldings || data.full?.topHoldings || [];
   
   return `
     <div class="top-holdings-section" style="margin-bottom: 20px;">
-      <h3 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center; font-size: 1.5rem;">S&P 500 Top Holdings</h3>
-      
-      <div class="top-holdings-table-container" style="overflow-x: auto; margin-bottom: 10px;">
-        <table style="width: 100%; border-collapse: collapse; min-width: 600px;">
-          <thead>
-            <tr style="background-color: #f1f5f9;">
-              <th style="padding: 10px; text-align: left; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Company</th>
-              <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Weight</th>
-              <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Price</th>
-              <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Change</th>
-              <th style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; font-weight: 600; color: #334155;">Market Cap</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${topHoldings.slice(0, 10).map((holding, index) => {
-              const changeColor = parseFloat(holding.change) >= 0 ? '#10b981' : '#ef4444';
-              const changePrefix = parseFloat(holding.change) >= 0 ? '+' : '';
-              
-              return `
-                <tr style="background-color: ${index % 2 === 0 ? '#ffffff' : '#f8fafc'};">
-                  <td style="padding: 10px; border-bottom: 1px solid #e2e8f0;">
-                    <div style="font-weight: 500; color: #334155;">${holding.symbol}</div>
-                    <div style="font-size: 0.85rem; color: #64748b;">${holding.name}</div>
-                  </td>
-                  <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #334155;">${holding.weight}%</td>
-                  <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #334155;">$${formatNumber(holding.price)}</td>
-                  <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: ${changeColor};">${changePrefix}${formatNumber(holding.change)}%</td>
-                  <td style="padding: 10px; text-align: right; border-bottom: 1px solid #e2e8f0; color: #334155;">${formatCurrency(holding.marketCap)}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Top 5 Weighted Stocks in Major Indices</div>
       </div>
       
-      <div style="font-size: 10px; color: #888; text-align: right;">
-        Source: <a href="https://www.slickcharts.com/sp500" target="_blank" style="color:#2563eb; text-decoration:underline;">SlickCharts</a>, as of ${data.full?.topHoldings?.[0]?.asOf || 'N/A'}
+      <div class="etf-holdings-cards" style="display: flex; flex-direction: row; gap: 10px; justify-content: space-between; flex-wrap: wrap; width: 100%;">
+        ${topHoldings.map(index => {
+          return `
+            <div class="etf-holding-card" style="flex: 1 1 calc(32% - 10px); min-width: 250px; max-width: 32%; background: #fff; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.07); padding: 15px 12px 10px 12px; border-left: 5px solid #2563eb; display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 10px;">
+              <div style="font-weight: bold; font-size: clamp(0.95rem, 2vw, 1.05rem); margin-bottom: 4px;">${index.name} <span style="font-weight: normal; font-size: 0.9em; color: #666;">(${index.symbol})</span></div>
+              <div style="margin-bottom: 10px; font-size: clamp(0.9rem, 2vw, 1rem); color: #444;">Top 5 Holdings:</div>
+              <div style="display: flex; flex-direction: column; gap: 6px; width: 100%; margin-bottom: 10px;">
+                ${index.holdings.map(holding => {
+                  return `
+                    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8f9fa; border-radius: 4px; padding: 5px 6px;">
+                      <span style="font-weight: bold; color: #2563eb; font-size: 0.85em;">${holding.symbol}</span>
+                      <span style="flex: 1; margin-left: 8px; color: #222; font-size: 0.75em;">${holding.name}</span>
+                      <span style="margin-left: 8px; color: #444; font-size: 0.75em;">${holding.weight}%</span>
+                    </div>
+                  `;
+                }).join('')}
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: auto; text-align: right; width: 100%;">
+                Source: <a href="${index.sourceUrl}" target="_blank" style="color:#2563eb; text-decoration:underline;">${index.source}</a>, as of ${index.asOf}
+              </div>
+            </div>
+          `;
+        }).join('')}
       </div>
     </div>
   `;
@@ -306,7 +317,9 @@ const addStockCardsContent = (data) => {
   
   return `
     <div class="magnificent-seven-section" style="margin-bottom: 20px;">
-      <h3 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center; font-size: 1.5rem;">Magnificent Seven</h3>
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Magnificent Seven</div>
+      </div>
       
       <div class="stock-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
         ${magnificentSeven.map(stock => {
