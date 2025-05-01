@@ -244,10 +244,8 @@ const addFearGreedIndex = (mobiledoc, data) => {
   const chartHtml = `
     <div style="margin-top: 20px;">
       <!-- Slider visualization similar to HTML format -->
-      <div style="position: relative; height: 12px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
-        <!-- Shadow (behind) -->
-        <div style="position: absolute; top: 50%; left: ${current}%; transform: translate(-50%, -50%); width: 18px; height: 18px; background-color: #333; border-radius: 50%; z-index: 1;"></div>
-        <!-- Thumb (front) -->
+      <div style="position: relative; height: 5px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+        <!-- Thumb -->
         <div style="position: absolute; top: 50%; left: ${current}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
       </div>
       
@@ -267,48 +265,48 @@ const addFearGreedIndex = (mobiledoc, data) => {
       <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
       
       <div style="position: relative; height: 180px; background-color: #fff; border-radius: 8px; padding: 20px 20px 30px 20px; margin-top: 15px; display: flex; justify-content: center;">
-        <!-- Background color bands (horizontal) -->
+        <!-- Background color bands (horizontal) without dotted lines -->
         <div style="position: absolute; top: 20px; left: 30px; right: 20px; bottom: 30px; display: flex; flex-direction: column;">
-          <div style="flex: 1; background-color: rgba(47, 133, 90, 0.2); border-top: 1px dashed #2f855a;">
+          <div style="flex: 1; background-color: rgba(47, 133, 90, 0.2);">
             <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">100</div>
           </div>
-          <div style="flex: 1; background-color: rgba(72, 187, 120, 0.2); border-top: 1px dashed #48bb78;">
+          <div style="flex: 1; background-color: rgba(72, 187, 120, 0.2);">
             <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">75</div>
           </div>
-          <div style="flex: 1; background-color: rgba(236, 201, 75, 0.2); border-top: 1px dashed #ecc94b;">
+          <div style="flex: 1; background-color: rgba(236, 201, 75, 0.2);">
             <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">50</div>
           </div>
-          <div style="flex: 1; background-color: rgba(237, 137, 54, 0.2); border-top: 1px dashed #ed8936;">
+          <div style="flex: 1; background-color: rgba(237, 137, 54, 0.2);">
             <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">25</div>
           </div>
         </div>
         
-        <!-- X-axis labels -->
-        <div style="position: absolute; bottom: 10px; left: 30px; right: 20px; display: flex; justify-content: space-between;">
-          <div style="font-size: 0.8rem; color: #718096; width: 25%; text-align: center;">One Month Ago</div>
-          <div style="font-size: 0.8rem; color: #718096; width: 25%; text-align: center;">One Week Ago</div>
-          <div style="font-size: 0.8rem; color: #718096; width: 25%; text-align: center;">Previous Close</div>
-          <div style="font-size: 0.8rem; color: #718096; font-weight: bold; width: 25%; text-align: center;">Current</div>
-        </div>
-        
         <!-- SVG Chart -->
         <svg width="calc(100% - 30px)" height="130" style="overflow: visible; position: relative; z-index: 2; margin-left: 30px;">
-          <!-- Line connecting points with straight lines -->
-          <path d="M${25}%,${130 - oneMonthAgo * 1.3} L${50}%,${130 - oneWeekAgo * 1.3} L${75}%,${130 - previousClose * 1.3} L${100}%,${130 - current * 1.3}" stroke="#718096" stroke-width="1" fill="none"></path>
+          <!-- Line connecting points with curve -->
+          <path d="M${10}%,${130 - oneMonthAgo * 1.3} C${20}%,${130 - (oneMonthAgo + oneWeekAgo) / 2 * 1.3} ${35}%,${130 - oneWeekAgo * 1.3} ${50}%,${130 - (oneWeekAgo + previousClose) / 2 * 1.3} C${65}%,${130 - previousClose * 1.3} ${80}%,${130 - (previousClose + current) / 2 * 1.3} ${90}%,${130 - current * 1.3}" stroke="#718096" stroke-width="1" fill="none"></path>
           
           <!-- Data points with values -->
-          <circle cx="${25}%" cy="${130 - oneMonthAgo * 1.3}" r="5" fill="${getColor(oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${25}%" y="${120 - oneMonthAgo * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${oneMonthAgo}</text>
+          <circle cx="${10}%" cy="${130 - oneMonthAgo * 1.3}" r="5" fill="${getColor(oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${10}%" y="${120 - oneMonthAgo * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${oneMonthAgo}</text>
           
-          <circle cx="${50}%" cy="${130 - oneWeekAgo * 1.3}" r="5" fill="${getColor(oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${50}%" y="${120 - oneWeekAgo * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${oneWeekAgo}</text>
+          <circle cx="${35}%" cy="${130 - oneWeekAgo * 1.3}" r="5" fill="${getColor(oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${35}%" y="${120 - oneWeekAgo * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${oneWeekAgo}</text>
           
-          <circle cx="${75}%" cy="${130 - previousClose * 1.3}" r="5" fill="${getColor(previousClose)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${75}%" y="${120 - previousClose * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${previousClose}</text>
+          <circle cx="${65}%" cy="${130 - previousClose * 1.3}" r="5" fill="${getColor(previousClose)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${65}%" y="${120 - previousClose * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${previousClose}</text>
           
-          <circle cx="${100}%" cy="${130 - current * 1.3}" r="7" fill="${getColor(current)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="${100}%" y="${120 - current * 1.3}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${current}</text>
+          <circle cx="${90}%" cy="${130 - current * 1.3}" r="7" fill="${getColor(current)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${90}%" y="${120 - current * 1.3}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${current}</text>
         </svg>
+        
+        <!-- X-axis labels aligned with data points -->
+        <div style="position: absolute; bottom: 10px; left: 30px; right: 20px; display: flex;">
+          <div style="font-size: 0.8rem; color: #718096; width: 10%; text-align: center; position: absolute; left: 10%; transform: translateX(-50%);">One Month Ago</div>
+          <div style="font-size: 0.8rem; color: #718096; width: 10%; text-align: center; position: absolute; left: 35%; transform: translateX(-50%);">One Week Ago</div>
+          <div style="font-size: 0.8rem; color: #718096; width: 10%; text-align: center; position: absolute; left: 65%; transform: translateX(-50%);">Previous Close</div>
+          <div style="font-size: 0.8rem; color: #718096; font-weight: bold; width: 10%; text-align: center; position: absolute; left: 90%; transform: translateX(-50%);">Current</div>
+        </div>
       </div>
     </div>
   `;
@@ -321,7 +319,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
       <div style="margin-top: 10px;">
         ${chartHtml}
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${fgData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fgData.source || 'CNN Business Fear & Greed Index'} as of ${formattedDate}
+          Source: <a href="${fgData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fgData.source || 'CNN Business Fear & Greed Index'}</a> as of ${formattedDate}
         </div>
       </div>
     </div>
