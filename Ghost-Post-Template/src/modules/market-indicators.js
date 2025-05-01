@@ -279,7 +279,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
         <div style="position: absolute; top: 50%; left: ${current}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
       </div>
       
-      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #718096; margin-top: 5px;">
         <div>Extreme Fear</div>
         <div>Fear</div>
         <div>Neutral</div>
@@ -295,17 +295,8 @@ const addFearGreedIndex = (mobiledoc, data) => {
       <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
       
       <div style="position: relative; height: 180px; background-color: #fff; border-radius: 8px; padding: 20px 20px 40px 20px; margin-top: 15px; margin-bottom: 25px; display: flex; justify-content: center;">
-        <!-- Y-axis labels positioned outside chart area -->
-        <div style="position: absolute; top: 20px; left: 0; bottom: 40px; width: 30px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; padding-right: 5px;">
-          <div style="font-size: 10px; color: #718096;">100</div>
-          <div style="font-size: 10px; color: #718096;">75</div>
-          <div style="font-size: 10px; color: #718096;">50</div>
-          <div style="font-size: 10px; color: #718096;">25</div>
-          <div style="font-size: 10px; color: #718096;">0</div>
-        </div>
-        
         <!-- Background color bands (horizontal) with more granular shading -->
-        <div style="position: absolute; top: 20px; left: 30px; right: 20px; bottom: 40px; display: flex; flex-direction: column;">
+        <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 40px; display: flex; flex-direction: column;">
           <div style="flex: 1; background-color: rgba(67, 160, 71, 0.6);"></div>
           <div style="flex: 1; background-color: rgba(124, 179, 66, 0.6);"></div>
           <div style="flex: 1; background-color: rgba(255, 235, 59, 0.6);"></div>
@@ -314,7 +305,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
         </div>
         
         <!-- SVG Chart - aligned with bottom of chart area -->
-        <svg width="calc(100% - 30px)" height="${chartHeight}" style="overflow: visible; position: absolute; z-index: 2; left: 30px; bottom: 40px;">
+        <svg width="calc(100% - 20px)" height="${chartHeight}" style="overflow: visible; position: absolute; z-index: 2; left: 20px; bottom: 40px;">
           <!-- Straight black line connecting data points -->
           <path d="${pathD}" stroke="#000000" stroke-width="2" fill="none"></path>
           
@@ -326,7 +317,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
         </svg>
         
         <!-- X-axis labels aligned with data points - all condensed to two lines -->
-        <div style="position: absolute; bottom: 15px; left: 30px; right: 20px; display: flex; height: 25px;">
+        <div style="position: absolute; bottom: 15px; left: 20px; right: 20px; display: flex; height: 25px;">
           ${dataPoints.map(point => `
             <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: ${point.x}%; transform: translateX(-50%); line-height: 1.2; ${point.isCurrent ? 'font-weight: bold;' : ''}">${point.label.includes(' ') ? point.label.replace(' ', '<br>') : point.label}</div>
           `).join('')}
