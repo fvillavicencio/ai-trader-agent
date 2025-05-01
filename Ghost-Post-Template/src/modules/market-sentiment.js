@@ -131,8 +131,6 @@ const addMarketSentiment = (mobiledoc, data) => {
       </div>
     `);
   }
-  
-  addDivider(mobiledoc);
 };
 
 module.exports = { addMarketSentiment };

@@ -69,67 +69,51 @@ const formatCurrencyWithCommas = (value) => {
 };
 
 /**
- * Adds the Fundamental Metrics section to the mobiledoc
- * @param {object} mobiledoc - The mobiledoc object to add content to
- * @param {object} data - The data object containing fundamental metrics information
+ * Creates a stock card HTML for a given stock
+ * @param {object} stock - The stock data object
+ * @returns {string} - The HTML for the stock card
  */
-const addFundamentalMetrics = (mobiledoc, data) => {
-  // Add section heading
-  addHeading(mobiledoc, 'Fundamental Metrics', 2);
+const createStockCard = (stock) => {
+  const isPositive = parseFloat(stock.priceChange) >= 0;
+  const color = isPositive ? '#10b981' : '#ef4444';
+  const arrow = isPositive ? '▲' : '▼';
+  const changePrefix = isPositive ? '+' : '';
   
-  // Create the collapsible section with a blue background
-  const fundamentalMetricsHtml = `
-    <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%; margin-bottom: 20px;">
-      <!-- Section Header with blue background -->
-      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
-        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-          <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
-          <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
+  // Limit metrics to maximum 4 to prevent vertical overflow
+  const limitedMetrics = stock.metrics.slice(0, 4);
+  
+  return `
+    <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 3px solid ${color}; margin-bottom: 15px; height: auto;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 8px; background-color: #f8f9fa;">
+        <!-- Left: Symbol and Company Name -->
+        <div style="display: flex; flex-direction: column; align-items: flex-start; flex: 1; overflow: hidden;">
+          <div style="font-weight: bold; font-size: 14px; color: #000; letter-spacing: 0.5px;">${stock.symbol}</div>
+          <div style="font-size: 10px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${stock.name}</div>
         </div>
-        <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
-          <span style="white-space: nowrap;">S&P 500: ${formatNumber(data.sp500?.indexLevel)}</span> | 
-          <span style="white-space: nowrap;">P/E Ratio: ${formatNumber(data.sp500?.peRatio?.current)}</span> | 
-          <span style="white-space: nowrap;">EPS (TTM): $${formatNumber(data.sp500?.eps?.ttm?.replace('$', ''))}</span>
+        <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+        <div style="display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; text-align: right;">
+          <div style="font-weight: bold; font-size: 0.85em; color: ${color}; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">$${formatNumber(stock.price)} <span style="color: ${color};">${arrow}</span> <span style="color: ${color}; font-weight: normal;">$${changePrefix}${formatNumber(Math.abs(stock.priceChange))}</span> <span style="color: ${color}; font-weight: normal; font-size: 0.75em;">(${stock.percentChange})</span></div>
         </div>
       </div>
-      
-      <!-- Collapsible Content -->
-      <div class="collapsible-content" style="display: none; padding: 15px; background-color: #f8f9fa;">
-        <!-- S&P 500 Analysis -->
-        ${addSP500AnalysisContent(data)}
-        
-        <!-- Top Holdings -->
-        ${addTopHoldingsContent(data)}
-        
-        <!-- Stock Cards -->
-        ${addStockCardsContent(data)}
+      <!-- Metrics Table -->
+      <div style="padding: 6px 8px; background-color: white;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.75em;">
+          <tbody>
+            ${limitedMetrics.map(metric => {
+              return `
+                <tr>
+                  <td style="color: #777; padding: 2px 6px 2px 0; text-align: left; white-space: nowrap;">${metric.name}</td>
+                  <td style="font-weight: bold; color: #222; padding: 2px 0; text-align: right; white-space: nowrap;">
+                    ${metric.value}
+                  </td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
       </div>
     </div>
-    
-    <script>
-      // Add click event to toggle collapsible sections
-      document.addEventListener('DOMContentLoaded', function() {
-        const headers = document.querySelectorAll('.collapsible-header');
-        headers.forEach(header => {
-          header.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            const icon = this.querySelector('.collapsible-icon');
-            
-            // Toggle display
-            if (content.style.display === 'none' || content.style.display === '') {
-              content.style.display = 'block';
-              icon.style.transform = 'rotate(180deg)';
-            } else {
-              content.style.display = 'none';
-              icon.style.transform = 'rotate(0deg)';
-            }
-          });
-        });
-      });
-    </script>
   `;
-  
-  addHTML(mobiledoc, fundamentalMetricsHtml);
 };
 
 /**
@@ -141,7 +125,7 @@ const addSP500AnalysisContent = (data) => {
   const sp500Data = data.sp500 || {};
   
   return `
-    <div class="sp500-analysis-section" style="margin-bottom: 20px;">
+    <div class="sp500-analysis-section" style="margin-bottom: 30px;">
       <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
         <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">S&P 500 Analysis</div>
       </div>
@@ -194,7 +178,7 @@ const addSP500AnalysisContent = (data) => {
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
               <thead>
-                <tr style="background-color: #B91C1C; text-align: center; font-weight: 600; color: white;">
+                <tr style="background:#166534; text-align: center; font-weight: 600; color: white;">
                   <th style="padding: 12px 8px; white-space: nowrap;">S&P 500 EPS (TTM)</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">Target at 15x</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">Target at 17x</th>
@@ -224,7 +208,7 @@ const addSP500AnalysisContent = (data) => {
         <div class="forward-eps-table" style="overflow-x:auto;">
           <table style="width:100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
             <thead>
-              <tr style="background:#166534; text-align:center; font-weight:600; color:#fff; font-size:0.9em;">
+              <tr style="background:#166534; text-align: center; font-weight: 600; color: white;">
                 <th style="padding:16px 0 12px 0;">Annual Estimate</th>
                 <th>Forward EPS</th>
                 <th>15x</th>
@@ -274,7 +258,7 @@ const addTopHoldingsContent = (data) => {
   const topHoldings = data.sp500?.topHoldings || data.full?.topHoldings || [];
   
   return `
-    <div class="top-holdings-section" style="margin-bottom: 20px;">
+    <div class="top-holdings-section" style="margin-bottom: 30px;">
       <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
         <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Top 5 Weighted Stocks in Major Indices</div>
       </div>
@@ -308,60 +292,204 @@ const addTopHoldingsContent = (data) => {
 };
 
 /**
- * Generates the Stock Cards content
- * @param {object} data - The data object containing stock information
- * @returns {string} - The HTML content for the Stock Cards section
+ * Generates the Major Indices content
+ * @param {object} data - The data object containing market indicators information
+ * @returns {string} - The HTML content for the Major Indices section
  */
-const addStockCardsContent = (data) => {
-  const magnificentSeven = data.full?.magnificentSeven || [];
+const addMajorIndicesContent = (data) => {
+  // Get major indices data from the data object
+  const majorIndices = data.fundamentalMetrics?.majorIndices || [
+    {
+      symbol: "SPY",
+      name: "SPDR S&P 500",
+      price: 554.54,
+      priceChange: 0.22,
+      percentChange: "0.00%",
+      metrics: [
+        { name: "ROE", value: "0.00%" },
+        { name: "Beta", value: "1.00" },
+        { name: "Volume", value: "75.6M" },
+        { name: "52W High", value: "$613.23" },
+        { name: "52W Low", value: "$481.80" },
+        { name: "Sector", value: "Financial Services" },
+        { name: "Industry", value: "Asset Management" }
+      ]
+    },
+    {
+      symbol: "QQQ",
+      name: "Invesco QQQ Trust, Series 1",
+      price: 475.47,
+      priceChange: -0.06,
+      percentChange: "0.00%",
+      metrics: [
+        { name: "ROE", value: "0.00%" },
+        { name: "Beta", value: "1.17" },
+        { name: "Volume", value: "43.5M" },
+        { name: "52W High", value: "$540.81" },
+        { name: "52W Low", value: "$402.39" },
+        { name: "Sector", value: "Financial Services" },
+        { name: "Industry", value: "Asset Management" }
+      ]
+    },
+    {
+      symbol: "DIA",
+      name: "SPDR Dow Jones Industrial Average ETF",
+      price: 406.34,
+      priceChange: 1.13,
+      percentChange: "0.00%",
+      metrics: [
+        { name: "Volume", value: "2.5M" },
+        { name: "52W High", value: "$451.55" },
+        { name: "52W Low", value: "$366.32" }
+      ]
+    },
+    {
+      symbol: "IWM",
+      name: "iShares Russell 2000 ETF",
+      price: 194.86,
+      priceChange: -1.23,
+      percentChange: "0.00%",
+      metrics: [
+        { name: "ROE", value: "0.00%" },
+        { name: "Beta", value: "1.17" },
+        { name: "Volume", value: "28.7M" },
+        { name: "52W High", value: "$244.98" },
+        { name: "52W Low", value: "$171.73" },
+        { name: "Sector", value: "Financial Services" },
+        { name: "Industry", value: "Asset Management" }
+      ]
+    }
+  ];
   
   return `
-    <div class="magnificent-seven-section" style="margin-bottom: 20px;">
+    <div class="major-indices-section" style="margin-bottom: 30px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Major Indices</div>
+      </div>
+      
+      <div class="stock-cards-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; justify-content: center; margin-bottom: 20px;">
+        ${majorIndices.map(index => createStockCard(index)).join('')}
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Generates the Magnificent Seven content
+ * @param {object} data - The data object containing stock information
+ * @returns {string} - The HTML content for the Magnificent Seven section
+ */
+const addMagnificentSevenContent = (data) => {
+  // Get Magnificent Seven data from the data object
+  const magnificentSeven = data.fundamentalMetrics?.magnificentSeven || [];
+  
+  if (magnificentSeven.length === 0) {
+    return '';
+  }
+  
+  return `
+    <div class="magnificent-seven-section" style="margin-bottom: 30px;">
       <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
         <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Magnificent Seven</div>
       </div>
       
-      <div class="stock-cards-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px;">
-        ${magnificentSeven.map(stock => {
-          const color = parseFloat(stock.priceChange) >= 0 ? '#10b981' : '#ef4444';
-          const arrow = parseFloat(stock.priceChange) >= 0 ? '▲' : '▼';
-          
-          return `
-            <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
-                <!-- Left: Symbol and Company Name -->
-                <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
-                  <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">${stock.symbol}</div>
-                  <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${stock.name}</div>
-                </div>
-                <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
-                <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
-                  <div style="font-weight: bold; font-size: 0.95em; color: ${color}; margin-bottom: 2px; white-space: nowrap;">$${formatNumber(stock.price)} <span style="color: ${color};">${arrow}</span> <span style="color: ${color}; font-weight: normal;">$${formatNumber(stock.priceChange)}</span> <span style="color: ${color}; font-weight: normal;">(${stock.percentChange})</span></div>
-                </div>
-              </div>
-              <!-- Metrics Table -->
-              <div style="padding: 10px 12px; background-color: white;">
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
-                  <tbody>
-                    ${stock.metrics.slice(0, 4).map(metric => {
-                      return `
-                        <tr>
-                          <td style="color: #777; padding: 4px 10px 4px 0; text-align: left; white-space: nowrap;">${metric.name}</td>
-                          <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right; white-space: nowrap;">
-                            ${formatNumber(metric.value)}
-                          </td>
-                        </tr>
-                      `;
-                    }).join('')}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          `;
-        }).join('')}
+      <div class="stock-cards-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; justify-content: center; margin-bottom: 20px;">
+        ${magnificentSeven.map(stock => createStockCard(stock)).join('')}
       </div>
     </div>
   `;
+};
+
+/**
+ * Generates the Other Stocks content
+ * @param {object} data - The data object containing stock information
+ * @returns {string} - The HTML content for the Other Stocks section
+ */
+const addOtherStocksContent = (data) => {
+  // Get Other Stocks data from the data object
+  const otherStocks = data.fundamentalMetrics?.otherStocks || [];
+  
+  if (otherStocks.length === 0) {
+    return '';
+  }
+  
+  return `
+    <div class="other-stocks-section" style="margin-bottom: 30px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Other Stocks</div>
+      </div>
+      
+      <div class="stock-cards-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; justify-content: center; margin-bottom: 20px;">
+        ${otherStocks.map(stock => createStockCard(stock)).join('')}
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Adds the Fundamental Metrics section to the mobiledoc
+ * @param {object} mobiledoc - The mobiledoc object to add content to
+ * @param {object} data - The data object containing fundamental metrics information
+ */
+const addFundamentalMetrics = (mobiledoc, data) => {
+  // Add the heading
+  addHeading(mobiledoc, 'Fundamental Metrics', 2);
+  
+  // Add the content
+  const html = `
+    <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%; margin-bottom: 20px;">
+      <!-- Section Header with blue background -->
+      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer;">
+        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+          <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
+          <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
+        </div>
+        <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+          <span style="white-space: nowrap;">S&P 500: ${formatNumber(data.sp500?.indexLevel)}</span> | 
+          <span style="white-space: nowrap;">P/E Ratio: ${formatNumber(data.sp500?.peRatio?.current)}</span> | 
+          <span style="white-space: nowrap;">EPS (TTM): $${formatNumber(data.sp500?.eps?.ttm?.replace('$', ''))}</span>
+        </div>
+      </div>
+      
+      <!-- Collapsible Content -->
+      <div class="collapsible-content" style="display: none; padding: 15px; background-color: #f8f9fa;">
+        <div class="fundamental-metrics-container">
+          ${addSP500AnalysisContent(data)}
+          ${addTopHoldingsContent(data)}
+          ${addMajorIndicesContent(data)}
+          ${addMagnificentSevenContent(data)}
+          ${addOtherStocksContent(data)}
+        </div>
+      </div>
+    </div>
+    
+    <script>
+      // Add click event to toggle collapsible sections
+      document.addEventListener('DOMContentLoaded', function() {
+        const headers = document.querySelectorAll('.collapsible-header');
+        headers.forEach(header => {
+          header.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const icon = this.querySelector('.collapsible-icon');
+            
+            // Toggle display
+            if (content.style.display === 'none' || content.style.display === '') {
+              content.style.display = 'block';
+              icon.style.transform = 'rotate(180deg)';
+            } else {
+              content.style.display = 'none';
+              icon.style.transform = 'rotate(0deg)';
+            }
+          });
+        });
+      });
+    </script>
+  `;
+  
+  addHTML(mobiledoc, html);
+  
+  // Add a divider
+  addDivider(mobiledoc);
 };
 
 module.exports = {
