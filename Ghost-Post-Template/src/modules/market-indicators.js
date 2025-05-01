@@ -232,48 +232,82 @@ const addFearGreedIndex = (mobiledoc, data) => {
   // Use category from data if available
   const fearGreedCategory = fgData.category || getCategory(current);
   const fearGreedColor = fgData.color || getColor(current);
+  const formattedDate = fgData.asOf || new Date().toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    timeZoneName: 'short'
+  });
   
   const chartHtml = `
-    <div style="margin-top: 40px;">
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
-        <h4 style="margin-top: 0; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
-        <div style="font-size: 0.9rem; color: #718096;">${fgData.description || ''}</div>
+    <div style="margin-top: 20px;">
+      <!-- Slider visualization similar to HTML format -->
+      <div style="position: relative; height: 12px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+        <!-- Shadow (behind) -->
+        <div style="position: absolute; top: 50%; left: ${current}%; transform: translate(-50%, -50%); width: 18px; height: 18px; background-color: #333; border-radius: 50%; z-index: 1;"></div>
+        <!-- Thumb (front) -->
+        <div style="position: absolute; top: 50%; left: ${current}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
       </div>
-      <div style="position: relative; height: 150px; background-color: #fff; border-radius: 8px; padding: 10px;">
-        <!-- Background color bands -->
-        <div style="position: absolute; top: 30px; left: 0; right: 0; height: 40px; display: flex;">
-          <div style="flex: 1; background-color: rgba(197, 48, 48, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(237, 137, 54, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(236, 201, 75, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(72, 187, 120, 0.1);"></div>
-          <div style="flex: 1; background-color: rgba(47, 133, 90, 0.1);"></div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
+        <div>Extreme Fear</div>
+        <div>Fear</div>
+        <div>Neutral</div>
+        <div>Greed</div>
+        <div>Extreme Greed</div>
+      </div>
+      
+      <div style="font-size: 0.9rem; color: #718096; margin-top: 15px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid ${fearGreedColor}; display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; overflow: hidden;">
+        <span style="font-weight: bold; flex-shrink: 0;">${fearGreedCategory}:</span>
+        ${fgData.description || 'The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.'}
+      </div>
+      
+      <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
+      
+      <div style="position: relative; height: 180px; background-color: #fff; border-radius: 8px; padding: 20px 20px 30px 20px; margin-top: 15px; display: flex; justify-content: center;">
+        <!-- Background color bands (horizontal) -->
+        <div style="position: absolute; top: 20px; left: 30px; right: 20px; bottom: 30px; display: flex; flex-direction: column;">
+          <div style="flex: 1; background-color: rgba(47, 133, 90, 0.2); border-top: 1px dashed #2f855a;">
+            <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">100</div>
+          </div>
+          <div style="flex: 1; background-color: rgba(72, 187, 120, 0.2); border-top: 1px dashed #48bb78;">
+            <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">75</div>
+          </div>
+          <div style="flex: 1; background-color: rgba(236, 201, 75, 0.2); border-top: 1px dashed #ecc94b;">
+            <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">50</div>
+          </div>
+          <div style="flex: 1; background-color: rgba(237, 137, 54, 0.2); border-top: 1px dashed #ed8936;">
+            <div style="position: absolute; left: 0; font-size: 10px; color: #718096;">25</div>
+          </div>
         </div>
         
         <!-- X-axis labels -->
-        <div style="position: absolute; bottom: 10px; left: 0; right: 0; display: flex; justify-content: space-between;">
-          <div style="font-size: 0.8rem; color: #718096;">One Month Ago</div>
-          <div style="font-size: 0.8rem; color: #718096;">One Week Ago</div>
-          <div style="font-size: 0.8rem; color: #718096;">Previous Close</div>
-          <div style="font-size: 0.8rem; color: #718096; font-weight: bold;">Current</div>
+        <div style="position: absolute; bottom: 10px; left: 30px; right: 20px; display: flex; justify-content: space-between;">
+          <div style="font-size: 0.8rem; color: #718096; width: 25%; text-align: center;">One Month Ago</div>
+          <div style="font-size: 0.8rem; color: #718096; width: 25%; text-align: center;">One Week Ago</div>
+          <div style="font-size: 0.8rem; color: #718096; width: 25%; text-align: center;">Previous Close</div>
+          <div style="font-size: 0.8rem; color: #718096; font-weight: bold; width: 25%; text-align: center;">Current</div>
         </div>
         
         <!-- SVG Chart -->
-        <svg width="100%" height="100" style="overflow: visible; position: relative; z-index: 2;">
-          <!-- Line connecting points with curve -->
-          <path d="M30,${100 - oneMonthAgo} C90,${100 - (oneMonthAgo + oneWeekAgo) / 2} 150,${100 - oneWeekAgo} 210,${100 - (oneWeekAgo + previousClose) / 2} C270,${100 - previousClose} 330,${100 - (previousClose + current) / 2} 370,${100 - current}" stroke="#3182ce" stroke-width="3" fill="none"></path>
+        <svg width="calc(100% - 30px)" height="130" style="overflow: visible; position: relative; z-index: 2; margin-left: 30px;">
+          <!-- Line connecting points with straight lines -->
+          <path d="M${25}%,${130 - oneMonthAgo * 1.3} L${50}%,${130 - oneWeekAgo * 1.3} L${75}%,${130 - previousClose * 1.3} L${100}%,${130 - current * 1.3}" stroke="#718096" stroke-width="1" fill="none"></path>
           
           <!-- Data points with values -->
-          <circle cx="30" cy="${100 - oneMonthAgo}" r="5" fill="${getColor(oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="30" y="${90 - oneMonthAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${oneMonthAgo}</text>
+          <circle cx="${25}%" cy="${130 - oneMonthAgo * 1.3}" r="5" fill="${getColor(oneMonthAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${25}%" y="${120 - oneMonthAgo * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${oneMonthAgo}</text>
           
-          <circle cx="150" cy="${100 - oneWeekAgo}" r="5" fill="${getColor(oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="150" y="${90 - oneWeekAgo}" text-anchor="middle" font-size="10" fill="#4a5568">${oneWeekAgo}</text>
+          <circle cx="${50}%" cy="${130 - oneWeekAgo * 1.3}" r="5" fill="${getColor(oneWeekAgo)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${50}%" y="${120 - oneWeekAgo * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${oneWeekAgo}</text>
           
-          <circle cx="270" cy="${100 - previousClose}" r="5" fill="${getColor(previousClose)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="270" y="${90 - previousClose}" text-anchor="middle" font-size="10" fill="#4a5568">${previousClose}</text>
+          <circle cx="${75}%" cy="${130 - previousClose * 1.3}" r="5" fill="${getColor(previousClose)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${75}%" y="${120 - previousClose * 1.3}" text-anchor="middle" font-size="10" fill="#4a5568">${previousClose}</text>
           
-          <circle cx="370" cy="${100 - current}" r="7" fill="${getColor(current)}" stroke="#fff" stroke-width="2"></circle>
-          <text x="370" y="${90 - current}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${current}</text>
+          <circle cx="${100}%" cy="${130 - current * 1.3}" r="7" fill="${getColor(current)}" stroke="#fff" stroke-width="2"></circle>
+          <text x="${100}%" y="${120 - current * 1.3}" text-anchor="middle" font-size="10" font-weight="bold" fill="#4a5568">${current}</text>
         </svg>
       </div>
     </div>
@@ -287,7 +321,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
       <div style="margin-top: 10px;">
         ${chartHtml}
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${fgData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fgData.source || 'CNN Business Fear & Greed Index'}</a> as of ${fgData.timestamp || new Date().toLocaleDateString()}
+          Source: <a href="${fgData.sourceUrl || 'https://money.cnn.com/data/fear-and-greed/'}" target="_blank" style="color: #3182ce; text-decoration: none;">${fgData.source || 'CNN Business Fear & Greed Index'} as of ${formattedDate}
         </div>
       </div>
     </div>
@@ -427,11 +461,11 @@ const addMarketHeader = (mobiledoc, data) => {
   
   // Determine the color based on the value
   const getFearGreedColor = (value) => {
-    if (value <= 25) return '#b91c1c'; // Dark red for extreme fear
-    if (value <= 40) return '#ed8936'; // Orange for fear
-    if (value <= 60) return '#ecc94b'; // Yellow for neutral
-    if (value <= 75) return '#48bb78'; // Green
-    return '#2f855a'; // Darker green
+    if (value <= 25) return '#b91c1c';  // Dark red for extreme fear
+    if (value <= 40) return '#ed8936';  // Orange for fear
+    if (value <= 60) return '#ecc94b';  // Yellow for neutral
+    if (value <= 75) return '#48bb78';  // Green
+    return '#2f855a';  // Darker green
   };
   
   const fearGreedColor = getFearGreedColor(fearGreedValue);

@@ -4,6 +4,24 @@
   
   <div class="fear-greed-container">
     <div class="fear-greed-gauge-container">
+      <!-- Slider visualization similar to HTML format -->
+      <div style="position: relative; height: 12px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+        <!-- Shadow (behind) -->
+        <div style="position: absolute; top: 50%; left: {{fearGreedIndex.currentValue}}%; transform: translate(-50%, -50%); width: 18px; height: 18px; background-color: #333; border-radius: 50%; z-index: 1;"></div>
+        <!-- Thumb (front) -->
+        <div style="position: absolute; top: 50%; left: {{fearGreedIndex.currentValue}}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
+        <div>Extreme Fear</div>
+        <div>Fear</div>
+        <div>Neutral</div>
+        <div>Greed</div>
+        <div>Extreme Greed</div>
+      </div>
+      
+      <h4 style="margin-top: 15px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
+      
       <div class="fear-greed-gauge">
         <div class="fear-greed-scale">
           <div class="fear-greed-label fear-label">Extreme Fear</div>
