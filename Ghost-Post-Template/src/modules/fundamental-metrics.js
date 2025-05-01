@@ -45,9 +45,16 @@ const addFundamentalMetrics = (mobiledoc, data) => {
     <div class="market-pulse-section fundamental-metrics-container" style="margin-bottom: 20px;">
       <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%;">
         <!-- Section Header with blue background -->
-        <div class="collapsible-header" style="display: flex; justify-content: space-between; align-items: center; padding: 20px 25px; background-color: #3182ce; color: white; cursor: pointer; width: 100%;">
-          <div class="collapsible-title" style="font-weight: bold; font-size: 1.5rem; color: white;">Fundamental Metrics</div>
-          <div class="collapsible-icon" style="font-size: 1.5rem; transition: transform 0.3s ease; color: white;">▼</div>
+        <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 0; display: flex; flex-direction: column; align-items: flex-start; width: 100%; color: white; cursor: pointer;">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
+            <div class="collapsible-icon" style="font-size: 1.5rem; color: white; transition: transform 0.3s ease;">▼</div>
+          </div>
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+            <span style="white-space: nowrap;">S&P 500: ${data.sp500 ? data.sp500.indexLevel.toFixed(2) : 'N/A'}</span> | 
+            <span style="white-space: nowrap;">P/E Ratio: ${data.sp500 ? data.sp500.peRatio.current.toFixed(2) : 'N/A'}</span> | 
+            <span style="white-space: nowrap;">EPS (TTM): ${data.sp500 ? data.sp500.eps.ttm : 'N/A'}</span>
+          </div>
         </div>
         
         <!-- Collapsible Content -->
