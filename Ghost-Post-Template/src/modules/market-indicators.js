@@ -293,7 +293,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
         </div>
         
         <!-- SVG Chart - aligned with bottom of chart area -->
-        <svg width="calc(100% - 30px)" height="130" style="overflow: visible; position: absolute; z-index: 2; left: 30px; bottom: 40px;">
+        <svg width="calc(100% - 30px)" height="130" style="overflow: visible; position: absolute; z-index: 2; left: 30px; bottom: 35px;">
           <!-- Line connecting points with curve -->
           <path d="M${10}%,${getYPosition(oneMonthAgo)} C${20}%,${getYPosition((oneMonthAgo + oneWeekAgo) / 2)} ${35}%,${getYPosition(oneWeekAgo)} ${50}%,${getYPosition((oneWeekAgo + previousClose) / 2)} C${65}%,${getYPosition(previousClose)} ${80}%,${getYPosition((previousClose + current) / 2)} ${90}%,${getYPosition(current)}" stroke="#333333" stroke-width="1.5" fill="none"></path>
           
