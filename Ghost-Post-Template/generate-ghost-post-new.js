@@ -27,7 +27,7 @@ const {
  */
 const loadData = () => {
   try {
-    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'full-dataset.json'), 'utf8'));
+    const data = JSON.parse(fs.readFileSync(path.join(__dirname, 'market_pulse_data.json'), 'utf8'));
     return data;
   } catch (error) {
     console.error('Error loading data:', error);
@@ -147,7 +147,9 @@ const addDecisionBanner = (mobiledoc, data) => {
   
   // Get decision text and color from data
   let decisionValue = '';
-  let decisionColor = '#718096'; // Default gray
+  let decisionIcon = '';
+  let decisionSummary = '';
+  let decisionBgColor = '#f59e0b'; // Default amber/orange for all decisions
   
   if (typeof data.decision === 'string') {
     decisionValue = data.decision;
@@ -159,39 +161,71 @@ const addDecisionBanner = (mobiledoc, data) => {
       decisionValue = data.decision.value;
     }
     
-    // Use color from decision object if available
-    if (data.decision.color) {
-      decisionColor = data.decision.color;
+    // Get icon if available or determine based on decision text
+    if (data.decision.icon) {
+      decisionIcon = data.decision.icon;
     } else {
-      // Determine color based on decision text
       const decisionLower = decisionValue.toLowerCase();
-      if (decisionLower.includes('bullish') || decisionLower.includes('buy')) {
-        decisionColor = '#10b981'; // Green
-      } else if (decisionLower.includes('bearish') || decisionLower.includes('sell')) {
-        decisionColor = '#ef4444'; // Red
-      } else if (decisionLower.includes('watch') || decisionLower.includes('hold')) {
-        decisionColor = '#f59e0b'; // Amber
+      if (decisionLower.includes('buy') || decisionLower.includes('bullish')) {
+        decisionIcon = '↑';
+      } else if (decisionLower.includes('sell') || decisionLower.includes('bearish')) {
+        decisionIcon = '↓';
+      } else if (decisionLower.includes('hold')) {
+        decisionIcon = '→';
+      } else {
+        decisionIcon = '⚠️';
       }
     }
+    
+    // Get summary if available
+    if (data.decision.summary) {
+      decisionSummary = data.decision.summary;
+    }
+    
+    // Use color from decision object if available, otherwise keep default orange
+    if (data.decision.color) {
+      decisionBgColor = data.decision.color;
+    }
+    // We're no longer determining color based on text - always use orange as default
   }
   
-  // Use reportDateDisplay or reportDateFormatted for the "as of" text
-  const asOfText = data.reportDateDisplay || `As of ${data.reportDateFormatted || ''}`;
-  
+  // Use the decision color from the data or our default amber/orange
   const decisionBannerHtml = `
-    <div class="market-pulse-section decision-banner">
-      <div style="display: flex; justify-content: space-between; align-items: center; padding: 15px; background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;">
-        <div style="font-size: 1.2rem; font-weight: bold; color: ${decisionColor};">
-          ${decisionValue}
-        </div>
-        <div>
-          <p style="text-align: center; margin: 0; color: #718096; font-style: italic;">*${asOfText}*</p>
-        </div>
+    <div class="decision-banner" style="background-color: ${decisionBgColor}; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; border-radius: 1rem; margin: 1.5rem 0;">
+      <div class="decision-text" id="decision" style="color: white; font-weight: bold; text-align: center; font-size: clamp(1.6rem, 5vw, 2.8rem); line-height: 1.1; display: flex; align-items: center; justify-content: center; width: 100%;">
+        ${decisionIcon ? `<span style="margin-right: 10px;">${decisionIcon}</span>` : ''}
+        ${decisionValue}
       </div>
+      ${decisionSummary ? `<div style="font-size: 16px; color: white; margin-top: 8px; text-align: center;">${decisionSummary}</div>` : ''}
     </div>
   `;
   
   addHTML(mobiledoc, decisionBannerHtml);
+};
+
+/**
+ * Add the justification section to the mobiledoc
+ * @param {object} mobiledoc - The mobiledoc object to add content to
+ * @param {object} data - The data object containing justification information
+ */
+const addJustification = (mobiledoc, data) => {
+  if (!data.justification) return;
+  
+  // Get justification text from data
+  const justificationText = typeof data.justification === 'string' 
+    ? data.justification 
+    : (data.justification.text || '');
+  
+  if (!justificationText) return;
+  
+  const justificationHtml = `
+    <div class="section">
+      <h2 style="font-size: 1.8rem; margin-bottom: 1rem; color: #1a365d;">Justification</h2>
+      <div style="line-height: 1.6; color: #444; font-size: 1.1em;">${justificationText}</div>
+    </div>
+  `;
+  
+  addHTML(mobiledoc, justificationHtml);
   addDivider(mobiledoc);
 };
 
@@ -212,7 +246,7 @@ const addDisclaimer = (mobiledoc, data) => {
   
   const disclaimerHtml = `
     <div class="market-pulse-section disclaimer">
-      <p style="font-size: 0.9rem; color: #718096; line-height: 1.5;">
+      <p class="disclaimer-text">
         ${disclaimerText}
       </p>
     </div>
@@ -229,20 +263,63 @@ const addCollapsibleSectionsScript = (mobiledoc) => {
   const collapsibleScript = `
     <script>
       document.addEventListener('DOMContentLoaded', function() {
+        // Add CSS for collapsible sections
+        const style = document.createElement('style');
+        style.textContent = \`
+          .collapsible-header {
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 15px;
+            background-color: #f8fafc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+          }
+          
+          .collapsible-content {
+            overflow: hidden;
+            transition: max-height 0.3s ease-out;
+            max-height: 0;
+          }
+          
+          .collapsible-content.active {
+            max-height: 2000px; /* Large enough to fit content */
+          }
+          
+          .collapsible-icon {
+            font-size: 14px;
+            transition: transform 0.3s ease;
+          }
+          
+          .collapsible-icon.active {
+            transform: rotate(180deg);
+          }
+        \`;
+        document.head.appendChild(style);
+        
+        // Initialize all collapsible sections
         const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
         
         collapsibleHeaders.forEach(header => {
+          const content = header.nextElementSibling;
+          const icon = header.querySelector('.collapsible-icon');
+          
+          // Ensure content starts collapsed
+          content.classList.remove('active');
+          content.style.maxHeight = '0px';
+          icon.classList.remove('active');
+          
+          // Add click event
           header.addEventListener('click', function() {
-            const content = this.nextElementSibling;
-            const icon = this.querySelector('.collapsible-icon');
-            
             // Toggle content visibility
-            if (content.style.maxHeight) {
-              content.style.maxHeight = null;
-              icon.textContent = '▼';
-            } else {
+            content.classList.toggle('active');
+            icon.classList.toggle('active');
+            
+            if (content.classList.contains('active')) {
               content.style.maxHeight = content.scrollHeight + 'px';
-              icon.textContent = '▲';
+            } else {
+              content.style.maxHeight = '0px';
             }
           });
         });
@@ -269,6 +346,7 @@ const generateGhostPost = () => {
     addWrapperStart(mobiledoc);
     addTitle(mobiledoc, data);
     addDecisionBanner(mobiledoc, data);
+    addJustification(mobiledoc, data);
     
     // Add sections using the modular approach
     addMarketSentiment(mobiledoc, data);

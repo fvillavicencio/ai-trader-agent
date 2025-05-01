@@ -53,23 +53,23 @@ const getSentimentClass = (sentiment) => {
 const addMarketSentiment = (mobiledoc, data) => {
   if (!data.marketSentiment) return;
 
-  addHeading(mobiledoc, 'Market Sentiment', 2);
-
+  // We'll add the heading inside the collapsible section instead of separately
+  
   // Add overall sentiment in a collapsible section
-  const sentimentColor = getSentimentColor(data.marketSentiment.overall);
   const sentimentClass = getSentimentClass(data.marketSentiment.overall);
   const html = `
-    <div class="market-pulse-section sentiment-container collapsible-section" data-section="market-sentiment">
-      <div class="collapsible-header">
-        <div class="collapsible-title">Market Sentiment: <span style="color: ${sentimentColor};">${data.marketSentiment.overall || 'N/A'}</span></div>
-        <div class="collapsible-icon">▼</div>
-      </div>
-      <div class="collapsible-content">
-        ${data.marketSentiment.summary ? `
-          <div style="margin-bottom: 15px; line-height: 1.5;">
-            ${data.marketSentiment.summary}
+    <div class="market-pulse-section sentiment-container">
+      <div class="collapsible-section" data-section="market-sentiment">
+        <div class="collapsible-header" style="background-color: #1a365d; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.5rem; color: white;">Market Sentiment</h2>
+            <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
           </div>
-        ` : ''}
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal;">
+            ${data.marketSentiment.overall || 'N/A'}
+          </div>
+        </div>
+        <div class="collapsible-content">
   `;
 
   addHTML(mobiledoc, html);
@@ -77,21 +77,23 @@ const addMarketSentiment = (mobiledoc, data) => {
   // Add analyst commentary
   if (data.marketSentiment.analysts && data.marketSentiment.analysts.length > 0) {
     const analystsHtml = `
-      <div class="analyst-commentary">
+      <div class="analyst-commentary" style="margin-top: 15px;">
         ${data.marketSentiment.analysts.map(analyst => {
           const mentionedSymbols = analyst.mentionedSymbols && analyst.mentionedSymbols.length > 0
-            ? `<div style="margin-top: 5px;"><strong>Mentioned:</strong> ${analyst.mentionedSymbols.join(', ')}</div>`
+            ? `<div style="margin-top: 5px;"><strong>Mentioned:</strong> ${analyst.mentionedSymbols.map(symbol => 
+                `<span style="display: inline-block; background-color: #e6f7ff; padding: 2px 6px; border-radius: 4px; margin-right: 5px; font-size: 0.9em;">${symbol}</span>`
+              ).join(' ')}</div>`
             : '';
 
           return `
-            <div class="market-pulse-card ${sentimentClass}">
-              <div style="font-weight: bold; margin-bottom: 5px; color: #2c5282;">${analyst.name || 'Analyst'}:</div>
+            <div class="market-pulse-card" style="background-color: #f8f9fa; border-radius: 8px; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); padding: 1.5rem; margin-bottom: 1.5rem; border: none;">
+              <div style="font-weight: bold; margin-bottom: 5px; color: #2c5282;">${analyst.name || 'Analyst'}</div>
               <div style="line-height: 1.5;">
                 ${analyst.comment || ''}
                 ${mentionedSymbols}
               </div>
               <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-                Source: ${analyst.source || 'Financial News Source'}
+                Source: ${analyst.source ? `<a href="#" style="color: #3182ce; text-decoration: none;">${analyst.source}</a>` : 'Financial News Source'}
               </div>
             </div>
           `;
@@ -102,8 +104,8 @@ const addMarketSentiment = (mobiledoc, data) => {
     addHTML(mobiledoc, analystsHtml);
   }
 
-  // Add source information
-  if (data.marketSentiment.source || data.marketSentiment.lastUpdated) {
+  // Add last updated information if available
+  if (data.marketSentiment.lastUpdated) {
     const sourceDate = data.marketSentiment.lastUpdated ?
       new Date(data.marketSentiment.lastUpdated).toLocaleString('en-US', {
         year: 'numeric',
@@ -113,19 +115,20 @@ const addMarketSentiment = (mobiledoc, data) => {
         minute: '2-digit'
       }) : '';
 
-    const sourceHtml = `
+    const dateHtml = `
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          ${data.marketSentiment.source ? `Source: <a href="${data.marketSentiment.sourceUrl || '#'}" target="_blank">${data.marketSentiment.source}</a>` : ''}
-          ${sourceDate ? `<br>Last Updated: ${sourceDate}` : ''}
+          ${sourceDate ? `Last Updated: ${sourceDate}` : ''}
+        </div>
         </div>
       </div>
     </div>
   `;
 
-    addHTML(mobiledoc, sourceHtml);
+    addHTML(mobiledoc, dateHtml);
   } else {
     // Close the divs if no source information
     addHTML(mobiledoc, `
+          </div>
         </div>
       </div>
     `);
