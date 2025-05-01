@@ -384,6 +384,8 @@ const addRSI = (mobiledoc, data) => {
   } else if (rsiValue <= 30) {
     sentiment = 'Oversold';
     sentimentColor = '#c53030';
+  } else {
+    sentimentColor = '#718096';
   }
   
   const rsiHtml = `
