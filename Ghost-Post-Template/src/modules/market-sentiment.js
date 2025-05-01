@@ -11,6 +11,8 @@ const { addHeading, addHTML, addDivider } = require('../utils/mobiledoc-helpers'
  * @returns {string} - The hex color code
  */
 const getSentimentColor = (sentiment) => {
+  if (!sentiment) return '#718096'; // Default gray
+  
   const sentimentLower = sentiment.toLowerCase();
   
   if (sentimentLower.includes('bullish') || sentimentLower.includes('positive')) {
@@ -30,6 +32,8 @@ const getSentimentColor = (sentiment) => {
  * @returns {string} - The CSS class name
  */
 const getSentimentClass = (sentiment) => {
+  if (!sentiment) return 'neutral';
+  
   const sentimentLower = sentiment.toLowerCase();
   
   if (sentimentLower.includes('bullish') || sentimentLower.includes('positive')) {
@@ -57,7 +61,7 @@ const addMarketSentiment = (mobiledoc, data) => {
   const html = `
     <div class="market-pulse-section sentiment-container collapsible-section" data-section="market-sentiment">
       <div class="collapsible-header">
-        <div class="collapsible-title">Market Sentiment: <span style="color: ${sentimentColor};">${data.marketSentiment.overall}</span></div>
+        <div class="collapsible-title">Market Sentiment: <span style="color: ${sentimentColor};">${data.marketSentiment.overall || 'N/A'}</span></div>
         <div class="collapsible-icon">▼</div>
       </div>
       <div class="collapsible-content">
@@ -81,13 +85,13 @@ const addMarketSentiment = (mobiledoc, data) => {
 
           return `
             <div class="market-pulse-card ${sentimentClass}">
-              <div style="font-weight: bold; margin-bottom: 5px; color: #2c5282;">${analyst.name}:</div>
+              <div style="font-weight: bold; margin-bottom: 5px; color: #2c5282;">${analyst.name || 'Analyst'}:</div>
               <div style="line-height: 1.5;">
-                ${analyst.comment}
+                ${analyst.comment || ''}
                 ${mentionedSymbols}
               </div>
               <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-                Source: ${analyst.source}
+                Source: ${analyst.source || 'Financial News Source'}
               </div>
             </div>
           `;
@@ -99,7 +103,7 @@ const addMarketSentiment = (mobiledoc, data) => {
   }
 
   // Add source information
-  if (data.marketSentiment.source) {
+  if (data.marketSentiment.source || data.marketSentiment.lastUpdated) {
     const sourceDate = data.marketSentiment.lastUpdated ?
       new Date(data.marketSentiment.lastUpdated).toLocaleString('en-US', {
         year: 'numeric',
@@ -111,7 +115,7 @@ const addMarketSentiment = (mobiledoc, data) => {
 
     const sourceHtml = `
         <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
-          Source: <a href="${data.marketSentiment.sourceUrl || '#'}" target="_blank">${data.marketSentiment.source}</a>
+          ${data.marketSentiment.source ? `Source: <a href="${data.marketSentiment.sourceUrl || '#'}" target="_blank">${data.marketSentiment.source}</a>` : ''}
           ${sourceDate ? `<br>Last Updated: ${sourceDate}` : ''}
         </div>
       </div>

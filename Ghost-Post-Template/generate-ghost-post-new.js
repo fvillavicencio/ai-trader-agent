@@ -52,8 +52,12 @@ const createMobiledoc = () => {
 /**
  * Add custom CSS to the mobiledoc
  * @param {object} mobiledoc - The mobiledoc object to add content to
+ * @param {object} data - The data object containing styling information
  */
-const addCustomCSS = (mobiledoc) => {
+const addCustomCSS = (mobiledoc, data) => {
+  // Use a relative path for the CSS import to avoid hardcoding absolute paths
+  const cssPath = './src/custom-styles.css';
+  
   const customCss = `
     <style>
       .market-pulse-section {
@@ -69,7 +73,7 @@ const addCustomCSS = (mobiledoc) => {
       }
       
       /* Add any additional custom CSS here */
-      @import url('/Users/frankvillavicencio/Documents/Development/Market Pulse Daily/Ghost-Post-Template/src/custom-styles.css');
+      @import url('${cssPath}');
     </style>
   `;
   
@@ -106,17 +110,23 @@ const addWrapperEnd = (mobiledoc) => {
  * @param {object} data - The data object containing title information
  */
 const addTitle = (mobiledoc, data) => {
-  // Add the title
-  addHeading(mobiledoc, data.title || 'Market Pulse Daily', 1);
+  // Add the title from metadata or use a sensible default based on existing data
+  const title = data.metadata && data.metadata.title ? data.metadata.title : 'Market Pulse Daily';
+  addHeading(mobiledoc, title, 1);
   
-  // Add the date
-  const date = data.date ? new Date(data.date) : new Date();
-  const formattedDate = date.toLocaleDateString('en-US', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  });
+  // Add the date from reportDateFormatted or calculate from reportDate
+  let formattedDate = '';
+  if (data.reportDateFormatted) {
+    formattedDate = data.reportDateFormatted;
+  } else if (data.reportDate) {
+    const date = new Date(data.reportDate);
+    formattedDate = date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  }
   
   const dateHtml = `
     <div style="text-align: center; margin-bottom: 20px; color: #718096;">
@@ -135,8 +145,38 @@ const addTitle = (mobiledoc, data) => {
 const addDecisionBanner = (mobiledoc, data) => {
   if (!data.decision) return;
   
-  const decisionValue = typeof data.decision === 'string' ? data.decision : data.decision.value || 'Neutral';
-  const decisionColor = decisionValue.toLowerCase() === 'bullish' ? '#10b981' : '#ef4444';
+  // Get decision text and color from data
+  let decisionValue = '';
+  let decisionColor = '#718096'; // Default gray
+  
+  if (typeof data.decision === 'string') {
+    decisionValue = data.decision;
+  } else if (typeof data.decision === 'object') {
+    // Handle different decision object structures
+    if (data.decision.text) {
+      decisionValue = data.decision.text;
+    } else if (data.decision.value) {
+      decisionValue = data.decision.value;
+    }
+    
+    // Use color from decision object if available
+    if (data.decision.color) {
+      decisionColor = data.decision.color;
+    } else {
+      // Determine color based on decision text
+      const decisionLower = decisionValue.toLowerCase();
+      if (decisionLower.includes('bullish') || decisionLower.includes('buy')) {
+        decisionColor = '#10b981'; // Green
+      } else if (decisionLower.includes('bearish') || decisionLower.includes('sell')) {
+        decisionColor = '#ef4444'; // Red
+      } else if (decisionLower.includes('watch') || decisionLower.includes('hold')) {
+        decisionColor = '#f59e0b'; // Amber
+      }
+    }
+  }
+  
+  // Use reportDateDisplay or reportDateFormatted for the "as of" text
+  const asOfText = data.reportDateDisplay || `As of ${data.reportDateFormatted || ''}`;
   
   const decisionBannerHtml = `
     <div class="market-pulse-section decision-banner">
@@ -145,7 +185,7 @@ const addDecisionBanner = (mobiledoc, data) => {
           ${decisionValue}
         </div>
         <div>
-          <p style="text-align: center; margin: 0; color: #718096; font-style: italic;">*As of ${data.asOf || 'April 29, 2025 at 5:04 PM EDT'}*</p>
+          <p style="text-align: center; margin: 0; color: #718096; font-style: italic;">*${asOfText}*</p>
         </div>
       </div>
     </div>
@@ -158,16 +198,22 @@ const addDecisionBanner = (mobiledoc, data) => {
 /**
  * Add the disclaimer section to the mobiledoc
  * @param {object} mobiledoc - The mobiledoc object to add content to
+ * @param {object} data - The data object containing disclaimer information
  */
-const addDisclaimer = (mobiledoc) => {
+const addDisclaimer = (mobiledoc, data) => {
   addHeading(mobiledoc, 'Disclaimer', 2);
+  
+  // Use disclaimer from data if available, otherwise use a standard disclaimer
+  // This ensures we have a disclaimer even if it's not in the JSON
+  const disclaimerText = data.disclaimer || 
+    'The information provided in this report is for informational purposes only and does not constitute investment advice. ' +
+    'Market data and analysis are based on sources believed to be reliable, but we make no representation as to their accuracy or completeness. ' +
+    'Past performance is not indicative of future results. All investments involve risk, including the loss of principal.';
   
   const disclaimerHtml = `
     <div class="market-pulse-section disclaimer">
       <p style="font-size: 0.9rem; color: #718096; line-height: 1.5;">
-        The information provided in this report is for informational purposes only and does not constitute investment advice. 
-        Market data and analysis are based on sources believed to be reliable, but we make no representation as to their accuracy or completeness. 
-        Past performance is not indicative of future results. All investments involve risk, including the loss of principal.
+        ${disclaimerText}
       </p>
     </div>
   `;
@@ -219,7 +265,7 @@ const generateGhostPost = () => {
     const mobiledoc = createMobiledoc();
     
     // Add content to the mobiledoc
-    addCustomCSS(mobiledoc);
+    addCustomCSS(mobiledoc, data);
     addWrapperStart(mobiledoc);
     addTitle(mobiledoc, data);
     addDecisionBanner(mobiledoc, data);
@@ -232,7 +278,7 @@ const generateGhostPost = () => {
     addGeopoliticalRisks(mobiledoc, data);
     
     // Add disclaimer and JavaScript
-    addDisclaimer(mobiledoc);
+    addDisclaimer(mobiledoc, data);
     addCollapsibleSectionsScript(mobiledoc);
     addWrapperEnd(mobiledoc);
     

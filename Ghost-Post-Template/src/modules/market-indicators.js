@@ -159,10 +159,11 @@ const addMarketFutures = (mobiledoc, data) => {
  * @param {object} data - The data object containing fear & greed index information
  */
 const addFearGreedIndex = (mobiledoc, data) => {
-  if (!data.fearGreedIndex) return;
+  // Check for either fearGreedIndex or fearAndGreed in the data
+  const fearGreedData = data.fearGreedIndex || data.marketIndicators?.fearAndGreed;
+  if (!fearGreedData) return;
   
-  const fearGreedData = data.fearGreedIndex;
-  const fearGreedValue = fearGreedData.value;
+  const fearGreedValue = fearGreedData.value || 0;
   
   // Determine the category based on the value
   let fearGreedCategory;
@@ -185,6 +186,11 @@ const addFearGreedIndex = (mobiledoc, data) => {
     fearGreedColor = '#48bb78';
   }
   
+  // Use category from data if available
+  if (fearGreedData.category) {
+    fearGreedCategory = fearGreedData.category;
+  }
+  
   addHeading(mobiledoc, 'Fear & Greed Index', 3);
   
   const fearGreedHtml = `
@@ -199,16 +205,38 @@ const addFearGreedIndex = (mobiledoc, data) => {
         </div>
         
         <div class="fear-greed-labels">
-          <div class="fear-greed-label">Oversold</div>
-          <div class="fear-greed-label">Neutral</div>
-          <div class="fear-greed-label">Overbought</div>
+          <div>Extreme Fear</div>
+          <div>Fear</div>
+          <div>Neutral</div>
+          <div>Greed</div>
+          <div>Extreme Greed</div>
         </div>
         
-        <div class="fear-greed-explanation">
-          <p>The Fear & Greed Index measures market sentiment. Extreme fear can be a sign that investors are too worried, which may represent a buying opportunity. When investors are getting greedy, it may be time to be cautious.</p>
+        <div style="margin-top: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Historical Comparison</div>
+          <div style="display: flex; flex-wrap: wrap; gap: 15px;">
+            <div style="flex: 1 1 150px; min-width: 0; background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+              <div style="font-size: 0.9rem; color: #718096;">Previous Day</div>
+              <div style="font-weight: 500; margin-top: 5px;">${fearGreedData.previousDay || fearGreedData.previousValue || 'N/A'}</div>
+            </div>
+            <div style="flex: 1 1 150px; min-width: 0; background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+              <div style="font-size: 0.9rem; color: #718096;">One Week Ago</div>
+              <div style="font-weight: 500; margin-top: 5px;">${fearGreedData.oneWeekAgo || 'N/A'}</div>
+            </div>
+            <div style="flex: 1 1 150px; min-width: 0; background-color: white; padding: 10px; border-radius: 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);">
+              <div style="font-size: 0.9rem; color: #718096;">One Month Ago</div>
+              <div style="font-weight: 500; margin-top: 5px;">${fearGreedData.oneMonthAgo || 'N/A'}</div>
+            </div>
+          </div>
         </div>
         
-        <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
+        ${fearGreedData.description ? `
+          <div style="margin-top: 20px; line-height: 1.5;">
+            ${fearGreedData.description}
+          </div>
+        ` : ''}
+        
+        <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
           Source: <a href="${fearGreedData.sourceUrl || '#'}" target="_blank">${fearGreedData.source || 'CNN Money Fear & Greed Index'}</a>
           ${fearGreedData.asOf ? `<br>As of: ${fearGreedData.asOf}` : ''}
         </div>
