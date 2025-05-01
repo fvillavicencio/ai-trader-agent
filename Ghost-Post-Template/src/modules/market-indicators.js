@@ -311,7 +311,9 @@ const addFearGreedIndex = (mobiledoc, data) => {
           
           <!-- Data points with values -->
           ${dataPoints.map(point => `
-            <circle cx="${point.x}%" cy="${getYPosition(point.value)}" r="${point.isCurrent ? 7 : 5}" fill="${getColor(point.value)}" stroke="#fff" stroke-width="2"></circle>
+            <!-- Vertical line from data point to x-axis -->
+            <line x1="${point.x}%" y1="${getYPosition(point.value)}" x2="${point.x}%" y2="${chartHeight}" stroke="#000000" stroke-width="1" stroke-dasharray="2,2"></line>
+            <circle cx="${point.x}%" cy="${getYPosition(point.value)}" r="${point.isCurrent ? 7 : 5}" fill="${getColor(point.value)}" stroke="#000000" stroke-width="2"></circle>
             <text x="${point.x}%" y="${getYPosition(point.value) - 10}" text-anchor="middle" font-size="10" ${point.isCurrent ? 'font-weight="bold"' : ''} fill="#4a5568">${point.value}</text>
           `).join('')}
         </svg>
