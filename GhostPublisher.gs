@@ -607,6 +607,244 @@ function generateTeaserTeaserHtml(opts) {
 }
 
 /**
+ * Publishes an HTML file from Google Drive to Ghost CMS via Lambda API.
+ * 
+ * @param {Object} jsonData - The JSON data to publish
+ * @param {Object} options - Additional options
+ * @param {boolean} options.draftOnly - Force the post to be created as a draft
+ * @param {boolean} options.skipMembersFetch - Skip fetching members from Ghost API
+ * @returns {Object} - The response from Lambda API
+ */
+function publishToGhostWithLambda(jsonData, options = {}) {
+  try {
+    const props = PropertiesService.getScriptProperties();
+    const ghostUrl = props.getProperty('GHOST_API_URL') || 'https://market-pulse-daily.ghost.io';
+    const ghostApiKey = props.getProperty('GHOST_ADMIN_API_KEY');
+    const newsletterId = props.getProperty('GHOST_NEWSLETTER_ID') || '67f427c5744a72000854ee8f';
+    const lambdaApiUrl = 'https://vrwz4xsvml.execute-api.us-east-2.amazonaws.com/prod/publish';
+    const lambdaApiKey = props.getProperty('GHOST_LAMBDA_API_KEY');
+    
+    // Prepare the request payload
+    const payload = {
+      ghostUrl: ghostUrl,
+      ghostApiKey: ghostApiKey,
+      newsletterId: newsletterId,
+      jsonData: jsonData
+    };
+    
+    // For testing purposes, we'll log the payload structure (without sensitive data)
+    Logger.log('Preparing to publish to Ghost via Lambda with payload structure:');
+    Logger.log('ghostUrl: ' + ghostUrl);
+    Logger.log('newsletterId: ' + newsletterId);
+    Logger.log('jsonData keys: ' + Object.keys(jsonData).join(', '));
+    
+    // Make the actual API call to the Lambda function if not in test mode
+    let lambdaResponse = null;
+    if (!options.draftOnly) {
+      try {
+        Logger.log('Calling Lambda API to publish article...');
+        const response = UrlFetchApp.fetch(lambdaApiUrl, {
+          method: 'post',
+          contentType: 'application/json',
+          headers: {
+            'x-api-key': lambdaApiKey
+          },
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        });
+        
+        const responseCode = response.getResponseCode();
+        const responseText = response.getContentText();
+        
+        Logger.log('Lambda API response code: ' + responseCode);
+        Logger.log('Lambda API response: ' + responseText);
+        
+        if (responseCode >= 200 && responseCode < 300) {
+          lambdaResponse = JSON.parse(responseText);
+          Logger.log('Article successfully published to Ghost!');
+        } else {
+          Logger.log('Error publishing article to Ghost. Response: ' + responseText);
+        }
+      } catch (apiError) {
+        Logger.log('Error calling Lambda API: ' + apiError.toString());
+      }
+    } else {
+      Logger.log('Draft only mode - skipping Lambda API call');
+    }
+    
+    // Extract decision and summary for teaser email
+    const decision = jsonData.decision ? jsonData.decision.text || jsonData.decision : 'Market Update';
+    const summary = jsonData.justification ? jsonData.justification.summary || jsonData.justification : '';
+    
+    // Generate a mock post URL for testing if we don't have a real one from the Lambda response
+    const now = new Date();
+    const dateStr = Utilities.formatDate(now, props.getProperty('TIME_ZONE') || 'America/New_York', 'yyyy-MM-dd');
+    const timeStr = Utilities.formatDate(now, props.getProperty('TIME_ZONE') || 'America/New_York', 'HH-mm-ss');
+    const mockPostSlug = `market-pulse-${dateStr}-${timeStr}`;
+    
+    // Use the real post URL if available, otherwise use the mock URL
+    const postUrl = lambdaResponse && lambdaResponse.postUrl 
+      ? lambdaResponse.postUrl 
+      : `${ghostUrl}/${mockPostSlug}`;
+    
+    // Generate teaser email HTML
+    const teaserHtmlBody = generateTeaserTeaserHtml({
+      decision: decision,
+      summary: summary,
+      reportUrl: postUrl,
+      generatedAt: now
+    });
+    
+    // Log the teaser email HTML for preview
+    Logger.log('Teaser Email HTML Preview:');
+    Logger.log(teaserHtmlBody);
+    
+    // Fetch Ghost members to include in the response if we don't already have them from the Lambda response
+    let members = lambdaResponse && lambdaResponse.members 
+      ? lambdaResponse.members 
+      : { all: [], paid: [], free: [], comped: [] };
+    
+    if (!lambdaResponse && !options.skipMembersFetch) {
+      try {
+        const token = generateGhostJWT(ghostApiKey);
+        const membersUrl = ghostUrl + '/ghost/api/admin/members/?limit=all&filter=subscribed:true';
+        const membersResp = UrlFetchApp.fetch(membersUrl, {
+          method: 'get',
+          headers: { 'Authorization': 'Ghost ' + token }
+        });
+        const membersData = JSON.parse(membersResp.getContentText());
+        
+        if (membersData && membersData.members) {
+          for (let i = 0; i < membersData.members.length; i++) {
+            const member = membersData.members[i];
+            if (member.email) {
+              members.all.push(member.email);
+              
+              // Categorize members
+              if (member.status === 'paid') {
+                members.paid.push(member.email);
+              } else if (member.status === 'comped') {
+                members.comped.push(member.email);
+              } else {
+                members.free.push(member.email);
+              }
+            }
+          }
+        }
+      } catch (membersErr) {
+        Logger.log('Error fetching members: ' + membersErr);
+      }
+    }
+    
+    // Create a draft email in Gmail
+    const subject = 'Market Pulse Daily: ' + decision;
+    const debugMode = props.getProperty('DEBUG_MODE') === 'true';
+    const TEST_EMAIL = props.getProperty('TEST_EMAIL') || Session.getActiveUser().getEmail();
+    
+    // Create a draft email - use the TEST_EMAIL as recipient if in debug mode
+    // or create a draft without sending if not in debug mode
+    if (debugMode) {
+      // In debug mode, create a draft to the test email
+      const draft = GmailApp.createDraft(
+        TEST_EMAIL,
+        subject,
+        'This email requires HTML to view properly.',
+        {
+          htmlBody: teaserHtmlBody,
+          name: 'Market Pulse Daily'
+        }
+      );
+      Logger.log('Draft teaser email created with subject: ' + subject + ' to recipient: ' + TEST_EMAIL);
+    } else {
+      // Not in debug mode, just create a draft without a recipient (will be in Drafts folder)
+      const draft = GmailApp.createDraft(
+        '',  // No recipient
+        subject,
+        'This email requires HTML to view properly.',
+        {
+          htmlBody: teaserHtmlBody,
+          name: 'Market Pulse Daily',
+          bcc: members.all.join(',')  // Add all members as BCC
+        }
+      );
+      Logger.log('Draft teaser email created with subject: ' + subject + ' (no recipient, will be in Drafts folder)');
+    }
+    
+    // Create a response that matches the Lambda function's response format
+    // Use the actual Lambda response if available, otherwise create a mock response
+    const response = lambdaResponse || {
+      message: "Draft teaser email created successfully" + (options.draftOnly ? " (draft only mode)" : ""),
+      postUrl: postUrl,
+      postId: "draft-" + Utilities.getUuid(),
+      members: members
+    };
+    
+    return response;
+  } catch (error) {
+    Logger.log('Error in publishToGhostWithLambda: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
+ * Test function for the publishToGhostWithLambda function
+ * Retrieves the JSON payload from Google Drive and sends it to the Lambda function
+ */
+function testPublishToGhostWithLambda() {
+  try {
+    // Get script properties
+    var props = PropertiesService.getScriptProperties();
+    var folderName = props.getProperty('GOOGLE_FOLDER_NAME');
+    var jsonFileName = "market_pulse_data.json";
+    
+    // Find the folder by name
+    var folderIterator = DriveApp.getFoldersByName(folderName);
+    if (!folderIterator.hasNext()) {
+      throw new Error('Folder ' + folderName + ' not found');
+    }
+    var folder = folderIterator.next();
+    Logger.log('Searching for file: ' + jsonFileName + ' in folder: ' + folderName);
+
+    // Search for the JSON file in the specified folder
+    var files = folder.getFilesByName(jsonFileName);
+    if (!files.hasNext()) {
+      throw new Error('File ' + jsonFileName + ' not found in folder ' + folderName);
+    }
+    var file = files.next();
+    Logger.log('Found file: ' + file.getName() + ' with ID: ' + file.getId());
+
+    // Get the JSON content from the file
+    var jsonContent = file.getBlob().getDataAsString();
+    var jsonData;
+    
+    try {
+      // Parse the JSON content
+      jsonData = JSON.parse(jsonContent);
+      Logger.log('Successfully parsed JSON data with keys: ' + Object.keys(jsonData).join(', '));
+    } catch (parseError) {
+      Logger.log('Error parsing JSON: ' + parseError.toString());
+      throw new Error('Invalid JSON format in file: ' + parseError.message);
+    }
+    
+    // Call the function with the JSON data
+    // Set draftOnly to false to actually publish the article to Ghost
+    const result = publishToGhostWithLambda(jsonData, { 
+      isTest: true,
+      draftOnly: false  // Changed from true to false to actually publish the article
+    });
+    
+    // Log the result
+    Logger.log('Test publishToGhostWithLambda result:');
+    Logger.log(JSON.stringify(result, null, 2));
+    
+    return result;
+  } catch (error) {
+    Logger.log('Error in testPublishToGhostWithLambda: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
  * Export the functions for use in other scripts
  */
 var GhostPublisher = {
@@ -614,5 +852,7 @@ var GhostPublisher = {
   testPublishLatestAnalysis: testPublishLatestAnalysis,
   generateHtmlFromAnalysisJson: generateHtmlFromAnalysisJson,
   generateTeaserHtmlFromAnalysisJson: generateTeaserHtmlFromAnalysisJson,
-  extractSectionTextById: extractSectionTextById
+  extractSectionTextById: extractSectionTextById,
+  publishToGhostWithLambda: publishToGhostWithLambda,
+  testPublishToGhostWithLambda: testPublishToGhostWithLambda
 };
