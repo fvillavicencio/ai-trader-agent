@@ -116,42 +116,133 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         Logger.log(`Created new file: ${fileName}`);
       }    
       
-      // Publish to Ghost
-      Logger.log("Publishing HTML content to Ghost"); 
+      // Publish to Ghost using the Lambda function
+      Logger.log("Publishing content to Ghost via Lambda function");
+      
+      // Use the fullJsonDataset to publish to Ghost via Lambda
       let ghostResult;
       try {
-        ghostResult = GhostPublisher.publishToGhost(file.getId(), folder.getId(), fileName);
-      } catch (e) {
-        Logger.log("Warning: Failed to publish to Ghost: " + e);
+        // If we're using the new template, we already have the full JSON dataset
+        const jsonDataToPublish = newTemplate ? fullJsonDataset : analysisJson;
+        
+        // Publish to Ghost via Lambda function
+        ghostResult = GhostPublisher.publishToGhostWithLambda(jsonDataToPublish, {
+          draftOnly: false  // Actually publish the article
+        });
+        
+        Logger.log("Successfully published to Ghost via Lambda function");
+        Logger.log(`Post URL: ${ghostResult.postUrl}`);
+        Logger.log(`Post ID: ${ghostResult.postId}`);
+        
+        // Get the recipients list from the Ghost members
+        const recipients = ghostResult.members.all || [];
+        
+        // Generate teaser email HTML using the same approach as in publishToGhostWithLambda
+        const decision = jsonDataToPublish.decision ? 
+          (typeof jsonDataToPublish.decision === 'object' ? jsonDataToPublish.decision.text : jsonDataToPublish.decision) : 
+          'Market Update';
+        const summary = jsonDataToPublish.justification ? 
+          (typeof jsonDataToPublish.justification === 'object' ? jsonDataToPublish.justification.summary : jsonDataToPublish.justification) : 
+          '';
+        
+        // Generate teaser email HTML
+        const teaserHtmlBody = GhostPublisher.generateTeaserTeaserHtml({
+          decision: decision,
+          summary: summary,
+          reportUrl: ghostResult.postUrl,
+          generatedAt: new Date()
+        });
+        
+        // Determine whether to send the email or create a draft based on debug mode
+        if (debugMode) {
+          // In debug mode, just create a draft email
+          Logger.log("Debug mode enabled - creating draft teaser email");
+          
+          // Get test email from properties or use active user's email
+          const testEmail = props.getProperty('TEST_EMAIL') || Session.getActiveUser().getEmail();
+          
+          // Create a draft email to the test recipient
+          const subject = `Market Pulse Daily: ${decision}`;
+          const draft = GmailApp.createDraft(
+            testEmail,
+            subject,
+            'This email requires HTML to view properly.',
+            {
+              htmlBody: teaserHtmlBody,
+              name: 'Market Pulse Daily'
+            }
+          );
+          
+          Logger.log(`Draft teaser email created with subject: ${subject} to recipient: ${testEmail}`);
+        } else {
+          // Not in debug mode, send the email to all recipients
+          Logger.log("Sending teaser email to all recipients");
+          
+          // Compose email subject
+          let newsletterName = 'Market Pulse Daily';
+          try {
+            const propName = props.getProperty('NEWSLETTER_NAME');
+            if (propName && propName.trim() !== '') {
+              newsletterName = propName.trim();
+            }
+          } catch (e) {}
+          
+          const subject = `${newsletterName} - ${decision}`;
+          
+          // Send the email to all recipients as BCC
+          const recipientList = recipients.join(",");
+          const emailResult = sendEmail(subject, teaserHtmlBody, recipientList, false, true); // true for forceBcc
+          
+          if (!emailResult.success) {
+            Logger.log(`Failed to send email to recipients: ${recipientList}`);
+            sendErrorEmail("Trade Decision Email Error", emailResult.error || "Unknown error");
+            return false;
+          }
+          
+          Logger.log("Trade decision email sent successfully to all recipients");
+        }
+        
+      } catch (ghostError) {
+        Logger.log("Warning: Failed to publish to Ghost via Lambda: " + ghostError);
+        
+        // Fall back to the old Ghost publishing method if Lambda fails
+        try {
+          ghostResult = GhostPublisher.publishToGhost(file.getId(), folder.getId(), fileName);
+          Logger.log("Fallback: Published to Ghost using traditional method");
+          
+          // Get the final recipients from Config.gs
+          const recipients = getEmailRecipients();
+          
+          // Compose email subject
+          let newsletterName = 'Market Pulse Daily';
+          try {
+            const propName = props.getProperty('NEWSLETTER_NAME');
+            if (propName && propName.trim() !== '') {
+              newsletterName = propName.trim();
+            }
+          } catch (e) {}
+          const subject = `${newsletterName} - ${analysisJson.decision}`;
+
+          // Send the email using our enhanced sendEmail function
+          const recipientList = recipients.join(",");
+          const emailResult = sendEmail(subject, htmlContent, recipientList, false, true); // true for forceBcc
+          if (!emailResult.success) {
+            Logger.log(`Failed to send email to recipients: ${recipientList}`);
+            sendErrorEmail("Trade Decision Email Error", emailResult.error || "Unknown error");
+            return false;
+          }
+        } catch (fallbackError) {
+          Logger.log("Error in fallback Ghost publishing: " + fallbackError);
+          throw fallbackError;
+        }
       }
       
       Logger.log("HTML content saved successfully to Google Drive and published to Ghost");
     } catch (error) {
-      Logger.log("Error saving HTML to Google Drive: " + error.toString());
+      Logger.log("Error saving HTML to Google Drive or publishing to Ghost: " + error.toString());
       throw error;
     }
 
-    // Get the final recipients from Config.gs
-    const recipients = getEmailRecipients();
-    
-    // Compose email subject
-    let newsletterName = 'Market Pulse Daily';
-    try {
-      const propName = props.getProperty('NEWSLETTER_NAME');
-      if (propName && propName.trim() !== '') {
-        newsletterName = propName.trim();
-      }
-    } catch (e) {}
-    const subject = `${newsletterName} - ${analysisJson.decision}`;
-
-    // Send the email using our enhanced sendEmail function
-    const recipientList = recipients.join(",");
-    const emailResult = sendEmail(subject, htmlContent, recipientList, false, true); // true for forceBcc
-    if (!emailResult.success) {
-      Logger.log(`Failed to send email to recipients: ${recipientList}`);
-      sendErrorEmail("Trade Decision Email Error", emailResult.error || "Unknown error");
-      return false;
-    }
     Logger.log("Trade decision email process completed.");
     return true;
   } catch (error) {
