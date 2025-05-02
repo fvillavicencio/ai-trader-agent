@@ -2,7 +2,7 @@
  * AI Trading Agent - One-Time Setup Script
  * 
  * This script automates the setup process for the AI Trading Agent:
- * 1. Creates time-based triggers for morning and evening analysis
+ * 1. Creates time-based triggers for morning, midday, and evening analysis
  * 2. Sets up script properties for API key storage
  * 3. Performs initial validation tests
  * 4. Sends a confirmation email when setup is complete
@@ -67,8 +67,8 @@ function setupApiKey() {
 }
 
 /**
- * Creates time-based triggers for morning and evening analysis
- * Uses a more efficient approach with just 2 triggers and day checking in the handler
+ * Creates time-based triggers for morning, midday, and evening analysis
+ * Uses an efficient approach with 3 triggers and day checking in the handler
  */
 function setupTriggers() {
   Logger.log("Setting up time-based triggers...");
@@ -76,7 +76,7 @@ function setupTriggers() {
   // Delete any existing triggers to avoid duplicates
   deleteExistingTriggers();
   
-  // Create a single morning trigger (daily)
+  // Create morning trigger (9 AM ET, daily)
   ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
     .timeBased()
     .atHour(MORNING_SCHEDULE_HOUR)
@@ -87,7 +87,18 @@ function setupTriggers() {
   
   Logger.log(`Morning trigger created: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (daily with weekday check)`);
   
-  // Create a single evening trigger (daily)
+  // Create midday trigger (12 PM ET, daily)
+  ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
+    .timeBased()
+    .atHour(MIDDAY_SCHEDULE_HOUR)
+    .nearMinute(MIDDAY_SCHEDULE_MINUTE)
+    .everyDays(1) // Run every day
+    .inTimezone(TIME_ZONE)
+    .create();
+  
+  Logger.log(`Midday trigger created: ${MIDDAY_SCHEDULE_HOUR}:${MIDDAY_SCHEDULE_MINUTE} ${TIME_ZONE} (daily with weekday check)`);
+  
+  // Create evening trigger (6 PM ET, daily)
   ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
     .timeBased()
     .atHour(EVENING_SCHEDULE_HOUR)
@@ -102,6 +113,7 @@ function setupTriggers() {
 /**
  * Wrapper function that checks if today is an appropriate day to run the analysis
  * Morning analysis: Monday-Friday
+ * Midday analysis: Monday-Friday
  * Evening analysis: Sunday-Thursday
  */
 function runTradingAnalysisWithDayCheck() {
@@ -112,6 +124,13 @@ function runTradingAnalysisWithDayCheck() {
   // Morning trigger (runs Monday-Friday)
   if (hour === MORNING_SCHEDULE_HOUR && dayOfWeek >= 1 && dayOfWeek <= 5) {
     Logger.log("Running morning trading analysis (weekday)");
+    runTradingAnalysis();
+    return;
+  }
+  
+  // Midday trigger (runs Monday-Friday)
+  if (hour === MIDDAY_SCHEDULE_HOUR && dayOfWeek >= 1 && dayOfWeek <= 5) {
+    Logger.log("Running midday trading analysis (weekday)");
     runTradingAnalysis();
     return;
   }
@@ -180,8 +199,9 @@ The AI Trading Agent has been successfully set up!
 
 Configuration Details:
 - Morning Analysis: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (Monday-Friday)
+- Midday Analysis: ${MIDDAY_SCHEDULE_HOUR}:${MIDDAY_SCHEDULE_MINUTE} ${TIME_ZONE} (Monday-Friday)
 - Evening Analysis: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE} (Sunday-Thursday)
-- Schedule: Runs twice daily from Sunday evening to Friday morning (excluding Saturday, Friday evening, and Sunday morning)
+- Schedule: Runs three times daily from Sunday evening to Friday morning (excluding Saturday, Friday evening, and Sunday morning)
 - Recipients: ${RECIPIENT_EMAILS.join(", ")}
 
 The agent will begin sending trading analysis emails at the next scheduled time.

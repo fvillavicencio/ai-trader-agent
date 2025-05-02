@@ -34,14 +34,15 @@ const PROMPT_ERROR_EMAIL = "fvillavicencio+AI_trading_agent@gmail.com";
 const TEST_EMAIL = "fvillavicencio@gmail.com";
 
 // Schedule configuration
-const MORNING_SCHEDULE_HOUR = 8;
-const MORNING_SCHEDULE_MINUTE = 50;
+const MORNING_SCHEDULE_HOUR = 9;
+const MORNING_SCHEDULE_MINUTE = 0;
+const MIDDAY_SCHEDULE_HOUR = 12;
+const MIDDAY_SCHEDULE_MINUTE = 0;
 const EVENING_SCHEDULE_HOUR = 18;
 const EVENING_SCHEDULE_MINUTE = 0;
 
 // Time zone for scheduling
 const TIME_ZONE = "America/New_York";
-
 
 /**
  * Gets the Perplexity API key from script properties if not hardcoded
