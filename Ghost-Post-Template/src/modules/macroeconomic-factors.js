@@ -325,24 +325,25 @@ const addMacroeconomicFactors = (mobiledoc, data) => {
   
   // Create a collapsible section header with dark purple background
   const macroHeaderHtml = `
-    <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%; margin-bottom: 20px;">
-      <!-- Section Header with dark purple background -->
-      <div class="collapsible-header" style="background-color: #4a1d96; padding: 15px; border-radius: 6px 6px 0 0; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; margin-bottom: 0; width: 95%; max-width: 800px; margin-left: auto; margin-right: auto;">
-        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-          <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Macroeconomic Factors</h2>
-          <div class="collapsible-icon" style="font-size: 14px; color: white; margin-left: auto;">▼</div>
+    <div class="market-pulse-section macroeconomic-factors-container" style="margin: 0; padding: 0; margin-top: 20px;">
+      <div class="collapsible-section" data-section="macroeconomic-factors">
+        <div class="collapsible-header" style="background-color: #4a1d96; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Macroeconomic Factors</h2>
+            <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
+          </div>
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+            Fed Funds: ${data.macroeconomicFactors?.fedPolicy?.currentRate || "4.33%"} | CPI: ${data.macroeconomicFactors?.inflation?.cpi?.headline || "2.4"}% | 10Y Treasury: ${data.macroeconomicFactors?.treasuryYields?.current?.find(y => y.maturity === "10-Year")?.rate || "4.19"}%
+          </div>
         </div>
-        <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
-          Fed Funds: ${data.macroeconomicFactors?.fedPolicy?.currentRate || "4.33%"} | CPI: ${data.macroeconomicFactors?.inflation?.cpi?.headline || "2.4"}% | 10Y Treasury: ${data.macroeconomicFactors?.treasuryYields?.current?.find(y => y.maturity === "10-Year")?.rate || "4.19"}%
+        
+        <!-- Collapsible Content -->
+        <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
+          ${addTreasuryYields(data)}
+          ${addFedPolicy(data)}
+          ${addInflation(data)}
+          ${addUpcomingEvents(data)}
         </div>
-      </div>
-      
-      <!-- Collapsible Content -->
-      <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
-        ${addTreasuryYields(data)}
-        ${addFedPolicy(data)}
-        ${addInflation(data)}
-        ${addUpcomingEvents(data)}
       </div>
     </div>
     

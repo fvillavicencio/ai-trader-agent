@@ -437,27 +437,28 @@ const addFundamentalMetrics = (mobiledoc, data) => {
   
   // Add the content
   const html = `
-    <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%; margin-bottom: 20px;">
-      <!-- Section Header with blue background -->
-      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 6px 6px 0 0; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; margin-bottom: 0; width: 95%; max-width: 800px; margin-left: auto; margin-right: auto;">
-        <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-          <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
-          <div class="collapsible-icon" style="font-size: 14px; color: white; margin-left: auto;">▼</div>
+    <div class="market-pulse-section fundamental-metrics-container" style="margin: 0; padding: 0; margin-top: 20px;">
+      <div class="collapsible-section" data-section="fundamental-metrics">
+        <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
+            <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
+          </div>
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+            <span style="white-space: nowrap;">S&P 500: ${formatNumber(data.sp500?.indexLevel)}</span> | 
+            <span style="white-space: nowrap;">P/E Ratio: ${formatNumber(data.sp500?.peRatio?.current)}</span> | 
+            <span style="white-space: nowrap;">EPS (TTM): $${formatNumber(data.sp500?.eps?.ttm?.replace('$', ''))}</span>
+          </div>
         </div>
-        <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
-          <span style="white-space: nowrap;">S&P 500: ${formatNumber(data.sp500?.indexLevel)}</span> | 
-          <span style="white-space: nowrap;">P/E Ratio: ${formatNumber(data.sp500?.peRatio?.current)}</span> | 
-          <span style="white-space: nowrap;">EPS (TTM): $${formatNumber(data.sp500?.eps?.ttm?.replace('$', ''))}</span>
+        
+        <!-- Collapsible Content -->
+        <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
+          ${addSP500AnalysisContent(data)}
+          ${addTopHoldingsContent(data)}
+          ${addMajorIndicesContent(data)}
+          ${addMagnificentSevenContent(data)}
+          ${addOtherStocksContent(data)}
         </div>
-      </div>
-      
-      <!-- Collapsible Content -->
-      <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
-        ${addSP500AnalysisContent(data)}
-        ${addTopHoldingsContent(data)}
-        ${addMajorIndicesContent(data)}
-        ${addMagnificentSevenContent(data)}
-        ${addOtherStocksContent(data)}
       </div>
     </div>
     
