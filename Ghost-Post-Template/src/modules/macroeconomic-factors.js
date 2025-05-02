@@ -287,13 +287,20 @@ const addUpcomingEvents = (data) => {
     }
   ];
   
+  // Sort events chronologically by date
+  const sortedEvents = [...upcomingEvents].sort((a, b) => {
+    const dateA = new Date(a.date);
+    const dateB = new Date(b.date);
+    return dateA - dateB;
+  });
+  
   return `
     <div style="margin-bottom: 30px;">
       <div style="font-weight: bold; margin-bottom: 15px; font-size: clamp(1.1rem, 3vw, 1.25rem);">Upcoming Events</div>
       
       <div style="background-color: #f9f9f9; border-radius: 8px; padding: 15px;">
         <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
-          ${upcomingEvents.map(event => `
+          ${sortedEvents.map(event => `
             <div style="display: flex; flex-wrap: nowrap; align-items: flex-start; padding: 8px 10px; border-radius: 5px; background-color: #ffffff; border: 1px solid #e2e8f0;">
               <div style="min-width: 110px; flex: 0 0 110px;">
                 <div style="font-size: 0.85rem; font-weight: 500; color: #2196f3;">${event.date}</div>
