@@ -31,6 +31,43 @@ const loadEnv = () => {
   }
 };
 
+/**
+ * Determines if the content should be premium based on the time of day
+ * Premium content is published before 4:30 PM ET
+ * @returns {boolean} - Whether the content should be premium
+ */
+const isPremiumContent = () => {
+  // Get current time in ET
+  const now = new Date();
+  const timeZone = 'America/New_York'; // ET timezone
+  
+  // Format the time to get hours and minutes
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone,
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: false
+  });
+  
+  const timeString = formatter.format(now);
+  const [hour, minute] = timeString.split(':').map(num => parseInt(num, 10));
+  
+  // Premium content is published before 4:30 PM ET
+  return hour < 16 || (hour === 16 && minute < 30);
+};
+
+/**
+ * Gets the standard tags for Market Pulse Daily posts
+ * @returns {Array} - Array of tag objects
+ */
+const getStandardTags = () => {
+  return [
+    { name: 'Market Insights' },
+    { name: 'Daily Update' },
+    { name: 'Market Pulse' }
+  ];
+};
+
 // Load environment variables
 const env = loadEnv();
 
@@ -94,12 +131,20 @@ const main = async () => {
     console.log('Publishing post to Ghost...');
     console.log(`Using Ghost URL: ${GHOST_URL}`);
     
+    // Determine if content should be premium based on time of day
+    const premium = isPremiumContent();
+    const visibility = premium ? 'paid' : 'members';
+    
+    console.log(`Content type: ${premium ? 'Premium (Paid members only)' : 'Standard (All members)'}`);
+    console.log(`Visibility: ${visibility}`);
+    
     // Create the post using the Ghost Admin API client
     const post = await api.posts.add({
       title: `Market Pulse Daily: ${formattedDate}`,
       mobiledoc: JSON.stringify(mobiledoc),
       status: 'published', // or 'draft' if you want to review before publishing
-      tags: ['Market Analysis', 'Trading', 'Finance'],
+      tags: getStandardTags(),
+      visibility: visibility,
       excerpt: data.decision ? data.decision.summary : 'Market analysis and trading insights',
       feature_image: process.env.FEATURE_IMAGE_URL || null, // Optional feature image URL
       published_at: new Date().toISOString()

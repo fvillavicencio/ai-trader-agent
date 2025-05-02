@@ -135,8 +135,8 @@ const addInflation = (data) => {
       <div style="display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px;">
         <!-- CPI Card -->
         <div style="flex: 1; min-width: 250px; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <div style="background-color: #2196f3; color: white; padding: 12px; text-align: center;">
-            <div style="font-size: 1.1rem; font-weight: bold;">Consumer Price Index (CPI)</div>
+          <div style="background-color: #2196f3; color: white; padding: 8px; text-align: center;">
+            <div style="font-size: 1rem; font-weight: bold;">Consumer Price Index (CPI)</div>
           </div>
           <div style="padding: 15px; display: flex; justify-content: space-around;">
             <div style="text-align: center;">
@@ -320,8 +320,8 @@ const addUpcomingEvents = (data) => {
  * @param {object} data - The data object containing all macroeconomic factors information
  */
 const addMacroeconomicFactors = (mobiledoc, data) => {
-  // Add section heading
-  addHeading(mobiledoc, 'Macroeconomic Factors', 2);
+  // Skip adding the heading - remove h2 tag as requested
+  // addHeading(mobiledoc, 'Macroeconomic Factors', 2);
   
   // Create a collapsible section header with dark purple background
   const macroHeaderHtml = `
@@ -329,10 +329,10 @@ const addMacroeconomicFactors = (mobiledoc, data) => {
       <div class="collapsible-section" data-section="macroeconomic-factors">
         <div class="collapsible-header" style="background-color: #4a1d96; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Macroeconomic Factors</h2>
+            <div style="margin: 0; font-size: 2rem; font-weight: bold; color: white;">Macroeconomic Factors</div>
             <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
           </div>
-          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%;">
             Fed Funds: ${data.macroeconomicFactors?.fedPolicy?.currentRate || "4.33%"} | CPI: ${data.macroeconomicFactors?.inflation?.cpi?.headline || "2.4"}% | 10Y Treasury: ${data.macroeconomicFactors?.treasuryYields?.current?.find(y => y.maturity === "10-Year")?.rate || "4.19"}%
           </div>
         </div>

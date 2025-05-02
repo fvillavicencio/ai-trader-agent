@@ -396,7 +396,7 @@ const addRSI = (mobiledoc, data) => {
       
       <div style="font-size: 1rem; margin-bottom: 10px;">
         <span style="font-weight: bold;">14-day Relative Strength Index (RSI):</span> 
-        <span style="color: ${sentimentColor};">${rsiValue} (${sentiment})</span>
+        <span style="color: ${sentimentColor};">${rsiValue} (${getRSICategory(parseFloat(rsiValue))})</span>
       </div>
       
       <!-- RSI Slider with thicker height and expanded gray range -->
@@ -457,18 +457,6 @@ const addMarketHeader = (mobiledoc, data) => {
   const fearGreedValue = fearGreedData ? fearGreedData.value : 0;
   const fearGreedCategory = getFearGreedCategory(fearGreedValue);
   
-  // Determine the color based on the value
-  const getFearGreedColor = (value) => {
-    if (value <= 0) return '#718096';  // Gray for unknown
-    if (value <= 25) return '#b91c1c';  // Dark red for extreme fear
-    if (value <= 40) return '#ed8936';  // Orange for Fear
-    if (value <= 60) return '#ecc94b';  // Yellow for Neutral
-    if (value <= 75) return '#48bb78';  // Green
-    return '#2f855a';  // Darker green
-  };
-  
-  const fearGreedColor = getFearGreedColor(fearGreedValue);
-
   // Get VIX data
   const vix = data.marketIndicators?.volatilityIndices?.find(index => index.symbol === '^VIX' || index.name.includes('VIX'));
   const vixValue = vix ? formatNumber(vix.value) : '';
@@ -478,7 +466,7 @@ const addMarketHeader = (mobiledoc, data) => {
   // Get RSI data
   const rsi = data.rsi || data.marketIndicators?.rsi;
   const rsiValue = rsi ? rsi.value : '';
-  const rsiCategory = rsi?.category || '';  // Use category directly from JSON, no fallback calculation
+  const rsiCategory = rsi?.category || getRSICategory(parseFloat(rsiValue));  // Calculate category if not provided
   const rsiColor = getRSIColor(rsiValue);
 
   const headerHtml = `
@@ -486,7 +474,7 @@ const addMarketHeader = (mobiledoc, data) => {
       <div style="font-size: 1.8rem; font-weight: bold; margin-bottom: 5px;">
         Market Pulse Daily
       </div>
-      <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+      <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
         <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change}%)</span></span> | 
         <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
         <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span> | 
@@ -530,19 +518,19 @@ const addMarketIndicators = (mobiledoc, data) => {
   // Get RSI data
   const rsi = data.rsi || data.marketIndicators?.rsi;
   const rsiValue = rsi ? rsi.value : '';
-  const rsiCategory = rsi?.category || '';  // Use category directly from JSON, no fallback calculation
+  const rsiCategory = rsi?.category || getRSICategory(parseFloat(rsiValue));  // Calculate category if not provided
   const rsiColor = getRSIColor(rsiValue);
 
   // Create the main container with collapsible header
   const html = `
     <div class="market-pulse-section market-indicators-container" style="margin: 0; padding: 0;">
       <div class="collapsible-section" data-section="market-indicators">
-        <div class="collapsible-header" style="background-color: #f1f5f9; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
+        <div class="collapsible-header" style="background-color: white; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; border: 2px solid #5D4037;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: black;">Key Market Indicators</h2>
+            <div style="margin: 0; font-size: 2rem; font-weight: bold; color: black;">Key Market Indicators</div>
             <div class="collapsible-icon" style="font-size: 14px; color: black;">▼</div>
           </div>
-          <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+          <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
             <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change})</span></span> | 
             <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
             <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span> | 

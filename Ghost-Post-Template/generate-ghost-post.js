@@ -112,7 +112,9 @@ const addWrapperEnd = (mobiledoc) => {
 const addTitle = (mobiledoc, data) => {
   // Add the title from metadata or use a sensible default based on existing data
   const title = data.metadata && data.metadata.title ? data.metadata.title : 'Market Pulse Daily';
-  addHeading(mobiledoc, title, 1);
+  
+  // We're not adding the title to the content anymore, as it will be set in the Ghost post metadata
+  // This prevents duplicate titles in the published content
   
   // Add the date from reportDateFormatted or calculate from reportDate
   let formattedDate = '';
