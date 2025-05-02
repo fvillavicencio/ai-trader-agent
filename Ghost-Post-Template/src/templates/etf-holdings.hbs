@@ -1,0 +1,25 @@
+{{#if marketIndicators.topHoldings}}
+  <div class="etf-holdings-container">
+    <div class="etf-holdings-header label-col">Top 5 Weighted Stocks in Major Indices</div>
+    <div class="etf-holdings-cards">
+      {{#each marketIndicators.topHoldings}}
+        <div class="etf-holding-card">
+          <div class="etf-holding-header">{{name}} <span>({{symbol}})</span></div>
+          <div class="etf-holding-table">Top 5 Holdings:</div>
+          <div class="etf-holding-rows">
+            {{#each holdings}}
+              <div class="etf-holding-row">
+                <span class="etf-holding-symbol">{{symbol}}</span>
+                <span class="etf-holding-name">{{name}}</span>
+                <span class="etf-holding-weight">{{weight}}</span>
+              </div>
+            {{/each}}
+          </div>
+          <div class="etf-holding-source">
+            Source: <a href="{{sourceUrl}}" target="_blank">{{source}}</a>, as of {{asOf}}
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+{{/if}}
