@@ -19,6 +19,8 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
     
     let htmlContent = "";
     let jsonUrl = "";
+    // Declare fullJsonDataset at function scope so it's available throughout the function
+    let fullJsonDataset = analysisJson; // Default to analysisJson if not using new template
     
     if (newTemplate) {
       // Generate the full JSON dataset using JsonExport
@@ -26,7 +28,7 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         Logger.log("Using new template approach with JSON export");
         
         // Generate the full JSON dataset
-        const fullJsonDataset = JsonExport.generateFullJsonDataset(analysisJson);
+        fullJsonDataset = JsonExport.generateFullJsonDataset(analysisJson);
         
         // Save the JSON to Google Drive
         const folderName = props.getProperty('GOOGLE_FOLDER_NAME') || 'Trading Analysis Emails';
@@ -130,7 +132,7 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         Logger.log("Debug mode is: " + (debugMode ? "enabled" : "disabled"));
         
         // Publish to Ghost via Lambda function
-        ghostResult = GhostPublisher.publishToGhostWithLambda(jsonDataToPublish, {
+        ghostResult = publishToGhostWithLambda(jsonDataToPublish, {
           draftOnly: debugMode  // Create a draft if in debug mode, otherwise publish
         });
         
@@ -162,7 +164,7 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
           '';
         
         // Generate teaser email HTML
-        const teaserHtmlBody = GhostPublisher.generateTeaserTeaserHtml({
+        const teaserHtmlBody = generateTeaserTeaserHtml({
           decision: decision,
           summary: summary,
           reportUrl: ghostResult.postUrl,
@@ -178,7 +180,7 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
           const testEmail = props.getProperty('TEST_EMAIL') || Session.getActiveUser().getEmail();
           
           // Create a draft email to the test recipient
-          const subject = `${newsletterName}: ${decision}`;
+          const subject = `[DEBUG] ${newsletterName}: New Analysis Published`;
           const draft = GmailApp.createDraft(
             testEmail,
             subject,
@@ -214,6 +216,9 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
       } catch (ghostError) {
         Logger.log("Warning: Failed to publish to Ghost via Lambda: " + ghostError);
         
+        // Store the JSON data to publish for use in the fallback path
+        const jsonDataToPublish = newTemplate ? fullJsonDataset : analysisJson;
+        
         // Fall back to the old Ghost publishing method if Lambda fails
         try {
           ghostResult = GhostPublisher.publishToGhost(file.getId(), folder.getId(), fileName);
@@ -230,15 +235,40 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
               newsletterName = propName.trim();
             }
           } catch (e) {}
-          const subject = `${newsletterName} - ${analysisJson.decision}`;
-
-          // Send the email using our enhanced sendEmail function
-          const recipientList = recipients.join(",");
-          const emailResult = sendEmail(subject, htmlContent, recipientList, false, true); // true for forceBcc
-          if (!emailResult.success) {
-            Logger.log(`Failed to send email to recipients: ${recipientList}`);
-            sendErrorEmail("Trade Decision Email Error", emailResult.error || "Unknown error");
-            return false;
+          
+          // Extract decision text
+          const decision = jsonDataToPublish.decision ? 
+            (typeof jsonDataToPublish.decision === 'object' ? jsonDataToPublish.decision.text : jsonDataToPublish.decision) : 
+            'Market Update';
+          
+          const subject = `${newsletterName} - ${decision}`;
+          
+          // In debug mode, create a draft instead of sending
+          if (debugMode) {
+            // Get test email from properties or use active user's email
+            const testEmail = props.getProperty('TEST_EMAIL') || Session.getActiveUser().getEmail();
+            
+            // Create a draft email to the test recipient
+            const draftSubject = `[DEBUG] ${newsletterName} - ${decision}`;
+            const draft = GmailApp.createDraft(
+              testEmail,
+              draftSubject,
+              'This email requires HTML to view properly.',
+              {
+                htmlBody: htmlContent,
+                name: newsletterName
+              }
+            );
+            Logger.log(`Debug mode: Draft email created with subject: ${draftSubject} to recipient: ${testEmail}`);
+          } else {
+            // Send the email using our enhanced sendEmail function
+            const recipientList = recipients.join(",");
+            const emailResult = sendEmail(subject, htmlContent, recipientList, false, true); // true for forceBcc
+            if (!emailResult.success) {
+              Logger.log(`Failed to send email to recipients: ${recipientList}`);
+              sendErrorEmail("Trade Decision Email Error", emailResult.error || "Unknown error");
+              return false;
+            }
           }
         } catch (fallbackError) {
           Logger.log("Error in fallback Ghost publishing: " + fallbackError);

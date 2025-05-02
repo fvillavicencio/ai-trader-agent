@@ -810,8 +810,8 @@ function retrieveFearAndGreedIndex() {
     try {
       Logger.log("Attempting to fetch Fear & Greed Index from RapidAPI...");
       data = fetchFearAndGreedIndexFromRapidAPI();
-      source = "Fear and Greed Index API (RapidAPI)";
-      sourceUrl = "https://fear-and-greed-index.p.rapidapi.com/v1/fgi";
+      source = "CNN Business (via RapidAPI)";
+      sourceUrl = "https://www.cnn.com/markets/fear-and-greed";
       
       if (data) {
         Logger.log("Successfully retrieved Fear & Greed Index from RapidAPI");
@@ -1003,16 +1003,14 @@ function retrieveFearAndGreedIndexData() {
     
     // Try to get data from CNN
     let data = null;
-    let source = "";
-    let sourceUrl = "";
+    let source = "CNN Business";
+    let sourceUrl = "https://www.cnn.com/markets/fear-and-greed";
     let errorMessage = "";
     
     try {
       // Fetch the Fear & Greed Index data from CNN
       Logger.log("Attempting to fetch Fear & Greed Index from CNN...");
       data = fetchFearAndGreedIndexData();
-      source = "CNN Business";
-      sourceUrl = "https://www.cnn.com/markets/fear-and-greed";
       
       if (data) {
         Logger.log("Successfully retrieved Fear & Greed Index from CNN");
