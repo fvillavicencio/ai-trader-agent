@@ -554,11 +554,24 @@ const categorizeMembersByStatus = (members) => {
 exports.handler = async (event, context) => {
     try {
         console.log('Event received:', JSON.stringify(event));
+        console.log('Context:', JSON.stringify(context));
         
         // Initialize the Ghost Admin API client
+        const ghostUrl = process.env.GHOST_URL || event.ghostUrl;
+        const ghostApiKey = process.env.GHOST_API_KEY || event.ghostApiKey;
+        const newsletterId = process.env.GHOST_NEWSLETTER_ID || event.newsletterId;
+        
+        console.log('Ghost URL:', ghostUrl);
+        console.log('Ghost API Key:', ghostApiKey ? 'Provided (masked)' : 'Not provided');
+        console.log('Newsletter ID:', newsletterId);
+        
+        if (!ghostUrl || !ghostApiKey) {
+            throw new Error('Missing required Ghost credentials. Please provide GHOST_URL and GHOST_API_KEY as environment variables or in the request payload.');
+        }
+        
         const api = new GhostAdminAPI({
-            url: process.env.GHOST_URL || event.ghostUrl,
-            key: process.env.GHOST_API_KEY || event.ghostApiKey,
+            url: ghostUrl,
+            key: ghostApiKey,
             version: 'v5.0'
         });
         
@@ -573,17 +586,54 @@ exports.handler = async (event, context) => {
         if (event.jsonData) {
             // Direct JSON data provided in the event
             data = event.jsonData;
+            console.log('Using jsonData from event');
         } else if (event.body) {
             // API Gateway format
-            const parsedBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
-            data = parsedBody.jsonData || parsedBody;
+            console.log('Detected API Gateway format with body');
+            let parsedBody;
+            try {
+                parsedBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+                console.log('Parsed body:', JSON.stringify(parsedBody).substring(0, 200) + '...');
+            } catch (error) {
+                console.error('Error parsing event.body:', error);
+                throw new Error('Invalid JSON in event.body');
+            }
+            
+            if (parsedBody.jsonData) {
+                data = parsedBody.jsonData;
+                console.log('Using jsonData from parsed body');
+            } else {
+                data = parsedBody;
+                console.log('Using entire parsed body as data');
+            }
         } else if (typeof event === 'string') {
             // String format
-            const parsedEvent = JSON.parse(event);
-            data = parsedEvent.jsonData || parsedEvent;
+            console.log('Detected string event format');
+            try {
+                const parsedEvent = JSON.parse(event);
+                data = parsedEvent.jsonData || parsedEvent;
+                console.log('Using parsed string event data');
+            } catch (error) {
+                console.error('Error parsing string event:', error);
+                throw new Error('Invalid JSON string in event');
+            }
         } else {
             // Default to the event itself
-            data = event.jsonData || event;
+            console.log('Using default event format');
+            data = event;
+        }
+        
+        // Validate the data structure
+        if (!data || typeof data !== 'object') {
+            throw new Error('Invalid data format. Expected a JSON object.');
+        }
+        
+        console.log('Data structure validation passed');
+        console.log('Data keys:', Object.keys(data));
+        
+        // Check for required data sections
+        if (!data.decision) {
+            console.warn('Warning: Missing decision section in data');
         }
         
         console.log('Processing data for mobiledoc generation');
@@ -624,7 +674,7 @@ exports.handler = async (event, context) => {
         ];
         
         // Create the post in Ghost
-        const post = await api.posts.add({
+        const postData = {
             title: title,
             mobiledoc: JSON.stringify(mobiledoc),
             status: 'published',
@@ -633,12 +683,19 @@ exports.handler = async (event, context) => {
             visibility: visibility,
             excerpt: data.decision ? data.decision.summary : 'Market analysis and trading insights',
             newsletter: {
-                id: process.env.GHOST_NEWSLETTER_ID || event.newsletterId
+                id: newsletterId
             }
-        });
+        };
+        
+        console.log('Post data prepared:', JSON.stringify({
+            ...postData,
+            mobiledoc: '(mobiledoc content omitted for brevity)'
+        }));
+        
+        const post = await api.posts.add(postData);
         
         console.log('Post created successfully!');
-        console.log('Post URL:', `${process.env.GHOST_URL || event.ghostUrl}/${post.slug}`);
+        console.log('Post URL:', `${ghostUrl}/${post.slug}`);
         console.log('Post ID:', post.id);
         
         // Fetch all members and categorize them
@@ -652,23 +709,39 @@ exports.handler = async (event, context) => {
         
         return {
             statusCode: 200,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
             body: JSON.stringify({
                 message: 'Post created successfully',
-                postUrl: `${process.env.GHOST_URL || event.ghostUrl}/${post.slug}`,
+                postUrl: `${ghostUrl}/${post.slug}`,
                 postId: post.id,
                 members: categorizedMembers
             })
         };
     } catch (error) {
         console.error('Error:', error);
-        console.error('Error details:', error.details);
+        console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
+        
+        if (error.details) {
+            console.error('Error details:', JSON.stringify(error.details));
+        }
         
         return {
             statusCode: 500,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
+                'Access-Control-Allow-Methods': 'OPTIONS,POST'
+            },
             body: JSON.stringify({
                 error: error.message,
-                details: error.details,
+                details: error.details || 'No additional details available',
                 stack: error.stack
             })
         };
