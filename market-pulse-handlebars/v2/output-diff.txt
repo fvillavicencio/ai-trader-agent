@@ -1,0 +1,967 @@
+--- normalized-handlebars.html	2025-04-24 13:48:50
++++ ../../market-pulse-handlebars/v2/normalized-lambda.html	2025-04-24 13:48:50
+@@ -551,7 +551,7 @@
+                         <div class="etf-holding-row">
+                           <span class="etf-holding-symbol">SHW</span>
+                           <span class="etf-holding-name">SHERWIN WILLIAMS CO/THE</span>
+-                          <span class="etf-holding-weight">5.41%</span>
++                          <span class="etf-holding-weight">5.19%</span>
+                         </div>
+                     </div>
+                     <div class="etf-holding-source">
+\ No newline at end of file
+@@ -677,7 +677,7 @@
+                     </div>
+                     
+                     <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$502.18 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$1.53</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
++                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$502.18 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$1.53</span> <span style="color: #4CAF50; font-weight: normal;">(0.00%)</span></div>
+                     </div>
+                   </div>
+                   
+\ No newline at end of file
+@@ -685,40 +685,36 @@
+                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                       <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">23.47</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Dividend Yield</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.32%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W High</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$518.84</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W Low</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$420.16</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Volume</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">78.4M</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Beta</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.0</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Sector</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Index ETF</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">23.47</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Assets</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$482.5B</td>
+                           </tr>
+                       </tbody>
+                     </table>
+\ No newline at end of file
+@@ -733,7 +729,7 @@
+                     </div>
+                     
+                     <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$438.76 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$2.15</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
++                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$438.76 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$2.15</span> <span style="color: #4CAF50; font-weight: normal;">(0.00%)</span></div>
+                     </div>
+                   </div>
+                   
+\ No newline at end of file
+@@ -741,36 +737,36 @@
+                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                       <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">31.82</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Dividend Yield</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">0.48%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W High</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$445.89</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W Low</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$334.56</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Volume</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">42.7M</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Beta</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.15</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Sector</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Tech ETF</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Assets</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$245.8B</td>
+                           </tr>
+                       </tbody>
+                     </table>
+\ No newline at end of file
+@@ -785,7 +781,7 @@
+                     </div>
+                     
+                     <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #f44336; margin-bottom: 2px; white-space: nowrap;">$383.42 <span style="color: #f44336;">↓</span> <span style="color: #f44336; font-weight: normal;">$-1.24</span> <span style="color: #f44336; font-weight: normal;">(N/A)</span></div>
++                      <div style="font-weight: bold; font-size: 0.95em; color: #f44336; margin-bottom: 2px; white-space: nowrap;">$383.42 <span style="color: #f44336;">↓</span> <span style="color: #f44336; font-weight: normal;">$-1.24</span> <span style="color: #f44336; font-weight: normal;">(0.00%)</span></div>
+                     </div>
+                   </div>
+                   
+\ No newline at end of file
+@@ -793,36 +789,36 @@
+                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                       <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">21.63</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Dividend Yield</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.85%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W High</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$392.41</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W Low</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$323.58</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Volume</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">3.2M</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Beta</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">0.92</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Sector</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Industrial ETF</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Assets</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$32.1B</td>
+                           </tr>
+                       </tbody>
+                     </table>
+\ No newline at end of file
+@@ -837,7 +833,7 @@
+                     </div>
+                     
+                     <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #f44336; margin-bottom: 2px; white-space: nowrap;">$202.37 <span style="color: #f44336;">↓</span> <span style="color: #f44336; font-weight: normal;">$-0.87</span> <span style="color: #f44336; font-weight: normal;">(N/A)</span></div>
++                      <div style="font-weight: bold; font-size: 0.95em; color: #f44336; margin-bottom: 2px; white-space: nowrap;">$202.37 <span style="color: #f44336;">↓</span> <span style="color: #f44336; font-weight: normal;">$-0.87</span> <span style="color: #f44336; font-weight: normal;">(0.00%)</span></div>
+                     </div>
+                   </div>
+                   
+\ No newline at end of file
+@@ -845,439 +841,37 @@
+                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                       <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">18.95</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Dividend Yield</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.21%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W High</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$218.63</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">52W Low</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$175.42</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Volume</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">29.8M</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Beta</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.25</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Assets</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$32.1B</td>
+-                          </tr>
+-                          <tr>
+                             <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Sector</td>
+                             <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Small Cap ETF</td>
+                           </tr>
+-                      </tbody>
+-                    </table>
+-                  </div>
+-                </div>
+-            </div>
+-          </div>
+-        
+-          <div class="subsection">
+-            <h3 style="margin-top: 30px;">Magnificent Seven</h3>
+-            <div class="stocks-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; align-items: stretch; justify-items: stretch;">
+-                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">AAPL</div>
+-                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">Apple Inc.</div>
+-                    </div>
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$169.32 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$0.87</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
+-                    </div>
+-                  </div>
+-                  
+-                  <div style="padding: 10px 12px; background-color: white;">
+-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+-                      <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">8</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">ROE</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">16.5%</td>
+-                          </tr>
+-                      </tbody>
+-                    </table>
+-                  </div>
+-                </div>
+-                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">MSFT</div>
+-                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">Microsoft Corp.</div>
+-                    </div>
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$416.78 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$3.21</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
+-                    </div>
+-                  </div>
+-                  
+-                  <div style="padding: 10px 12px; background-color: white;">
+-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+-                      <tbody>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">8</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Beta</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.85</td>
+-                          </tr>
+-                      </tbody>
+-                    </table>
+-                  </div>
+-                </div>
+-                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">AMZN</div>
+-                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">Amazon.com Inc.</div>
+-                    </div>
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$182.87 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$1.45</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
+-                    </div>
+-                  </div>
+-                  
+-                  <div style="padding: 10px 12px; background-color: white;">
+-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+-                      <tbody>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">8</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Forward P/E</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">13.8</td>
+-                          </tr>
+-                      </tbody>
+-                    </table>
+-                  </div>
+-                </div>
+-                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">GOOGL</div>
+-                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">Alphabet Inc. Class A</div>
+-                    </div>
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$153.88 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$1.22</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
+-                    </div>
+-                  </div>
+-                  
+-                  <div style="padding: 10px 12px; background-color: white;">
+-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+-                      <tbody>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                      </tbody>
+-                    </table>
+-                  </div>
+-                </div>
+-                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">NVDA</div>
+-                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">NVIDIA Corp.</div>
+-                    </div>
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$881.86 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$7.14</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
+-                    </div>
+-                  </div>
+-                  
+-                  <div style="padding: 10px 12px; background-color: white;">
+-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+-                      <tbody>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                      </tbody>
+-                    </table>
+-                  </div>
+-                </div>
+-                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">META</div>
+-                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">Meta Platforms Inc.</div>
+-                    </div>
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$493.97 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$7.02</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
+-                    </div>
+-                  </div>
+-                  
+-                  <div style="padding: 10px 12px; background-color: white;">
+-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+-                      <tbody>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                      </tbody>
+-                    </table>
+-                  </div>
+-                </div>
+-                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+-                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">TSLA</div>
+-                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">Tesla Inc.</div>
+-                    </div>
+-                    
+-                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #f44336; margin-bottom: 2px; white-space: nowrap;">$142.05 <span style="color: #f44336;">↓</span> <span style="color: #f44336; font-weight: normal;">$-3.21</span> <span style="color: #f44336; font-weight: normal;">(N/A)</span></div>
+-                    </div>
+-                  </div>
+-                  
+-                  <div style="padding: 10px 12px; background-color: white;">
+-                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+-                      <tbody>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Assets</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">$58.3B</td>
+                           </tr>
+-                          <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
+-                          </tr>
+                       </tbody>
+                     </table>
+                   </div>
+\ No newline at end of file
+@@ -1285,6 +879,7 @@
+             </div>
+           </div>
+         
++        
+           <div class="subsection">
+             <h3 style="margin-top: 30px;">Other Stocks</h3>
+             <div class="stocks-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; align-items: stretch; justify-items: stretch;">
+\ No newline at end of file
+@@ -1297,7 +892,7 @@
+                     </div>
+                     
+                     <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$182.56 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$2.34</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
++                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$182.56 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$2.34</span> <span style="color: #4CAF50; font-weight: normal;">(0.00%)</span></div>
+                     </div>
+                   </div>
+                   
+\ No newline at end of file
+@@ -1305,32 +900,32 @@
+                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                       <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">11.2</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Forward P/E</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">10.8</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Dividend Yield</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">2.45%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">ROE</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">16.5%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">ROA</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.32%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Sector</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Financial Services</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Industry</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Banks - Diversified</td>
+                           </tr>
+                       </tbody>
+                     </table>
+\ No newline at end of file
+@@ -1345,7 +940,7 @@
+                     </div>
+                     
+                     <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #f44336; margin-bottom: 2px; white-space: nowrap;">$27.85 <span style="color: #f44336;">↓</span> <span style="color: #f44336; font-weight: normal;">$-0.32</span> <span style="color: #f44336; font-weight: normal;">(N/A)</span></div>
++                      <div style="font-weight: bold; font-size: 0.95em; color: #f44336; margin-bottom: 2px; white-space: nowrap;">$27.85 <span style="color: #f44336;">↓</span> <span style="color: #f44336; font-weight: normal;">$-0.32</span> <span style="color: #f44336; font-weight: normal;">(0.00%)</span></div>
+                     </div>
+                   </div>
+                   
+\ No newline at end of file
+@@ -1353,40 +948,40 @@
+                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                       <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">46.42</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Forward P/E</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">12.3</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">PEG Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">2.65</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Price/Book</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.85</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Dividend Yield</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">5.74%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">ROE</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">3.8%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">ROA</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">1.65%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Sector</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Healthcare</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">8</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Industry</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Drug Manufacturers</td>
+                           </tr>
+                       </tbody>
+                     </table>
+\ No newline at end of file
+@@ -1401,7 +996,7 @@
+                     </div>
+                     
+                     <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+-                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$118.42 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$2.15</span> <span style="color: #4CAF50; font-weight: normal;">(N/A)</span></div>
++                      <div style="font-weight: bold; font-size: 0.95em; color: #4CAF50; margin-bottom: 2px; white-space: nowrap;">$118.42 <span style="color: #4CAF50;">↑</span> <span style="color: #4CAF50; font-weight: normal;">$2.15</span> <span style="color: #4CAF50; font-weight: normal;">(0.00%)</span></div>
+                     </div>
+                   </div>
+                   
+\ No newline at end of file
+@@ -1409,40 +1004,40 @@
+                     <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                       <tbody>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">0</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">P/E Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">14.52</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">1</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Forward P/E</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">13.8</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">2</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">PEG Ratio</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">0.85</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">3</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Price/Book</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">2.15</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">4</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Dividend Yield</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">3.28%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">5</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">ROE</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">18.5%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">6</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">ROA</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">9.8%</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">7</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Sector</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Energy</td>
+                           </tr>
+                           <tr>
+-                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">8</td>
+-                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">[object Object]</td>
++                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">Industry</td>
++                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">Oil &amp; Gas Integrated</td>
+                           </tr>
+                       </tbody>
+                     </table>
+\ No newline at end of file
+@@ -1642,19 +1237,19 @@
+                   <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                     <div style="text-align: center; border-right: 1px solid #eee; padding-right: 10px;">
+                       <div style="color: #4CAF50; font-size: 1rem; margin-bottom: 6px; font-weight: bold;">Trend</div>
+-                      <div style="color: #2c3e50; font-weight: bold; font-size: 1rem;"></div>
++                      <div style="color: #2c3e50; font-weight: bold; font-size: 1rem;">Increasing</div>
+                     </div>
+                     <div style="text-align: center; border-right: 1px solid #eee; padding-right: 10px;">
+                       <div style="color: #2196F3; font-size: 1rem; margin-bottom: 6px; font-weight: bold;">Outlook</div>
+-                      <div style="color: #2c3e50; font-size: 0.8rem; line-height: 1.4;"></div>
++                      <div style="color: #2c3e50; font-size: 0.8rem; line-height: 1.4;">Inflation is above target, suggesting potential for tighter monetary policy.</div>
+                     </div>
+                     <div style="text-align: center;">
+                       <div style="color: #9C27B0; font-size: 1rem; margin-bottom: 6px; font-weight: bold;">Market Impact</div>
+-                      <div style="color: #2c3e50; font-size: 0.8rem; line-height: 1.4;"></div>
++                      <div style="color: #2c3e50; font-size: 0.8rem; line-height: 1.4;">Continued inflation pressures may lead to higher interest rates, impacting growth stocks.</div>
+                     </div>
+                   </div>
+                 </div>
+-                <div style="font-size: 0.7rem; color: #666; text-align: right; padding: 0 15px 10px 15px; background-color: white;">Source: <a href="https://www.bls.gov/cpi/" style="color: #2196F3; text-decoration: none;">Bureau of Labor Statistics &amp; Federal Reserve</a>, as of April 10, 2024</div>
++                <div style="font-size: 0.7rem; color: #666; text-align: right; padding: 0 15px 10px 15px; background-color: white;">Source: <a href="https://www.federalreserve.gov/" style="color: #2196F3; text-decoration: none;">Federal Reserve</a>, as of April 10, 2024</div>
+               </div>
+             
+           </div>
+\ No newline at end of file
+@@ -1668,9 +1263,59 @@
+       
+       <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
+         <div style="font-weight: bold; margin-bottom: 5px;">Global Overview</div>
+-        <div style="color: #333;"></div>
++        <div style="color: #333;">Global geopolitical risk level is currently Moderate to High.</div>
+       </div>
+       
++          <div style="display: flex; margin-bottom: 15px;">
++            <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
++              <div style="font-weight: bold; margin-bottom: 5px;">Middle East Conflict</div>
++              <div style="color: #555; margin-bottom: 5px;">THIS SHOULD BE REMOVED, but doing so is breaking th ereport. Ongoing tensions in the Middle East continue to pose risks to global oil supplies and regional stability.</div>
++              <div style="font-size: 10px; color: #757575;">Region: Middle East • Source: Council on Foreign Relations</div>
++            </div>
++            <div style="width: 80px; text-align: center; background-color: #f44336; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
++              <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">High</div>
++            </div>
++          </div>
++          <div style="display: flex; margin-bottom: 15px;">
++            <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
++              <div style="font-weight: bold; margin-bottom: 5px;">Russia-Ukraine War</div>
++              <div style="color: #555; margin-bottom: 5px;">The prolonged conflict continues to impact global energy markets and supply chains.</div>
++              <div style="font-size: 10px; color: #757575;">Region: Eastern Europe • Source: Council on Foreign Relations</div>
++            </div>
++            <div style="width: 80px; text-align: center; background-color: #ff9800; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
++              <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">Medium</div>
++            </div>
++          </div>
++          <div style="display: flex; margin-bottom: 15px;">
++            <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
++              <div style="font-weight: bold; margin-bottom: 5px;">US-China Trade Tensions</div>
++              <div style="color: #555; margin-bottom: 5px;">Ongoing trade disputes and technology restrictions between the world's two largest economies.</div>
++              <div style="font-size: 10px; color: #757575;">Region: Global • Source: Peterson Institute for International Economics</div>
++            </div>
++            <div style="width: 80px; text-align: center; background-color: #ff9800; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
++              <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">Medium</div>
++            </div>
++          </div>
++          <div style="display: flex; margin-bottom: 15px;">
++            <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
++              <div style="font-weight: bold; margin-bottom: 5px;">Taiwan Strait Tensions</div>
++              <div style="color: #555; margin-bottom: 5px;">Increased military activities in the Taiwan Strait raising concerns about regional stability.</div>
++              <div style="font-size: 10px; color: #757575;">Region: East Asia • Source: Council on Foreign Relations</div>
++            </div>
++            <div style="width: 80px; text-align: center; background-color: #ff9800; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
++              <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">Medium</div>
++            </div>
++          </div>
++          <div style="display: flex; margin-bottom: 15px;">
++            <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
++              <div style="font-weight: bold; margin-bottom: 5px;">Global Debt Levels</div>
++              <div style="color: #555; margin-bottom: 5px;">Rising sovereign debt levels in both developed and emerging economies pose risks to financial stability.</div>
++              <div style="font-size: 10px; color: #757575;">Region: Global • Source: International Monetary Fund</div>
++            </div>
++            <div style="width: 80px; text-align: center; background-color: #ff9800; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
++              <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">Medium</div>
++            </div>
++          </div>
+     </div>
+ 
+     
+\ No newline at end of file

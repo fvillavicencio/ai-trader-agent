@@ -1,0 +1,136 @@
+        <!-- Federal Reserve Policy -->
+        {{#if macroeconomicFactors.fedPolicy}}
+          <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196F3;">
+            <div style="font-weight: bold; margin-bottom: 15px; font-size: clamp(1.1rem, 3vw, 1.25rem);">Federal Reserve Policy</div>
+            <div style="background-color: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+              <!-- Forward Guidance Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: clamp(1rem, 2vw, 1.08rem); color: #333; line-height: 1.6; word-break: break-word;">{{macroeconomicFactors.fedPolicy.guidance}}</div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.guidanceSourceUrl}}">{{macroeconomicFactors.fedPolicy.guidanceSource}}</a>, as of {{macroeconomicFactors.fedPolicy.guidanceAsOf}}
+                </div>
+              </div>
+              
+              <!-- Current Rate Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: clamp(1.1rem, 3vw, 1.25rem); font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; min-width: 0;">
+                  <div style="color: #4CAF50; font-weight: bold; font-size: clamp(1.2rem, 2.5vw, 1.5rem);">
+                    {{macroeconomicFactors.fedPolicy.currentRate}}%
+                  </div>
+                  <div style="color: #666; font-size: clamp(0.97rem, 2vw, 1.08rem); min-width: 0; max-width: 100%;">
+                    Range: {{macroeconomicFactors.fedPolicy.rateRange}}
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.rateSourceUrl}}">{{macroeconomicFactors.fedPolicy.rateSource}}</a>, as of {{macroeconomicFactors.fedPolicy.rateAsOf}}
+                </div>
+              </div>
+              
+              <!-- Federal Funds Futures Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: clamp(1.1rem, 3vw, 1.25rem); font-weight: bold; margin-bottom: 5px;">Federal Funds Futures</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin-bottom: 10px; margin-top: 5px; min-width: 0;">
+                    <div style="color: #666; font-size: clamp(1rem, 2vw, 1.08rem); min-width: 0; max-width: 100%;">Current Price: <span style="font-weight: bold; font-size: clamp(1.15rem, 2.5vw, 1.5rem);">{{macroeconomicFactors.fedPolicy.futuresPrice}}</span></div>
+                    <div style="color: #666; font-size: clamp(1rem, 2vw, 1.08rem); min-width: 0; max-width: 100%;">Implied Rate: <span style="font-weight: bold; font-size: clamp(1.15rem, 2.5vw, 1.5rem);">{{macroeconomicFactors.fedPolicy.impliedRate}}%</span></div>
+                  </div>
+                </div>
+                <div style="font-size: clamp(1.1rem, 3vw, 1.25rem); font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #4CAF50; font-size: clamp(1.1rem, 2vw, 1.5em);font-weight: bold;">&#8595;</span>
+                    <div style="color: #4CAF50; font-weight: bold; font-size: clamp(1.1rem, 2vw, 1.5em);">{{macroeconomicFactors.fedPolicy.cutProbability}}%</div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #757575; font-size: clamp(1.1rem, 2vw, 1.5em);font-weight: bold;">&#8594;</span>
+                    <div style="color: #757575; font-weight: bold; font-size: clamp(1.1rem, 2vw, 1.5em);">{{macroeconomicFactors.fedPolicy.holdProbability}}%</div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #f44336; font-size: clamp(1.1rem, 2vw, 1.5em);font-weight: bold;">&#8593;</span>
+                    <div style="color: #f44336; font-weight: bold; font-size: clamp(1.1rem, 2vw, 1.5em);">{{macroeconomicFactors.fedPolicy.hikeProbability}}%</div>
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.futuresSourceUrl}}">{{macroeconomicFactors.fedPolicy.futuresSource}}</a>, as of {{macroeconomicFactors.fedPolicy.futuresAsOf}}
+                </div>
+              </div>
+              
+              <!-- Meeting Schedule Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: clamp(1.1rem, 3vw, 1.25rem); font-weight: bold; margin-bottom: 5px;">Meeting Schedule</div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; min-width: 0;">
+                  <div style="color: #666; font-size: clamp(0.95rem, 2vw, 1.05rem); min-width: 0; max-width: 100%;">Last FOMC Meeting - {{macroeconomicFactors.fedPolicy.lastMeeting}}</div>
+                  <div style="color: #666; font-size: clamp(0.95rem, 2vw, 1.05rem); min-width: 0; max-width: 100%;">Next FOMC Meeting - {{macroeconomicFactors.fedPolicy.nextMeeting}}</div>
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.meetingSourceUrl}}">{{macroeconomicFactors.fedPolicy.meetingSource}}</a>, as of {{macroeconomicFactors.fedPolicy.meetingAsOf}}
+                </div>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+      
+        <!-- Inflation -->
+        {{#if macroeconomicFactors.inflation}}
+          <div style="margin-bottom: 20px;">
+            <div style="font-weight: bold; margin-bottom: 10px; font-size: clamp(1.1rem, 3vw, 1.25rem);">Inflation</div>
+            <div style="display: flex; flex-wrap: wrap; margin-bottom: 15px; gap: 10px;">
+              <!-- CPI Card -->
+              <div style="flex: 1 1 220px; min-width: 180px; max-width: 100%; margin-right: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #3498db; color: white; line-height: 1.2; font-size: clamp(1rem, 2vw, 1.08rem);">Consumer Price Index<br>(CPI)</div>
+                <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #3498db; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                  <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 10px;">
+                    <div style="flex: 1 1 80px; min-width: 60px;">
+                      <div style="color: #555; font-size: clamp(0.97rem, 2vw, 1.1em); margin-bottom: 2px;">Headline</div>
+                      <div style="color: #2c3e50; font-weight: bold; font-size: clamp(1.15rem, 2.5vw, 1.5em);">{{macroeconomicFactors.inflation.cpi.headline}}%</div>
+                    </div>
+                    <div style="flex: 1 1 80px; min-width: 60px;">
+                      <div style="color: #555; font-size: clamp(0.97rem, 2vw, 1.1em); margin-bottom: 2px;">Core</div>
+                      <div style="color: #2c3e50; font-weight: bold; font-size: clamp(1.15rem, 2.5vw, 1.5em);">{{macroeconomicFactors.inflation.cpi.core}}%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- PCE Card -->
+              <div style="flex: 1 1 220px; min-width: 180px; max-width: 100%; margin-left: 0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #e67e22; color: white; line-height: 1.2; font-size: clamp(1rem, 2vw, 1.08rem);">Personal Consumption Expenditure<br>(PCE)</div>
+                <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #e67e22; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                  <div style="display: flex; flex-wrap: wrap; justify-content: space-around; gap: 10px;">
+                    <div style="flex: 1 1 80px; min-width: 60px;">
+                      <div style="color: #555; font-size: clamp(0.97rem, 2vw, 1.1em); margin-bottom: 2px;">Headline</div>
+                      <div style="color: #2c3e50; font-weight: bold; font-size: clamp(1.15rem, 2.5vw, 1.5em);">{{macroeconomicFactors.inflation.pce.headline}}%</div>
+                    </div>
+                    <div style="flex: 1 1 80px; min-width: 60px;">
+                      <div style="color: #555; font-size: clamp(0.97rem, 2vw, 1.1em); margin-bottom: 2px;">Core</div>
+                      <div style="color: #2c3e50; font-weight: bold; font-size: clamp(1.15rem, 2.5vw, 1.5em);">{{macroeconomicFactors.inflation.pce.core}}%</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+           
+            <!-- Inflation Expectations -->
+            {{#if macroeconomicFactors.inflation.expectations}}
+              <div style="background-color: #f8f9fa; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 10px;">
+                <div style="background-color:rgb(19, 52, 79); color: white; padding: 12px; text-align: center;">
+                  <div style="font-size: clamp(1.05rem, 2vw, 1.15em); font-weight: bold; margin-bottom: 4px;">Inflation Expectations</div>
+                  <div style="font-size: clamp(0.92rem, 1.5vw, 0.98em); color: rgba(255,255,255,0.8);">Market Consensus</div>
+                </div>
+                <div style="padding: 15px; background-color: white;">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;">
+                    {{#each macroeconomicFactors.inflation.expectations}}
+                      <div style="text-align: center;">
+                        <div style="color: {{color}}; font-size: clamp(1rem, 2vw, 1.1em); margin-bottom: 6px;">{{period}}</div>
+                        <div style="color: #2c3e50; font-weight: bold; font-size: clamp(1.15rem, 2.5vw, 1.5em);">{{value}}%</div>
+                        <div style="color: #666; font-size: clamp(0.78rem, 1.5vw, 0.8em); margin-top: 4px;">{{asOf}}</div>
+                      </div>
+                    {{/each}}
+                  </div>
+                  <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                    Source: <a href="{{macroeconomicFactors.inflation.expectations.sourceUrl}}" style="color: #2196F3; text-decoration: none;">{{macroeconomicFactors.inflation.expectations.source}}</a>. Last Updated: {{macroeconomicFactors.inflation.expectations.lastUpdated}}
+                  </div>
+                </div>
+              </div>
+            {{/if}}

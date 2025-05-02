@@ -1,0 +1,436 @@
+{
+  "metadata": {
+    "title": "Market Pulse Daily",
+    "version": "1.0.0"
+  },
+  "reportDate": "2025-04-23T14:15:35-04:00",
+  "marketSentiment": {
+    "decision": "BUY",
+    "summary": "Markets are showing bullish signals with potential for continued upward momentum.",
+    "analysts": [
+      {
+        "name": "Jane Smith",
+        "comment": "Positive outlook due to strong earnings and favorable economic data.",
+        "mentionedSymbols": [
+          "SPY",
+          "QQQ",
+          "AAPL"
+        ]
+      },
+      {
+        "name": "John Doe",
+        "comment": "Tech sector looks particularly strong with AI developments driving growth.",
+        "mentionedSymbols": [
+          "NVDA",
+          "MSFT",
+          "GOOGL"
+        ]
+      }
+    ]
+  },
+  "marketIndicators": {
+    "rsi": {
+      "value": 62.5,
+      "description": "Bullish",
+      "source": "Trading View",
+      "sourceUrl": "https://www.tradingview.com/symbols/SPX/",
+      "asOf": "Apr 23, 2025, 2:15 PM EDT"
+    },
+    "macd": {
+      "value": 2.35,
+      "signal": 1.75,
+      "histogram": 0.6,
+      "description": "Bullish",
+      "source": "Trading View",
+      "sourceUrl": "https://www.tradingview.com/symbols/SPX/",
+      "asOf": "Apr 23, 2025, 2:15 PM EDT"
+    },
+    "movingAverages": {
+      "sma20": 4780.25,
+      "sma50": 4725.50,
+      "sma200": 4650.75,
+      "description": "Bullish - Price above all major MAs",
+      "source": "Trading View",
+      "sourceUrl": "https://www.tradingview.com/symbols/SPX/",
+      "asOf": "Apr 23, 2025, 2:15 PM EDT"
+    }
+  },
+  "fundamentalMetrics": {
+    "majorIndices": [
+      {
+        "symbol": "SPY",
+        "name": "S&P 500 ETF",
+        "price": 520.75,
+        "change": 2.35,
+        "changePercent": 0.0045,
+        "volume": "65.3M",
+        "recommendation": "Buy"
+      },
+      {
+        "symbol": "QQQ",
+        "name": "Nasdaq 100 ETF",
+        "price": 420.5,
+        "change": 3.25,
+        "changePercent": 0.0078,
+        "volume": "45.2M",
+        "recommendation": "Strong Buy"
+      },
+      {
+        "symbol": "DIA",
+        "name": "Dow Jones Industrial Average ETF",
+        "price": 380.25,
+        "change": 1.75,
+        "changePercent": 0.0046,
+        "volume": "28.7M",
+        "recommendation": "Buy"
+      },
+      {
+        "symbol": "IWM",
+        "name": "Russell 2000 ETF",
+        "price": 210.50,
+        "change": 1.25,
+        "changePercent": 0.0060,
+        "volume": "32.1M",
+        "recommendation": "Buy"
+      }
+    ],
+    "sectorPerformance": [
+      {
+        "sector": "Technology",
+        "changePercent": 0.0125,
+        "topPerformer": "NVDA",
+        "bottomPerformer": "INTC"
+      },
+      {
+        "sector": "Healthcare",
+        "changePercent": 0.0075,
+        "topPerformer": "LLY",
+        "bottomPerformer": "PFE"
+      },
+      {
+        "sector": "Financials",
+        "changePercent": 0.0050,
+        "topPerformer": "JPM",
+        "bottomPerformer": "C"
+      },
+      {
+        "sector": "Consumer Discretionary",
+        "changePercent": 0.0035,
+        "topPerformer": "AMZN",
+        "bottomPerformer": "NKE"
+      },
+      {
+        "sector": "Energy",
+        "changePercent": -0.0020,
+        "topPerformer": "XOM",
+        "bottomPerformer": "CVX"
+      }
+    ],
+    "stocks": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "price": 185.92,
+        "change": 1.25,
+        "changePercent": 0.0068,
+        "volume": "58.3M",
+        "recommendation": "Buy",
+        "analysis": "Strong product lineup and services growth. The company continues to expand its ecosystem and maintain strong customer loyalty. Recent AI initiatives show promise for future growth."
+      },
+      {
+        "symbol": "MSFT",
+        "name": "Microsoft Corp.",
+        "price": 415.75,
+        "change": 3.5,
+        "changePercent": 0.0085,
+        "volume": "22.1M",
+        "recommendation": "Strong Buy",
+        "analysis": "Cloud business continues to drive growth with Azure gaining market share. AI integration across product lines is creating new revenue streams. Strong position in enterprise software market."
+      },
+      {
+        "symbol": "NVDA",
+        "name": "NVIDIA Corp.",
+        "price": 925.50,
+        "change": 15.75,
+        "changePercent": 0.0173,
+        "volume": "35.7M",
+        "recommendation": "Strong Buy",
+        "analysis": "Dominating AI chip market with continued strong demand. Data center revenue growth exceeding expectations. New product launches maintaining technological edge."
+      },
+      {
+        "symbol": "GOOGL",
+        "name": "Alphabet Inc.",
+        "price": 175.25,
+        "change": 2.35,
+        "changePercent": 0.0136,
+        "volume": "18.9M",
+        "recommendation": "Buy",
+        "analysis": "Search business remains strong while cloud segment shows accelerating growth. AI integration improving core products. YouTube ad revenue recovering well."
+      }
+    ],
+    "etfHoldings": {
+      "symbol": "SPY",
+      "name": "SPDR S&P 500 ETF Trust",
+      "topHoldings": [
+        {
+          "symbol": "AAPL",
+          "name": "Apple Inc.",
+          "weight": 0.0725,
+          "change": 0.0068
+        },
+        {
+          "symbol": "MSFT",
+          "name": "Microsoft Corp.",
+          "weight": 0.0685,
+          "change": 0.0085
+        },
+        {
+          "symbol": "AMZN",
+          "name": "Amazon.com Inc.",
+          "weight": 0.0345,
+          "change": 0.0092
+        }
+      ]
+    },
+    "earnings": {
+      "recentReports": [
+        {
+          "symbol": "TSLA",
+          "name": "Tesla Inc.",
+          "reportDate": "2025-04-22T16:00:00Z",
+          "epsEstimate": 0.85,
+          "epsActual": 0.92,
+          "revenueEstimate": "25.1B",
+          "revenueActual": "26.2B",
+          "priceChange": 0.0325
+        },
+        {
+          "symbol": "NFLX",
+          "name": "Netflix Inc.",
+          "reportDate": "2025-04-21T16:00:00Z",
+          "epsEstimate": 4.75,
+          "epsActual": 5.10,
+          "revenueEstimate": "9.2B",
+          "revenueActual": "9.5B",
+          "priceChange": 0.0475
+        }
+      ],
+      "upcoming": [
+        {
+          "symbol": "AMZN",
+          "name": "Amazon.com Inc.",
+          "reportDate": "2025-04-25T16:00:00Z",
+          "epsEstimate": 1.25,
+          "revenueEstimate": "142.5B"
+        },
+        {
+          "symbol": "META",
+          "name": "Meta Platforms Inc.",
+          "reportDate": "2025-04-24T16:00:00Z",
+          "epsEstimate": 4.35,
+          "revenueEstimate": "38.7B"
+        }
+      ]
+    },
+    "forwardEPS": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "currentEPS": 6.35,
+        "forwardEPS": 6.85,
+        "growth": 0.0787
+      },
+      {
+        "symbol": "MSFT",
+        "name": "Microsoft Corp.",
+        "currentEPS": 11.25,
+        "forwardEPS": 12.50,
+        "growth": 0.1111
+      }
+    ]
+  },
+  "macroeconomicFactors": {
+    "treasuryYields": [
+      {
+        "duration": "2-Year",
+        "yield": 4.95,
+        "change": 0.05
+      },
+      {
+        "duration": "5-Year",
+        "yield": 4.65,
+        "change": 0.03
+      },
+      {
+        "duration": "10-Year",
+        "yield": 4.35,
+        "change": -0.02
+      },
+      {
+        "duration": "30-Year",
+        "yield": 4.45,
+        "change": -0.01
+      }
+    ],
+    "economicEvents": [
+      {
+        "event": "Fed Interest Rate Decision",
+        "date": "2025-04-30T14:00:00Z",
+        "forecast": "No Change",
+        "previous": "5.25-5.50%",
+        "impact": "High"
+      },
+      {
+        "event": "Non-Farm Payrolls",
+        "date": "2025-05-02T12:30:00Z",
+        "forecast": "175K",
+        "previous": "192K",
+        "impact": "High"
+      },
+      {
+        "event": "GDP Growth Rate",
+        "date": "2025-04-25T12:30:00Z",
+        "forecast": "2.3%",
+        "previous": "2.1%",
+        "impact": "Medium"
+      },
+      {
+        "event": "Consumer Confidence",
+        "date": "2025-04-29T14:00:00Z",
+        "forecast": "105.5",
+        "previous": "104.7",
+        "impact": "Medium"
+      }
+    ],
+    "commodities": [
+      {
+        "name": "Crude Oil",
+        "price": 82.35,
+        "change": 1.25,
+        "changePercent": 0.0154
+      },
+      {
+        "name": "Gold",
+        "price": 2350.75,
+        "change": 15.50,
+        "changePercent": 0.0066
+      },
+      {
+        "name": "Silver",
+        "price": 28.75,
+        "change": 0.45,
+        "changePercent": 0.0159
+      },
+      {
+        "name": "Natural Gas",
+        "price": 3.25,
+        "change": -0.05,
+        "changePercent": -0.0152
+      }
+    ],
+    "volatilityIndices": [
+      {
+        "symbol": "VIX",
+        "name": "CBOE Volatility Index",
+        "value": 18.75,
+        "change": -0.85,
+        "changePercent": -0.0434
+      },
+      {
+        "symbol": "VXN",
+        "name": "Nasdaq Volatility Index",
+        "value": 22.50,
+        "change": -1.25,
+        "changePercent": -0.0526
+      }
+    ],
+    "futures": [
+      {
+        "name": "S&P 500 E-mini",
+        "price": 5215.50,
+        "change": 12.75,
+        "changePercent": 0.0025
+      },
+      {
+        "name": "Nasdaq 100 E-mini",
+        "price": 18250.25,
+        "change": 65.50,
+        "changePercent": 0.0036
+      },
+      {
+        "name": "Dow Jones E-mini",
+        "price": 38025.75,
+        "change": 85.25,
+        "changePercent": 0.0022
+      }
+    ]
+  },
+  "inflationMetrics": {
+    "cpi": {
+      "current": 3.2,
+      "previous": 3.4,
+      "change": -0.2,
+      "asOf": "Mar 2025"
+    },
+    "pce": {
+      "current": 2.8,
+      "previous": 2.9,
+      "change": -0.1,
+      "asOf": "Feb 2025"
+    },
+    "ppi": {
+      "current": 2.5,
+      "previous": 2.7,
+      "change": -0.2,
+      "asOf": "Mar 2025"
+    },
+    "wageGrowth": {
+      "current": 3.8,
+      "previous": 3.7,
+      "change": 0.1,
+      "asOf": "Mar 2025"
+    }
+  },
+  "geopoliticalRisks": {
+    "overview": "Moderate geopolitical tensions with potential impact on energy markets and global trade.",
+    "items": [
+      {
+        "region": "Middle East",
+        "risk": "Ongoing tensions affecting oil supply routes.",
+        "impact": "Medium",
+        "markets": [
+          "Energy",
+          "Defense"
+        ]
+      },
+      {
+        "region": "Europe",
+        "risk": "Trade negotiations creating uncertainty.",
+        "impact": "Low",
+        "markets": [
+          "Financials",
+          "Consumer Goods"
+        ]
+      },
+      {
+        "region": "Asia",
+        "risk": "Semiconductor supply chain disruptions.",
+        "impact": "Medium",
+        "markets": [
+          "Technology",
+          "Automotive"
+        ]
+      },
+      {
+        "region": "Global",
+        "risk": "Cybersecurity threats to financial infrastructure.",
+        "impact": "Medium",
+        "markets": [
+          "Technology",
+          "Financials",
+          "Utilities"
+        ]
+      }
+    ]
+  }
+}

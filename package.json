@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@tryghost/admin-api": "^1.13.13"
+  }
+}

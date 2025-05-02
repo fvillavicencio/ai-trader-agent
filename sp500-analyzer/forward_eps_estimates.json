@@ -1,0 +1,62 @@
+[
+  {
+    "source": "FactSet",
+    "url": "https://www.factset.com/",
+    "year": 2025,
+    "eps": 250.00
+  },
+  {
+    "source": "S&P Global",
+    "url": "https://www.spglobal.com/",
+    "year": 2025,
+    "eps": 248.50
+  },
+  {
+    "source": "Yardeni Research",
+    "url": "https://www.yardeni.com/",
+    "year": 2025,
+    "eps": 251.20
+  },
+  {
+    "source": "Goldman Sachs",
+    "url": "https://www.goldmansachs.com/",
+    "year": 2025,
+    "eps": 252.10
+  },
+  {
+    "source": "JP Morgan",
+    "url": "https://www.jpmorgan.com/",
+    "year": 2025,
+    "eps": 249.30
+  },
+  {
+    "source": "FactSet",
+    "url": "https://www.factset.com/",
+    "year": 2026,
+    "eps": 265.00
+  },
+  {
+    "source": "S&P Global",
+    "url": "https://www.spglobal.com/",
+    "year": 2026,
+    "eps": 263.00
+  },
+  {
+    "source": "Yardeni Research",
+    "url": "https://www.yardeni.com/",
+    "year": 2026,
+    "eps": 266.10
+  },
+  {
+    "source": "Goldman Sachs",
+    "url": "https://www.goldmansachs.com/",
+    "year": 2026,
+    "eps": 267.50
+  },
+  {
+    "source": "JP Morgan",
+    "url": "https://www.jpmorgan.com/",
+    "year": 2026,
+    "eps": 264.20
+  }
+]
