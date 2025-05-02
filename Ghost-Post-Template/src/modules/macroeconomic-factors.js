@@ -152,8 +152,8 @@ const addInflation = (data) => {
         
         <!-- PCE Card -->
         <div style="flex: 1; min-width: 250px; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
-          <div style="background-color: #ff9800; color: white; padding: 12px; text-align: center;">
-            <div style="font-size: 1.1rem; font-weight: bold;">Personal Consumption Expenditure (PCE)</div>
+          <div style="background-color: #ff9800; color: white; padding: 8px; text-align: center;">
+            <div style="font-size: 1rem; font-weight: bold;">Personal Consumption Expenditure (PCE)</div>
           </div>
           <div style="padding: 15px; display: flex; justify-content: space-around;">
             <div style="text-align: center;">
@@ -208,15 +208,15 @@ const addInflation = (data) => {
       <div style="background-color: white; border-radius: 0 0 8px 8px; padding: 20px; border: 1px solid #e2e8f0; border-top: none;">
         <div style="display: flex; flex-wrap: wrap; justify-content: space-between; gap: 15px;">
           <div style="flex: 1; min-width: 100px; text-align: center;">
-            <div style="color: #666; font-size: 0.9rem; margin-bottom: 5px;">Trend</div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 5px; font-weight: bold;">Trend</div>
             <div style="font-size: 1.1rem; font-weight: bold; color: #4caf50;">${trend.direction || "Stable"}</div>
           </div>
           <div style="flex: 2; min-width: 200px;">
-            <div style="color: #666; font-size: 0.9rem; margin-bottom: 5px;">Outlook</div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 5px; font-weight: bold;">Outlook</div>
             <div style="font-size: 0.9rem;">${trend.outlook || "Inflation is being closely monitored by the Federal Reserve for potential policy adjustments."}</div>
           </div>
           <div style="flex: 2; min-width: 200px;">
-            <div style="color: #666; font-size: 0.9rem; margin-bottom: 5px;">Market Impact</div>
+            <div style="color: #666; font-size: 0.9rem; margin-bottom: 5px; font-weight: bold;">Market Impact</div>
             <div style="font-size: 0.9rem;">${trend.marketImpact || "Changes in inflation may impact interest rates and asset valuations across markets."}</div>
           </div>
         </div>
@@ -323,14 +323,14 @@ const addMacroeconomicFactors = (mobiledoc, data) => {
   // Add section heading
   addHeading(mobiledoc, 'Macroeconomic Factors', 2);
   
-  // Create a collapsible section header with blue background
+  // Create a collapsible section header with dark purple background
   const macroHeaderHtml = `
     <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%; margin-bottom: 20px;">
-      <!-- Section Header with blue background -->
-      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; margin-bottom: 0; width: 100%;">
+      <!-- Section Header with dark purple background -->
+      <div class="collapsible-header" style="background-color: #4a1d96; padding: 15px; border-radius: 6px 6px 0 0; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; margin-bottom: 0; width: 95%; max-width: 800px; margin-left: auto; margin-right: auto;">
         <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
           <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Macroeconomic Factors</h2>
-          <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
+          <div class="collapsible-icon" style="font-size: 14px; color: white; margin-left: auto;">▼</div>
         </div>
         <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
           Fed Funds: ${data.macroeconomicFactors?.fedPolicy?.currentRate || "4.33%"} | CPI: ${data.macroeconomicFactors?.inflation?.cpi?.headline || "2.4"}% | 10Y Treasury: ${data.macroeconomicFactors?.treasuryYields?.current?.find(y => y.maturity === "10-Year")?.rate || "4.19"}%

@@ -3,7 +3,7 @@
  * Generates the Fundamental Metrics section of the Ghost post
  */
 
-const { addHeading, addHTML, addDivider } = require('../utils/mobiledoc-helpers');
+const { addHeading, addHTML } = require('../utils/mobiledoc-helpers');
 
 /**
  * Formats a number with commas for thousands and fixed decimal places
@@ -147,7 +147,7 @@ const addSP500AnalysisContent = (data) => {
           <div style="overflow-x: auto;">
             <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
               <thead>
-                <tr style="background-color: #4B2991; text-align: center; font-weight: 600; color: white;">
+                <tr style="background-color: #800020; text-align: center; font-weight: 600; color: white;">
                   <th style="padding: 12px 8px; white-space: nowrap;">Current</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">5-Year Avg</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">10-Year Avg</th>
@@ -439,10 +439,10 @@ const addFundamentalMetrics = (mobiledoc, data) => {
   const html = `
     <div class="collapsible-section" style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; width: 100%; margin-bottom: 20px;">
       <!-- Section Header with blue background -->
-      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 6px; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; margin-bottom: 0; width: 100%;">
+      <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 6px 6px 0 0; display: flex; flex-direction: column; align-items: flex-start; cursor: pointer; margin-bottom: 0; width: 95%; max-width: 800px; margin-left: auto; margin-right: auto;">
         <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
           <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
-          <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
+          <div class="collapsible-icon" style="font-size: 14px; color: white; margin-left: auto;">▼</div>
         </div>
         <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
           <span style="white-space: nowrap;">S&P 500: ${formatNumber(data.sp500?.indexLevel)}</span> | 
@@ -485,9 +485,6 @@ const addFundamentalMetrics = (mobiledoc, data) => {
   `;
   
   addHTML(mobiledoc, html);
-  
-  // Add a divider
-  addDivider(mobiledoc);
 };
 
 module.exports = {
