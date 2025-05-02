@@ -18,7 +18,9 @@
   "author": "Market Pulse Daily",
   "license": "MIT",
   "dependencies": {
+    "@aws-sdk/client-lambda": "^3.799.0",
     "@tryghost/admin-api": "^1.13.8",
+    "dotenv": "^16.5.0",
     "express": "^5.1.0"
   }
 }

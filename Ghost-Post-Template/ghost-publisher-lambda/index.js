@@ -30,33 +30,41 @@ const {
  * @returns {string} - The generated title
  */
 const generateEngagingTitle = () => {
-  const titles = [
-    'Market Whisper',
-    'Market Pulse',
-    'Market Insights',
-    'Market Navigator',
-    'Market Rhythms'
+  const now = new Date();
+  
+  // Format time and date
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true
+  });
+  
+  const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  
+  const time = formatter.format(now);
+  const date = dateFormatter.format(now);
+  
+  // List of market phrases to choose from
+  const marketPhrases = [
+    "Market Currents", "Market Pulse", "Market Whisper", "Market Musings", "Market Rhythms",
+    "Market Beats", "Market Insights", "Market Signals", "Market Watch", "Market Movements"
   ];
   
-  const randomIndex = Math.floor(Math.random() * titles.length);
-  const title = titles[randomIndex];
+  // List of emojis to choose from
+  const emojis = ["📊", "📈", "📉", "💰", "🔍", "🎯", "💡", "⚡", "💫", "🌟"];
   
-  // Get current date and time in ET
-  const now = new Date();
-  const options = {
-    timeZone: 'America/New_York',
-    month: 'numeric',
-    day: 'numeric',
-    year: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true
-  };
+  // Randomly select a phrase and emoji
+  const phrase = marketPhrases[Math.floor(Math.random() * marketPhrases.length)];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
   
-  const formatter = new Intl.DateTimeFormat('en-US', options);
-  const dateTimeET = formatter.format(now);
-  
-  return `${title} - ${dateTimeET}`;
+  // Return the formatted title
+  return `${phrase} ${emoji} - ${date} ${time} ET`;
 };
 
 /**
@@ -91,7 +99,6 @@ const addCustomCSS = (mobiledoc, data) => {
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         padding: 1.25rem;
         margin-bottom: 1rem;
-        border: none;
       }
       
       .decision-banner {
@@ -203,6 +210,12 @@ const addWrapperEnd = (mobiledoc) => {
  * @param {object} data - The data object containing title information
  */
 const addTitle = (mobiledoc, data) => {
+  // Add the title from metadata or use a sensible default based on existing data
+  const title = data.metadata && data.metadata.title ? data.metadata.title : 'Market Pulse Daily';
+  
+  // We're not adding the title to the content anymore, as it will be set in the Ghost post metadata
+  // This prevents duplicate titles in the published content
+  
   // Add the date from reportDateFormatted or calculate from reportDate
   let formattedDate = '';
   if (data.reportDateFormatted) {
@@ -275,6 +288,7 @@ const addDecisionBanner = (mobiledoc, data) => {
     if (data.decision.color) {
       decisionBgColor = data.decision.color;
     }
+    // We're no longer determining color based on text - always use orange as default
   }
   
   // Use the decision color from the data or our default amber/orange
@@ -299,25 +313,22 @@ const addDecisionBanner = (mobiledoc, data) => {
 const addJustification = (mobiledoc, data) => {
   if (!data.justification) return;
   
-  // Add heading
-  addHeading(mobiledoc, 'Justification', 2);
+  // Get justification text from data
+  const justificationText = typeof data.justification === 'string' 
+    ? data.justification 
+    : (data.justification.text || '');
   
-  // Add justification text
-  if (typeof data.justification === 'string') {
-    addParagraph(mobiledoc, data.justification);
-  } else if (Array.isArray(data.justification)) {
-    data.justification.forEach(paragraph => {
-      addParagraph(mobiledoc, paragraph);
-    });
-  } else if (typeof data.justification === 'object' && data.justification.text) {
-    if (Array.isArray(data.justification.text)) {
-      data.justification.text.forEach(paragraph => {
-        addParagraph(mobiledoc, paragraph);
-      });
-    } else {
-      addParagraph(mobiledoc, data.justification.text);
-    }
-  }
+  if (!justificationText) return;
+  
+  const justificationHtml = `
+    <div class="section">
+      <h2 style="font-size: 1.8rem; margin-bottom: 1rem; color: #1a365d;">Justification</h2>
+      <div style="line-height: 1.6; color: #444; font-size: 1.1em;">${justificationText}</div>
+    </div>
+  `;
+  
+  addHTML(mobiledoc, justificationHtml);
+  addDivider(mobiledoc);
 };
 
 /**
@@ -326,11 +337,15 @@ const addJustification = (mobiledoc, data) => {
  * @param {object} data - The data object containing disclaimer information
  */
 const addDisclaimer = (mobiledoc, data) => {
-  const disclaimer = data.disclaimer || 'This content is for informational purposes only and should not be considered financial advice. Always do your own research before making investment decisions.';
+  // Add a horizontal line before the disclaimer
+  addDivider(mobiledoc);
   
+  // Use the exact disclaimer format from the HTML template
   const disclaimerHtml = `
-    <div style="margin-top: 2rem; padding: 1rem; background-color: #f8f9fa; border-radius: 8px; font-size: 0.9rem; color: #718096;">
-      <strong>Disclaimer:</strong> ${disclaimer}
+    <div style="margin-top: 15px; padding: 15px; background-color: #e6f2ff; border-radius: 8px; font-size: 11px; color: #666; line-height: 1.4;">
+      <p><strong>Disclaimer:</strong> The information provided in this report is for informational purposes only and does not constitute investment advice. Market Pulse Daily does not guarantee the accuracy, completeness, or timeliness of the information provided. The content should not be construed as an offer to sell or the solicitation of an offer to buy any security. Market Pulse Daily is not responsible for any investment decisions made based on the information provided in this report.</p>
+      <p>Past performance is not indicative of future results. Investing in securities involves risks, including the potential loss of principal. Market data and analysis are sourced from third parties believed to be reliable, but Market Pulse Daily makes no representations regarding the accuracy or completeness of such information.</p>
+      <p>Market Pulse Daily may hold positions in securities mentioned in this report. Readers should conduct their own due diligence before making any investment decisions.</p>
     </div>
   `;
   
@@ -343,14 +358,14 @@ const addDisclaimer = (mobiledoc, data) => {
  * @param {object} data - The data object containing footer information
  */
 const addFooter = (mobiledoc, data) => {
-  const footerText = data.footer?.text || 'Market Pulse Daily';
-  const footerLink = data.footer?.link || '#';
+  // Get the current year for the copyright
+  const year = new Date().getFullYear();
   
+  // Use the exact footer format from the HTML template
   const footerHtml = `
-    <div style="margin-top: 2rem; padding: 1rem; background-color: #1a365d; border-radius: 8px; text-align: center;">
-      <a href="${footerLink}" style="color: white; text-decoration: none; font-weight: bold;">
-        ${footerText}
-      </a>
+    <div style="margin-top: 15px; padding: 20px; background-color: #1a365d; color: white; text-align: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <div style="font-weight: bold; margin-bottom: 10px;">Market Pulse Daily - Actionable Trading Insights</div>
+      <div style="font-size: 12px; color: #e2e8f0;">&copy; ${year} Market Pulse Daily. All rights reserved.</div>
     </div>
   `;
   
@@ -470,26 +485,32 @@ const generateMobiledoc = (data) => {
  * @returns {array} - Array of member objects
  */
 const fetchAllMembers = async (api) => {
-  let allMembers = [];
-  let page = 1;
-  let hasMorePages = true;
-  
-  while (hasMorePages) {
-    const response = await api.members.browse({
-      limit: 100,
-      page: page,
-      include: 'email'
-    });
+  try {
+    const members = [];
+    let page = 1;
+    let hasMore = true;
     
-    if (response.length === 0) {
-      hasMorePages = false;
-    } else {
-      allMembers = allMembers.concat(response);
-      page++;
+    // Fetch all members using pagination
+    while (hasMore) {
+      const response = await api.members.browse({
+        limit: 100,
+        page: page,
+        include: 'email'
+      });
+      
+      if (response.length === 0) {
+        hasMore = false;
+      } else {
+        members.push(...response);
+        page++;
+      }
     }
+    
+    return members;
+  } catch (error) {
+    console.error('Error fetching members:', error);
+    return [];
   }
-  
-  return allMembers;
 };
 
 /**
@@ -498,24 +519,30 @@ const fetchAllMembers = async (api) => {
  * @returns {object} - Object with categorized member arrays
  */
 const categorizeMembersByStatus = (members) => {
-  const categorized = {
-    all: members.map(member => member.email),
+  const result = {
+    all: [],
     paid: [],
     free: [],
     comped: []
   };
   
   members.forEach(member => {
-    if (member.status === 'paid') {
-      categorized.paid.push(member.email);
-    } else if (member.status === 'comped') {
-      categorized.comped.push(member.email);
-    } else {
-      categorized.free.push(member.email);
+    // Add to all members
+    if (member.email) {
+      result.all.push(member.email);
+      
+      // Categorize by status
+      if (member.status === 'paid') {
+        result.paid.push(member.email);
+      } else if (member.status === 'comped') {
+        result.comped.push(member.email);
+      } else {
+        result.free.push(member.email);
+      }
     }
   });
   
-  return categorized;
+  return result;
 };
 
 /**
@@ -530,8 +557,8 @@ exports.handler = async (event, context) => {
         
         // Initialize the Ghost Admin API client
         const api = new GhostAdminAPI({
-            url: process.env.GHOST_URL,
-            key: process.env.GHOST_API_KEY,
+            url: process.env.GHOST_URL || event.ghostUrl,
+            key: process.env.GHOST_API_KEY || event.ghostApiKey,
             version: 'v5.0'
         });
         
@@ -540,13 +567,61 @@ exports.handler = async (event, context) => {
         console.log('Generated title:', title);
         
         // Parse the JSON data from the event
-        const data = typeof event.body === 'string' ? JSON.parse(event.body) :
-                    (event.body || (typeof event === 'string' ? JSON.parse(event) : event));
-        console.log('Parsed data:', JSON.stringify(data, null, 2));
+        let data;
+        
+        // Handle different input formats
+        if (event.jsonData) {
+            // Direct JSON data provided in the event
+            data = event.jsonData;
+        } else if (event.body) {
+            // API Gateway format
+            const parsedBody = typeof event.body === 'string' ? JSON.parse(event.body) : event.body;
+            data = parsedBody.jsonData || parsedBody;
+        } else if (typeof event === 'string') {
+            // String format
+            const parsedEvent = JSON.parse(event);
+            data = parsedEvent.jsonData || parsedEvent;
+        } else {
+            // Default to the event itself
+            data = event.jsonData || event;
+        }
+        
+        console.log('Processing data for mobiledoc generation');
         
         // Generate the mobiledoc structure
         const mobiledoc = generateMobiledoc(data);
         console.log('Generated mobiledoc structure');
+        
+        // Determine if content should be premium based on time of day
+        const isPremium = () => {
+            // Get current time in ET
+            const now = new Date();
+            const formatter = new Intl.DateTimeFormat('en-US', {
+                timeZone: 'America/New_York',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: false
+            });
+            
+            const timeString = formatter.format(now);
+            const [hour, minute] = timeString.split(':').map(num => parseInt(num, 10));
+            
+            // Premium content is published before 4:30 PM ET
+            return hour < 16 || (hour === 16 && minute < 30);
+        };
+        
+        const premium = isPremium();
+        const visibility = premium ? 'paid' : 'members';
+        
+        console.log(`Content type: ${premium ? 'Premium (Paid members only)' : 'Standard (All members)'}`);
+        console.log(`Visibility: ${visibility}`);
+        
+        // Standard tags for Market Pulse Daily posts
+        const tags = [
+            { name: 'Market Insights' },
+            { name: 'Daily Update' },
+            { name: 'Market Pulse' }
+        ];
         
         // Create the post in Ghost
         const post = await api.posts.add({
@@ -554,13 +629,16 @@ exports.handler = async (event, context) => {
             mobiledoc: JSON.stringify(mobiledoc),
             status: 'published',
             featured: false,
+            tags: tags,
+            visibility: visibility,
+            excerpt: data.decision ? data.decision.summary : 'Market analysis and trading insights',
             newsletter: {
-                id: process.env.GHOST_NEWSLETTER_ID
+                id: process.env.GHOST_NEWSLETTER_ID || event.newsletterId
             }
         });
         
         console.log('Post created successfully!');
-        console.log('Post URL:', `${process.env.GHOST_URL}/${post.slug}`);
+        console.log('Post URL:', `${process.env.GHOST_URL || event.ghostUrl}/${post.slug}`);
         console.log('Post ID:', post.id);
         
         // Fetch all members and categorize them
@@ -576,7 +654,7 @@ exports.handler = async (event, context) => {
             statusCode: 200,
             body: JSON.stringify({
                 message: 'Post created successfully',
-                postUrl: `${process.env.GHOST_URL}/${post.slug}`,
+                postUrl: `${process.env.GHOST_URL || event.ghostUrl}/${post.slug}`,
                 postId: post.id,
                 members: categorizedMembers
             })
