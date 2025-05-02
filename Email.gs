@@ -125,9 +125,13 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         // If we're using the new template, we already have the full JSON dataset
         const jsonDataToPublish = newTemplate ? fullJsonDataset : analysisJson;
         
+        // Log the JSON data structure before publishing
+        Logger.log("JSON data to publish structure: " + Object.keys(jsonDataToPublish).join(", "));
+        Logger.log("Debug mode is: " + (debugMode ? "enabled" : "disabled"));
+        
         // Publish to Ghost via Lambda function
         ghostResult = GhostPublisher.publishToGhostWithLambda(jsonDataToPublish, {
-          draftOnly: false  // Actually publish the article
+          draftOnly: debugMode  // Create a draft if in debug mode, otherwise publish
         });
         
         Logger.log("Successfully published to Ghost via Lambda function");
@@ -136,6 +140,18 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         
         // Get the recipients list from the Ghost members
         const recipients = ghostResult.members.all || [];
+        Logger.log(`Retrieved ${recipients.length} recipients from Ghost members`);
+        
+        // Get newsletter name from properties
+        let newsletterName = 'Market Pulse Daily';
+        try {
+          const propName = props.getProperty('NEWSLETTER_NAME');
+          if (propName && propName.trim() !== '') {
+            newsletterName = propName.trim();
+          }
+        } catch (e) {
+          Logger.log("Error getting newsletter name: " + e);
+        }
         
         // Generate teaser email HTML using the same approach as in publishToGhostWithLambda
         const decision = jsonDataToPublish.decision ? 
@@ -162,35 +178,28 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
           const testEmail = props.getProperty('TEST_EMAIL') || Session.getActiveUser().getEmail();
           
           // Create a draft email to the test recipient
-          const subject = `Market Pulse Daily: ${decision}`;
+          const subject = `${newsletterName}: ${decision}`;
           const draft = GmailApp.createDraft(
             testEmail,
             subject,
             'This email requires HTML to view properly.',
             {
               htmlBody: teaserHtmlBody,
-              name: 'Market Pulse Daily'
+              name: newsletterName
             }
-          );
-          
+          )
           Logger.log(`Draft teaser email created with subject: ${subject} to recipient: ${testEmail}`);
         } else {
           // Not in debug mode, send the email to all recipients
-          Logger.log("Sending teaser email to all recipients");
+          Logger.log("Debug mode disabled - sending teaser email to all recipients");
           
           // Compose email subject
-          let newsletterName = 'Market Pulse Daily';
-          try {
-            const propName = props.getProperty('NEWSLETTER_NAME');
-            if (propName && propName.trim() !== '') {
-              newsletterName = propName.trim();
-            }
-          } catch (e) {}
           
           const subject = `${newsletterName} - ${decision}`;
           
           // Send the email to all recipients as BCC
           const recipientList = recipients.join(",");
+          Logger.log(`Sending email to ${recipients.length} recipients`);
           const emailResult = sendEmail(subject, teaserHtmlBody, recipientList, false, true); // true for forceBcc
           
           if (!emailResult.success) {
