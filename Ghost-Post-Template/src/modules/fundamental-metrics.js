@@ -79,31 +79,66 @@ const createStockCard = (stock) => {
   const arrow = isPositive ? '▲' : '▼';
   const changePrefix = isPositive ? '+' : '';
   
-  // Limit metrics to maximum 4 to prevent vertical overflow
-  const limitedMetrics = stock.metrics.slice(0, 4);
+  // Calculate the correct percentage change
+  let percentChange;
+  if (stock.price && stock.priceChange) {
+    // Calculate percentage change based on price and priceChange
+    const priceValue = parseFloat(stock.price);
+    const changeValue = parseFloat(stock.priceChange);
+    
+    if (!isNaN(priceValue) && !isNaN(changeValue) && priceValue !== 0) {
+      // Calculate percentage: (change / (price - change)) * 100
+      const basePrice = priceValue - changeValue;
+      if (basePrice !== 0) {
+        const calculatedPercent = (changeValue / basePrice) * 100;
+        percentChange = calculatedPercent.toFixed(2) + '%';
+      } else {
+        percentChange = '0.00%';
+      }
+    } else {
+      percentChange = '0.00%';
+    }
+  } else if (typeof stock.percentChange === 'string' && stock.percentChange.includes('%')) {
+    // If we can't calculate, but have a percentage string, clean it up
+    const numericPart = parseFloat(stock.percentChange.replace('%', ''));
+    if (!isNaN(numericPart)) {
+      // Format to 2 decimal places
+      percentChange = numericPart.toFixed(2) + '%';
+    } else {
+      percentChange = '0.00%';
+    }
+  } else if (typeof stock.percentChange === 'number') {
+    // If it's a number, format it as percentage
+    percentChange = stock.percentChange.toFixed(2) + '%';
+  } else {
+    percentChange = '0.00%';
+  }
+  
+  // Get all metrics to display
+  const metrics = stock.metrics || [];
   
   return `
-    <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border-left: 3px solid ${color}; margin-bottom: 15px; height: auto;">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 6px 8px; background-color: #f8f9fa;">
+    <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
         <!-- Left: Symbol and Company Name -->
-        <div style="display: flex; flex-direction: column; align-items: flex-start; flex: 1; overflow: hidden;">
-          <div style="font-weight: bold; font-size: 14px; color: #000; letter-spacing: 0.5px;">${stock.symbol}</div>
-          <div style="font-size: 10px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">${stock.name}</div>
+        <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+          <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">${stock.symbol}</div>
+          <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">${stock.name}</div>
         </div>
         <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
-        <div style="display: flex; flex-direction: column; align-items: flex-end; flex-shrink: 0; text-align: right;">
-          <div style="font-weight: bold; font-size: 0.85em; color: ${color}; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">$${formatNumber(stock.price)} <span style="color: ${color};">${arrow}</span> <span style="color: ${color}; font-weight: normal;">$${changePrefix}${formatNumber(Math.abs(stock.priceChange))}</span> <span style="color: ${color}; font-weight: normal; font-size: 0.75em;">(${stock.percentChange})</span></div>
+        <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+          <div style="font-weight: bold; font-size: 0.95em; color: ${color}; margin-bottom: 2px; white-space: nowrap;">$${formatNumber(stock.price)} <span style="color: ${color};">${arrow}</span> <span style="color: ${color}; font-weight: normal;">$${changePrefix}${formatNumber(Math.abs(stock.priceChange))}</span> <span style="color: ${color}; font-weight: normal;">(${percentChange})</span></div>
         </div>
       </div>
       <!-- Metrics Table -->
-      <div style="padding: 6px 8px; background-color: white;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.75em;">
+      <div style="padding: 10px 12px; background-color: white;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
           <tbody>
-            ${limitedMetrics.map(metric => {
+            ${metrics.map(metric => {
               return `
                 <tr>
-                  <td style="color: #777; padding: 2px 6px 2px 0; text-align: left; white-space: nowrap;">${metric.name}</td>
-                  <td style="font-weight: bold; color: #222; padding: 2px 0; text-align: right; white-space: nowrap;">
+                  <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">${metric.name}</td>
+                  <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
                     ${metric.value}
                   </td>
                 </tr>
@@ -432,8 +467,8 @@ const addOtherStocksContent = (data) => {
  * @param {object} data - The data object containing fundamental metrics information
  */
 const addFundamentalMetrics = (mobiledoc, data) => {
-  // Add the heading
-  addHeading(mobiledoc, 'Fundamental Metrics', 2);
+  // Skip adding the heading - remove h2 tag as requested
+  // addHeading(mobiledoc, 'Fundamental Metrics', 2);
   
   // Add the content
   const html = `
@@ -441,10 +476,10 @@ const addFundamentalMetrics = (mobiledoc, data) => {
       <div class="collapsible-section" data-section="fundamental-metrics">
         <div class="collapsible-header" style="background-color: #3182ce; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Fundamental Metrics</h2>
+            <div style="margin: 0; font-size: 2rem; font-weight: bold; color: white;">Fundamental Metrics</div>
             <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
           </div>
-          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%;">
             <span style="white-space: nowrap;">S&P 500: ${formatNumber(data.sp500?.indexLevel)}</span> | 
             <span style="white-space: nowrap;">P/E Ratio: ${formatNumber(data.sp500?.peRatio?.current)}</span> | 
             <span style="white-space: nowrap;">EPS (TTM): $${formatNumber(data.sp500?.eps?.ttm?.replace('$', ''))}</span>

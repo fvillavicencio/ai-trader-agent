@@ -57,6 +57,48 @@ const isPremiumContent = () => {
 };
 
 /**
+ * Generates an engaging market-related title with a timestamp
+ * @returns {string} - The formatted title
+ */
+const generateEngagingTitle = () => {
+  const now = new Date();
+  
+  // Format time and date
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    hour: 'numeric',
+    minute: 'numeric',
+    hour12: true
+  });
+  
+  const dateFormatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/New_York',
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric'
+  });
+  
+  const time = formatter.format(now);
+  const date = dateFormatter.format(now);
+  
+  // List of market phrases to choose from
+  const marketPhrases = [
+    "Market Currents", "Market Pulse", "Market Whisper", "Market Musings", "Market Rhythms",
+    "Market Beats", "Market Insights", "Market Signals", "Market Watch", "Market Movements"
+  ];
+  
+  // List of emojis to choose from
+  const emojis = ["📊", "📈", "📉", "💰", "🔍", "🎯", "💡", "⚡", "💫", "🌟"];
+  
+  // Randomly select a phrase and emoji
+  const phrase = marketPhrases[Math.floor(Math.random() * marketPhrases.length)];
+  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+  
+  // Return the formatted title
+  return `${phrase} ${emoji} - ${date} ${time} ET`;
+};
+
+/**
  * Gets the standard tags for Market Pulse Daily posts
  * @returns {Array} - Array of tag objects
  */
@@ -120,16 +162,12 @@ const main = async () => {
     const mobiledoc = loadMobiledoc();
     const data = loadData();
     
-    // Format the date for the title
-    const date = new Date(data.reportDate);
-    const formattedDate = date.toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-    
     console.log('Publishing post to Ghost...');
     console.log(`Using Ghost URL: ${GHOST_URL}`);
+    
+    // Generate an engaging title
+    const title = generateEngagingTitle();
+    console.log(`Generated title: ${title}`);
     
     // Determine if content should be premium based on time of day
     const premium = isPremiumContent();
@@ -140,7 +178,7 @@ const main = async () => {
     
     // Create the post using the Ghost Admin API client
     const post = await api.posts.add({
-      title: `Market Pulse Daily: ${formattedDate}`,
+      title: title,
       mobiledoc: JSON.stringify(mobiledoc),
       status: 'published', // or 'draft' if you want to review before publishing
       tags: getStandardTags(),
