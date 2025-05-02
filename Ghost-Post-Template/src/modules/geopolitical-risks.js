@@ -82,10 +82,10 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
       <div class="collapsible-section" data-section="geopolitical-risks">
         <div class="collapsible-header" style="background-color: ${bgColor}; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.5rem; font-weight: bold; color: white;">Geopolitical Risks</h2>
+            <div style="margin: 0; font-size: 2rem; font-weight: bold; color: white;">Geopolitical Risks</div>
             <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
           </div>
-          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%;">
             ${globalOverview}
           </div>
         </div>

@@ -56,14 +56,14 @@ const addMarketSentiment = (mobiledoc, data) => {
   const sentiment = data.marketSentiment;
   
   const html = `
-    <div class="market-pulse-section market-sentiment-container" style="margin: 0; padding: 0;">
+    <div class="market-pulse-section market-sentiment-container" style="margin: 0; padding: 0; margin-bottom: 20px;">
       <div class="collapsible-section" data-section="market-sentiment">
         <div class="collapsible-header" style="background-color: #1a365d; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start;">
           <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
-            <h2 style="margin: 0; font-size: 1.5rem; color: white;">Market Sentiment</h2>
+            <div style="margin: 0; font-size: 2rem; color: white;">Market Sentiment</div>
             <div class="collapsible-icon" style="font-size: 14px; color: white;">▼</div>
           </div>
-          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1rem; font-weight: normal; text-align: center; width: 100%;">
+          <div style="margin-top: 10px; line-height: 1.5; color: white; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%;">
             ${sentiment.overall || 'No sentiment data available'}
           </div>
         </div>
