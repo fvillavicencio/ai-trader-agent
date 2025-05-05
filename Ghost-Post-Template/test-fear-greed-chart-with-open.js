@@ -110,9 +110,9 @@ const generateFearGreedChart = (fgData) => {
       
       <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
       
-      <div style="position: relative; height: 170px; background-color: #fff; border-radius: 8px; padding: 20px 20px 30px 20px; margin-top: 15px; margin-bottom: 25px; display: flex; justify-content: center;">
+      <div style="position: relative; height: 160px; background-color: #fff; border-radius: 8px; padding: 20px 20px 25px 20px; margin-top: 15px; margin-bottom: 25px; display: flex; justify-content: center;">
         <!-- Background color bands (horizontal) with proper scale alignment -->
-        <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 30px; height: ${chartHeight}px;">
+        <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 25px; height: ${chartHeight}px;">
           <!-- Extreme Greed: 75-100 -->
           <div style="position: absolute; top: 0; left: 0; right: 0; height: ${chartHeight * 25 / 100}px; background-color: rgba(67, 160, 71, 0.6);"></div>
           <!-- Greed: 60-75 -->
@@ -140,7 +140,7 @@ const generateFearGreedChart = (fgData) => {
         </svg>
         
         <!-- X-axis labels aligned with data points - all condensed to two lines -->
-        <div style="position: absolute; bottom: 2px; left: 20px; right: 20px; display: flex; height: 25px;">
+        <div style="position: absolute; bottom: 0px; left: 20px; right: 20px; display: flex; height: 25px;">
           ${dataPoints.map(point => `
             <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: ${point.x}%; transform: translateX(-50%); line-height: 1.2; ${point.isCurrent ? 'font-weight: bold;' : ''}">${point.label === 'One Month Ago' ? 'One<br>Month Ago' : point.label === 'One Week Ago' ? 'One<br>Week Ago' : point.label === 'Previous Close' ? 'Previous<br>Close' : point.label}</div>
           `).join('')}
