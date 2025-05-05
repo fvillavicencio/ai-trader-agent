@@ -77,7 +77,7 @@ const createStockCard = (stock) => {
   const isPositive = parseFloat(stock.priceChange) >= 0;
   const color = isPositive ? '#10b981' : '#ef4444';
   const arrow = isPositive ? '▲' : '▼';
-  const changePrefix = isPositive ? '+' : '';
+  const changePrefix = '';
   
   // Calculate the correct percentage change
   let percentChange;
@@ -127,7 +127,7 @@ const createStockCard = (stock) => {
         </div>
         <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
         <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
-          <div style="font-weight: bold; font-size: 0.95em; color: ${color}; margin-bottom: 2px; white-space: nowrap;">$${formatNumber(stock.price)} <span style="color: ${color};">${arrow}</span> <span style="color: ${color}; font-weight: normal;">$${changePrefix}${formatNumber(Math.abs(stock.priceChange))}</span> <span style="color: ${color}; font-weight: normal;">(${percentChange})</span></div>
+          <div style="font-weight: bold; font-size: 0.95em; color: ${color}; margin-bottom: 2px; white-space: nowrap;">$${formatNumber(stock.price)} <span style="color: ${color};">${arrow}</span> <span style="color: ${color}; font-weight: normal;">$${formatNumber(Math.abs(stock.priceChange))}</span> <span style="color: ${color}; font-weight: normal;">(${percentChange})</span></div>
         </div>
       </div>
       <!-- Metrics Table -->
