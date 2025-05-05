@@ -132,13 +132,13 @@ const createStockCard = (stock) => {
       </div>
       <!-- Metrics Table -->
       <div style="padding: 10px 12px; background-color: white;">
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+        <table style="width: 100%; border-collapse: collapse; border: 0; font-size: 0.9em;">
           <tbody>
             ${metrics.map(metric => {
               return `
-                <tr>
-                  <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">${metric.name}</td>
-                  <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
+                <tr style="border: 0;">
+                  <td style="color: #777; padding: 4px 10px 4px 0; text-align: left; border: 0;">${metric.name}</td>
+                  <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right; border: 0;">
                     ${metric.value}
                   </td>
                 </tr>
