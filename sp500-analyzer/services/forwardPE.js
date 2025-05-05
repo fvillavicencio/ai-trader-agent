@@ -250,45 +250,45 @@ export async function getForwardEpsEstimates() {
     // Convert to array of arrays for easier scanning
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
     
-    // Extract the last updated date from cell B2 (row index 1, column index 1)
+    // Extract the last updated date from cell A2 (row index 1, column index 0)
     let spGlobalLastUpdated = null;
     
-    // Check if row 1 (index 1) exists and has at least 2 columns
-    if (rows.length > 1 && rows[1] && rows[1].length > 1) {
-      const cellB2 = rows[1][1]; // Row 2, Column B (0-indexed)
-      console.log('[EPS] Cell B2 value:', cellB2);
+    // Check if row 1 (index 1) exists and has at least 1 column
+    if (rows.length > 1 && rows[1] && rows[1].length > 0) {
+      const cellA2 = rows[1][0]; // Row 2, Column A (0-indexed)
+      console.log('[EPS] Cell A2 value:', cellA2);
       
-      if (cellB2) {
+      if (cellA2) {
         // If it's a date object, format it
-        if (cellB2 instanceof Date) {
-          spGlobalLastUpdated = `${cellB2.getMonth() + 1}/${cellB2.getDate()}/${cellB2.getFullYear()}`;
+        if (cellA2 instanceof Date) {
+          spGlobalLastUpdated = `${cellA2.getMonth() + 1}/${cellA2.getDate()}/${cellA2.getFullYear()}`;
         } 
         // If it's a string that looks like a date, use it directly
-        else if (typeof cellB2 === 'string' && cellB2.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
-          spGlobalLastUpdated = cellB2;
+        else if (typeof cellA2 === 'string' && cellA2.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+          spGlobalLastUpdated = cellA2;
         }
         // If it's a number that could be a date serial number, try to convert it
-        else if (typeof cellB2 === 'number') {
+        else if (typeof cellA2 === 'number') {
           try {
             // Excel date serial numbers can be converted to JS dates
             const excelEpoch = new Date(1899, 11, 30);
-            const dateObj = new Date(excelEpoch.getTime() + cellB2 * 24 * 60 * 60 * 1000);
+            const dateObj = new Date(excelEpoch.getTime() + cellA2 * 24 * 60 * 60 * 1000);
             spGlobalLastUpdated = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
           } catch (e) {
             console.log('[EPS] Failed to convert Excel date serial number:', e);
-            spGlobalLastUpdated = String(cellB2);
+            spGlobalLastUpdated = String(cellA2);
           }
         }
         // Otherwise just use the string representation
         else {
-          spGlobalLastUpdated = String(cellB2);
+          spGlobalLastUpdated = String(cellA2);
         }
       }
     }
     
     // If we couldn't extract a date, fall back to current date
     if (!spGlobalLastUpdated) {
-      console.log('[EPS] Could not extract date from cell B2, using current date');
+      console.log('[EPS] Could not extract date from cell A2, using current date');
       const now = new Date();
       spGlobalLastUpdated = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
     }

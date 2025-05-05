@@ -156,7 +156,9 @@ function formatSP500AnalysisText(lambdaJson) {
     lines.push('S&P 500 Forward EPS & Implied Index Values (2025 & 2026):');
     lines.push('  Annual Estimate | Forward EPS | 15x | % vs Index | 17x | % vs Index | 20x | % vs Index');
     data.forwardEstimates.forEach(function(est) {
-      lines.push(`  ${est.estimateDate || ''} | $${est.eps || ''} | $${est.pe15 || ''} | ${est.pe15Pct || ''} | $${est.pe17 || ''} | ${est.pe17Pct || ''} | $${est.pe20 || ''} | ${est.pe20Pct || ''}`);
+      // Format EPS to 2 decimal places
+      const formattedEPS = Number(est.eps).toFixed(2);
+      lines.push(`  ${est.estimateDate || ''} | $${formattedEPS} | $${est.pe15 || ''} | ${est.pe15Pct || ''} | $${est.pe17 || ''} | ${est.pe17Pct || ''} | $${est.pe20 || ''} | ${est.pe20Pct || ''}`);
     });
     lines.push('');
   }
@@ -432,7 +434,10 @@ function addImpliedIndexValuesToEstimates(data) {
   var currentIndex = Number(data.sp500Index.price);
   
   data.forwardEstimates.forEach(function(est) {
+    // Format EPS to 2 decimal places first
+    est.eps = Number(est.eps).toFixed(2);
     var eps = Number(est.eps);
+    
     if (!isNaN(eps) && !isNaN(currentIndex) && currentIndex > 0) {
       est.pe15 = (eps * 15).toFixed(2);
       est.pe17 = (eps * 17).toFixed(2);
