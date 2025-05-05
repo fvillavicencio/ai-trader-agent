@@ -34,6 +34,20 @@ const addMajorIndices = (mobiledoc, data) => {
             const changeColor = isPositive ? '#48bb78' : '#f56565';
             const changeSign = isPositive ? '+' : '';
             const changeIcon = isPositive ? '↑' : '↓';
+            
+            // Format percentage change without negative sign
+            let percentChange = '';
+            if (index.percentChange) {
+              // If percentChange is provided as a string
+              const numericPart = parseFloat(index.percentChange.replace('%', ''));
+              percentChange = Math.abs(numericPart).toFixed(2) + '%';
+            } else if (index.change) {
+              // If we need to add % to the change value
+              percentChange = Math.abs(parseFloat(index.change)).toFixed(2) + '%';
+            } else {
+              percentChange = '0.00%';
+            }
+            
             return `
               <div class="market-index-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${changeColor};">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -41,7 +55,7 @@ const addMajorIndices = (mobiledoc, data) => {
                   <div style="display: flex; align-items: center; gap: 15px;">
                     <div style="font-size: 0.95rem;">${formatNumber(index.price)}</div>
                     <div style="color: ${changeColor}; font-weight: 500; font-size: 0.95rem;">
-                      ${changeIcon} ${changeSign}${index.percentChange || index.change + '%'}
+                      ${changeIcon} ${changeSign}${percentChange}
                     </div>
                   </div>
                 </div>
@@ -323,8 +337,8 @@ const addFearGreedIndex = (mobiledoc, data) => {
           `).join('')}
         </svg>
         
-        <!-- X-axis labels aligned with data points - all condensed to two lines -->
-        <div style="position: absolute; bottom: 0px; left: 20px; right: 20px; display: flex; height: 25px;">
+        <!-- X-axis labels aligned with data points - positioned directly under the SVG plot area -->
+        <div style="position: absolute; bottom: 0; left: 20px; right: 20px; display: flex; height: 25px;">
           ${dataPoints.map(point => `
             <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: ${point.x}%; transform: translateX(-50%); line-height: 1.2; ${point.isCurrent ? 'font-weight: bold;' : ''}">${point.label === 'One Month Ago' ? 'One<br>Month Ago' : point.label === 'One Week Ago' ? 'One<br>Week Ago' : point.label === 'Previous Close' ? 'Previous<br>Close' : point.label}</div>
           `).join('')}

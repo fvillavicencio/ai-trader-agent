@@ -91,7 +91,7 @@ const createStockCard = (stock) => {
       const basePrice = priceValue - changeValue;
       if (basePrice !== 0) {
         const calculatedPercent = (changeValue / basePrice) * 100;
-        percentChange = calculatedPercent.toFixed(2) + '%';
+        percentChange = Math.abs(calculatedPercent).toFixed(2) + '%';
       } else {
         percentChange = '0.00%';
       }
@@ -102,14 +102,14 @@ const createStockCard = (stock) => {
     // If we can't calculate, but have a percentage string, clean it up
     const numericPart = parseFloat(stock.percentChange.replace('%', ''));
     if (!isNaN(numericPart)) {
-      // Format to 2 decimal places
-      percentChange = numericPart.toFixed(2) + '%';
+      // Format to 2 decimal places and use absolute value to remove negative sign
+      percentChange = Math.abs(numericPart).toFixed(2) + '%';
     } else {
       percentChange = '0.00%';
     }
   } else if (typeof stock.percentChange === 'number') {
-    // If it's a number, format it as percentage
-    percentChange = stock.percentChange.toFixed(2) + '%';
+    // If it's a number, format it as percentage using absolute value
+    percentChange = Math.abs(stock.percentChange).toFixed(2) + '%';
   } else {
     percentChange = '0.00%';
   }
