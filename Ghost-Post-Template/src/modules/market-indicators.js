@@ -296,21 +296,21 @@ const addFearGreedIndex = (mobiledoc, data) => {
       
       <div style="position: relative; height: 180px; background-color: #fff; border-radius: 8px; padding: 20px 20px 40px 20px; margin-top: 15px; margin-bottom: 25px; display: flex; justify-content: center;">
         <!-- Background color bands (horizontal) with proper scale alignment -->
-        <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 40px; height: ${chartHeight}px;">
+        <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 40px;">
           <!-- Extreme Greed: 75-100 -->
-          <div style="position: absolute; top: 0; left: 0; right: 0; height: ${chartHeight * 25 / 100}px; background-color: rgba(67, 160, 71, 0.6);"></div>
+          <div style="position: absolute; top: 0%; left: 0; right: 0; height: 25%; background-color: rgba(67, 160, 71, 0.6);"></div>
           <!-- Greed: 60-75 -->
-          <div style="position: absolute; top: ${chartHeight * 25 / 100}px; left: 0; right: 0; height: ${chartHeight * 15 / 100}px; background-color: rgba(124, 179, 66, 0.6);"></div>
+          <div style="position: absolute; top: 25%; left: 0; right: 0; height: 15%; background-color: rgba(124, 179, 66, 0.6);"></div>
           <!-- Neutral: 40-60 -->
-          <div style="position: absolute; top: ${chartHeight * 40 / 100}px; left: 0; right: 0; height: ${chartHeight * 20 / 100}px; background-color: rgba(255, 235, 59, 0.6);"></div>
+          <div style="position: absolute; top: 40%; left: 0; right: 0; height: 20%; background-color: rgba(255, 235, 59, 0.6);"></div>
           <!-- Fear: 25-40 -->
-          <div style="position: absolute; top: ${chartHeight * 60 / 100}px; left: 0; right: 0; height: ${chartHeight * 15 / 100}px; background-color: rgba(251, 140, 0, 0.6);"></div>
+          <div style="position: absolute; top: 60%; left: 0; right: 0; height: 15%; background-color: rgba(251, 140, 0, 0.6);"></div>
           <!-- Extreme Fear: 0-25 -->
-          <div style="position: absolute; top: ${chartHeight * 75 / 100}px; left: 0; right: 0; height: ${chartHeight * 25 / 100}px; background-color: rgba(229, 57, 53, 0.6);"></div>
+          <div style="position: absolute; top: 75%; left: 0; right: 0; height: 25%; background-color: rgba(229, 57, 53, 0.6);"></div>
         </div>
         
         <!-- SVG Chart - aligned with bottom of chart area -->
-        <svg width="calc(100% - 20px)" height="${chartHeight}" style="overflow: visible; position: absolute; z-index: 2; left: 20px; bottom: 40px;">
+        <svg width="calc(100% - 40px)" height="${chartHeight}" style="position: absolute; z-index: 2; left: 20px; top: 20px;">
           <!-- Straight black line connecting data points -->
           <path d="${pathD}" stroke="#000000" stroke-width="2" fill="none"></path>
           
