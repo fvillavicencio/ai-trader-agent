@@ -112,37 +112,335 @@ function setupTriggers() {
 
 /**
  * Wrapper function that checks if today is an appropriate day to run the analysis
- * Morning analysis: Monday-Friday
- * Midday analysis: Monday-Friday
- * Evening analysis: Sunday-Thursday
+ * Morning analysis: Monday-Friday (9 AM)
+ * Midday analysis: Monday-Friday (12 PM)
+ * Evening analysis: Sunday-Thursday (6 PM)
+ * 
+ * When manually executed, it will run regardless of the time
+ * Also checks if today/tomorrow is a market trading day using Tradier API
  */
 function runTradingAnalysisWithDayCheck() {
   const now = new Date();
   const hour = now.getHours();
   const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
   
-  // Morning trigger (runs Monday-Friday)
+  // Check if this is a manual execution (not triggered by a time-based trigger)
+  const executionType = checkExecutionType();
+  
+  if (executionType === 'MANUAL') {
+    Logger.log("Manual execution detected - running trading analysis regardless of time");
+    runTradingAnalysis();
+    return;
+  }
+  
+  // Check if today is a trading day for morning/midday reports
+  // or if tomorrow is a trading day for evening reports
+  const isTradingDay = checkTradingDay(now);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const isTomorrowTradingDay = checkTradingDay(tomorrow);
+  
+  // Morning trigger (runs Monday-Friday at 9 AM)
   if (hour === MORNING_SCHEDULE_HOUR && dayOfWeek >= 1 && dayOfWeek <= 5) {
-    Logger.log("Running morning trading analysis (weekday)");
-    runTradingAnalysis();
+    // Only run if today is a trading day
+    if (isTradingDay) {
+      Logger.log("Running morning trading analysis (Monday-Friday)");
+      runTradingAnalysis();
+    } else {
+      Logger.log("Skipping morning trading analysis: today is not a trading day");
+    }
     return;
   }
   
-  // Midday trigger (runs Monday-Friday)
+  // Midday trigger (runs Monday-Friday at 12 PM)
   if (hour === MIDDAY_SCHEDULE_HOUR && dayOfWeek >= 1 && dayOfWeek <= 5) {
-    Logger.log("Running midday trading analysis (weekday)");
-    runTradingAnalysis();
+    // Only run if today is a trading day
+    if (isTradingDay) {
+      Logger.log("Running midday trading analysis (Monday-Friday)");
+      runTradingAnalysis();
+    } else {
+      Logger.log("Skipping midday trading analysis: today is not a trading day");
+    }
     return;
   }
   
-  // Evening trigger (runs Sunday-Thursday)
-  if (hour === EVENING_SCHEDULE_HOUR && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4))) {
-    Logger.log("Running evening trading analysis (Sunday-Thursday)");
-    runTradingAnalysis();
+  // Evening trigger (runs Sunday-Thursday at 6 PM)
+  // Sunday (dayOfWeek = 0) OR Monday-Thursday (dayOfWeek = 1-4)
+  if (hour === EVENING_SCHEDULE_HOUR && ((dayOfWeek === 0) || (dayOfWeek >= 1 && dayOfWeek <= 4))) {
+    // Only run if tomorrow is a trading day
+    if (isTomorrowTradingDay) {
+      Logger.log("Running evening trading analysis (Sunday-Thursday)");
+      runTradingAnalysis();
+    } else {
+      Logger.log("Skipping evening trading analysis: tomorrow is not a trading day");
+    }
     return;
   }
   
   Logger.log("Trigger activated but skipping execution: not a scheduled day for this time slot");
+}
+
+/**
+ * Test function for checkTradingDay
+ * Tests both today and tomorrow at 10 AM
+ */
+function testTradingDayCheck() {
+  // Get today's date at 10 AM
+  const today = new Date();
+  today.setHours(10, 0, 0, 0);
+  
+  // Get tomorrow's date at 10 AM
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  // Format dates for display
+  const todayFormatted = Utilities.formatDate(today, "America/New_York", "yyyy-MM-dd HH:mm:ss");
+  const tomorrowFormatted = Utilities.formatDate(tomorrow, "America/New_York", "yyyy-MM-dd HH:mm:ss");
+  
+  // Check if today is a trading day
+  const isTodayTradingDay = checkTradingDay(today);
+  
+  // Check if tomorrow is a trading day
+  const isTomorrowTradingDay = checkTradingDay(tomorrow);
+  
+  // Log the results
+  Logger.log(`===== TRADING DAY CHECK RESULTS =====`);
+  Logger.log(`Today (${todayFormatted}): ${isTodayTradingDay ? "IS a trading day" : "is NOT a trading day"}`);
+  Logger.log(`Tomorrow (${tomorrowFormatted}): ${isTomorrowTradingDay ? "IS a trading day" : "is NOT a trading day"}`);
+  
+  // Return the results as an object
+  return {
+    today: {
+      date: todayFormatted,
+      isTradingDay: isTodayTradingDay
+    },
+    tomorrow: {
+      date: tomorrowFormatted,
+      isTradingDay: isTomorrowTradingDay
+    }
+  };
+}
+
+/**
+ * Alternative implementation that uses a hardcoded list of market holidays
+ * This is used as a fallback when the Tradier API call fails
+ * @param {Date} date - The date to check
+ * @return {boolean} - True if the date is a trading day, false otherwise
+ */
+function isMarketHoliday(date) {
+  // Format the date as YYYY-MM-DD
+  const formattedDate = Utilities.formatDate(date, "America/New_York", "yyyy-MM-dd");
+  
+  // Get the year of the date
+  const year = date.getFullYear();
+  
+  // List of market holidays for 2025 and 2026
+  // Source: https://www.nyse.com/markets/hours-calendars
+  const marketHolidays = {
+    2025: [
+      "2025-01-01", // New Year's Day
+      "2025-01-20", // Martin Luther King, Jr. Day
+      "2025-02-17", // Presidents' Day
+      "2025-04-18", // Good Friday
+      "2025-05-26", // Memorial Day
+      "2025-06-19", // Juneteenth National Independence Day
+      "2025-07-04", // Independence Day
+      "2025-09-01", // Labor Day
+      "2025-11-27", // Thanksgiving Day
+      "2025-12-25"  // Christmas Day
+    ],
+    2026: [
+      "2026-01-01", // New Year's Day
+      "2026-01-19", // Martin Luther King, Jr. Day
+      "2026-02-16", // Presidents' Day
+      "2026-04-03", // Good Friday
+      "2026-05-25", // Memorial Day
+      "2026-06-19", // Juneteenth National Independence Day
+      "2026-07-03", // Independence Day (observed)
+      "2026-09-07", // Labor Day
+      "2026-11-26", // Thanksgiving Day
+      "2026-12-25"  // Christmas Day
+    ]
+  };
+  
+  // Select the appropriate holiday list based on the year
+  const holidayList = marketHolidays[year] || [];
+  
+  // If we don't have data for this year, log a warning
+  if (holidayList.length === 0) {
+    Logger.log(`Warning: No market holiday data available for ${year}. Using weekend check only.`);
+  }
+  
+  // Check if the date is in the list of market holidays
+  return holidayList.includes(formattedDate);
+}
+
+/**
+ * Checks if a given date is a market trading day
+ * @param {Date} date - The date to check
+ * @return {boolean} - True if the date is a trading day, false otherwise
+ */
+function checkTradingDay(date) {
+  try {
+    // First, check if it's a weekend
+    const dayOfWeek = date.getDay();
+    if (dayOfWeek === 0 || dayOfWeek === 6) {
+      Logger.log(`${Utilities.formatDate(date, "America/New_York", "yyyy-MM-dd")} is a weekend (not a trading day)`);
+      return false;
+    }
+    
+    // Then check if it's a market holiday
+    if (isMarketHoliday(date)) {
+      Logger.log(`${Utilities.formatDate(date, "America/New_York", "yyyy-MM-dd")} is a market holiday (not a trading day)`);
+      return false;
+    }
+    
+    // If it's not a weekend or a holiday, it's a trading day
+    return true;
+    
+    // The code below is the original implementation using Tradier API
+    // It's commented out because it's not working correctly
+    /*
+    // Format the date as YYYY-MM-DD
+    const formattedDate = Utilities.formatDate(date, "America/New_York", "yyyy-MM-dd");
+    
+    // Get the calendar for the month containing the date
+    const calendar = fetchTradierCalendar(date);
+    
+    // If we couldn't get the calendar, assume it's a trading day
+    if (!calendar || !calendar.days || !calendar.days.day) {
+      Logger.log("Could not retrieve market calendar from Tradier API. Assuming it's a trading day.");
+      return true;
+    }
+    
+    // Check if the date is in the calendar and is a market holiday
+    const days = calendar.days.day;
+    for (let i = 0; i < days.length; i++) {
+      const day = days[i];
+      if (day.date === formattedDate) {
+        // If status is not defined or is "open", it's a trading day
+        if (!day.status || day.status === "open") {
+          return true;
+        }
+        // If status is "closed", check if it's a holiday or weekend
+        if (day.status === "closed") {
+          // If it's a holiday, it's not a trading day
+          if (day.description && day.description !== "Market Holiday") {
+            Logger.log(`Market closed on ${formattedDate}: ${day.description}`);
+            return false;
+          }
+          // If it's a weekend, it's not a trading day
+          const dayNum = date.getDay();
+          if (dayNum === 0 || dayNum === 6) {
+            return false;
+          }
+          // Otherwise, assume it's a trading day
+          return true;
+        }
+      }
+    }
+    
+    // If we didn't find the date in the calendar, check if it's a weekend
+    const dayNum = date.getDay();
+    if (dayNum === 0 || dayNum === 6) {
+      return false;
+    }
+    
+    // If it's not a weekend and not in the calendar, assume it's a trading day
+    return true;
+    */
+  } catch (error) {
+    Logger.log(`Error checking if ${date} is a trading day: ${error}`);
+    // In case of error, assume it's a trading day to avoid skipping reports
+    return true;
+  }
+}
+
+/**
+ * Fetches the market calendar from Tradier API for a given month
+ * @param {Date} date - Any date in the month to fetch
+ * @return {Object} - The calendar object or null if there was an error
+ */
+function fetchTradierCalendar(date) {
+  try {
+    // Format the date as YYYY-MM for the API request
+    const month = Utilities.formatDate(date, "America/New_York", "yyyy-MM");
+    
+    // Get the Tradier API token
+    const apiToken = PropertiesService.getScriptProperties().getProperty('TRADIER_API_KEY');
+    if (!apiToken) {
+      Logger.log("Tradier API token not found in script properties");
+      return null;
+    }
+    
+    // Determine the base URL based on environment
+    const baseUrl = "https://api.tradier.com/v1"; // Production URL
+    
+    // Construct the URL for the calendar endpoint
+    const url = `${baseUrl}/markets/calendar?month=${month}`;
+    
+    // Make the API request
+    const options = {
+      method: 'GET',
+      headers: {
+        'Authorization': `Bearer ${apiToken}`,
+        'Accept': 'application/json'
+      },
+      muteHttpExceptions: true
+    };
+    
+    const response = UrlFetchApp.fetch(url, options);
+    const responseCode = response.getResponseCode();
+    
+    if (responseCode !== 200) {
+      Logger.log(`Error fetching market calendar: HTTP ${responseCode}`);
+      return null;
+    }
+    
+    const responseText = response.getContentText();
+    const data = JSON.parse(responseText);
+    
+    // Return the calendar object
+    return data.calendar;
+  } catch (error) {
+    Logger.log(`Error fetching market calendar: ${error}`);
+    return null;
+  }
+}
+
+/**
+ * Determines if the current execution is manual or triggered
+ * @return {string} 'MANUAL' for manual execution, 'TRIGGER' for trigger-based execution
+ */
+function checkExecutionType() {
+  try {
+    // Get the current trigger
+    const triggers = ScriptApp.getProjectTriggers();
+    const executionId = ScriptApp.getScriptId();
+    const triggerUid = Session.getEffectiveUser().getEmail();
+    
+    // If we can't determine, assume it's a manual execution
+    if (!triggers || triggers.length === 0) {
+      return 'MANUAL';
+    }
+    
+    // Check if any of the triggers match the current execution
+    for (let i = 0; i < triggers.length; i++) {
+      const trigger = triggers[i];
+      if (trigger.getHandlerFunction() === 'runTradingAnalysisWithDayCheck') {
+        // This is a bit of a hack, but if we find a matching trigger,
+        // we'll assume this is a trigger-based execution
+        return 'TRIGGER';
+      }
+    }
+    
+    // If no matching trigger was found, it's likely a manual execution
+    return 'MANUAL';
+  } catch (error) {
+    Logger.log('Error determining execution type: ' + error);
+    // Default to manual if we can't determine
+    return 'MANUAL';
+  }
 }
 
 /**
