@@ -360,7 +360,8 @@ const addRSI = (mobiledoc, data) => {
   // Use whichever data is available
   const rsi = rsiData || altRsiData;
   
-  if (!rsi) return;
+  // Skip if RSI object doesn't exist or if RSI value is null
+  if (!rsi || rsi.value === null) return;
   
   const rsiValue = rsi.value || 0;
   const rsiSource = rsi.source || 'Tradier (RSI)';
@@ -465,9 +466,10 @@ const addMarketHeader = (mobiledoc, data) => {
   
   // Get RSI data
   const rsi = data.rsi || data.marketIndicators?.rsi;
-  const rsiValue = rsi ? rsi.value : '';
-  const rsiCategory = rsi?.category || getRSICategory(parseFloat(rsiValue));  // Calculate category if not provided
-  const rsiColor = getRSIColor(rsiValue);
+  const showRSI = rsi && rsi.value !== null;
+  const rsiValue = showRSI ? rsi.value : '';
+  const rsiCategory = showRSI ? (rsi?.category || getRSICategory(parseFloat(rsiValue))) : '';  // Calculate category if not provided
+  const rsiColor = showRSI ? getRSIColor(rsiValue) : '';
 
   const headerHtml = `
     <div class="market-pulse-header" style="background-color: #e2e8f0; color: black; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: center;">
@@ -477,8 +479,8 @@ const addMarketHeader = (mobiledoc, data) => {
       <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
         <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change}%)</span></span> | 
         <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
-        <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span> | 
-        <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span></span>
+        <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span>${showRSI ? ` | 
+        <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span></span>` : ''}
       </div>
     </div>
   `;
@@ -517,9 +519,10 @@ const addMarketIndicators = (mobiledoc, data) => {
   
   // Get RSI data
   const rsi = data.rsi || data.marketIndicators?.rsi;
-  const rsiValue = rsi ? rsi.value : '';
-  const rsiCategory = rsi?.category || getRSICategory(parseFloat(rsiValue));  // Calculate category if not provided
-  const rsiColor = getRSIColor(rsiValue);
+  const showRSI = rsi && rsi.value !== null;
+  const rsiValue = showRSI ? rsi.value : '';
+  const rsiCategory = showRSI ? (rsi?.category || getRSICategory(parseFloat(rsiValue))) : '';  // Calculate category if not provided
+  const rsiColor = showRSI ? getRSIColor(rsiValue) : '';
 
   // Create the main container with collapsible header
   const html = `
@@ -533,8 +536,8 @@ const addMarketIndicators = (mobiledoc, data) => {
           <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
             <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change})</span></span> | 
             <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
-            <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span> | 
-            <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span></span>
+            <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span>${showRSI ? ` | 
+            <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiCategory})</span></span>` : ''}
           </div>
         </div>
         <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
@@ -548,7 +551,9 @@ const addMarketIndicators = (mobiledoc, data) => {
   addMarketFutures(mobiledoc, data);
   addVolatilityIndices(mobiledoc, data);
   addFearGreedIndex(mobiledoc, data);
-  addRSI(mobiledoc, data);
+  if (showRSI) {
+    addRSI(mobiledoc, data);
+  }
 
   // Close the container
   const closingHtml = `

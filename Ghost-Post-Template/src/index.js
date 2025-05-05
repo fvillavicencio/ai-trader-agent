@@ -632,7 +632,7 @@ function processData(data) {
   }
   
   // Add RSI explanation to the template data
-  if (sampleData.marketIndicators && sampleData.marketIndicators.rsi) {
+  if (sampleData.marketIndicators && sampleData.marketIndicators.rsi && sampleData.marketIndicators.rsi.value !== null) {
     sampleData.marketIndicators = sampleData.marketIndicators || {};
     sampleData.marketIndicators.rsi = {
       value: sampleData.marketIndicators.rsi.value,
@@ -642,6 +642,9 @@ function processData(data) {
       sourceUrl: sampleData.marketIndicators.rsi.sourceUrl,
       asOf: sampleData.marketIndicators.rsi.asOf
     };
+  } else if (sampleData.marketIndicators && sampleData.marketIndicators.rsi && sampleData.marketIndicators.rsi.value === null) {
+    // If RSI value is null, remove the RSI object completely so it won't be displayed
+    delete sampleData.marketIndicators.rsi;
   }
   
   return sampleData;
