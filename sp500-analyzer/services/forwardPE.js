@@ -356,8 +356,7 @@ export async function getForwardEpsEstimates() {
           value: eps,
           source: 'S&P Global',
           sourceUrl: 'https://www.spglobal.com/spdji/en/',
-          lastUpdated: fetchedRemote ? new Date().toISOString().slice(0,10) : (usedFallback === 'tmp' ? fs.statSync(TMP_XLSX_PATH).mtime.toISOString().slice(0,10) : fs.statSync(BUNDLED_XLSX_PATH).mtime.toISOString().slice(0,10)),
-          spGlobalLastUpdated: spGlobalLastUpdated, // Add the S&P Global last updated date
+          lastUpdated: spGlobalLastUpdated, // Use the S&P Global last updated date instead of current date
           year: year,
           price: price // Include the price if available
         });
