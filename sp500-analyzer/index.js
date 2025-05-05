@@ -76,8 +76,8 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
     const sourceUrl = est.sourceUrl || est.url || '#';
     
     // Calculate the appropriate scaling factor based on current S&P 500 level and forward P/E
-    // Current S&P 500 ~5670 with forward EPS ~74 gives a scaling factor of ~5
-    const scalingFactor = 5;
+    // Update to match the scaling factor used in SP500Analyzer.gs
+    const scalingFactor = 4;
     
     lines.push(`<tr><td>${scenario}</td><td>${year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(epsValue).toFixed(2)}</strong></td>` +
       multiples.map(m => {

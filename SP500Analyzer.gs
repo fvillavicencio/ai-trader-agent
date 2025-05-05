@@ -430,15 +430,20 @@ function formatSP500AnalysisHtml(lambdaJson) {
 function addImpliedIndexValuesToEstimates(data) {
   if (!data || !data.forwardEstimates || !data.sp500Index || !data.sp500Index.price) return;
   var currentIndex = Number(data.sp500Index.price);
+  
+  // Apply a scaling factor to convert the EPS values to the correct scale for S&P 500 index points
+  // S&P Global reports EPS values that need to be scaled up to match the index level
+  var scalingFactor = 4;
+  
   data.forwardEstimates.forEach(function(est) {
     var eps = Number(est.eps);
     if (!isNaN(eps) && !isNaN(currentIndex) && currentIndex > 0) {
-      est.pe15 = (eps * 15).toFixed(2);
-      est.pe17 = (eps * 17).toFixed(2);
-      est.pe20 = (eps * 20).toFixed(2);
-      est.pe15Pct = ((eps * 15 / currentIndex - 1) * 100).toFixed(1) + '%';
-      est.pe17Pct = ((eps * 17 / currentIndex - 1) * 100).toFixed(1) + '%';
-      est.pe20Pct = ((eps * 20 / currentIndex - 1) * 100).toFixed(1) + '%';
+      est.pe15 = (eps * 15 * scalingFactor).toFixed(2);
+      est.pe17 = (eps * 17 * scalingFactor).toFixed(2);
+      est.pe20 = (eps * 20 * scalingFactor).toFixed(2);
+      est.pe15Pct = ((eps * 15 * scalingFactor / currentIndex - 1) * 100).toFixed(1) + '%';
+      est.pe17Pct = ((eps * 17 * scalingFactor / currentIndex - 1) * 100).toFixed(1) + '%';
+      est.pe20Pct = ((eps * 20 * scalingFactor / currentIndex - 1) * 100).toFixed(1) + '%';
     } else {
       est.pe15 = est.pe17 = est.pe20 = 'N/A';
       est.pe15Pct = est.pe17Pct = est.pe20Pct = 'N/A';
@@ -451,10 +456,16 @@ function addImpliedIndexValuesToEstimates(data) {
  * @param {Object} data - The parsed Lambda JSON
  */
 function addImpliedIndexValuesToEarningsTTM(data) {
-  if (data.earnings && typeof data.earnings.eps === 'number') {
-    data.earnings.pe15 = (data.earnings.eps * 15).toFixed(2);
-    data.earnings.pe17 = (data.earnings.eps * 17).toFixed(2);
-    data.earnings.pe20 = (data.earnings.eps * 20).toFixed(2);
+  if (!data || !data.earnings || !data.earnings.eps) return;
+  
+  // Apply the same scaling factor as used for forward EPS
+  var scalingFactor = 4;
+  
+  var eps = Number(data.earnings.eps);
+  if (!isNaN(eps)) {
+    data.earnings.pe15 = (eps * 15 * scalingFactor).toFixed(2);
+    data.earnings.pe17 = (eps * 17 * scalingFactor).toFixed(2);
+    data.earnings.pe20 = (eps * 20 * scalingFactor).toFixed(2);
   } else {
     data.earnings.pe15 = data.earnings.pe17 = data.earnings.pe20 = 'N/A';
   }

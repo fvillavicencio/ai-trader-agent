@@ -54,7 +54,7 @@ async function testDeployedLambda() {
       console.log(`\nImplied S&P 500 values (current: ~${currentSPX}):`);
       
       // Calculate using the same approach as our updated code
-      const scalingFactor = 5;
+      const scalingFactor = 4;
       
       data.forwardEstimates.forEach(est => {
         const epsValue = est.eps || est.value;

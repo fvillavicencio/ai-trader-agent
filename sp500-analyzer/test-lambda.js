@@ -43,8 +43,8 @@ async function testLambda() {
         console.log(`\nImplied S&P 500 values (current: ~${currentSPX}):`);
         
         // Calculate the scaling factor to convert EPS to S&P 500 index points
-        // This should match the factor used in htmlForwardPETable
-        const scalingFactor = 5;
+        // This should match the factor used in htmlForwardPETable and SP500Analyzer.gs
+        const scalingFactor = 4;
         
         responseBody.forwardEstimates.forEach(est => {
           const epsValue = est.value !== undefined ? est.value : est.eps;
