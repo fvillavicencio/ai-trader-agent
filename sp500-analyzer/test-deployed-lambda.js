@@ -53,18 +53,21 @@ async function testDeployedLambda() {
       const currentSPX = data.sp500Index?.price || 5200;
       console.log(`\nImplied S&P 500 values (current: ~${currentSPX}):`);
       
-      // Calculate using the same approach as our updated code
-      const scalingFactor = 4;
+      // S&P Global reports quarterly EPS values, so multiply by 4 to get annual EPS
+      const quarterToAnnualMultiplier = 4;
       
       data.forwardEstimates.forEach(est => {
         const epsValue = est.eps || est.value;
         const year = est.year || (est.estimateDate ? parseInt(est.estimateDate.split('/')[2]) : new Date().getFullYear());
         
-        console.log(`\n${year} EPS: $${epsValue.toFixed(2)} (Source: ${est.source})`);
+        // Convert quarterly EPS to annual EPS
+        const annualEps = epsValue * quarterToAnnualMultiplier;
+        
+        console.log(`\n${year} EPS: $${epsValue.toFixed(2)} (quarterly) → $${annualEps.toFixed(2)} (annual) (Source: ${est.source})`);
         console.log('  PE Multiple | Target Value | % Change');
         console.log('  ------------------------------------');
         [15, 17, 18, 19, 20].forEach(multiple => {
-          const target = epsValue * multiple * scalingFactor;
+          const target = annualEps * multiple;
           const percentChange = ((target - currentSPX) / currentSPX * 100).toFixed(1);
           console.log(`  ${multiple}x         | $${target.toFixed(2)}      | ${percentChange}%`);
         });

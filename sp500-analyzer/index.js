@@ -75,13 +75,14 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
     // Use est.sourceUrl if available, otherwise fall back to est.url
     const sourceUrl = est.sourceUrl || est.url || '#';
     
-    // Calculate the appropriate scaling factor based on current S&P 500 level and forward P/E
-    // Update to match the scaling factor used in SP500Analyzer.gs
-    const scalingFactor = 4;
+    // S&P Global reports quarterly EPS values, so multiply by 4 to get annual EPS
+    const quarterToAnnualMultiplier = 4;
+    // Convert quarterly EPS to annual EPS
+    const annualEps = epsValue * quarterToAnnualMultiplier;
     
     lines.push(`<tr><td>${scenario}</td><td>${year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(epsValue).toFixed(2)}</strong></td>` +
       multiples.map(m => {
-        const target = epsValue * m * scalingFactor;
+        const target = annualEps * m;
         const pct = currentIndex ? (((target - currentIndex) / currentIndex) * 100).toFixed(1) + '%' : '';
         return `<td><strong>${formatUSD(Number(target).toFixed(2))}</strong></td><td>${pct}</td>`;
       }).join('') +
