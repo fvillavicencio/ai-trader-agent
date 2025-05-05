@@ -246,14 +246,55 @@ export async function getForwardEpsEstimates() {
     workbook = XLSX.read(xlsBuffer, { type: 'buffer' });
     // Find the relevant sheet (usually first)
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    // Convert to array of arrays
+    
+    // Convert to array of arrays for easier scanning
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
-    // DEBUG: Print rows 120 to 140 to inspect ESTIMATES section
-    console.log('==== XLSX ROWS 120-140 ====');
-    for (let i = 120; i < Math.min(rows.length, 140); i++) {
-      console.log(`[${i}]`, rows[i]);
+    
+    // Extract the last updated date from cell B2 (row index 1, column index 1)
+    let spGlobalLastUpdated = null;
+    
+    // Check if row 1 (index 1) exists and has at least 2 columns
+    if (rows.length > 1 && rows[1] && rows[1].length > 1) {
+      const cellB2 = rows[1][1]; // Row 2, Column B (0-indexed)
+      console.log('[EPS] Cell B2 value:', cellB2);
+      
+      if (cellB2) {
+        // If it's a date object, format it
+        if (cellB2 instanceof Date) {
+          spGlobalLastUpdated = `${cellB2.getMonth() + 1}/${cellB2.getDate()}/${cellB2.getFullYear()}`;
+        } 
+        // If it's a string that looks like a date, use it directly
+        else if (typeof cellB2 === 'string' && cellB2.match(/^\d{1,2}\/\d{1,2}\/\d{4}$/)) {
+          spGlobalLastUpdated = cellB2;
+        }
+        // If it's a number that could be a date serial number, try to convert it
+        else if (typeof cellB2 === 'number') {
+          try {
+            // Excel date serial numbers can be converted to JS dates
+            const excelEpoch = new Date(1899, 11, 30);
+            const dateObj = new Date(excelEpoch.getTime() + cellB2 * 24 * 60 * 60 * 1000);
+            spGlobalLastUpdated = `${dateObj.getMonth() + 1}/${dateObj.getDate()}/${dateObj.getFullYear()}`;
+          } catch (e) {
+            console.log('[EPS] Failed to convert Excel date serial number:', e);
+            spGlobalLastUpdated = String(cellB2);
+          }
+        }
+        // Otherwise just use the string representation
+        else {
+          spGlobalLastUpdated = String(cellB2);
+        }
+      }
     }
-    console.log('============================');
+    
+    // If we couldn't extract a date, fall back to current date
+    if (!spGlobalLastUpdated) {
+      console.log('[EPS] Could not extract date from cell B2, using current date');
+      const now = new Date();
+      spGlobalLastUpdated = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+    }
+    
+    console.log(`[EPS] S&P Global data last updated: ${spGlobalLastUpdated}`);
+    
     // Find the 'ESTIMATES' row and extract data rows after it, until 'ACTUALS'
     let estimatesStart = -1;
     let estimatesEnd = rows.length;
@@ -267,7 +308,7 @@ export async function getForwardEpsEstimates() {
       }
     }
     if (estimatesStart === -1) {
-      console.warn('[EPS] Could not find ESTIMATES section in XLSX. Fallback:', usedFallback);
+      console.warn('[EPS] Could not find ESTIMATES section in XLSX. Falling back to JSON file.');
       return getForwardEpsFromJsonFile();
     }
     
@@ -316,6 +357,7 @@ export async function getForwardEpsEstimates() {
           source: 'S&P Global',
           sourceUrl: 'https://www.spglobal.com/spdji/en/',
           lastUpdated: fetchedRemote ? new Date().toISOString().slice(0,10) : (usedFallback === 'tmp' ? fs.statSync(TMP_XLSX_PATH).mtime.toISOString().slice(0,10) : fs.statSync(BUNDLED_XLSX_PATH).mtime.toISOString().slice(0,10)),
+          spGlobalLastUpdated: spGlobalLastUpdated, // Add the S&P Global last updated date
           year: year,
           price: price // Include the price if available
         });

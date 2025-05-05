@@ -61,8 +61,25 @@ function htmlRSIBlock(pathObj, maObj) {
 }
 
 function htmlForwardPETable(estimates, multiples, currentIndex) {
+  if (!estimates || estimates.length === 0) {
+    return '<p>No forward P/E data available</p>';
+  }
+
+  const currentIndexValue = currentIndex?.price || 0;
+  
+  // Check if we have S&P Global last updated date in any of the estimates
+  let spGlobalLastUpdated = null;
+  for (const est of estimates) {
+    if (est.spGlobalLastUpdated) {
+      spGlobalLastUpdated = est.spGlobalLastUpdated;
+      break;
+    }
+  }
+  
   let lines = [
-    `<div class="forward-pe-block"><div class="responsive-table"><table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th>` +
+    `<div class="forward-pe-block"><h3>S&P 500 Forward P/E Ratios</h3>`,
+    spGlobalLastUpdated ? `<p class="text-muted small">S&P Global data as of ${formatTimestamp(spGlobalLastUpdated)}</p>` : '',
+    `<div class="responsive-table"><table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th>` +
       multiples.map(m => `<th>${m}x</th><th>% vs Index</th>`).join('') + `<th>Source</th></tr></thead><tbody>`
   ];
   estimates.forEach(est => {
@@ -81,7 +98,7 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
     lines.push(`<tr><td>${scenario}</td><td>${year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(epsValue).toFixed(2)}</strong></td>` +
       multiples.map(m => {
         const target = annualEps * m;
-        const pct = currentIndex ? (((target - currentIndex) / currentIndex) * 100).toFixed(1) + '%' : '';
+        const pct = currentIndexValue ? (((target - currentIndexValue) / currentIndexValue) * 100).toFixed(1) + '%' : '';
         return `<td><strong>${formatUSD(Number(target).toFixed(2))}</strong></td><td>${pct}</td>`;
       }).join('') +
       `<td><a href="${sourceUrl}">${est.source || 'N/A'}</a></td></tr>`);
