@@ -365,6 +365,87 @@ const addFearGreedIndex = (mobiledoc, data) => {
 };
 
 /**
+ * Adds the RSI section to the mobiledoc
+ * @param {object} mobiledoc - The mobiledoc object to add content to
+ * @param {object} data - The data object containing RSI information
+ */
+const addRSI = (mobiledoc, data) => {
+  const rsiData = data.marketIndicators?.rsi;
+  
+  if (!rsiData || !rsiData.value) return;
+  
+  // Determine RSI level category and color
+  let rsiCategory, rsiColor;
+  const rsiValue = parseFloat(rsiData.value);
+  
+  if (rsiValue >= 70) {
+    rsiCategory = 'Overbought';
+    rsiColor = '#e53935'; // Red
+  } else if (rsiValue <= 30) {
+    rsiCategory = 'Oversold';
+    rsiColor = '#43a047'; // Green
+  } else if (rsiValue >= 60) {
+    rsiCategory = 'Approaching Overbought';
+    rsiColor = '#fb8c00'; // Orange
+  } else if (rsiValue <= 40) {
+    rsiCategory = 'Approaching Oversold';
+    rsiColor = '#7cb342'; // Light green
+  } else {
+    rsiCategory = 'Neutral';
+    rsiColor = '#ffeb3b'; // Yellow
+  }
+  
+  const formattedDate = rsiData.asOf || new Date().toLocaleDateString('en-US', { 
+    month: 'long', 
+    day: 'numeric', 
+    year: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+    timeZoneName: 'short'
+  });
+  
+  const rsiHtml = `
+    <div class="market-pulse-section rsi-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Relative Strength Index (RSI)</div>
+      </div>
+      <div style="margin-top: 10px;">
+        <div class="rsi-card" style="background-color: #f8f9fa; border-radius: 8px; padding: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid ${rsiColor};">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <div style="font-size: 1.1rem; font-weight: bold; color: #2d3748;">S&P 500 RSI</div>
+            <div style="font-size: 1.2rem; font-weight: bold; color: ${rsiColor};">${rsiValue.toFixed(1)}</div>
+          </div>
+          <div style="margin-top: 10px;">
+            <div style="position: relative; height: 8px; background: linear-gradient(to right, #43a047 0%, #7cb342 20%, #ffeb3b 35%, #ffeb3b 65%, #fb8c00 80%, #e53935 100%); border-radius: 5px; margin: 10px 0;">
+              <!-- Thumb -->
+              <div style="position: absolute; top: 50%; left: ${rsiValue}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; color: #718096; margin-top: 5px;">
+              <div>Oversold (30)</div>
+              <div>Neutral (50)</div>
+              <div>Overbought (70)</div>
+            </div>
+          </div>
+          <div style="font-size: 0.9rem; color: #718096; margin-top: 15px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid ${rsiColor};">
+            <span style="font-weight: bold;">${rsiCategory}:</span>
+            ${rsiCategory === 'Overbought' ? 'The market may be overextended and due for a pullback.' : 
+              rsiCategory === 'Oversold' ? 'The market may be undervalued and due for a bounce.' : 
+              rsiCategory === 'Approaching Overbought' ? 'The market is showing strong momentum but may be nearing resistance levels.' :
+              rsiCategory === 'Approaching Oversold' ? 'The market is showing weakness but may be nearing support levels.' :
+              'The market is currently in a balanced state between buying and selling pressure.'}
+          </div>
+        </div>
+        <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
+          Source: <a href="${rsiData.sourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${rsiData.source || 'Market Data Provider'}</a> as of ${formattedDate}
+        </div>
+      </div>
+    </div>
+  `;
+  
+  addHTML(mobiledoc, rsiHtml);
+};
+
+/**
  * Adds the header with key market data
  * @param {object} mobiledoc - The mobiledoc object to add content to
  * @param {object} data - The data object containing market data
@@ -460,6 +541,7 @@ const addMarketIndicators = (mobiledoc, data) => {
   addMarketFutures(mobiledoc, data);
   addVolatilityIndices(mobiledoc, data);
   addFearGreedIndex(mobiledoc, data);
+  addRSI(mobiledoc, data);
 
   // Close the container
   const closingHtml = `
@@ -527,5 +609,6 @@ module.exports = {
   addSectorPerformance,
   addMarketFutures,
   addFearGreedIndex,
-  addVolatilityIndices
+  addVolatilityIndices,
+  addRSI
 };
