@@ -295,13 +295,18 @@ const addFearGreedIndex = (mobiledoc, data) => {
       <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
       
       <div style="position: relative; height: 180px; background-color: #fff; border-radius: 8px; padding: 20px 20px 40px 20px; margin-top: 15px; margin-bottom: 25px; display: flex; justify-content: center;">
-        <!-- Background color bands (horizontal) with more granular shading -->
-        <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 40px; display: flex; flex-direction: column;">
-          <div style="flex: 1; background-color: rgba(67, 160, 71, 0.6);"></div>
-          <div style="flex: 1; background-color: rgba(124, 179, 66, 0.6);"></div>
-          <div style="flex: 1; background-color: rgba(255, 235, 59, 0.6);"></div>
-          <div style="flex: 0.5; background-color: rgba(251, 140, 0, 0.6);"></div>
-          <div style="flex: 0.5; background-color: rgba(229, 57, 53, 0.6);"></div>
+        <!-- Background color bands (horizontal) with proper scale alignment -->
+        <div style="position: absolute; top: 20px; left: 20px; right: 20px; bottom: 40px; height: ${chartHeight}px;">
+          <!-- Extreme Greed: 75-100 -->
+          <div style="position: absolute; top: 0; left: 0; right: 0; height: ${chartHeight * 25 / 100}px; background-color: rgba(67, 160, 71, 0.6);"></div>
+          <!-- Greed: 60-75 -->
+          <div style="position: absolute; top: ${chartHeight * 25 / 100}px; left: 0; right: 0; height: ${chartHeight * 15 / 100}px; background-color: rgba(124, 179, 66, 0.6);"></div>
+          <!-- Neutral: 40-60 -->
+          <div style="position: absolute; top: ${chartHeight * 40 / 100}px; left: 0; right: 0; height: ${chartHeight * 20 / 100}px; background-color: rgba(255, 235, 59, 0.6);"></div>
+          <!-- Fear: 25-40 -->
+          <div style="position: absolute; top: ${chartHeight * 60 / 100}px; left: 0; right: 0; height: ${chartHeight * 15 / 100}px; background-color: rgba(251, 140, 0, 0.6);"></div>
+          <!-- Extreme Fear: 0-25 -->
+          <div style="position: absolute; top: ${chartHeight * 75 / 100}px; left: 0; right: 0; height: ${chartHeight * 25 / 100}px; background-color: rgba(229, 57, 53, 0.6);"></div>
         </div>
         
         <!-- SVG Chart - aligned with bottom of chart area -->
