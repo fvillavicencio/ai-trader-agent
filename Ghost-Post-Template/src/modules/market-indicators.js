@@ -479,9 +479,9 @@ const addMarketHeader = (mobiledoc, data) => {
   const fearGreedCategory = getFearGreedCategory(fearGreedValue);
   
   // Get VIX data
-  const vix = data.marketIndicators?.volatilityIndices?.find(index => index.symbol === '^VIX' || index.name.includes('VIX'));
-  const vixValue = vix ? formatNumber(vix.value) : '';
-  const vixTrend = vix?.trend || '';
+  const vix = data.marketIndicators?.volatilityIndices?.find(i => i.name.includes('VIX') || i.symbol === '^VIX');
+  const vixValue = vix?.value ? formatNumber(vix.value) : '0';
+  const vixTrend = vix?.trend || 'Neutral';
   const vixColor = vixTrend.toLowerCase() === 'rising' ? '#f56565' : '#48bb78';
   
   // Get RSI data
@@ -536,8 +536,8 @@ const addMarketIndicators = (mobiledoc, data) => {
 
   // Get VIX data
   const vix = data.marketIndicators?.volatilityIndices?.find(i => i.name.includes('VIX') || i.symbol === '^VIX');
-  const vixValue = vix?.value || '';
-  const vixTrend = vix?.trend || '';
+  const vixValue = vix?.value ? formatNumber(vix.value) : '0';
+  const vixTrend = vix?.trend || 'Neutral';
   const vixColor = vixTrend.toLowerCase() === 'rising' ? '#f56565' : '#48bb78';
 
   // Get RSI data
