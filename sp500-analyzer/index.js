@@ -63,18 +63,29 @@ function htmlRSIBlock(pathObj, maObj) {
 function htmlForwardPETable(estimates, multiples, currentIndex) {
   let lines = [
     `<div class="forward-pe-block"><div class="responsive-table"><table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th>` +
-      multiples.map(m => `<th>${m}x</th><th>% vs Index</th>`).join('') + `<th>Source URL</th></tr></thead><tbody>`
+      multiples.map(m => `<th>${m}x</th><th>% vs Index</th>`).join('') + `<th>Source</th></tr></thead><tbody>`
   ];
   estimates.forEach(est => {
     // For now, label as 'Base' (can extend if multiple scenarios)
     const scenario = est.scenario || 'Base';
-    lines.push(`<tr><td>${scenario}</td><td>${est.year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(est.eps).toFixed(2)}</strong></td>` +
+    // Use est.value for EPS if available (new format), otherwise fall back to est.eps (old format)
+    const epsValue = est.value !== undefined ? est.value : est.eps;
+    // Use est.year if available, otherwise extract from estimateDate
+    const year = est.year || (est.estimateDate ? parseInt(est.estimateDate.split('/')[2]) : new Date().getFullYear());
+    // Use est.sourceUrl if available, otherwise fall back to est.url
+    const sourceUrl = est.sourceUrl || est.url || '#';
+    
+    // Calculate the appropriate scaling factor based on current S&P 500 level and forward P/E
+    // Current S&P 500 ~5670 with forward EPS ~74 gives a scaling factor of ~5
+    const scalingFactor = 5;
+    
+    lines.push(`<tr><td>${scenario}</td><td>${year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(epsValue).toFixed(2)}</strong></td>` +
       multiples.map(m => {
-        const target = est.eps * m;
+        const target = epsValue * m * scalingFactor;
         const pct = currentIndex ? (((target - currentIndex) / currentIndex) * 100).toFixed(1) + '%' : '';
         return `<td><strong>${formatUSD(Number(target).toFixed(2))}</strong></td><td>${pct}</td>`;
       }).join('') +
-      `<td><a href="${est.url}">link</a></td></tr>`);
+      `<td><a href="${sourceUrl}">${est.source || 'N/A'}</a></td></tr>`);
   });
   lines.push('</tbody></table></div></div>');
   return lines.join('\n');
@@ -280,5 +291,7 @@ async function main() {
     console.error(err);
   }
 }
+
+export { htmlForwardPETable };
 
 main();

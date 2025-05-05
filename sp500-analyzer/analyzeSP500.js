@@ -32,7 +32,6 @@ export async function analyzeSP500() {
   // Defensive: Ensure all service results are never null
   const safeSpxObj = spxObj || { price: null, lastUpdated: '', sourceName: 'N/A', sourceUrl: '' };
   const safeEarningsObj = earningsObj || { eps: null, pe: null, price: null, value: null, sourceName: 'N/A', sourceUrl: '', lastUpdated: '', provider: 'N/A' };
-  const safeForwardEstimates = Array.isArray(forwardEstimates) && forwardEstimates.length > 0 ? forwardEstimates : [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
   const safePathObj = pathObj || { value: null, lastUpdated: '', sourceName: 'N/A', sourceUrl: '' };
   const safeMaObj = maObj || { latest: null, sma50: null, sma200: null };
 
@@ -50,9 +49,33 @@ export async function analyzeSP500() {
     };
   }
 
-  const forwardDate = safeForwardEstimates[0]?.estimateDate || safeSpxObj.lastUpdated;
+  // Process forward EPS estimates
+  let formattedEstimates = [];
+  try {
+    console.log('[DIAG] analyzeSP500: fetching forward EPS estimates');
+    const forwardEpsEstimates = await getForwardEpsEstimates();
+    
+    // Format for Lambda response - ensure compatibility with SP500Analyzer.gs
+    // SP500Analyzer.gs expects 'eps' property, so map 'value' to 'eps'
+    formattedEstimates = forwardEpsEstimates.map(est => ({
+      year: est.year,
+      estimateDate: est.estimateDate,
+      eps: est.value, // Map value to eps for compatibility
+      value: est.value, // Keep value for newer code
+      source: est.source,
+      sourceUrl: est.sourceUrl,
+      lastUpdated: formatDate(new Date())
+    }));
+    
+    const forwardDate = formattedEstimates[0]?.estimateDate || safeSpxObj.lastUpdated;
+    freshnessSections.push({ label: 'Forward EPS', lastUpdated: forwardDate, sourceName: formattedEstimates[0]?.source || 'N/A' });
+  } catch (error) {
+    console.error('[ERROR] Failed to fetch forward EPS estimates:', error);
+    const forwardDate = safeSpxObj.lastUpdated;
+    freshnessSections.push({ label: 'Forward EPS', lastUpdated: forwardDate, sourceName: 'N/A' });
+  }
+
   freshnessSections.push({ label: 'Trailing P/E', lastUpdated: safeEarningsObj.lastUpdated, sourceName: safeEarningsObj.sourceName });
-  freshnessSections.push({ label: 'Forward EPS', lastUpdated: forwardDate, sourceName: safeForwardEstimates[0]?.source || 'N/A' });
   freshnessSections.push({ label: 'Market Path (RSI)', lastUpdated: safePathObj.lastUpdated, sourceName: safePathObj.sourceName });
 
   // Parallelize ETF holdings fetches
@@ -89,11 +112,18 @@ export async function analyzeSP500() {
   return {
     sp500Index: safeSpxObj,
     trailingPE,
-    forwardEstimates: safeForwardEstimates,
+    forwardEstimates: formattedEstimates || [],
     marketPath: safePathObj,
     movingAverages: safeMaObj,
     etfHoldings,
     earnings: safeEarningsObj,
     dataFreshness: freshnessSections
   };
+}
+
+function formatDate(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
