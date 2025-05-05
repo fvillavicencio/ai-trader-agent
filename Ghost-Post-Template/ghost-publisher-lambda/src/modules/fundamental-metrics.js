@@ -247,11 +247,8 @@ const addSP500AnalysisContent = (data) => {
                 <th style="padding:16px 0 12px 0;">Annual Estimate</th>
                 <th>Forward EPS</th>
                 <th>15x</th>
-                <th>% vs Index</th>
                 <th>17x</th>
-                <th>% vs Index</th>
                 <th>20x</th>
-                <th>% vs Index</th>
               </tr>
             </thead>
             <tbody>
@@ -260,24 +257,21 @@ const addSP500AnalysisContent = (data) => {
                   <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
                     <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${item.year}</td>
                     <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${item.eps}</td>
-                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt15x)}</td>
-                    <td style="color:#111; font-size: 0.85rem;">${item.percentVsIndex15x}%</td>
-                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt17x)}</td>
-                    <td style="color:#111; font-size: 0.85rem;">${item.percentVsIndex17x}%</td>
-                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt20x)}</td>
-                    <td style="color:#111; font-size: 0.85rem;">${item.percentVsIndex20x}%</td>
+                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt15x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex15x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex15x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex15x)).toFixed(2)}%)</span></td>
+                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt17x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex17x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex17x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex17x)).toFixed(2)}%)</span></td>
+                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt20x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex20x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex20x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex20x)).toFixed(2)}%)</span></td>
                   </tr>
                 `;
               }).join('') || `
                 <tr>
-                  <td colspan="8" style="text-align: center; padding: 15px;">No forward EPS data available</td>
+                  <td colspan="5" style="text-align: center; padding: 15px;">No forward EPS data available</td>
                 </tr>
               `}
             </tbody>
           </table>
         </div>
         <div class="forward-eps-source" style="font-size: 10px; color: #888; margin-top: 8px; text-align: right;">
-          Source: <a href="${data.sp500?.forwardEpsSource?.url || '#'}" target="_blank" style="color:#2563eb; text-decoration:underline;">${data.sp500?.forwardEpsSource?.name || 'S&P Global'}</a>, as of ${data.sp500?.forwardEpsSource?.asOf || 'N/A'}
+          Source: <a href="${data.sp500?.forwardEpsSource?.url || '#'}" target="_blank" style="color:#2563eb; text-decoration:underline;">${data.sp500?.forwardEpsSource?.name || 'S&P Global'}</a>, as of ${data.sp500?.forwardEpsSource?.asOf || data.sp500?.source?.asOf || 'N/A'}
         </div>
       </div>
     </div>
