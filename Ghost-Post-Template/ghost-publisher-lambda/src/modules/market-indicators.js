@@ -324,7 +324,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
         </svg>
         
         <!-- X-axis labels aligned with data points - all condensed to two lines -->
-        <div style="position: absolute; bottom: 15px; left: 20px; right: 20px; display: flex; height: 25px;">
+        <div style="position: absolute; bottom: 5px; left: 20px; right: 20px; display: flex; height: 25px;">
           ${dataPoints.map(point => `
             <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: ${point.x}%; transform: translateX(-50%); line-height: 1.2; ${point.isCurrent ? 'font-weight: bold;' : ''}">${point.label === 'One Month Ago' ? 'One<br>Month Ago' : point.label === 'One Week Ago' ? 'One<br>Week Ago' : point.label === 'Previous Close' ? 'Previous<br>Close' : point.label}</div>
           `).join('')}

@@ -324,7 +324,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
         </svg>
         
         <!-- X-axis labels aligned with data points - all condensed to two lines -->
-        <div style="position: absolute; bottom: 15px; left: 20px; right: 20px; display: flex; height: 25px;">
+        <div style="position: absolute; bottom: 5px; left: 20px; right: 20px; display: flex; height: 25px;">
           ${dataPoints.map(point => `
             <div style="font-size: 0.65rem; color: #718096; width: 10%; text-align: center; position: absolute; left: ${point.x}%; transform: translateX(-50%); line-height: 1.2; ${point.isCurrent ? 'font-weight: bold;' : ''}">${point.label === 'One Month Ago' ? 'One<br>Month Ago' : point.label === 'One Week Ago' ? 'One<br>Week Ago' : point.label === 'Previous Close' ? 'Previous<br>Close' : point.label}</div>
           `).join('')}
@@ -403,7 +403,7 @@ const addMarketIndicators = (mobiledoc, data) => {
   if (!data.marketIndicators) return;
 
   // Find S&P 500 data
-  const sp500 = data.marketIndicators.majorIndices?.find(i => i.name === 'S&P 500');
+  const sp500 = data.marketIndicators?.majorIndices?.find(i => i.name === 'S&P 500');
   const sp500Price = sp500?.price ? formatNumber(sp500.price) : '0';
   const sp500Change = sp500?.percentChange || (sp500?.change ? sp500.change + '%' : '0%');
   const sp500IsPositive = sp500?.isPositive !== undefined ? sp500.isPositive : (parseFloat(sp500?.change || 0) >= 0);
