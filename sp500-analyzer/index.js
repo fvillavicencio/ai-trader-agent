@@ -75,10 +75,8 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
     // Use est.sourceUrl if available, otherwise fall back to est.url
     const sourceUrl = est.sourceUrl || est.url || '#';
     
-    // S&P Global reports quarterly EPS values, so multiply by 4 to get annual EPS
-    const quarterToAnnualMultiplier = 4;
-    // Convert quarterly EPS to annual EPS
-    const annualEps = epsValue * quarterToAnnualMultiplier;
+    // No need to multiply by 4 anymore as we're now using annualized EPS values directly
+    const annualEps = epsValue;
     
     lines.push(`<tr><td>${scenario}</td><td>${year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(epsValue).toFixed(2)}</strong></td>` +
       multiples.map(m => {

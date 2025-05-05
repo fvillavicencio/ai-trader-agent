@@ -271,18 +271,26 @@ export async function getForwardEpsEstimates() {
       return getForwardEpsFromJsonFile();
     }
     
-    // Extract forward EPS for current and next year (use column 0 = date, column 2 = operating EPS)
+    // Extract forward EPS for current and next year (use column 0 = date, column 8 = OPERATING EARNINGS)
     const results = [];
     const currentYear = new Date().getFullYear();
     const nextYear = currentYear + 1;
     
     // Find the price column (usually column 1)
     let priceColumnIndex = 1;
-    for (let i = estimatesStart - 5; i < estimatesStart; i++) {
-      if (Array.isArray(rows[i]) && rows[i].some(cell => cell === 'PRICE')) {
-        const priceIndex = rows[i].findIndex(cell => cell === 'PRICE');
-        if (priceIndex !== -1) {
-          priceColumnIndex = priceIndex;
+    let operatingEarningsColumnIndex = 8; // Default to column 8 for OPERATING EARNINGS
+    
+    // Try to find the OPERATING EARNINGS column by header
+    for (let i = estimatesStart - 10; i < estimatesStart; i++) {
+      if (Array.isArray(rows[i])) {
+        // Look for "OPERATING EARNINGS" header
+        const opIndex = rows[i].findIndex(cell => 
+          cell && String(cell).toUpperCase().includes('OPERATING') && 
+          String(cell).toUpperCase().includes('EARNINGS'));
+        
+        if (opIndex !== -1) {
+          operatingEarningsColumnIndex = opIndex;
+          console.log(`[EPS] Found OPERATING EARNINGS column at index ${operatingEarningsColumnIndex}`);
           break;
         }
       }
@@ -292,20 +300,19 @@ export async function getForwardEpsEstimates() {
       const row = rows[i];
       if (!row || typeof row[0] !== 'string' || !row[0].match(/\d{2}\/\d{2}\/\d{4}/)) continue;
       const year = parseInt(row[0].split('/')[2]);
-      const eps = parseFloat(row[2]);
+      
+      // Use the OPERATING EARNINGS column (annualized values) instead of column 2 (quarterly values)
+      const eps = parseFloat(row[operatingEarningsColumnIndex]);
+      
       // Only take the 12/31/20XX rows for current and next year
       if ((year === currentYear || year === nextYear) && row[0].startsWith('12/31') && !isNaN(eps)) {
         // Get the price from the same row if available
         const price = row[priceColumnIndex] ? parseFloat(row[priceColumnIndex]) : null;
         
-        // Calculate the adjusted EPS value to match FactSet's methodology
-        // This ensures the EPS values are comparable to what's shown in the Google search
-        // The adjustment factor is based on comparing our values with FactSet's values
-        const adjustedEps = eps;
-        
+        // No need for adjustment since we're now using the annualized values directly
         results.push({
           estimateDate: row[0],
-          value: adjustedEps,
+          value: eps,
           source: 'S&P Global',
           sourceUrl: 'https://www.spglobal.com/spdji/en/',
           lastUpdated: fetchedRemote ? new Date().toISOString().slice(0,10) : (usedFallback === 'tmp' ? fs.statSync(TMP_XLSX_PATH).mtime.toISOString().slice(0,10) : fs.statSync(BUNDLED_XLSX_PATH).mtime.toISOString().slice(0,10)),

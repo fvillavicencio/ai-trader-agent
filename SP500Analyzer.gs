@@ -431,21 +431,15 @@ function addImpliedIndexValuesToEstimates(data) {
   if (!data || !data.forwardEstimates || !data.sp500Index || !data.sp500Index.price) return;
   var currentIndex = Number(data.sp500Index.price);
   
-  // S&P Global reports quarterly EPS values, so multiply by 4 to get annual EPS
-  var quarterToAnnualMultiplier = 4;
-  
   data.forwardEstimates.forEach(function(est) {
     var eps = Number(est.eps);
     if (!isNaN(eps) && !isNaN(currentIndex) && currentIndex > 0) {
-      // Convert quarterly EPS to annual EPS by multiplying by 4
-      var annualEps = eps * quarterToAnnualMultiplier;
-      
-      est.pe15 = (annualEps * 15).toFixed(2);
-      est.pe17 = (annualEps * 17).toFixed(2);
-      est.pe20 = (annualEps * 20).toFixed(2);
-      est.pe15Pct = ((annualEps * 15 / currentIndex - 1) * 100).toFixed(1) + '%';
-      est.pe17Pct = ((annualEps * 17 / currentIndex - 1) * 100).toFixed(1) + '%';
-      est.pe20Pct = ((annualEps * 20 / currentIndex - 1) * 100).toFixed(1) + '%';
+      est.pe15 = (eps * 15).toFixed(2);
+      est.pe17 = (eps * 17).toFixed(2);
+      est.pe20 = (eps * 20).toFixed(2);
+      est.pe15Pct = ((eps * 15 / currentIndex - 1) * 100).toFixed(1) + '%';
+      est.pe17Pct = ((eps * 17 / currentIndex - 1) * 100).toFixed(1) + '%';
+      est.pe20Pct = ((eps * 20 / currentIndex - 1) * 100).toFixed(1) + '%';
     } else {
       est.pe15 = est.pe17 = est.pe20 = 'N/A';
       est.pe15Pct = est.pe17Pct = est.pe20Pct = 'N/A';
@@ -460,17 +454,11 @@ function addImpliedIndexValuesToEstimates(data) {
 function addImpliedIndexValuesToEarningsTTM(data) {
   if (!data || !data.earnings || !data.earnings.eps) return;
   
-  // S&P Global reports quarterly EPS values, so multiply by 4 to get annual EPS
-  var quarterToAnnualMultiplier = 4;
-  
   var eps = Number(data.earnings.eps);
   if (!isNaN(eps)) {
-    // Convert quarterly EPS to annual EPS by multiplying by 4
-    var annualEps = eps * quarterToAnnualMultiplier;
-    
-    data.earnings.pe15 = (annualEps * 15).toFixed(2);
-    data.earnings.pe17 = (annualEps * 17).toFixed(2);
-    data.earnings.pe20 = (annualEps * 20).toFixed(2);
+    data.earnings.pe15 = (eps * 15).toFixed(2);
+    data.earnings.pe17 = (eps * 17).toFixed(2);
+    data.earnings.pe20 = (eps * 20).toFixed(2);
   } else {
     data.earnings.pe15 = data.earnings.pe17 = data.earnings.pe20 = 'N/A';
   }
