@@ -90,9 +90,18 @@ const addFedPolicy = (data) => {
         <div style="margin-top: 20px; margin-bottom: 15px;">
           <div style="font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;">Rate Change Probabilities</div>
           <div style="display: flex; justify-content: space-between; align-items: center;">
-            <div style="color: #4caf50;">↓ ${fedPolicy.cutProbability || "68.5"}%</div>
-            <div>→ ${fedPolicy.holdProbability || "31.5"}%</div>
-            <div style="color: #f44336;">↑ ${fedPolicy.hikeProbability || "0"}%</div>
+            <div style="border: 2px solid #4caf50; border-radius: 6px; padding: 8px; text-align: center; width: 30%;">
+              <div style="font-weight: bold; color: #4caf50; margin-bottom: 5px;">Rate Cut</div>
+              <div style="color: #4caf50;">↓ ${fedPolicy.cutProbability || "68.5"}%</div>
+            </div>
+            <div style="border: 2px solid #757575; border-radius: 6px; padding: 8px; text-align: center; width: 30%;">
+              <div style="font-weight: bold; color: #757575; margin-bottom: 5px;">No Change</div>
+              <div>→ ${fedPolicy.holdProbability || "31.5"}%</div>
+            </div>
+            <div style="border: 2px solid #f44336; border-radius: 6px; padding: 8px; text-align: center; width: 30%;">
+              <div style="font-weight: bold; color: #f44336; margin-bottom: 5px;">Rate Hike</div>
+              <div style="color: #f44336;">↑ ${fedPolicy.hikeProbability || "0"}%</div>
+            </div>
           </div>
           <div style="font-size: 10px; color: #888; margin-top: 5px; text-align: right;">
             Source: <a href="${fedPolicy.futuresSourceUrl || "#"}" target="_blank">${fedPolicy.futuresSource || "Yahoo Finance"}</a>, as of ${fedPolicy.futuresAsOf || "N/A"}
