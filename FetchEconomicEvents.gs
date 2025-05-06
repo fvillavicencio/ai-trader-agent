@@ -64,18 +64,20 @@ function fetchEconomicEvents() {
         previous: event.previous !== null ? formatNumber(event.previous, event.unit) : 'N/A'
       }));
 
-    // Sort by importance (descending), then by date and time
+    // Sort by date (chronologically), then by importance (descending)
     filteredEvents.sort((a, b) => {
-      // First sort by importance (higher is more important)
-      if (b.importance !== a.importance) {
-        return b.importance - a.importance;
+      // First sort by date (chronologically)
+      if (a.date.getTime() !== b.date.getTime()) {
+        return a.date - b.date;
       }
-      // Then sort by date and time
-      return a.date - b.date;
+      // Then sort by importance (higher is more important) if dates are the same
+      return b.importance - a.importance;
     });
 
-    // Get the top 7 most important events
-    const topEvents = filteredEvents.slice(0, 7);
+    // Get the configurable number of top events (default to 10)
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const maxEvents = parseInt(scriptProperties.getProperty('MAX_ECONOMIC_EVENTS')) || 10;
+    const topEvents = filteredEvents.slice(0, maxEvents);
 
     // Format the events for output
     const formattedEvents = topEvents.map(event => {
@@ -400,20 +402,52 @@ function decryptEventInfo(eventName, source) {
       source: 'U.S. Bureau of Labor Statistics'
     },
     'Average Earnings MM': {
-      name: 'Average Earnings Month-over-Month',
+      name: 'Average Hourly Earnings Month-over-Month',
       source: 'U.S. Bureau of Labor Statistics'
     },
     'Average Workweek Hrs': {
-      name: 'Average Workweek Hours',
+      name: 'Average Weekly Hours',
       source: 'U.S. Bureau of Labor Statistics'
     },
     'Labor Force Partic': {
       name: 'Labor Force Participation Rate',
-      source: 'BLS'
+      source: 'U.S. Bureau of Labor Statistics'
     },
     'ISM N-Mfg PMI': {
       name: 'ISM Non-Manufacturing PMI',
-      source: 'ISM'
+      source: 'Institute for Supply Management'
+    },
+    'Fed Funds Tgt Rate': {
+      name: 'Federal Funds Target Rate',
+      source: 'Federal Open Market Committee'
+    },
+    'Unit Labor Costs Prelim': {
+      name: 'Unit Labor Costs - Preliminary',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Refinance Mortgage Applications Index': {
+      name: 'Refinance Mortgage Applications Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'Mortgage Refinance Index': {
+      name: 'Mortgage Refinance Index',
+      source: 'Mortgage Bankers Association'
+    },
+    'Consumer Credit': {
+      name: 'Consumer Credit',
+      source: 'Federal Reserve'
+    },
+    'Productivity Prelim': {
+      name: 'Productivity - Preliminary',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Wholesale Invt(y), R MM': {
+      name: 'Wholesale Inventory Month-over-Month - Revised',
+      source: 'U.S. Department of Commerce'
+    },
+    'Wholesale Sales MM': {
+      name: 'Wholesale Sales Month-over-Month',
+      source: 'U.S. Department of Commerce'
     }
   };
 

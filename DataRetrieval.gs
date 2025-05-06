@@ -215,8 +215,8 @@ function generateDataRetrievalText() {
           Logger.log("Sorted upcoming economic events:");
           Logger.log(JSON.stringify(sortedEvents, null, 2));
           
-          // Add each event (limit to 5 to avoid too much text)
-          const eventsToShow = sortedEvents.slice(0, 5);
+          // Use all available events from FetchEconomicEvents.gs
+          const eventsToShow = sortedEvents;
           
           // Log the events to show for debugging
           Logger.log(`Number of events to show: ${eventsToShow.length}`);
@@ -614,7 +614,12 @@ function testFundamentalMetricsOutput() {
       if (metrics.priceToSales !== null) output += `  * Price/Sales: ${formatValue(metrics.priceToSales)}\n`;
       if (metrics.debtToEquity !== null) output += `  * Debt/Equity: ${formatValue(metrics.debtToEquity)}\n`;
       if (metrics.returnOnEquity !== null) output += `  * Return on Equity: ${formatValue(metrics.returnOnEquity)}%\n`;
+      if (metrics.returnOnAssets !== null) output += `  * Return on Assets: ${formatValue(metrics.returnOnAssets)}%\n`;
+      if (metrics.profitMargin !== null) output += `  * Profit Margin: ${formatValue(metrics.profitMargin)}%\n`;
+      if (metrics.dividendYield !== null) output += `  * Dividend Yield: ${formatValue(metrics.dividendYield)}%\n`;
       if (metrics.beta !== null) output += `  * Beta: ${formatValue(metrics.beta)}\n`;
+      if (metrics.summary !== null) output += `  * Summary: ${formatValue(metrics.summary)}\n`;
+      if (metrics.lastUpdated !== null) output += `  * Last Updated: ${formatValue(metrics.lastUpdated)}\n`;
       
       output += "\n";
     }

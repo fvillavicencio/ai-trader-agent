@@ -131,24 +131,17 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         Logger.log("JSON data to publish structure: " + Object.keys(jsonDataToPublish).join(", "));
         Logger.log("Debug mode is: " + (debugMode ? "enabled" : "disabled"));
         
-        // Skip Ghost publishing entirely if in debug mode
-        if (debugMode) {
-          Logger.log("Debug mode enabled - skipping Ghost publishing");
-          ghostResult = {
-            postUrl: "https://market-pulse-daily.ghost.io/debug-mode-no-publishing",
-            postId: "debug-mode",
-            members: { all: [] }
-          };
-        } else {
-          // Publish to Ghost via Lambda function
-          ghostResult = publishToGhostWithLambda(jsonDataToPublish, {
-            draftOnly: false  // Always publish, debug mode now skips Ghost entirely
-          });
-          
-          Logger.log("Successfully published to Ghost via Lambda function");
-          Logger.log(`Post URL: ${ghostResult.postUrl}`);
-          Logger.log(`Post ID: ${ghostResult.postId}`);
-        }
+        // Always publish to Ghost, even in debug mode
+        Logger.log(debugMode ? "Debug mode enabled - proceeding with Ghost publishing anyway" : "Publishing to Ghost");
+        
+        // Publish to Ghost via Lambda function
+        ghostResult = publishToGhostWithLambda(jsonDataToPublish, {
+          draftOnly: false  // Always publish, regardless of debug mode
+        });
+        
+        Logger.log("Successfully published to Ghost via Lambda function");
+        Logger.log(`Post URL: ${ghostResult.postUrl}`);
+        Logger.log(`Post ID: ${ghostResult.postId}`);
         
         // Get the recipients list from the Ghost members
         const recipients = ghostResult.members.all || [];
@@ -231,17 +224,11 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         
         // Fall back to the old Ghost publishing method if Lambda fails
         try {
-          // Skip Ghost publishing entirely if in debug mode
-          if (debugMode) {
-            Logger.log("Debug mode enabled - skipping fallback Ghost publishing");
-            ghostResult = {
-              postUrl: "https://market-pulse-daily.ghost.io/debug-mode-no-publishing",
-              postId: "debug-mode"
-            };
-          } else {
-            ghostResult = GhostPublisher.publishToGhost(file.getId(), folder.getId(), fileName);
-            Logger.log("Fallback: Published to Ghost using traditional method");
-          }
+          // Always publish to Ghost, even in debug mode
+          Logger.log(debugMode ? "Debug mode enabled - proceeding with fallback Ghost publishing anyway" : "Publishing to Ghost");
+          
+          ghostResult = GhostPublisher.publishToGhost(file.getId(), folder.getId(), fileName);
+          Logger.log("Fallback: Published to Ghost using traditional method");
           
           // Get the final recipients from Config.gs
           const recipients = getEmailRecipients();
