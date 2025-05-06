@@ -419,11 +419,11 @@ const addRSI = (mobiledoc, data) => {
   const rsiHtml = `
     <div class="market-pulse-section rsi-container" style="width: 100%; margin: 0; padding: 0; margin-bottom: 15px;">
       <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 5px;">
-        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Relative Strength Index (RSI)</div>
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">S&P 500 Relative Strength Index (RSI)</div>
       </div>
       <div style="margin-top: 10px; background-color: white; border-radius: 8px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
         <div style="margin-top: 20px;">
-          <h3 style="font-size: 1.25rem; font-weight: bold; color: #2d3748; margin-bottom: 10px;">Path of Least Resistance</h3>
+          <h3 style="font-size: 1.25rem; font-weight: bold; color: #2d3748; margin-bottom: 10px;">S&P 500 Path of Least Resistance</h3>
           
           <div style="font-size: 1rem; margin-bottom: 10px;">
             <span style="font-weight: bold;">14-day Relative Strength Index (RSI):</span> 
