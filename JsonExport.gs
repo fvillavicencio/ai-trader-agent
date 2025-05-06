@@ -298,7 +298,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           const isPositive = change >= 0;
           
           // Format price and change to 2 decimal places
-          const formattedPrice = typeof index.price === 'number' ? parseFloat(index.price.toFixed(2)) : index.price;
+          const formattedPrice = typeof index.price === 'number' ? 
+            parseFloat(index.price.toFixed(2)) : index.price;
           
           return {
             name: index.name || "Unknown Index",
@@ -428,7 +429,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           (currentValue !== null ? getFearGreedClassification(currentValue) : "Fear");
         
         // Get the analysis text - don't generate a default if not available
-        const analysis = fearGreedData.analysis || "The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.";
+        const analysis = fearGreedData.analysis || generateFearGreedAnalysis(currentValue, fearGreedData.previousClose, fearGreedData.oneWeekAgo);
         
         // Helper function to format previous values without fallbacks
         const formatHistoricalValue = (value) => {
@@ -463,7 +464,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         fullJsonDataset.marketIndicators.fearGreed = {
           value: currentValue,
           category: currentClassification,
-          description: analysis || generateFearGreedAnalysis(currentValue, fearGreedData.previousClose, fearGreedData.oneWeekAgo),
+          description: generateFearGreedAnalysis(currentValue, fearGreedData.previousClose, fearGreedData.oneWeekAgo),
           oneWeekAgo: fearGreedData.oneWeekAgo || 26,
           oneMonthAgo: fearGreedData.oneMonthAgo || 21,
           previousDay: fearGreedData.previousClose || 36, // Add explicit previousDay field

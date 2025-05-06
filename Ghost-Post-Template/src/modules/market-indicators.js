@@ -304,7 +304,7 @@ const addFearGreedIndex = (mobiledoc, data) => {
       
       <div style="font-size: 0.9rem; color: #718096; margin-top: 15px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid ${fearGreedColor}; display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; overflow: hidden;">
         <span style="font-weight: bold; flex-shrink: 0;">${fearGreedCategory}:</span>
-        ${fgData.description || 'The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.'}
+        ${fgData.description || generateFearGreedDescription(fearGreedCategory)}
       </div>
       
       <h4 style="margin-top: 20px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
@@ -364,6 +364,24 @@ const addFearGreedIndex = (mobiledoc, data) => {
   
   addHTML(mobiledoc, html);
 };
+
+// Helper function to generate appropriate Fear and Greed Index description based on the category
+function generateFearGreedDescription(category) {
+  switch(category) {
+    case 'Extreme Fear':
+      return 'The Fear and Greed Index is currently in a state of extreme fear, indicating significant market anxiety. Historically, this may represent a potential buying opportunity as markets often rebound from extreme pessimism.';
+    case 'Fear':
+      return 'The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.';
+    case 'Neutral':
+      return 'The Fear and Greed Index is currently in a neutral state, indicating balanced market sentiment. This suggests investors are neither overly pessimistic nor optimistic about current market conditions.';
+    case 'Greed':
+      return 'The Fear and Greed Index is currently in a state of greed, indicating market optimism. This suggests investors may be becoming overconfident, which could signal caution for contrarian investors.';
+    case 'Extreme Greed':
+      return 'The Fear and Greed Index is currently in a state of extreme greed, indicating excessive market optimism. This often signals market tops and may represent a time for caution or potential profit-taking.';
+    default:
+      return 'The Fear and Greed Index provides insight into current market sentiment. Extreme readings often represent potential turning points in market direction.';
+  }
+}
 
 /**
  * Adds the RSI section to the mobiledoc
