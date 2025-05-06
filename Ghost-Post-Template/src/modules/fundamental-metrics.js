@@ -179,10 +179,10 @@ const addSP500AnalysisContent = (data) => {
         <div class="pe-card" style="flex:1; min-width:280px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 1px solid #e2e8f0; max-width:100%; width:100%; position: relative;">
           <div style="font-weight: 700; font-size: clamp(1rem,2vw,1.1rem); color: #1e293b; margin-bottom: 15px; text-align:center;">S&P 500 Trailing P/E Ratio</div>
           
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;">
+            <table style="width: 100%; min-width: 300px; border-collapse: collapse; margin-bottom: 10px;">
               <thead>
-                <tr style="background-color: #800020; text-align: center; font-weight: 600; color: white;">
+                <tr style="background-color: #0c6e3d; text-align: center; font-weight: 600; color: white;">
                   <th style="padding: 12px 8px; white-space: nowrap;">Current</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">5-Year Avg</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">10-Year Avg</th>
@@ -210,10 +210,10 @@ const addSP500AnalysisContent = (data) => {
         <div class="eps-card" style="flex:1; min-width:280px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 1px solid #e2e8f0; max-width:100%; width:100%; position: relative;">
           <div style="font-weight: 700; font-size: clamp(1rem,2vw,1.1rem); color: #1e293b; margin-bottom: 15px; text-align:center;">S&P 500 Earnings Per Share (Trailing 12M)</div>
           
-          <div style="overflow-x: auto;">
-            <table style="width: 100%; border-collapse: collapse; margin-bottom: 10px;">
+          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;">
+            <table style="width: 100%; min-width: 400px; border-collapse: collapse; margin-bottom: 10px;">
               <thead>
-                <tr style="background:#166534; text-align: center; font-weight: 600; color: white;">
+                <tr style="background-color: #0c6e3d; text-align: center; font-weight: 600; color: white;">
                   <th style="padding: 12px 8px; white-space: nowrap;">S&P 500 EPS (TTM)</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">Target at 15x</th>
                   <th style="padding: 12px 8px; white-space: nowrap;">Target at 17x</th>
@@ -240,26 +240,26 @@ const addSP500AnalysisContent = (data) => {
       <!-- S&P 500 Forward EPS & Implied Index Values -->
       <div class="forward-eps-container" style="margin: 20px 0; padding: 28px 32px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
         <div class="forward-eps-header label-col" style="font-weight: bold; font-size: clamp(1.1rem,2vw,1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">S&P 500 Forward EPS & Implied Index Values</div>
-        <div class="forward-eps-table" style="overflow-x:auto;">
-          <table style="width:100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
+        <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;">
+          <table style="width: 100%; min-width: 400px; border-collapse: collapse; margin-bottom: 10px;">
             <thead>
-              <tr style="background:#166534; text-align: center; font-weight: 600; color: white;">
-                <th style="padding:16px 0 12px 0;">Annual Estimate</th>
-                <th>Forward EPS</th>
-                <th>15x</th>
-                <th>17x</th>
-                <th>20x</th>
+              <tr style="background-color: #0c6e3d; text-align: center; font-weight: 600; color: white;">
+                <th style="padding: 12px 8px; white-space: nowrap;">Annual Estimate</th>
+                <th style="padding: 12px 8px; white-space: nowrap;">Forward EPS</th>
+                <th style="padding: 12px 8px; white-space: nowrap;">15x</th>
+                <th style="padding: 12px 8px; white-space: nowrap;">17x</th>
+                <th style="padding: 12px 8px; white-space: nowrap;">20x</th>
               </tr>
             </thead>
             <tbody>
               ${data.sp500?.forwardEps?.map((item, index) => {
                 return `
-                  <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
-                    <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${item.year}</td>
-                    <td style="font-weight:bold; color:#111; font-size: 0.85rem;">${item.eps}</td>
-                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt15x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex15x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex15x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex15x)).toFixed(2)}%)</span></td>
-                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt17x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex17x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex17x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex17x)).toFixed(2)}%)</span></td>
-                    <td style="color:#111; font-size: 0.85rem;">${formatCurrencyWithCommas(item.targetAt20x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex20x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex20x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex20x)).toFixed(2)}%)</span></td>
+                  <tr style="text-align: center; background: white;">
+                    <td style="padding: 15px 8px; font-weight: bold; font-size: 0.95rem;">${item.year}</td>
+                    <td style="padding: 15px 8px; font-weight: bold; font-size: 0.95rem;">${item.eps}</td>
+                    <td style="padding: 15px 8px; font-size: 0.95rem;">${formatCurrencyWithCommas(item.targetAt15x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex15x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex15x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex15x)).toFixed(2)}%)</span></td>
+                    <td style="padding: 15px 8px; font-size: 0.95rem;">${formatCurrencyWithCommas(item.targetAt17x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex17x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex17x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex17x)).toFixed(2)}%)</span></td>
+                    <td style="padding: 15px 8px; font-size: 0.95rem;">${formatCurrencyWithCommas(item.targetAt20x)} <span style="font-size: 0.75rem; color: ${parseFloat(item.percentVsIndex20x) >= 0 ? '#10b981' : '#ef4444'};">(${parseFloat(item.percentVsIndex20x) >= 0 ? '▲' : '▼'} ${Math.abs(parseFloat(item.percentVsIndex20x)).toFixed(2)}%)</span></td>
                   </tr>
                 `;
               }).join('') || `

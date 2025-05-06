@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Set variables
-FUNCTION_NAME="GhostPublisherFunction"
+FUNCTION_NAME="MarketPulseDaily"
 REGION=${AWS_REGION:-"us-east-2"}
 
 # Create a temporary directory for packaging
@@ -13,12 +13,12 @@ npm install --production
 
 # Copy files to dist directory
 echo "📋 Copying files to dist directory..."
-cp -r index.js package.json node_modules dist/
+cp -r index.js package.json node_modules src dist/
 
 # Create the deployment package
 echo "🗜️ Creating deployment package..."
 cd dist
-zip -r ../function.zip .
+zip -r ../lambda-deployment.zip .
 cd ..
 
 # Deploy to AWS Lambda
@@ -29,7 +29,7 @@ if aws lambda get-function --function-name $FUNCTION_NAME --region $REGION >/dev
     echo "🔄 Updating existing Lambda function..."
     aws lambda update-function-code \
         --function-name $FUNCTION_NAME \
-        --zip-file fileb://function.zip \
+        --zip-file fileb://lambda-deployment.zip \
         --region $REGION
 else
     echo "🆕 Creating new Lambda function..."
@@ -37,14 +37,14 @@ else
         --function-name $FUNCTION_NAME \
         --runtime nodejs22.x \
         --handler index.handler \
-        --role arn:aws:iam::ACCOUNT_ID:role/lambda-ghost-publisher-role \
-        --zip-file fileb://function.zip \
+        --role arn:aws:iam::339712966836:role/lambda-ghost-publisher-role \
+        --zip-file fileb://lambda-deployment.zip \
         --region $REGION
 fi
 
 # Clean up
 echo "🧹 Cleaning up..."
-rm -rf dist
-rm function.zip
+# rm -rf dist
+# rm lambda-deployment.zip
 
 echo "✅ Deployment complete!"
