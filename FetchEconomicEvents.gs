@@ -183,7 +183,20 @@ function isSignificantEvent(event) {
     'fed',
     'bls',
     'mba',
-    'frb'
+    'frb',
+    'uscb',
+    'umich',
+    'umisr',
+    'fomc',
+    'ust',
+    'treasury',
+    'sp global',
+    'spglobal',
+    'spglobal',
+    'energy information administration',
+    'us energy information administration',
+    'us energy',
+    'useia'
   ];
   
   return importantIndicators.some(indicator => 
@@ -366,13 +379,41 @@ function decryptEventInfo(eventName, source) {
       name: 'Consumer Spending Component of GDP - Advance Estimate',
       source: 'U.S. Department of Commerce'
     },
-    'Employment Wages QQ': {
-      name: 'Employment Cost Index - Wages & Salaries (Quarterly)',
+    'Employment Cost Index': {
+      name: 'Employment Cost Index (Quarterly)',
       source: 'U.S. Bureau of Labor Statistics'
     },
     'Core PCE Price Index MM': {
       name: 'Core Personal Consumption Expenditures Price Index (Month-over-Month)',
       source: 'U.S. Department of Commerce'
+    },
+    'Manufacturing PMI': {
+      name: 'Manufacturing Purchasing Managers Index',
+      source: 'Institute for Supply Management'
+    },
+    'Non-Farm Payroll Employment Change': {
+      name: 'Non-Farm Payroll Employment Change',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Unemployment Rate': {
+      name: 'Unemployment Rate',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Average Earnings MM': {
+      name: 'Average Earnings Month-over-Month',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Average Workweek Hrs': {
+      name: 'Average Workweek Hours',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Labor Force Partic': {
+      name: 'Labor Force Participation Rate',
+      source: 'BLS'
+    },
+    'ISM N-Mfg PMI': {
+      name: 'ISM Non-Manufacturing PMI',
+      source: 'ISM'
     }
   };
 
