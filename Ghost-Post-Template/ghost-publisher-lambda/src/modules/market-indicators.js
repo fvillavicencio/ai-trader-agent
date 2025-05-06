@@ -497,7 +497,7 @@ const addMarketHeader = (mobiledoc, data) => {
   const fearGreedCategory = getFearGreedCategory(fearGreedValue);
   
   // Get VIX data
-  const vix = data.marketIndicators?.volatilityIndices?.find(i => i.name.includes('VIX') || i.symbol === '^VIX');
+  const vix = data.marketIndicators?.volatilityIndices?.find(i => i.name.includes('CBOE Volatility') || i.symbol === '^VIX');
   const vixValue = vix?.value ? formatNumber(vix.value) : '0';
   const vixTrend = vix?.trend || 'Neutral';
   const vixColor = vixTrend.toLowerCase() === 'rising' ? '#f56565' : '#48bb78';
@@ -542,8 +542,6 @@ const addMarketIndicators = (mobiledoc, data) => {
   const sp500Price = sp500?.price ? formatNumber(sp500.price) : '0';
   const sp500Change = sp500?.percentChange || (sp500?.change ? sp500.change + '%' : '0%');
   const sp500IsPositive = sp500?.isPositive !== undefined ? sp500.isPositive : (parseFloat(sp500?.change || 0) >= 0);
-  const sp500ChangeIcon = sp500IsPositive ? '↑' : '↓';
-  const sp500ChangeSign = sp500IsPositive ? '+' : '';
   const sp500Color = sp500IsPositive ? '#48bb78' : '#f56565';
 
   // Get Fear & Greed data
@@ -553,9 +551,9 @@ const addMarketIndicators = (mobiledoc, data) => {
   const fearGreedColor = getFearGreedColor(fearGreedValue);
 
   // Get VIX data
-  const vix = data.marketIndicators?.volatilityIndices?.find(i => i.name.includes('VIX') || i.symbol === '^VIX');
-  const vixValue = vix?.value ? formatNumber(vix.value) : '0';
-  const vixTrend = vix?.trend || 'Neutral';
+  const vix = data.marketIndicators?.volatilityIndices?.find(i => i.name.includes('CBOE Volatility') || i.symbol === '^VIX');
+  const vixValue = vix?.value ? formatNumber(vix.value) : '';
+  const vixTrend = vix?.trend || '';
   const vixColor = vixTrend.toLowerCase() === 'rising' ? '#f56565' : '#48bb78';
 
   // Get RSI data
@@ -574,24 +572,28 @@ const addMarketIndicators = (mobiledoc, data) => {
   
   const rsiColor = "#718096"; // Use a neutral gray color for RSI in the header
 
-  // Create the header HTML
-  const headerHtml = `
-    <div class="key-market-indicators" style="border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; margin-bottom: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center;">
-        <h2 style="font-size: 1.5rem; font-weight: bold; margin: 0;">Key Market Indicators</h2>
-        <div style="cursor: pointer;">▼</div>
-      </div>
-      <div style="margin-top: 10px; font-size: 0.9rem; color: #4a5568; text-align: center;">
-        S&P 500: ${sp500Price} <span style="color: ${sp500Color};">(${sp500IsPositive ? '↑' : '↓'} ${sp500Change})</span> | 
-        Fear & Greed Index: <span style="color: ${fearGreedColor};">${fearGreedValue} (${fearGreedCategory})</span> | 
-        VIX: <span style="color: ${vixColor};">${vixValue} (${vixTrend})</span>${rsiValue ? ` | RSI: <span style="color: ${rsiColor};">${rsiValue} (${rsiTrend})</span>` : ''}
-      </div>
-    </div>
+  // Create the main container with collapsible header
+  const html = `
+    <div class="market-pulse-section market-indicators-container" style="margin: 0; padding: 0;">
+      <div class="collapsible-section" data-section="market-indicators">
+        <div class="collapsible-header" style="background-color: white; padding: 15px; border-radius: 8px; display: flex; flex-direction: column; align-items: flex-start; border: 2px solid #5D4037;">
+          <div style="display: flex; justify-content: space-between; width: 100%; align-items: center;">
+            <div style="margin: 0; font-size: 2rem; font-weight: bold; color: black;">Key Market Indicators</div>
+            <div class="collapsible-icon" style="font-size: 14px; color: black;">▼</div>
+          </div>
+          <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
+            <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500IsPositive ? '↑' : '↓'} ${sp500Change})</span></span> | 
+            <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
+            <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span>${rsiValue ? ` | 
+            <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiTrend})</span></span>` : ''}
+          </div>
+        </div>
+        <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
   `;
+  
+  addHTML(mobiledoc, html);
 
-  addHTML(mobiledoc, headerHtml);
-
-  // Add the sections
+  // Add individual sections
   addMajorIndices(mobiledoc, data);
   addSectorPerformance(mobiledoc, data);
   addMarketFutures(mobiledoc, data);
@@ -601,9 +603,39 @@ const addMarketIndicators = (mobiledoc, data) => {
 
   // Close the container
   const closingHtml = `
+        </div>
+      </div>
     </div>
+    
+    <script>
+      // Add click event to toggle collapsible sections
+      document.addEventListener('DOMContentLoaded', function() {
+        const headers = document.querySelectorAll('.collapsible-header');
+        headers.forEach(header => {
+          header.addEventListener('click', function() {
+            const content = this.nextElementSibling;
+            const icon = this.querySelector('.collapsible-icon');
+            
+            // Toggle display
+            if (content.style.maxHeight === '0px' || content.style.maxHeight === '') {
+              content.style.maxHeight = '5000px';
+              icon.textContent = '▲';
+            } else {
+              content.style.maxHeight = '0px';
+              icon.textContent = '▼';
+            }
+          });
+          
+          // Initialize (open by default)
+          const content = header.nextElementSibling;
+          content.style.maxHeight = '5000px';
+          const icon = header.querySelector('.collapsible-icon');
+          icon.textContent = '▲';
+        });
+      });
+    </script>
   `;
-
+  
   addHTML(mobiledoc, closingHtml);
 };
 
