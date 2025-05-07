@@ -513,6 +513,26 @@ function processData(data) {
   
   // Process fundamentalMetrics to ensure proper format for display
   if (sampleData.fundamentalMetrics) {
+    // Handle legacy 'magnificentSeven' data if present
+    if (sampleData.fundamentalMetrics.magnificentSeven && Array.isArray(sampleData.fundamentalMetrics.magnificentSeven) && 
+        (!sampleData.fundamentalMetrics.topHoldings || !sampleData.fundamentalMetrics.topHoldings.length)) {
+      log('Converting magnificentSeven to topHoldings', 'TRANSFORM');
+      sampleData.fundamentalMetrics.topHoldings = sampleData.fundamentalMetrics.magnificentSeven;
+      // Remove the old property to avoid confusion
+      delete sampleData.fundamentalMetrics.magnificentSeven;
+    }
+    
+    // Log the number of top holdings before processing
+    if (sampleData.fundamentalMetrics.topHoldings && Array.isArray(sampleData.fundamentalMetrics.topHoldings)) {
+      log(`Number of top holdings before processing: ${sampleData.fundamentalMetrics.topHoldings.length}`, 'INFO');
+    } else {
+      log('No topHoldings array found or it is empty', 'WARNING');
+      // Initialize it if it doesn't exist
+      if (!sampleData.fundamentalMetrics.topHoldings) {
+        sampleData.fundamentalMetrics.topHoldings = [];
+      }
+    }
+    
     // Process each category of stocks
     ['majorIndices', 'topHoldings', 'otherStocks'].forEach(category => {
       if (sampleData.fundamentalMetrics[category] && Array.isArray(sampleData.fundamentalMetrics[category])) {

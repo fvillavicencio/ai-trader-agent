@@ -706,6 +706,79 @@ function cleanAndReplaceSymbols(symbols) {
 }
 
 /**
+ * Gets the top holdings from all ETFs in SP500Analyzer
+ * @return {Array} Array of stock symbols representing top holdings across all ETFs
+ */
+function getTopIndexHoldings() {
+  try {
+    // Get SP500 analysis data
+    const sp500Data = SP500Analyzer();
+    
+    // If no data or no ETF holdings, return empty array
+    if (!sp500Data || !sp500Data.body) {
+      Logger.log('No SP500 data available for top holdings extraction');
+      return [];
+    }
+    
+    // Parse the body if it's a string
+    let data;
+    try {
+      data = typeof sp500Data.body === 'string' ? JSON.parse(sp500Data.body) : sp500Data.body;
+    } catch (e) {
+      Logger.log('Error parsing SP500 data body: ' + e);
+      return [];
+    }
+    
+    // If no ETF holdings, return empty array
+    if (!data.etfHoldings || !Array.isArray(data.etfHoldings) || data.etfHoldings.length === 0) {
+      Logger.log('No ETF holdings data available');
+      return [];
+    }
+    
+    // Create a map to track symbols and their total weight across all ETFs
+    const holdingsMap = new Map();
+    
+    // Process each ETF's holdings
+    Logger.log(`Processing ${data.etfHoldings.length} ETFs for top holdings`);
+    
+    data.etfHoldings.forEach(etf => {
+      if (etf.holdings && Array.isArray(etf.holdings)) {
+        Logger.log(`Processing ETF: ${etf.symbol} with ${etf.holdings.length} holdings`);
+        
+        // Get top 5 holdings from each ETF
+        etf.holdings.slice(0, 5).forEach(holding => {
+          const symbol = holding.symbol;
+          if (symbol) {
+            // If symbol already exists in map, add to its weight
+            if (holdingsMap.has(symbol)) {
+              holdingsMap.set(symbol, holdingsMap.get(symbol) + 1);
+            } else {
+              holdingsMap.set(symbol, 1);
+            }
+          }
+        });
+      }
+    });
+    
+    Logger.log(`Collected ${holdingsMap.size} unique symbols from all ETFs`);
+    
+    // Convert map to array of symbols
+    const topHoldings = Array.from(holdingsMap.entries())
+      // Sort by frequency (descending)
+      .sort((a, b) => b[1] - a[1])
+      // Extract just the symbols
+      .map(entry => entry[0]);
+    
+    // Make sure we're returning ALL unique holdings (no arbitrary limit)
+    Logger.log(`Extracted ${topHoldings.length} top holdings from SP500Analyzer`);
+    return topHoldings;
+  } catch (error) {
+    Logger.log(`Error getting top index holdings: ${error}`);
+    return [];
+  }
+}
+
+/**
  * Formats fundamental metrics data
  * @param {Object} fundamentalMetricsData - Fundamental metrics data
  * @return {string} Formatted fundamental metrics data
@@ -723,13 +796,20 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
     
     // Organize stocks into categories
     const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
-    const magnificentSeven = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
+    
+    // Get top index holdings from SP500Analyzer
+    const topIndexHoldings = getTopIndexHoldings();
+    
+    // Filter out any top holdings that are already in majorIndices
+    const filteredTopHoldings = topIndexHoldings.filter(symbol => !majorIndices.includes(symbol));
+    
+    // Get other stocks (not in majorIndices or topIndexHoldings)
     const otherStocks = Object.keys(metricsObj).filter(
-  symbol =>
-    !majorIndices.includes(symbol) &&
-    !magnificentSeven.includes(symbol) &&
-    cleanAndReplaceSymbols([symbol])[0] === symbol
-);
+      symbol =>
+        !majorIndices.includes(symbol) &&
+        !filteredTopHoldings.includes(symbol) &&
+        cleanAndReplaceSymbols([symbol])[0] === symbol
+    );
     
     // Helper function to format a single stock
     function formatStock(symbol, metrics) {
@@ -785,10 +865,10 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
       });
     }
     
-    // Magnificent Seven
-    if (magnificentSeven.length > 0) {
-      formattedText += "**Magnificent Seven:**\n";
-      magnificentSeven.forEach(symbol => {
+    // Top Index Holdings
+    if (filteredTopHoldings.length > 0) {
+      formattedText += "**Top Index Holdings:**\n";
+      filteredTopHoldings.forEach(symbol => {
         const metrics = metricsObj[symbol];
         formattedText += formatStock(symbol, metrics) + "\n\n";
       });

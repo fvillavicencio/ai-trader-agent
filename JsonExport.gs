@@ -189,7 +189,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       },
       fundamentalMetrics: {
         majorIndices: [],
-        magnificentSeven: [],
+        topHoldings: [],
         otherStocks: []
       },
       macroeconomicFactors: {
@@ -579,12 +579,21 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       // Define major indices symbols
       const majorIndicesSymbols = ["SPY", "DIA", "QQQ", "IWM"];
       
-      // Define Magnificent Seven symbols
-      const magSevenSymbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
+      // Get top index holdings from SP500Analyzer
+      const topIndexHoldings = getTopIndexHoldings();
+      
+      // Log the number of top holdings retrieved
+      Logger.log(`Retrieved ${topIndexHoldings.length} top index holdings from SP500Analyzer`);
+      
+      // Filter out any top holdings that are already in majorIndices
+      const filteredTopHoldings = topIndexHoldings.filter(symbol => !majorIndicesSymbols.includes(symbol));
+      
+      // Log the number of filtered top holdings
+      Logger.log(`After filtering out major indices, ${filteredTopHoldings.length} top holdings remain`);
       
       // Process metrics for each category
       const majorIndices = [];
-      const magnificentSeven = [];
+      const topHoldings = [];
       const otherStocks = [];
       
       // Helper function to create stock object with metrics array format
@@ -746,8 +755,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           if (stockObject) {
             if (majorIndicesSymbols.includes(symbol)) {
               majorIndices.push(stockObject);
-            } else if (magSevenSymbols.includes(symbol)) {
-              magnificentSeven.push(stockObject);
+            } else if (filteredTopHoldings.includes(symbol)) {
+              topHoldings.push(stockObject);
             } else {
               otherStocks.push(stockObject);
             }
@@ -757,16 +766,16 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       
       // Sort each category alphabetically by symbol
       majorIndices.sort((a, b) => a.symbol.localeCompare(b.symbol));
-      magnificentSeven.sort((a, b) => a.symbol.localeCompare(b.symbol));
+      topHoldings.sort((a, b) => a.symbol.localeCompare(b.symbol));
       otherStocks.sort((a, b) => a.symbol.localeCompare(b.symbol));
       
       // Update the full JSON dataset
       fullJsonDataset.fundamentalMetrics.majorIndices = majorIndices;
-      fullJsonDataset.fundamentalMetrics.magnificentSeven = magnificentSeven;
+      fullJsonDataset.fundamentalMetrics.topHoldings = topHoldings;
       fullJsonDataset.fundamentalMetrics.otherStocks = otherStocks;
       
       // If we have no data in any category, add some sample data for testing
-      if (debugMode && majorIndices.length === 0 && magnificentSeven.length === 0 && otherStocks.length === 0) {
+      if (debugMode && majorIndices.length === 0 && topHoldings.length === 0 && otherStocks.length === 0) {
         Logger.log("No fundamental metrics data found. Adding sample data for testing.");
         
         // Add sample data for SPY
@@ -789,7 +798,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         });
         
         // Add sample data for AAPL
-        fullJsonDataset.fundamentalMetrics.magnificentSeven.push({
+        fullJsonDataset.fundamentalMetrics.topHoldings.push({
           symbol: "AAPL",
           name: "Apple Inc.",
           price: 169.32,
