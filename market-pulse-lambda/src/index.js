@@ -514,7 +514,7 @@ function processData(data) {
   // Process fundamentalMetrics to ensure proper format for display
   if (sampleData.fundamentalMetrics) {
     // Process each category of stocks
-    ['majorIndices', 'magnificentSeven', 'otherStocks'].forEach(category => {
+    ['majorIndices', 'topHoldings', 'otherStocks'].forEach(category => {
       if (sampleData.fundamentalMetrics[category] && Array.isArray(sampleData.fundamentalMetrics[category])) {
         // Process each stock in the category
         sampleData.fundamentalMetrics[category].forEach(stock => {

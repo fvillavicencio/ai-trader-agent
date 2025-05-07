@@ -12,11 +12,11 @@
     </div>
   {{/if}}
   
-  {{#if fundamentalMetrics.magSeven.length}}
+  {{#if fundamentalMetrics.topHoldings.length}}
     <div class="subsection">
-      <h3>Magnificent Seven</h3>
+      <h3>Top Index Holdings</h3>
       <div class="stocks-grid">
-        {{#each fundamentalMetrics.magSeven}}
+        {{#each fundamentalMetrics.topHoldings}}
           {{> stock-card}}
         {{/each}}
       </div>
