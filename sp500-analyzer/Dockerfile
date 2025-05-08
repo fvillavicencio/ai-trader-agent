@@ -30,4 +30,4 @@ COPY --from=build /app/services ./services
 COPY --from=build /app/forward_eps_estimates.json ./
 COPY --from=build /app/services/sp-500-eps-est.xlsx ./services/
 
-CMD [ "node_modules/.bin/aws-lambda-ric", "lambda.handler" ]
+CMD [ "node_modules/.bin/aws-lambda-ric", "--es-module-specifier-resolution=node", "lambda.handler" ]
