@@ -98,7 +98,6 @@ function getOpenAITradingAnalysis() {
       return JSON.parse(cachedAnalysis);
     }
     
-<<<<<<< HEAD
     // Check if DEBUG_MODE is enabled - do this earlier in the function
     const scriptProperties = PropertiesService.getScriptProperties();
     const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
@@ -190,31 +189,12 @@ function getOpenAITradingAnalysis() {
       return debugResponse;
     }
     
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     // Get the OpenAI API key
     const apiKey = getOpenAIApiKey();
     
     // Send the prompt to OpenAI
     Logger.log("Sending prompt to OpenAI...");
     
-<<<<<<< HEAD
-=======
-    // Check if DEBUG_MODE is enabled
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-
-    /**
-     * 
-     * If DEBUG_MODE is enabled, use generateDebugOpenAIResponse instead of submitting to OpenAI
-     */
-    if (debugMode) {
-      Logger.log("Debug mode enabled - using generateDebugOpenAIResponse");
-      const debugResponse = generateDebugOpenAIResponse();
-      return debugResponse;
-    }
-    
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     const response = sendPromptToOpenAI(fullPrompt, apiKey);
     const content = extractContentFromResponse(response);
     Logger.log("Received response from OpenAI");
@@ -249,7 +229,6 @@ function runTradingAnalysis() {
     const jsonFileName = "openai_response.json";
     const jsonFileUrl = saveJsonToGoogleDrive(analysisJson, jsonFileName);
     Logger.log(`OpenAI response saved to Google Drive: ${jsonFileUrl}`);
-<<<<<<< HEAD
 
     // Retrieve Script Property to determine which template to use
     const scriptProperties = PropertiesService.getScriptProperties();
@@ -257,11 +236,6 @@ function runTradingAnalysis() {
     
     // Send the trading decision email - only call this once
     sendTradeDecisionEmail(analysisJson, newTemplate);
-=======
-    
-    // Send the trading decision email - only call this once
-    sendTradeDecisionEmail(analysisJson);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     
     Logger.log("Trading analysis completed successfully.");
     return "Trading analysis completed successfully.";

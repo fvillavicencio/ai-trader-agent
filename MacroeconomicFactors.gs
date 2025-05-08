@@ -635,7 +635,6 @@ function retrieveGeopoliticalRisksData() {
       return parsedData;
     }
     
-<<<<<<< HEAD
     // Instead of calling AI services, return a hardcoded sample data structure
     // that matches what JsonExport.generateFullJsonDataset expects
     Logger.log("Using hardcoded geopolitical risks data");
@@ -694,49 +693,17 @@ function retrieveGeopoliticalRisksData() {
       global: "Geopolitical risk assessment unavailable due to system error.",
       risks: [
         {
-=======
-    // Determine which AI provider to use
-    const aiProvider = getMacroeconomicAIProvider();
-    Logger.log(`Using ${aiProvider} for geopolitical risks data retrieval`);
-    
-    // Call the appropriate function based on the AI provider
-    if (aiProvider === "perplexity") {
-      return retrieveGeopoliticalRisksFromPerplexity();
-    } else {
-      return retrieveGeopoliticalRisksFromOpenAI();
-    }
-  } catch (error) {
-    Logger.log(`Error retrieving geopolitical risks data: ${error}`);
-    
-    // Return a fallback object instead of throwing an error
-    return {
-      geopoliticalRiskIndex: 50,
-      risks: [
-        {
-          type: 'Event',
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           name: "System Error",
           description: "Geopolitical risk data retrieval encountered a system error.",
           region: "Global",
           impactLevel: "Unknown",
-<<<<<<< HEAD
           source: "System",
           sourceUrl: "https://openai.com/"
-=======
-          marketImpact: "Unable to assess market impact at this time.",
-          source: "System",
-          url: "https://openai.com/"
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         }
       ],
       source: "System (Error Fallback)",
       sourceUrl: "https://openai.com/",
-<<<<<<< HEAD
       lastUpdated: new Date().toISOString()
-=======
-      lastUpdated: new Date(),
-      error: error.toString()
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     };
   }
 }

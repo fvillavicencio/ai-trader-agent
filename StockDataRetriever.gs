@@ -266,7 +266,6 @@ function retrieveStockMetrics(symbol) {
         industry: metrics.industry,
         sector: metrics.sector
       });
-<<<<<<< HEAD
       // Calculate execution time
       const executionTime = (new Date().getTime() - startTime) / 1000;
       Logger.log(`Retrieved metrics for ${symbol} in ${executionTime} seconds`);
@@ -307,19 +306,6 @@ function retrieveStockMetrics(symbol) {
       Logger.log(`Failed to retrieve essential data from Yahoo Finance API. Missing price or valid company name.`);
       return null;
     }
-=======
-      metrics.lastUpdated = new Date().toISOString();
-      scriptCache.put(cacheKey, JSON.stringify(metrics), CACHE_DURATION * 60); // expiration in seconds
-      Logger.log(`Cached stock metrics for ${symbol}`);
-      return {
-        ...metrics,
-        fromCache: false
-     };
-  } else {
-    Logger.log(`Failed to retrieve essential data from Yahoo Finance API. Missing price or valid company name.`);
-    return null;
-  }
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   } catch (error) {
     Logger.log(`Error in retrieveStockMetrics: ${error}`);
     throw error;

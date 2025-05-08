@@ -215,13 +215,8 @@ function generateDataRetrievalText() {
           Logger.log("Sorted upcoming economic events:");
           Logger.log(JSON.stringify(sortedEvents, null, 2));
           
-<<<<<<< HEAD
           // Use all available events from FetchEconomicEvents.gs
           const eventsToShow = sortedEvents;
-=======
-          // Add each event (limit to 5 to avoid too much text)
-          const eventsToShow = sortedEvents.slice(0, 5);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           
           // Log the events to show for debugging
           Logger.log(`Number of events to show: ${eventsToShow.length}`);
@@ -316,7 +311,6 @@ function retrieveAllData() {
     // Retrieve fundamental metrics
     const defaultSymbols = ["SPY", "QQQ", "IWM", "DIA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
     const mentionedStocks = marketSentimentData.mentionedStocks || [];
-<<<<<<< HEAD
 
     // Get deduplicated top index holdings (excluding major indices)
     const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
@@ -325,11 +319,6 @@ function retrieveAllData() {
 
     // Merge all symbols needed for fundamental metrics
     const allSymbolsRaw = [...defaultSymbols, ...mentionedStocks, ...filteredTopHoldings];
-=======
-    
-    const allSymbolsRaw = [...defaultSymbols, ...mentionedStocks];
-
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     const cleanedSymbols = [...new Set(cleanAndReplaceSymbols(allSymbolsRaw))];
     const fundamentalMetricsData = retrieveFundamentalMetrics(cleanedSymbols);
 
@@ -630,16 +619,12 @@ function testFundamentalMetricsOutput() {
       if (metrics.priceToSales !== null) output += `  * Price/Sales: ${formatValue(metrics.priceToSales)}\n`;
       if (metrics.debtToEquity !== null) output += `  * Debt/Equity: ${formatValue(metrics.debtToEquity)}\n`;
       if (metrics.returnOnEquity !== null) output += `  * Return on Equity: ${formatValue(metrics.returnOnEquity)}%\n`;
-<<<<<<< HEAD
       if (metrics.returnOnAssets !== null) output += `  * Return on Assets: ${formatValue(metrics.returnOnAssets)}%\n`;
       if (metrics.profitMargin !== null) output += `  * Profit Margin: ${formatValue(metrics.profitMargin)}%\n`;
       if (metrics.dividendYield !== null) output += `  * Dividend Yield: ${formatValue(metrics.dividendYield)}%\n`;
       if (metrics.beta !== null) output += `  * Beta: ${formatValue(metrics.beta)}\n`;
       if (metrics.summary !== null) output += `  * Summary: ${formatValue(metrics.summary)}\n`;
       if (metrics.lastUpdated !== null) output += `  * Last Updated: ${formatValue(metrics.lastUpdated)}\n`;
-=======
-      if (metrics.beta !== null) output += `  * Beta: ${formatValue(metrics.beta)}\n`;
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
       
       output += "\n";
     }
@@ -726,7 +711,6 @@ function cleanAndReplaceSymbols(symbols) {
 }
 
 /**
-<<<<<<< HEAD
  * Gets the top holdings from all ETFs in SP500Analyzer
  * @return {Array} Array of stock symbols representing top holdings across all ETFs
  */
@@ -805,8 +789,6 @@ function getTopIndexHoldings() {
 }
 
 /**
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  * Formats fundamental metrics data
  * @param {Object} fundamentalMetricsData - Fundamental metrics data
  * @return {string} Formatted fundamental metrics data
@@ -824,7 +806,6 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
     
     // Organize stocks into categories
     const majorIndices = ["SPY", "QQQ", "IWM", "DIA"];
-<<<<<<< HEAD
     
     // Get top index holdings from SP500Analyzer
     const topIndexHoldings = getTopIndexHoldings();
@@ -853,15 +834,6 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
         !filteredTopHoldings.includes(symbol) &&
         cleanAndReplaceSymbols([symbol])[0] === symbol
     );
-=======
-    const magnificentSeven = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
-    const otherStocks = Object.keys(metricsObj).filter(
-  symbol =>
-    !majorIndices.includes(symbol) &&
-    !magnificentSeven.includes(symbol) &&
-    cleanAndReplaceSymbols([symbol])[0] === symbol
-);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     
     // Helper function to format a single stock
     function formatStock(symbol, metrics) {
@@ -917,17 +889,10 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
       });
     }
     
-<<<<<<< HEAD
     // Top Index Holdings
     if (filteredTopHoldings.length > 0) {
       formattedText += "**Top Index Holdings:**\n";
       filteredTopHoldings.forEach(symbol => {
-=======
-    // Magnificent Seven
-    if (magnificentSeven.length > 0) {
-      formattedText += "**Magnificent Seven:**\n";
-      magnificentSeven.forEach(symbol => {
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         const metrics = metricsObj[symbol];
         formattedText += formatStock(symbol, metrics) + "\n\n";
       });
