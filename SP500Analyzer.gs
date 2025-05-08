@@ -34,10 +34,46 @@ function fetchSP500AnalysisFromLambda_() {
         throw new Error('Lambda service error: ' + code + ' - ' + response.getContentText());
       }
       var json = response.getContentText();
+      
+      // Check if the response is HTML instead of JSON
+      if (json.trim().startsWith('<!DOCTYPE') || json.trim().startsWith('<html')) {
+        Logger.log('Received HTML content instead of JSON');
+        // Return a fallback object with error information
+        return {
+          error: 'Received HTML content instead of JSON',
+          message: 'The Lambda function returned HTML instead of JSON. This might indicate an issue with the Lambda function or API Gateway.',
+          htmlPreview: json.substring(0, 200) + '...' // First 200 chars for debugging
+        };
+      }
+      
       try {
-        return JSON.parse(json);
+        var lambdaResponse = JSON.parse(json);
+        // Handle the nested response structure from API Gateway
+        if (lambdaResponse.body) {
+          // Check if body is a string that needs parsing
+          if (typeof lambdaResponse.body === 'string') {
+            try {
+              return JSON.parse(lambdaResponse.body);
+            } catch (bodyError) {
+              // If body can't be parsed as JSON, it might be HTML or other content
+              if (lambdaResponse.body.trim().startsWith('<!DOCTYPE') || lambdaResponse.body.trim().startsWith('<html')) {
+                Logger.log('Lambda body contains HTML content');
+                return {
+                  error: 'Lambda body contains HTML content',
+                  message: 'The Lambda function body contains HTML instead of JSON.',
+                  htmlPreview: lambdaResponse.body.substring(0, 200) + '...'
+                };
+              }
+              // Otherwise return the body as is
+              return { error: 'Invalid JSON in Lambda body', rawBody: lambdaResponse.body.substring(0, 500) };
+            }
+          }
+          return lambdaResponse.body; // If body is already an object
+        }
+        return lambdaResponse;
       } catch (e) {
-        throw new Error('Failed to parse Lambda JSON: ' + e + '\n' + json);
+        Logger.log('Failed to parse Lambda JSON: ' + e + '\n' + json.substring(0, 500));
+        throw new Error('Failed to parse Lambda JSON: ' + e + '\n' + json.substring(0, 500));
       }
     } catch (err) {
       lastError = err;
@@ -83,6 +119,36 @@ function clearSP500AnalyzerCache() {
  * Tester/debug function: logs Lambda JSON output, text output, and HTML output
  */
 function testSP500Analyzer() {
+  // First log the script properties to see what URL and API key are being used
+  var props = PropertiesService.getScriptProperties();
+  var url = props.getProperty('LAMBDA_SERVICE_URL');
+  var apiKey = props.getProperty('LAMBDA_API_KEY');
+  Logger.log('=== Script Properties ===');
+  Logger.log('LAMBDA_SERVICE_URL: ' + url);
+  Logger.log('LAMBDA_API_KEY: ' + (apiKey ? '[API KEY EXISTS]' : '[MISSING]'));
+  
+  // Try to directly fetch from the Lambda URL to see what's returned
+  try {
+    var options = {
+      method: 'post',
+      headers: {
+        'x-api-key': apiKey
+      },
+      muteHttpExceptions: true
+    };
+    var response = UrlFetchApp.fetch(url, options);
+    var code = response.getResponseCode();
+    var contentText = response.getContentText();
+    Logger.log('=== Raw Lambda Response ===');
+    Logger.log('Status Code: ' + code);
+    Logger.log('Content Type: ' + response.getHeaders()['Content-Type']);
+    Logger.log('First 500 chars: ' + contentText.substring(0, 500));
+  } catch (err) {
+    Logger.log('=== Error fetching Lambda ===');
+    Logger.log(err.toString());
+  }
+  
+  // Continue with normal test
   var result = SP500Analyzer();
   Logger.log('=== Raw JSON ===');
   Logger.log(JSON.stringify(result, null, 2));
