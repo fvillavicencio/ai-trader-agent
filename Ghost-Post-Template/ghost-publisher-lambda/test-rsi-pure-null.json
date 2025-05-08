@@ -1,0 +1,34 @@
+{
+  "marketIndicators": {
+    "majorIndices": [
+      {
+        "name": "S&P 500",
+        "price": 5686.67,
+        "change": 82.53,
+        "isPositive": true
+      }
+    ],
+    "fearGreed": {
+      "value": 43,
+      "category": "Fear",
+      "description": "The Fear and Greed Index is currently in a state of fear, indicating a moderate level of market anxiety.",
+      "source": "CNN Business",
+      "sourceUrl": "https://www.cnn.com/markets/fear-and-greed",
+      "asOf": "May 4, 2025 at 8:18 PM EDT"
+    },
+    "volatilityIndices": [
+      {
+        "name": "CBOE Volatility Index",
+        "value": 22.68,
+        "change": -1.92,
+        "trend": "Falling"
+      }
+    ],
+    "rsi": {
+      "value": null,
+      "source": "Tradier (RSI)",
+      "sourceUrl": "https://developer.tradier.com/documentation/markets/get-timesales",
+      "asOf": "May 4, 2025 at 8:19 PM EDT"
+    }
+  }
+}

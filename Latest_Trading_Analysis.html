@@ -1,0 +1,1644 @@
+<!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+      <title>Market Pulse Daily - Analysis</title>
+      <style>
+        /* Base styles */
+        body {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          background-color: #f5f7fa;
+          color: #333;
+          line-height: 1.5;
+          margin: 0;
+          padding: 0;
+          -webkit-text-size-adjust: 100%;
+          -ms-text-size-adjust: 100%;
+        }
+        
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          padding: 20px;
+          width: 100%;
+        }
+        
+        .header {
+          text-align: center;
+          margin-bottom: 30px;
+          padding: 0 10px;
+        }
+        
+        .logo {
+          margin-bottom: 15px;
+          max-width: 100%;
+          height: auto;
+        }
+        
+        .title {
+          font-size: 24px;
+          font-weight: bold;
+          color: #2c3e50;
+          margin: 0;
+          line-height: 1.2;
+        }
+        
+        .subtitle {
+          font-size: 14px;
+          color: #7f8c8d;
+          margin: 5px 0 0;
+          line-height: 1.4;
+        }
+        
+        .decision-banner {
+          background-color: #f8f9fa;
+          border-radius: 8px;
+          padding: 20px;
+          margin-bottom: 20px;
+          text-align: center;
+          box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+          width: 100%;
+        }
+        
+        .decision-text {
+          font-size: 28px;
+          font-weight: bold;
+          margin: 0;
+          line-height: 1.2;
+        }
+        
+        .section {
+          background-color: white;
+          border-radius: 8px;
+          padding: 20px;
+          margin-bottom: 20px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          width: 100%;
+        }
+        
+        .section h2 {
+          color: #333;
+          border-bottom: 1px solid #eee;
+          padding-bottom: 10px;
+          margin-top: 0;
+          margin-bottom: 15px;
+          text-align: center;
+          font-size: 18px;
+          line-height: 1.3;
+        }
+        
+        .stock-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+          gap: 15px;
+          width: 100%;
+        }
+        
+        .stock-card {
+          display: flex;
+          flex-direction: column;
+          background: #fff;
+          border-radius: 6px;
+          padding: 15px;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+          width: 100%;
+        }
+        
+        .footer {
+          text-align: center;
+          font-size: 12px;
+          color: #95a5a6;
+          margin-top: 30px;
+          padding: 10px;
+          background-color: #1a365d;
+          color: white;
+        }
+        
+        .disclaimer {
+          font-size: 11px;
+          color: #95a5a6;
+          margin-top: 10px;
+          text-align: center;
+          line-height: 1.4;
+        }
+        
+        /* Enhanced styles for fundamental metrics section */
+        .subsection {
+          margin-bottom: 20px;
+          width: 100%;
+        }
+        
+        .stocks-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+          gap: 15px;
+          margin-top: 15px;
+          width: 100%;
+        }
+        
+        /* Mobile-specific styles */
+        @media (max-width: 600px) {
+          .container {
+            padding: 15px;
+            width: 100%;
+          }
+          
+          .stock-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          
+          .stocks-grid {
+            grid-template-columns: 1fr;
+            gap: 10px;
+          }
+          
+          .stock-card {
+            padding: 12px;
+          }
+          
+          .decision-banner {
+            padding: 15px;
+          }
+          
+          .decision-text {
+            font-size: 24px;
+          }
+          
+          .title {
+            font-size: 20px;
+          }
+          
+          .section {
+            padding: 15px;
+          }
+          
+          .section h2 {
+            font-size: 16px;
+          }
+          
+          .header {
+            padding: 0 5px;
+          }
+        }
+        
+        /* Print styles */
+        @media print {
+          .container {
+            max-width: 100%;
+            width: 100%;
+          }
+          
+          .section {
+            box-shadow: none;
+          }
+          
+          .decision-banner {
+            box-shadow: none;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <!-- Header -->
+        <div style="text-align: center; margin-bottom: 25px;">
+          <h1 style="margin: 0; color: #2c3e50; font-size: 28px;">Market Pulse Daily - Analysis</h1>
+          <p style="color: #7f8c8d; margin: 5px 0 0;">As of Apr 12, 2025, 11:43 PM EDT</p>
+          
+        </div>
+        
+        <!-- Decision Box -->
+        <div style="padding: 20px; margin: 25px 0; border-radius: 8px; text-align: center; background-color: #FFF8E1; border-left: 5px solid #4caf50; box-shadow: 0 3px 6px rgba(0,0,0,0.1);">
+          <div style="font-size: 28px; font-weight: bold; color: #4caf50; margin: 0 0 10px;">
+            <span style="margin-right: 10px;">&#8593;</span>Buy Now
+          </div>
+          <p style="font-size: 16px; color: #555; margin: 0;">The current market shows a positive trend with significant growth in major indices and sectors, despite geopolitical tensions and inflation concerns.</p>
+        </div>
+        
+        <!-- Justification Section -->
+        <div class="section" id="justification-section">
+          <h2>Justification</h2>
+          <div style="line-height: 1.6; color: #444; font-size: 13px;">Given the positive performance of major indices and sectors, alongside a normal yield curve indicating economic growth, the market presents buying opportunities despite existing geopolitical tensions and inflation concerns. The extreme fear sentiment further suggests that it might be an opportune time to buy undervalued stocks, especially in sectors highlighted by analysts such as consumer staples, energy, and technology.</div>
+        </div>
+        
+        
+    <div class="section">
+      <h2>Market Sentiment</h2>
+      
+      <div style="background-color: #f8f9fa; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+        <div style="font-weight: bold; display: inline;">Overall:</div>
+        <div style="display: inline; margin-left: 5px;">Mixed sentiment with a positive outlook on consumer staples, energy, and technology sectors.</div>
+      </div>
+      
+      
+          <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Dan Nathan</div>
+            <div style="font-style: italic; margin-bottom: 5px;">"Tech stocks are facing significant headwinds with the current economic policies."</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 3px;">Mentioned:</div>
+              <span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">AAPL</span><span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">MSFT</span>
+             </div>
+            <div style="margin-top: 8px; font-size: 12px; color: #666;">Source: <span style="color: #2196f3;">CNBC</span></div>
+          </div>
+        
+          <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Josh Brown</div>
+            <div style="font-style: italic; margin-bottom: 5px;">"Markets are showing resilience despite geopolitical tensions."</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 3px;">Mentioned:</div>
+              <span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">XOM</span><span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">JPM</span>
+             </div>
+            <div style="margin-top: 8px; font-size: 12px; color: #666;">Source: <span style="color: #2196f3;">Bloomberg</span></div>
+          </div>
+        
+          <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Steve Weiss</div>
+            <div style="font-style: italic; margin-bottom: 5px;">"Consumer staples are currently undervalued and present a good buying opportunity."</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 3px;">Mentioned:</div>
+              <span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">PG</span><span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">KO</span>
+             </div>
+            <div style="margin-top: 8px; font-size: 12px; color: #666;">Source: <span style="color: #2196f3;">MarketWatch</span></div>
+          </div>
+        
+          <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Joe Terranova</div>
+            <div style="font-style: italic; margin-bottom: 5px;">"Energy sector will continue to benefit from higher oil prices."</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 3px;">Mentioned:</div>
+              <span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">CVX</span><span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">BP</span>
+             </div>
+            <div style="margin-top: 8px; font-size: 12px; color: #666;">Source: <span style="color: #2196f3;">Financial Times</span></div>
+          </div>
+        
+          <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Dan Niles</div>
+            <div style="font-style: italic; margin-bottom: 5px;">"The semiconductor industry is poised for a rebound after the recent slump."</div>
+            <div style="margin-top: 8px;">
+              <div style="margin-bottom: 3px;">Mentioned:</div>
+              <span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">AMD</span><span style="display: inline-block; background-color: #e3f2fd; color: #0d47a1; padding: 2px 8px; border-radius: 4px; margin-right: 5px; font-size: 12px;">NVDA</span>
+             </div>
+            <div style="margin-top: 8px; font-size: 12px; color: #666;">Source: <span style="color: #2196f3;">Reuters</span></div>
+          </div>
+        
+          <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Mohamed El-Erian</div>
+            <div style="font-style: italic; margin-bottom: 5px;">"Inflation concerns are overstated; the economy is on a solid path."</div>
+            
+            <div style="margin-top: 8px; font-size: 12px; color: #666;">Source: <span style="color: #2196f3;">The Wall Street Journal</span></div>
+          </div>
+        
+      
+    </div>
+    
+        
+    <div class="section">
+      <h2>Key Market Indicators</h2>
+      <div style='margin-top: 15px;'>
+        
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Major Indices</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">S&P 500</div>
+              <div style="flex: 1; text-align: right;">5363.36</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 95.31 (1.8%)</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Dow Jones Industrial Average</div>
+              <div style="flex: 1; text-align: right;">40212.71</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 619.05 (1.6%)</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">NASDAQ Composite</div>
+              <div style="flex: 1; text-align: right;">16724.455</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 337.15 (2.1%)</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Russell 2000</div>
+              <div style="flex: 1; text-align: right;">1860.2048</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 28.81 (1.6%)</div>
+            </div>
+            
+        </div>
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+          Source: <a href="https://finance.yahoo.com/markets/">Yahoo Finance</a>, as of Apr 11, 2025, 4:56 PM EDT
+        </div>
+      </div>
+      
+        
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Sector Performance</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Materials</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 3.0%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Energy</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 2.5%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Technology</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 2.0%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Industrials</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 1.8%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Financials</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 1.7%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Healthcare</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 1.5%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Real Estate</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 1.4%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Consumer Staples</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 1.3%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Utilities</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 1.2%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Consumer Discretionary</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 1.0%</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #4caf50;">
+              <div style="font-weight: bold; width: 200px;">Communication Services</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8593; 0.9%</div>
+            </div>
+            
+        </div>
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+           Source: <a href="https://finance.yahoo.com/sectors/">Yahoo Finance</a>, as of Apr 11, 2025, 4:56 PM EDT
+        </div>
+      </div>
+      
+        
+      <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+          <div style="font-weight: bold; font-size: 1.3em;">Fear & Greed Index:</div>
+          <div style="font-weight: bold; color: #f44336; font-size: 1.69em;">13</div>
+        </div>
+        
+        <div style="position: relative; height: 10px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+          <div style="position: absolute; top: 0; left: 13%; transform: translateX(-50%); width: 15px; height: 15px; background-color: #333; border-radius: 50%;"></div>
+          <div style="position: absolute; top: -6px; left: calc(13% - 6px); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
+          <div>Extreme Fear</div>
+          <div>Fear</div>
+          <div>Neutral</div>
+          <div>Greed</div>
+          <div>Extreme Greed</div>
+        </div>
+        
+        <div style="font-size: 14px; color: #555; margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid #f44336;">
+          <span style="font-weight: bold;">Extreme Fear:</span> <span>Market sentiment indicator based on various market factors.</span>
+          <span style="margin-left: 50px; font-size: 12px; color: #888;">
+             One Week Ago: 3 |  One Month Ago: 15
+          </span>
+        </div>
+        
+        <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+          Source: <a href="https://www.cnn.com/markets/fear-and-greed">CNN</a>, as of Apr 12, 2025, 11:42 PM EDT
+        </div>
+      </div>
+      
+        
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Volatility Indices</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #f44336;">
+              <div style="font-weight: bold; width: 200px;">CBOE Volatility Index</div>
+              <div style="flex: 1; text-align: right;">37.56</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8595; Falling</div>
+            </div>
+            
+            <div style="display: flex; align-items: center; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid #f44336;">
+              <div style="font-weight: bold; width: 200px;">NASDAQ Volatility Index</div>
+              <div style="flex: 1; text-align: right;">39.95</div>
+              <div style="color: #4caf50; font-weight: bold; margin-left: 10px;">&#8595; Falling</div>
+            </div>
+            
+        </div>
+        <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+          Source: <a href="https://finance.yahoo.com/quote/%5EVIX/">Yahoo Finance</a>, as of Apr 11, 2025, 4:15 PM EDT
+        </div>
+      </div>
+      
+        
+      <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+        <div style="font-weight: bold; font-size: 16px; margin-bottom: 10px;">Upcoming Events</div>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">Apr 15, 2025, 8:30 AM EDT</div>
+              </div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">Export Prices Index MoM</div>
+                <div style="font-size: 12px; color: #666;">U.S. Bureau of Labor Statistics</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+                Forecast: 0.10%, Previous: 0.10%
+              </div>
+            </div>
+            
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">Apr 15, 2025, 8:30 AM EDT</div>
+              </div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">Import Prices Index MoM</div>
+                <div style="font-size: 12px; color: #666;">U.S. Bureau of Labor Statistics</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+                Forecast: 0.00%, Previous: 0.40%
+              </div>
+            </div>
+            
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">Apr 15, 2025, 8:30 AM EDT</div>
+              </div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">New York Fed Manufacturing Report</div>
+                <div style="font-size: 12px; color: #666;">Federal Reserve Bank of New York</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+                Forecast: -12.4, Previous: -20
+              </div>
+            </div>
+            
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">Apr 16, 2025, 7:00 AM EDT</div>
+              </div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">30-Year Fixed Rate Mortgage Rate</div>
+                <div style="font-size: 12px; color: #666;">Mortgage Bankers Association</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+                Previous: 6.61%
+              </div>
+            </div>
+            
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">Apr 16, 2025, 7:00 AM EDT</div>
+              </div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">Mortgage Applications Index</div>
+                <div style="font-size: 12px; color: #666;">Mortgage Bankers Association</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+                Previous: 20.00%
+              </div>
+            </div>
+            
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">Apr 17, 2025, 8:30 AM EDT</div>
+              </div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">Philadelphia Fed Business Outlook Survey 6-Month Index</div>
+                <div style="font-size: 12px; color: #666;">Federal Reserve Bank of Philadelphia</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+                Previous: 5.6
+              </div>
+            </div>
+            
+            <div style="display: flex; margin-bottom: 15px;">
+              <div style="min-width: 150px;">
+                <div style="font-weight: bold; color: #2196f3; font-size: 13px;">Apr 17, 2025, 8:30 AM EDT</div>
+              </div>
+              <div style="flex: 1; margin: 0 15px;">
+                <div style="font-weight: bold; margin-bottom: 2px;">Philadelphia Fed Business Outlook Survey Employment Index</div>
+                <div style="font-size: 12px; color: #666;">Federal Reserve Bank of Philadelphia</div>
+              </div>
+              <div style="min-width: 200px; text-align: right; color: #555; font-size: 11px;">
+                Previous: 19.7
+              </div>
+            </div>
+            
+        </div>
+      </div>
+      
+        
+      </div>
+    </div>
+    
+        
+      <div class="section">
+        <h2>Fundamental Metrics</h2>
+        
+        <div class="subsection">
+          <h3>Major Indices</h3>
+          <div class="stocks-grid">
+            
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">SPY</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Financial Services - Asset Management</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$533.94</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +9.36%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$481.93B</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:42 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">QQQ</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Financial Services - Asset Management</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$454.40</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +8.22%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$N/A</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:42 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">IWM</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Financial Services - Asset Management</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$184.36</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +2.65%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$51.79B</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:42 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">DIA</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Financial Services - Asset Management</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$401.91</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +6.23%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$32.89B</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:42 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+          </div>
+        </div>
+      
+        
+        <div class="subsection">
+          <h3>Magnificent Seven</h3>
+          <div class="stocks-grid">
+            
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">AAPL</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Technology - Consumer Electronics</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$198.15</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +7.73%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$2.98T</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:42 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">MSFT</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Technology - Software - Infrastructure</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$388.45</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +7.10%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$2.89T</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">GOOGL</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Communication Services - Internet Content & Information</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$157.14</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +4.32%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$1.93T</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">AMZN</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Consumer Cyclical - Specialty Retail</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$184.87</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +3.65%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$1.96T</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #f44336;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">META</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Communication Services - Internet Content & Information</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$543.57</div>
+                        <div style="color: #f44336; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8595;</span>
+                          -2.72%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$1.38T</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #f44336;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">TSLA</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Consumer Cyclical - Auto - Manufacturers</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$252.31</div>
+                        <div style="color: #f44336; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8595;</span>
+                          -0.09%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$790.38B</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">NVDA</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Technology - Semiconductors</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$110.93</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +3.36%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$2.71T</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+          </div>
+        </div>
+      
+        
+        <div class="subsection">
+          <h3>Other Stocks</h3>
+          <div class="stocks-grid">
+            
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">XOM</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Energy - Oil & Gas Integrated</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$103.14</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +3.21%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$446.11B</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">JPM</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Yahoo Finance - Banks—Diversified</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$236.20</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +9.09%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$N/A</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:21 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">PG</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Yahoo Finance - Household &amp; Personal Products</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$166.91</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +3.35%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$N/A</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:21 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">KO</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Yahoo Finance - Beverages—Non-Alcoholic</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$71.43</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +0.67%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$N/A</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:21 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">CVX</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Energy - Oil & Gas Integrated</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$135.63</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +0.65%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$236.91B</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">BP</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">Yahoo Finance - Oil &amp; Gas Integrated</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$26.59</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +0.36%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$N/A</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:21 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+                <div class="stock-card">
+                  <div style="flex: 1; border-radius: 6px; overflow: hidden; box-shadow: none; max-width: 100%; border: 1px solid #4CAF50;">
+                    <div style="display: flex; justify-content: space-between; padding: 10px; background-color: #f8f9fa; align-items: center; overflow: hidden;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000;">AMD</div>
+                      <div style="font-size: 14px; color: #000; max-width: 60%; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">N/A - Technology - Semiconductors</div>
+                    </div>
+                    <div style="padding: 15px; background-color: white; overflow: hidden;">
+                      <div style="display: flex; align-items: baseline; margin-bottom: 5px; flex-wrap: wrap;">
+                        <div style="font-size: 18px; font-weight: bold; color: #000; margin-right: 10px;">$93.40</div>
+                        <div style="color: #4CAF50; font-weight: bold;">
+                          <span style="margin-right: 3px;">&#8593;</span>
+                          +4.70%
+                        </div>
+                      </div>
+                      
+                      <div style="margin-top: 10px; max-width: 100%; overflow: hidden;">
+                        
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 80px;">Market Cap</div>
+                    <div style="font-weight: bold; text-align: right; color: #000; overflow: hidden; text-overflow: ellipsis;">$150.96B</div>
+                  </div>
+                
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                      </div>
+                      
+                      
+                      
+                      <div style="font-size: 11px; color: #888; margin-top: 10px; text-align: right;">Last updated: Apr 12, 2025, 11:43 PM EDT</div>
+                    </div>
+                  </div>
+                </div>
+              
+          </div>
+        </div>
+      
+      </div>
+    
+        
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Macroeconomic Factors</h2>
+      
+      
+        <div style="margin-bottom: 20px;">
+          <div style="font-weight: bold; margin-bottom: 10px;">Treasury Yields</div>
+          <div style="display: flex; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+            
+              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">3-Month</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">4.34%</div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
+              </div>
+            
+              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">1-Year</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">3.97%</div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
+              </div>
+            
+              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">2-Year</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">3.84%</div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
+              </div>
+            
+              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">5-Year</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">4.04%</div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
+              </div>
+            
+              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">10-Year</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">4.40%</div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
+              </div>
+            
+              <div style="flex: 1; text-align: center; padding: 0 10px; position: relative;">
+                <div style="color: #666; font-size: 14px; margin-bottom: 8px;">30-Year</div>
+                <div style="color: #4CAF50; font-weight: bold; font-size: 20px;">4.86%</div>
+                <div style="position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background-color: #4CAF50;"></div>
+              </div>
+            
+          </div>
+          
+          <div style="margin-top: 15px; padding-left: 15px; border-left: 4px solid #FFA500;">
+            <div style="font-weight: bold; margin-bottom: 5px;">Yield Curve: Normal</div>
+            <div style="color: #555; font-size: 14px;">The yield curve has a normal positive slope with the 10Y-2Y spread at 0.56%. This typically indicates expectations of economic growth.</div>
+          </div>
+
+          <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+            Source: <a href="https://fred.stlouisfed.org/">Federal Reserve Economic Data (FRED)</a>, as of Apr 12, 2025, 10:22 PM EDT
+          </div>
+        </div>
+      
+      
+        <div style="background-color: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #2196F3;">
+          <div style="font-weight: bold; margin-bottom: 15px; font-size: 1.2em;">Federal Reserve Policy</div>
+          
+          <div style="background-color: white; padding: 20px; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+            <!-- Forward Guidance Section -->
+            <div style="margin-bottom: 15px;">
+              <div style="font-size: 16px; color: #333; line-height: 1.6;">Recent indicators suggest that economic activity has continued to expand at a solid pace. The unemployment rate has stabilized at a low level in recent months, and labor market conditions remain solid. Inflation remains somewhat elevated.</div>
+              <!-- Source Information -->
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="https://www.federalreserve.gov/newsevents/pressreleases/monetary20250319a.htm">Federal Reserve Press Releases</a>, as of Mar 19, 2025, 2:00 PM EDT
+              </div>
+            </div>
+            
+            <!-- Current Rate Section -->
+            <div style="margin-bottom: 15px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="color: #4CAF50; font-size: 1.5em; font-weight: bold;">4.33%</div>
+                <div style="color: #666; font-size: 14px;">Range: 4.25% - 4.50%</div>
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="https://fred.stlouisfed.org/series/FEDFUNDS">Federal Reserve Bank of St. Louis</a>, as of Apr 12, 2025, 10:22 PM EDT
+              </div>
+            </div>
+            
+            <!-- Federal Funds Futures Section -->
+            <div style="margin-bottom: 15px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Federal Funds Futures</div>
+              <div style="display: flex; flex-direction: column; gap: 8px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;margin-top: 5px">
+                  <div style="color: #666; font-size: 1em;">Current Price: <span style="font-weight: bold; font-size: 1.5em;">96.08</span></div>
+                  <div style="color: #666; font-size: 1em;">Implied Rate: <span style="font-weight: bold; font-size: 1.5em;">3.92%</span></div>
+                </div>
+              </div>
+              <div style="font-weight: bold; margin-bottom: 5px;">Rate Change Probabilities</div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">&#8595;</span>
+                  <div style="color: #4CAF50; font-size: 1.5em;font-weight: bold;">69.0%</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="color: #757575; font-size: 1.5em;font-weight: bold;">&#8594;</span>
+                  <div style="color: #757575; font-size: 1.5em;font-weight: bold;">31.0%</div>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                  <span style="color: #f44336; font-size: 1.5em;font-weight: bold;">&#8593;</span>
+                  <div style="color: #f44336; font-size: 1.5em;font-weight: bold;">0.0%</div>
+                </div>
+              </div>
+              <!-- Source Information -->
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F">Yahoo Finance</a>, as of Apr 11, 2025, 4:58 PM EDT
+              </div>
+            </div>
+            
+            <!-- Meeting Schedule Section -->
+            <div style="margin-bottom: 15px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">Meeting Schedule</div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="color: #666; font-size: 14px;">Last FOMC Meeting - March 18-19 2025</div>
+                <div style="color: #666; font-size: 14px;">Next FOMC Meeting - May 6-7 2025</div>
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                Source: <a href="https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm">Federal Reserve Meeting Calendar</a>, as of Apr 12, 2025, 10:22 PM EDT
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      
+      
+      <div style="margin-bottom: 20px;">
+        <div style="font-weight: bold; margin-bottom: 10px; font-size: 1.2em;">Inflation</div>
+        <div style="display: flex; margin-bottom: 15px;">
+          <!-- CPI Card -->
+          <div style="flex: 1; margin-right: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #3498db; color: white; line-height: 1.2;">Consumer Price Index<br>(CPI)</div>
+            <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #3498db; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+              <div style="display: flex; justify-content: space-around;">
+                <div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Headline</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">2.4%</div>
+                </div>
+                <div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Core</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">2.8%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- PCE Card -->
+          <div style="flex: 1; margin-left: 5px; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+            <div style="text-align: center; padding: 8px 0; font-weight: bold; background-color: #e67e22; color: white; line-height: 1.2;">Personal Consumption Expenditure<br>(PCE)</div>
+            <div style="padding: 10px; text-align: center; background-color: white; border: 1px solid #e67e22; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+              <div style="display: flex; justify-content: space-around;">
+                <div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Headline</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">2.5%</div>
+                </div>
+                <div>
+                  <div style="color: #555; font-size: 1.1em; margin-bottom: 2px;">Core</div>
+                  <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">2.8%</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+       
+        <!-- Inflation Expectations -->
+        
+        <div style="background-color: #f8f9fa; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+          <div style="background-color:rgb(19, 52, 79); color: white; padding: 12px; text-align: center;">
+            <div style="font-size: 1.1em; font-weight: bold; margin-bottom: 4px;">Inflation Expectations</div>
+            <div style="font-size: 0.9em; color: rgba(255,255,255,0.8);">Market Consensus</div>
+          </div>
+          <div style="padding: 15px; background-color: white;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px;">
+              <div style="text-align: center;">
+                <div style="color: #4CAF50; font-size: 1.1em; margin-bottom: 6px;">1-Year</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">4.3%</div>
+                <div style="color: #666; font-size: 0.8em; margin-top: 4px;">Jan 31, 2025, 7:00 PM EST</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="color: #2196F3; font-size: 1.1em; margin-bottom: 6px;">5-Year</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">2.33%</div>
+                <div style="color: #666; font-size: 0.8em; margin-top: 4px;">Apr 10, 2025, 8:00 PM EDT</div>
+              </div>
+              <div style="text-align: center;">
+                <div style="color: #9C27B0; font-size: 1.1em; margin-bottom: 6px;">10-Year</div>
+                <div style="color: #2c3e50; font-weight: bold; font-size: 1.5em;">2.2%</div>
+                <div style="color: #666; font-size: 0.8em; margin-top: 4px;">Apr 10, 2025, 8:00 PM EDT</div>
+              </div>
+            </div>
+            <div style="font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; padding-right: 15px;">
+              Source: <a href="https://fred.stlouisfed.org/series/MICH" style="color: #2196F3; text-decoration: none;">St. Louis Fed (FRED API)</a>. Last Updated: Apr 12, 2025, 11:44 PM EDT
+            </div>
+          </div>
+        </div>
+          
+      </div>
+      
+      
+      <div style="margin-top: 20px; padding: 20px; background-color: #f8f9fa; border-radius: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+        <div style="background-color: #4CAF50; color: white; padding: 12px; border-radius: 8px 8px 0 0; text-align: center;">
+          <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 4px;">Inflation Trend Analysis</div>
+          <div style="font-size: 0.9em; color: rgba(255,255,255,0.8);">Current Market Insights</div>
+        </div>
+        <div style="padding: 20px; background-color: white; border-radius: 0 0 8px 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: top;">
+            <div style="flex: 1; text-align: center; padding: 0 15px;">
+              <div style="color: #4CAF50; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Trend</div>
+              <div style="color: #2c3e50; font-size: 0.8em; line-height: 1.2;">Increasing</div>
+            </div>
+            <div style="flex: 1; text-align: center; padding: 0 15px; border-left: 1px solid #eee;">
+              <div style="color: #2196F3; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Outlook</div>
+              <div style="color: #2c3e50; font-size: 0.8em; line-height: 1.2;">Inflation appears to be moderating toward the Fed's target.</div>
+            </div>
+            <div style="flex: 1; text-align: center; padding: 0 15px; border-left: 1px solid #eee;">
+              <div style="color: #9C27B0; font-size: 1.2em; margin-bottom: 15px; font-weight: bold;">Market Impact</div>
+              <div style="color: #2c3e50; font-size: 0.8em; line-height: 1.2;">Core inflation remains above the Fed's 2% target, which may influence monetary policy decisions.</div>
+            </div>
+          </div>
+          <div style="font-size: 0.8em; color: #888; margin-top: 15px; text-align: right; padding-right: 15px;">
+            Source: <a href="https://www.umich.edu/" style="color: #2196F3; text-decoration: none;">University of Michigan</a>. Last Updated: Apr 12, 2025, 10:22 PM EDT
+          </div>
+        </div>
+      </div>
+      
+    </div>
+    
+        
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+      <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center;">Geopolitical Risks</h2>
+      
+      <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
+        <div style="font-weight: bold; margin-bottom: 5px;">Global Overview</div>
+        <div style="color: #333;">High impact from Russia-Ukraine War and US-China rivalry, with medium impact from rising cyberattacks and the Israel-Hamas conflict.</div>
+      </div>
+      
+      
+      <div style="display: flex; margin-bottom: 15px;">
+        <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
+          <div style="font-weight: bold; margin-bottom: 5px;">Russia-Ukraine War</div>
+          <div style="color: #555; margin-bottom: 5px;">The ongoing conflict continues to disrupt European energy security and global food supply chains, contributing to inflationary pressures and market volatility.</div>
+          <div style="font-size: 12px; color: #757575;">
+            Region: Europe • Source: S&P Global
+          </div>
+        </div>
+        <div style="width: 80px; text-align: center; background-color: #f44336; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
+          <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">High</div>
+        </div>
+      </div>
+      
+      <div style="display: flex; margin-bottom: 15px;">
+        <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
+          <div style="font-weight: bold; margin-bottom: 5px;">US Trade and Defense Policy Shifts</div>
+          <div style="color: #555; margin-bottom: 5px;">The Trump administration's tariff policies and reduced NATO support have created uncertainty in global trade and defense alliances.</div>
+          <div style="font-size: 12px; color: #757575;">
+            Region: Global • Source: QuotedData
+          </div>
+        </div>
+        <div style="width: 80px; text-align: center; background-color: #f44336; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
+          <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">High</div>
+        </div>
+      </div>
+      
+      <div style="display: flex; margin-bottom: 15px;">
+        <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
+          <div style="font-weight: bold; margin-bottom: 5px;">Israel-Hamas War</div>
+          <div style="color: #555; margin-bottom: 5px;">The conflict has heightened regional instability in the Middle East, with potential spillover effects on neighboring countries.</div>
+          <div style="font-size: 12px; color: #757575;">
+            Region: Middle East • Source: S&P Global
+          </div>
+        </div>
+        <div style="width: 80px; text-align: center; background-color: #ff9800; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
+          <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">Medium</div>
+        </div>
+      </div>
+      
+      <div style="display: flex; margin-bottom: 15px;">
+        <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
+          <div style="font-weight: bold; margin-bottom: 5px;">US-China Rivalry</div>
+          <div style="color: #555; margin-bottom: 5px;">Escalating tensions over trade, technology, and military presence in the Indo-Pacific region.</div>
+          <div style="font-size: 12px; color: #757575;">
+            Region: Asia-Pacific • Source: RAND Corporation
+          </div>
+        </div>
+        <div style="width: 80px; text-align: center; background-color: #f44336; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
+          <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">High</div>
+        </div>
+      </div>
+      
+      <div style="display: flex; margin-bottom: 15px;">
+        <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
+          <div style="font-weight: bold; margin-bottom: 5px;">Rising Cyberattacks</div>
+          <div style="color: #555; margin-bottom: 5px;">Increased frequency and severity of cyberattacks targeting critical infrastructure globally.</div>
+          <div style="font-size: 12px; color: #757575;">
+            Region: Global • Source: S&P Global
+          </div>
+        </div>
+        <div style="width: 80px; text-align: center; background-color: #ff9800; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
+          <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">Medium</div>
+        </div>
+      </div>
+      
+      <div style="font-size: 12px; color: #888; margin-top: 10px; text-align: right;">
+        Last Updated: Apr 12, 2025, 10:22 PM EDT
+      </div>
+    </div>
+    
+      <div class="footer" style="text-align: center; background-color: #1a365d">
+            <div style="font-size: 14px; margin-bottom: 10px;">Market Pulse Daily - Actionable Trading Insights</div>
+            <div style="font-size: 12px; margin-bottom: 20px;">&copy; 2025 Market Pulse Daily. All rights reserved.</div>
+            <div class="disclaimer" style="font-size: 12px; color: rgba(255,255,255,0.9);">
+              Disclaimer: The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information.
+            </div>
+          </div>
+      </div>
+    </body>
+    </html>

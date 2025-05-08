@@ -49,8 +49,11 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
   const geopoliticalData = data.macroeconomicFactors?.geopoliticalRisks;
   
   if (!geopoliticalData) {
+    console.log('Geopolitical risks data not found in the expected structure');
     return;
   }
+  
+  console.log('Geopolitical risks data found:', JSON.stringify(geopoliticalData).substring(0, 100) + '...');
   
   // Extract data
   const risks = geopoliticalData.risks || [];
@@ -58,6 +61,8 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
   const source = geopoliticalData.source || 'Global Risk Assessment';
   const sourceUrl = geopoliticalData.sourceUrl || '#';
   const lastUpdated = geopoliticalData.lastUpdated || '';
+  
+  console.log(`Found ${risks.length} geopolitical risks`);
   
   // Determine overall risk level from the risks array
   let overallRiskLevel = 'High'; // Default
@@ -96,34 +101,39 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
             const riskColor = getRiskLevelColor(risk.impactLevel);
             return `
               <div style="display: flex; margin-top: 15px; margin-bottom: 15px;">
-                <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
+                <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px;">
                   <div style="font-weight: bold; margin-bottom: 5px;">${risk.name}</div>
                   <div style="color: #555; margin-bottom: 5px;">${risk.description}</div>
-                  <div style="font-size: 10px; color: #757575;">
-                    Region: ${risk.region} • Source: <a href="${risk.sourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${risk.source}</a>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 10px;">
+                    <div style="font-size: 0.85rem; color: #666;">
+                      <span style="font-weight: bold;">Region:</span> ${risk.region || 'Global'}
+                    </div>
+                    <div style="font-size: 0.85rem; background-color: ${riskColor}; color: white; padding: 3px 8px; border-radius: 4px;">
+                      ${risk.impactLevel || 'High'} Impact
+                    </div>
                   </div>
-                </div>
-                <div style="width: 80px; text-align: center; background-color: ${riskColor}; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
-                  <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">${risk.impactLevel}</div>
+                  <div style="font-size: 10px; color: #888; margin-top: 8px; text-align: right;">
+                    Source: <a href="${risk.sourceUrl || '#'}" target="_blank">${risk.source || 'Global Risk Assessment'}</a>
+                  </div>
                 </div>
               </div>
             `;
           }).join('')}
           
           <!-- Source Attribution -->
-          <div style="font-size: 0.8rem; color: #718096; margin-top: 15px; text-align: right;">
-            ${lastUpdated ? `As of ${lastUpdated}` : ''}
+          <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+            Source: <a href="${sourceUrl}" target="_blank">${source}</a>${lastUpdated ? `, as of ${lastUpdated}` : ''}
           </div>
         </div>
       </div>
     </div>
     
     <script>
-      // Add click event to toggle collapsible sections
+      // Add click event to toggle this specific collapsible section
       document.addEventListener('DOMContentLoaded', function() {
-        const headers = document.querySelectorAll('.collapsible-header');
-        headers.forEach(header => {
-          header.addEventListener('click', function() {
+        const geoRisksHeader = document.querySelector('[data-section="geopolitical-risks"] .collapsible-header');
+        if (geoRisksHeader) {
+          geoRisksHeader.addEventListener('click', function() {
             const content = this.nextElementSibling;
             const icon = this.querySelector('.collapsible-icon');
             

@@ -1,0 +1,8 @@
+{
+  "ghostUrl": "https://market-pulse-daily.ghost.io",
+  "ghostApiKey": "67f457a5f41c9900013e1e47:44daf1e666349bde96fad6f9a65979ba1d0b11b161a5c765847218f5bd263b7c",
+  "newsletterId": "67f427c5744a72000854ee8f",
+  "mobiledocPath": "ghost-post.json",
+  "dataPath": "market_pulse_data.json",
+  "featureImageUrl": "https://example.com/feature-image.jpg"
+}

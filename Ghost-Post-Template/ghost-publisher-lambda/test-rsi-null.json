@@ -1,0 +1,39 @@
+{
+  "title": "Market Pulse Daily: Test RSI Null",
+  "decision": "Hold",
+  "justification": "This is a test to verify RSI null handling",
+  "marketIndicators": {
+    "majorIndices": [
+      {
+        "name": "S&P 500",
+        "symbol": "^GSPC",
+        "price": 5686.67,
+        "change": 2.53,
+        "percentChange": "+2.53%",
+        "isPositive": true
+      }
+    ],
+    "fearGreed": {
+      "value": 43,
+      "classification": "Fear",
+      "previousClose": 42,
+      "previousWeek": 45,
+      "previousMonth": 50,
+      "source": "CNN Business",
+      "sourceUrl": "https://money.cnn.com/data/fear-and-greed/"
+    },
+    "volatilityIndices": [
+      {
+        "name": "VIX",
+        "symbol": "^VIX",
+        "value": 22.68,
+        "trend": "Falling"
+      }
+    ],
+    "rsi": {
+      "value": null,
+      "source": "Tradier (RSI)",
+      "asOf": "May 4, 2025"
+    }
+  }
+}

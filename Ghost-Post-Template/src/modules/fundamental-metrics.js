@@ -404,12 +404,43 @@ const addMajorIndicesContent = (data) => {
 };
 
 /**
- * Generates the Magnificent Seven content
+ * Generates the Top Index Holdings content
  * @param {object} data - The data object containing stock information
- * @returns {string} - The HTML content for the Magnificent Seven section
+ * @returns {string} - The HTML content for the Top Index Holdings section
+ */
+const addTopIndexHoldingsContent = (data) => {
+  // Get Top Index Holdings data from the data object
+  const topHoldings = data.fundamentalMetrics?.topHoldings || [];
+  
+  if (topHoldings.length === 0) {
+    return '';
+  }
+  
+  return `
+    <div class="top-index-holdings-section" style="margin-bottom: 30px;">
+      <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Top Index Holdings</div>
+      </div>
+      
+      <div class="stock-cards-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; justify-content: center; margin-bottom: 20px;">
+        ${topHoldings.map(stock => createStockCard(stock)).join('')}
+      </div>
+    </div>
+  `;
+};
+
+/**
+ * Legacy function for backward compatibility
+ * @param {object} data - The data object containing stock information
+ * @returns {string} - The HTML content for the section
  */
 const addMagnificentSevenContent = (data) => {
-  // Get Magnificent Seven data from the data object
+  // Check if we have topHoldings data
+  if (data.fundamentalMetrics?.topHoldings && data.fundamentalMetrics.topHoldings.length > 0) {
+    return addTopIndexHoldingsContent(data);
+  }
+  
+  // Fall back to magnificentSeven if available (for backward compatibility)
   const magnificentSeven = data.fundamentalMetrics?.magnificentSeven || [];
   
   if (magnificentSeven.length === 0) {
@@ -485,7 +516,7 @@ const addFundamentalMetrics = (mobiledoc, data) => {
           ${addSP500AnalysisContent(data)}
           ${addTopHoldingsContent(data)}
           ${addMajorIndicesContent(data)}
-          ${addMagnificentSevenContent(data)}
+          ${addTopIndexHoldingsContent(data)}
           ${addOtherStocksContent(data)}
         </div>
       </div>

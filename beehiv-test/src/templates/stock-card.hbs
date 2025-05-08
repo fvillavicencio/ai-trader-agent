@@ -1,0 +1,33 @@
+<div class="stock-card" style="border-color: {{getChangeColor priceChange}};">
+  <div class="stock-header">
+    <!-- Left: Symbol and Company Name -->
+    <div class="stock-identity">
+      <div class="stock-symbol">{{symbol}}</div>
+      <div class="stock-name">{{name}}</div>
+    </div>
+    <!-- Right: Price, Arrow, Price Change, Percent Change -->
+    <div class="stock-price-container">
+      <div class="stock-price" style="color: {{getChangeColor priceChange}};">
+        ${{formatNumber price}} <span class="change-icon">{{{getChangeIcon priceChange}}}</span> 
+        <span class="price-change">{{formatNumber priceChange}}</span>
+        <span class="percent-change">({{formatPercent changesPercentage}})</span>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Metrics Table -->
+  <div class="stock-metrics">
+    <table class="metrics-table">
+      <tbody>
+        {{#each metrics}}
+          {{#if this}}
+            <tr>
+              <td class="metric-label">{{@key}}</td>
+              <td class="metric-value">{{formatMetric @key this}}</td>
+            </tr>
+          {{/if}}
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>

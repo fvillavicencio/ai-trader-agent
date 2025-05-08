@@ -522,6 +522,90 @@ function processData(data) {
       delete sampleData.fundamentalMetrics.magnificentSeven;
     }
     
+    // If topHoldings is still empty but we have etfHoldings in marketIndicators, try to extract them
+    if ((!sampleData.fundamentalMetrics.topHoldings || !sampleData.fundamentalMetrics.topHoldings.length) && 
+        sampleData.marketIndicators && sampleData.marketIndicators.sp500 && 
+        sampleData.marketIndicators.sp500.etfHoldings && 
+        Array.isArray(sampleData.marketIndicators.sp500.etfHoldings)) {
+      
+      log('No topHoldings found, attempting to extract from etfHoldings', 'TRANSFORM');
+      
+      // Create a map to track symbols and their total weight across all ETFs
+      const holdingsMap = new Map();
+      
+      // Process each ETF's holdings
+      sampleData.marketIndicators.sp500.etfHoldings.forEach(etf => {
+        if (etf.holdings && Array.isArray(etf.holdings)) {
+          log(`Processing ETF: ${etf.symbol} with ${etf.holdings.length} holdings`, 'INFO');
+          
+          // Get top 5 holdings from each ETF
+          etf.holdings.slice(0, 5).forEach(holding => {
+            const symbol = holding.symbol;
+            if (symbol) {
+              // If symbol already exists in map, add to its weight
+              if (holdingsMap.has(symbol)) {
+                holdingsMap.set(symbol, holdingsMap.get(symbol) + 1);
+              } else {
+                holdingsMap.set(symbol, 1);
+              }
+            }
+          });
+        }
+      });
+      
+      log(`Collected ${holdingsMap.size} unique symbols from all ETFs`, 'INFO');
+      
+      // Convert map to array of symbols
+      const topHoldingSymbols = Array.from(holdingsMap.entries())
+        // Sort by frequency (descending)
+        .sort((a, b) => b[1] - a[1])
+        // Extract just the symbols
+        .map(entry => entry[0]);
+      
+      log(`Extracted ${topHoldingSymbols.length} top holding symbols`, 'INFO');
+      
+      // Now create stock objects for each symbol
+      if (topHoldingSymbols.length > 0) {
+        sampleData.fundamentalMetrics.topHoldings = [];
+        
+        // Try to find stock data for each symbol
+        topHoldingSymbols.forEach(symbol => {
+          // Check if we have this stock in other categories
+          let stockData = null;
+          
+          // Look in majorIndices
+          if (sampleData.fundamentalMetrics.majorIndices && Array.isArray(sampleData.fundamentalMetrics.majorIndices)) {
+            const found = sampleData.fundamentalMetrics.majorIndices.find(stock => stock.symbol === symbol);
+            if (found) {
+              stockData = { ...found };
+            }
+          }
+          
+          // Look in otherStocks if not found
+          if (!stockData && sampleData.fundamentalMetrics.otherStocks && Array.isArray(sampleData.fundamentalMetrics.otherStocks)) {
+            const found = sampleData.fundamentalMetrics.otherStocks.find(stock => stock.symbol === symbol);
+            if (found) {
+              stockData = { ...found };
+            }
+          }
+          
+          // If we found stock data, add it to topHoldings
+          if (stockData) {
+            sampleData.fundamentalMetrics.topHoldings.push(stockData);
+          } else {
+            // Create a minimal stock object
+            sampleData.fundamentalMetrics.topHoldings.push({
+              symbol: symbol,
+              name: symbol,
+              metrics: []
+            });
+          }
+        });
+        
+        log(`Created ${sampleData.fundamentalMetrics.topHoldings.length} top holdings stock objects`, 'INFO');
+      }
+    }
+    
     // Log the number of top holdings before processing
     if (sampleData.fundamentalMetrics.topHoldings && Array.isArray(sampleData.fundamentalMetrics.topHoldings)) {
       log(`Number of top holdings before processing: ${sampleData.fundamentalMetrics.topHoldings.length}`, 'INFO');

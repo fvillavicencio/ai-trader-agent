@@ -575,6 +575,37 @@ if (sampleData.fundamentalMetrics) {
 }
 
 // Add geopolitical risks directly
+// Check if we need to extract geopolitical risks from macroeconomicFactors
+log('Checking for geopolitical risks data', 'TRANSFORM');
+
+// First check if the data is already in the macroeconomicFactors section of the current data
+if (sampleData.macroeconomicFactors && sampleData.macroeconomicFactors.geopoliticalRisks) {
+  log('Found geopoliticalRisks in macroeconomicFactors of current data', 'TRANSFORM');
+  // Extract it to the top level for the template
+  sampleData.geopoliticalRisks = sampleData.macroeconomicFactors.geopoliticalRisks;
+  
+  // Map the risks array to the items array expected by the template
+  if (sampleData.geopoliticalRisks.risks && Array.isArray(sampleData.geopoliticalRisks.risks)) {
+    log(`Processing ${sampleData.geopoliticalRisks.risks.length} geopolitical risks items`, 'TRANSFORM');
+    sampleData.geopoliticalRisks.items = sampleData.geopoliticalRisks.risks.map(risk => {
+      return {
+        title: risk.name,
+        description: risk.description,
+        region: risk.region,
+        source: risk.source,
+        sourceUrl: risk.sourceUrl,
+        impactLevel: risk.impactLevel
+      };
+    });
+  }
+  
+  // Set the overview from global description if available
+  if (sampleData.geopoliticalRisks.global && !sampleData.geopoliticalRisks.overview) {
+    sampleData.geopoliticalRisks.overview = `Global geopolitical risk level is currently ${sampleData.geopoliticalRisks.global}.`;
+  }
+}
+
+// If we still don't have geopolitical risks at the top level, try to find it elsewhere
 if (!sampleData.geopoliticalRisks) {
   log('Adding missing geopoliticalRisks', 'TRANSFORM');
   try {
@@ -586,6 +617,7 @@ if (!sampleData.geopoliticalRisks) {
       
       // Map the risks array to the items array expected by the template
       if (sampleData.geopoliticalRisks.risks && Array.isArray(sampleData.geopoliticalRisks.risks)) {
+        log(`Processing ${sampleData.geopoliticalRisks.risks.length} geopolitical risks items from sample data`, 'TRANSFORM');
         sampleData.geopoliticalRisks.items = sampleData.geopoliticalRisks.risks.map(risk => {
           return {
             title: risk.name,
