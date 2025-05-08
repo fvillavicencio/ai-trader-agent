@@ -30,5 +30,9 @@ COPY --from=build /app/services ./services
 COPY --from=build /app/forward_eps_estimates.json ./
 COPY --from=build /app/services/sp-500-eps-est.xlsx ./services/
 
+# Ensure proper permissions
+RUN chmod -R 755 /var/task/services
+RUN ls -l /var/task/services/sp-500-eps-est.xlsx
+
 ENV NODE_OPTIONS="--es-module-specifier-resolution=node"
 CMD [ "node", "--es-module-specifier-resolution=node", "/var/task/node_modules/aws-lambda-ric/bin/index.mjs", "lambda.handler" ]
