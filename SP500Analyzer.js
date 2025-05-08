@@ -156,13 +156,9 @@ function formatSP500AnalysisText(lambdaJson) {
     lines.push('S&P 500 Forward EPS & Implied Index Values (2025 & 2026):');
     lines.push('  Annual Estimate | Forward EPS | 15x | % vs Index | 17x | % vs Index | 20x | % vs Index');
     data.forwardEstimates.forEach(function(est) {
-<<<<<<< HEAD
       // Format EPS to 2 decimal places
       const formattedEPS = Number(est.eps).toFixed(2);
       lines.push(`  ${est.estimateDate || ''} | $${formattedEPS} | $${est.pe15 || ''} | ${est.pe15Pct || ''} | $${est.pe17 || ''} | ${est.pe17Pct || ''} | $${est.pe20 || ''} | ${est.pe20Pct || ''}`);
-=======
-      lines.push(`  ${est.estimateDate || ''} | $${est.eps || ''} | $${est.pe15 || ''} | ${est.pe15Pct || ''} | $${est.pe17 || ''} | ${est.pe17Pct || ''} | $${est.pe20 || ''} | ${est.pe20Pct || ''}`);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     });
     lines.push('');
   }
@@ -436,17 +432,12 @@ function formatSP500AnalysisHtml(lambdaJson) {
 function addImpliedIndexValuesToEstimates(data) {
   if (!data || !data.forwardEstimates || !data.sp500Index || !data.sp500Index.price) return;
   var currentIndex = Number(data.sp500Index.price);
-<<<<<<< HEAD
   
   data.forwardEstimates.forEach(function(est) {
     // Format EPS to 2 decimal places first
     est.eps = Number(est.eps).toFixed(2);
     var eps = Number(est.eps);
     
-=======
-  data.forwardEstimates.forEach(function(est) {
-    var eps = Number(est.eps);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     if (!isNaN(eps) && !isNaN(currentIndex) && currentIndex > 0) {
       est.pe15 = (eps * 15).toFixed(2);
       est.pe17 = (eps * 17).toFixed(2);
@@ -466,7 +457,6 @@ function addImpliedIndexValuesToEstimates(data) {
  * @param {Object} data - The parsed Lambda JSON
  */
 function addImpliedIndexValuesToEarningsTTM(data) {
-<<<<<<< HEAD
   if (!data || !data.earnings || !data.earnings.eps) return;
   
   var eps = Number(data.earnings.eps);
@@ -474,12 +464,6 @@ function addImpliedIndexValuesToEarningsTTM(data) {
     data.earnings.pe15 = (eps * 15).toFixed(2);
     data.earnings.pe17 = (eps * 17).toFixed(2);
     data.earnings.pe20 = (eps * 20).toFixed(2);
-=======
-  if (data.earnings && typeof data.earnings.eps === 'number') {
-    data.earnings.pe15 = (data.earnings.eps * 15).toFixed(2);
-    data.earnings.pe17 = (data.earnings.eps * 17).toFixed(2);
-    data.earnings.pe20 = (data.earnings.eps * 20).toFixed(2);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   } else {
     data.earnings.pe15 = data.earnings.pe17 = data.earnings.pe20 = 'N/A';
   }

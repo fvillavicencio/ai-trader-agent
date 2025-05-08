@@ -2,11 +2,7 @@
  * AI Trading Agent - One-Time Setup Script
  * 
  * This script automates the setup process for the AI Trading Agent:
-<<<<<<< HEAD
  * 1. Creates time-based triggers for morning, midday, and evening analysis
-=======
- * 1. Creates time-based triggers for morning and evening analysis
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  * 2. Sets up script properties for API key storage
  * 3. Performs initial validation tests
  * 4. Sends a confirmation email when setup is complete
@@ -71,13 +67,8 @@ function setupApiKey() {
 }
 
 /**
-<<<<<<< HEAD
  * Creates time-based triggers for morning, midday, and evening analysis
  * Uses an efficient approach with 3 triggers and day checking in the handler
-=======
- * Creates time-based triggers for morning and evening analysis
- * Uses a more efficient approach with just 2 triggers and day checking in the handler
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  */
 function setupTriggers() {
   Logger.log("Setting up time-based triggers...");
@@ -85,11 +76,7 @@ function setupTriggers() {
   // Delete any existing triggers to avoid duplicates
   deleteExistingTriggers();
   
-<<<<<<< HEAD
   // Create morning trigger (9 AM ET, daily)
-=======
-  // Create a single morning trigger (daily)
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
     .timeBased()
     .atHour(MORNING_SCHEDULE_HOUR)
@@ -100,7 +87,6 @@ function setupTriggers() {
   
   Logger.log(`Morning trigger created: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (daily with weekday check)`);
   
-<<<<<<< HEAD
   // Create midday trigger (12 PM ET, daily)
   ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
     .timeBased()
@@ -113,9 +99,6 @@ function setupTriggers() {
   Logger.log(`Midday trigger created: ${MIDDAY_SCHEDULE_HOUR}:${MIDDAY_SCHEDULE_MINUTE} ${TIME_ZONE} (daily with weekday check)`);
   
   // Create evening trigger (6 PM ET, daily)
-=======
-  // Create a single evening trigger (daily)
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   ScriptApp.newTrigger('runTradingAnalysisWithDayCheck')
     .timeBased()
     .atHour(EVENING_SCHEDULE_HOUR)
@@ -129,39 +112,27 @@ function setupTriggers() {
 
 /**
  * Wrapper function that checks if today is an appropriate day to run the analysis
-<<<<<<< HEAD
  * Morning analysis: Monday-Friday (9 AM)
  * Midday analysis: Monday-Friday (12 PM)
  * Evening analysis: Sunday-Thursday (6 PM)
  * 
  * When manually executed, it will run regardless of the time
  * Also checks if today/tomorrow is a market trading day using Tradier API
-=======
- * Morning analysis: Monday-Friday
- * Evening analysis: Sunday-Thursday
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  */
 function runTradingAnalysisWithDayCheck() {
   const now = new Date();
   const hour = now.getHours();
   const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
   
-<<<<<<< HEAD
   // Check if this is a manual execution (not triggered by a time-based trigger)
   const executionType = checkExecutionType();
   
   if (executionType === 'MANUAL') {
     Logger.log("Manual execution detected - running trading analysis regardless of time");
-=======
-  // Morning trigger (runs Monday-Friday)
-  if (hour === MORNING_SCHEDULE_HOUR && dayOfWeek >= 1 && dayOfWeek <= 5) {
-    Logger.log("Running morning trading analysis (weekday)");
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     runTradingAnalysis();
     return;
   }
   
-<<<<<<< HEAD
   // Check if today is a trading day for morning/midday reports
   // or if tomorrow is a trading day for evening reports
   const isTradingDay = checkTradingDay(now);
@@ -203,12 +174,6 @@ function runTradingAnalysisWithDayCheck() {
     } else {
       Logger.log("Skipping evening trading analysis: tomorrow is not a trading day");
     }
-=======
-  // Evening trigger (runs Sunday-Thursday)
-  if (hour === EVENING_SCHEDULE_HOUR && (dayOfWeek === 0 || (dayOfWeek >= 1 && dayOfWeek <= 4))) {
-    Logger.log("Running evening trading analysis (Sunday-Thursday)");
-    runTradingAnalysis();
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     return;
   }
   
@@ -216,7 +181,6 @@ function runTradingAnalysisWithDayCheck() {
 }
 
 /**
-<<<<<<< HEAD
  * Test function for checkTradingDay
  * Tests both today and tomorrow at 10 AM
  */
@@ -480,8 +444,6 @@ function checkExecutionType() {
 }
 
 /**
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  * Deletes all existing triggers to avoid duplicates
  */
 function deleteExistingTriggers() {
@@ -535,14 +497,9 @@ The AI Trading Agent has been successfully set up!
 
 Configuration Details:
 - Morning Analysis: ${MORNING_SCHEDULE_HOUR}:${MORNING_SCHEDULE_MINUTE} ${TIME_ZONE} (Monday-Friday)
-<<<<<<< HEAD
 - Midday Analysis: ${MIDDAY_SCHEDULE_HOUR}:${MIDDAY_SCHEDULE_MINUTE} ${TIME_ZONE} (Monday-Friday)
 - Evening Analysis: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE} (Sunday-Thursday)
 - Schedule: Runs three times daily from Sunday evening to Friday morning (excluding Saturday, Friday evening, and Sunday morning)
-=======
-- Evening Analysis: ${EVENING_SCHEDULE_HOUR}:${EVENING_SCHEDULE_MINUTE} ${TIME_ZONE} (Sunday-Thursday)
-- Schedule: Runs twice daily from Sunday evening to Friday morning (excluding Saturday, Friday evening, and Sunday morning)
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 - Recipients: ${RECIPIENT_EMAILS.join(", ")}
 
 The agent will begin sending trading analysis emails at the next scheduled time.
@@ -667,4 +624,61 @@ function clearScriptProperties() {
   const scriptProperties = PropertiesService.getScriptProperties();
   scriptProperties.deleteAllProperties();
   Logger.log("All script properties have been cleared.");
+}
+
+/**
+ * Sets up the required script properties for the Market Pulse Daily application
+ * Run this function once to initialize all necessary script properties
+ */
+function setupScriptProperties() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  
+  // Set the admin email for debug and prompt emails
+  scriptProperties.setProperty('ADMIN_EMAIL', 'fvillavicencio@gmail.com');
+  
+  // Set debug mode (true/false)
+  scriptProperties.setProperty('DEBUG_MODE', 'true');
+  
+  // Set whether to send prompt emails
+  scriptProperties.setProperty('SEND_PROMPT_EMAILS', 'true');
+  
+  // Set the newsletter name
+  scriptProperties.setProperty('NEWSLETTER_NAME', 'Market Pulse Daily');
+  
+  // Set the time zone
+  scriptProperties.setProperty('TIME_ZONE', 'America/New_York');
+  
+  // Log the current script properties
+  const allProperties = scriptProperties.getProperties();
+  Logger.log('Script properties set up successfully:');
+  for (const key in allProperties) {
+    // Don't log API keys for security
+    if (key.includes('API_KEY')) {
+      Logger.log(`${key}: [REDACTED]`);
+    } else {
+      Logger.log(`${key}: ${allProperties[key]}`);
+    }
+  }
+  
+  return 'Script properties set up successfully';
+}
+
+/**
+ * Gets all script properties (for debugging)
+ */
+function getScriptProperties() {
+  const scriptProperties = PropertiesService.getScriptProperties();
+  const allProperties = scriptProperties.getProperties();
+  
+  Logger.log('Current script properties:');
+  for (const key in allProperties) {
+    // Don't log API keys for security
+    if (key.includes('API_KEY')) {
+      Logger.log(`${key}: [REDACTED]`);
+    } else {
+      Logger.log(`${key}: ${allProperties[key]}`);
+    }
+  }
+  
+  return allProperties;
 }

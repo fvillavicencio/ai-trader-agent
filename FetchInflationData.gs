@@ -29,11 +29,7 @@ function retrieveInflationExpectations() {
     
     // FRED Series IDs
     const series = {
-<<<<<<< HEAD
       oneYear: "EXPINF1YR",  // 1-year expected inflation
-=======
-      oneYear: "MICH",        // 1-year expectation (median from U. Michigan)
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
       fiveYear: "T5YIE",      // 5-year breakeven inflation
       tenYear: "T10YIE"       // 10-year breakeven inflation
     };
@@ -48,11 +44,7 @@ function retrieveInflationExpectations() {
         if (data.observations && data.observations.length > 0) {
           const observation = data.observations[0];
           results[key] = {
-<<<<<<< HEAD
             value: key === 'oneYear' ? parseFloat(parseFloat(observation.value).toFixed(2)) : parseFloat(observation.value),
-=======
-            value: parseFloat(observation.value),
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
             lastUpdated: observation.date,
             source: {
               name: "FRED (Federal Reserve Economic Data)",
@@ -67,19 +59,11 @@ function retrieveInflationExpectations() {
         fiveYear: results.fiveYear,
         tenYear: results.tenYear,
         source: {
-<<<<<<< HEAD
           url: `https://fred.stlouisfed.org/series/${series.oneYear}`,
           name: "St. Louis Fed (FRED API)",
           timestamp: new Date().toISOString(),
           components: {
             url: `https://fred.stlouisfed.org/series/${series.oneYear}`,
-=======
-          url: "https://fred.stlouisfed.org/series/MICH",
-          name: "St. Louis Fed (FRED API)",
-          timestamp: new Date().toISOString(),
-          components: {
-            url: "https://fred.stlouisfed.org/series/MICH",
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
             name: "St. Louis Fed (FRED API)",
             timestamp: new Date().toISOString()
           }
@@ -97,91 +81,6 @@ function retrieveInflationExpectations() {
 }
 
 /**
-<<<<<<< HEAD
-=======
- * Generates an analysis of inflation data
- * @param {Object} cpiData - CPI data
- * @param {Object} pceData - PCE data (optional)
- * @param {Object} expectationsData - Inflation expectations data
- * @return {String} Analysis of inflation data
- */
-function generateInflationAnalysis(cpiData, pceData, expectationsData) {
-  try {
-    let analysis = "";
-    
-    // Check if we have CPI data (required)
-    if (!cpiData) {
-      return "Insufficient data to generate inflation analysis (CPI data required).";
-    }
-    
-    // Get the headline CPI values
-    const cpiValue = cpiData.yearOverYearChange;
-    const cpiChange = cpiData.change;
-    const coreCpiValue = cpiData.coreRate;
-    const coreCpiChange = cpiData.coreChange;
-    
-    // Get the inflation expectations
-    const oneYearExpectation = expectationsData?.oneYear;
-    const fiveYearExpectation = expectationsData?.fiveYear;
-    
-    // Determine the trend
-    const cpiTrend = cpiChange < 0 ? "decreasing" : cpiChange > 0 ? "increasing" : "stable";
-    const coreCpiTrend = coreCpiChange < 0 ? "decreasing" : coreCpiChange > 0 ? "increasing" : "stable";
-    
-    // Generate the analysis
-    analysis += `Headline CPI is currently at ${formatValue(cpiValue)}% (${cpiTrend}), while Core CPI (excluding food and energy) is at ${formatValue(coreCpiValue)}% (${coreCpiTrend}). `;
-    
-    // Add PCE data if available
-    if (pceData) {
-      const pceValue = pceData.yearOverYearChange;
-      const pceChange = pceData.change;
-      const corePceValue = pceData.coreRate;
-      const corePceChange = pceData.coreChange;
-      const pceTrend = pceChange < 0 ? "decreasing" : pceChange > 0 ? "increasing" : "stable";
-      const corePceTrend = corePceChange < 0 ? "decreasing" : corePceChange > 0 ? "increasing" : "stable";
-      
-      analysis += `The Fed's preferred inflation measure, PCE, is at ${formatValue(pceValue)}% (${pceTrend}), with Core PCE at ${formatValue(corePceValue)}% (${corePceTrend}). `;
-    } else {
-      analysis += "PCE data is not available for comparison with the Fed's preferred inflation measure. ";
-    }
-    
-    // Compare to Fed target using Core CPI if PCE is not available
-    const fedTarget = 2.0;
-    const coreValue = pceData ? pceData.coreRate : coreCpiValue;
-    
-    if (coreValue > fedTarget + 0.5) {
-      analysis += `Core inflation remains above the Fed's ${fedTarget}% target, which may influence monetary policy decisions. `;
-    } else if (coreValue < fedTarget - 0.5) {
-      analysis += `Core inflation is below the Fed's ${fedTarget}% target, which may influence monetary policy decisions. `;
-    } else {
-      analysis += `Core inflation is near the Fed's ${fedTarget}% target. `;
-    }
-    
-    // Add information about expectations if available
-    if (oneYearExpectation && fiveYearExpectation) {
-      analysis += `Inflation expectations for the next year are at ${formatValue(oneYearExpectation.value)}%, while 5-year expectations are at ${formatValue(fiveYearExpectation.value)}%. `;
-    } else {
-      analysis += "Inflation expectations data is not currently available. ";
-    }
-    
-    // Conclude with an overall assessment
-    if (coreValue > fedTarget + 1.0 || cpiValue > fedTarget + 1.5) {
-      analysis += `Overall, inflation remains elevated relative to the Fed's target, suggesting continued vigilance from policymakers.`;
-    } else if (coreValue < fedTarget - 0.5 || cpiValue < fedTarget - 0.5) {
-      analysis += `Overall, inflation is running below the Fed's target, which may influence future monetary policy decisions.`;
-    } else {
-      analysis += `Overall, inflation appears to be moderating toward the Fed's target, suggesting a balanced approach to monetary policy.`;
-    }
-    
-    return analysis;
-  } catch (error) {
-    Logger.log(`Error generating inflation analysis: ${error}`);
-    return "Error generating inflation analysis.";
-  }
-}
-
-/**
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  * Tests the inflation data retrieval
  */
 function testInflationData() {
@@ -257,7 +156,6 @@ function testInflationData() {
 }
 
 /**
-<<<<<<< HEAD
  * Tests the inflation expectations data retrieval
  */
 function testInflationExpectations() {
@@ -320,8 +218,6 @@ function testInflationExpectations() {
 }
 
 /**
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  * Tests the PCE data retrieval from BEA API
  * Logs detailed information about the API response structure
  */
@@ -1208,7 +1104,6 @@ function fetchPCEDataFromFRED() {
     return null;
   }
 }
-<<<<<<< HEAD
 
 /**
  * Generates an analysis of inflation data
@@ -1291,5 +1186,3 @@ function generateInflationAnalysis(cpiData, pceData, expectationsData) {
     return "Error generating inflation analysis.";
   }
 }
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa

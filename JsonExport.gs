@@ -148,30 +148,19 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     
     // Create the full JSON dataset structure
     const fullJsonDataset = {
-<<<<<<< HEAD
       reportDate: now.toISOString(),
       reportDateFormatted: formattedDate,
       reportDateDisplay: "As of " + formattedDate,
-=======
-      reportDate: formattedDate,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
       isTest: debugMode,
       metadata: {
         title: newsletterName,
         timestamp: formattedDate
       },
       marketSentiment: {
-<<<<<<< HEAD
         overall: analysisJson && analysisJson.analysis && analysisJson.analysis.marketSentiment && analysisJson.analysis.marketSentiment.overall ? analysisJson.analysis.marketSentiment.overall : "Neutral",
         analysts: [],
         source: "Aggregated from multiple financial news sources",
         lastUpdated: analysisJson && analysisJson.analysis && analysisJson.analysis.marketSentiment && analysisJson.analysis.marketSentiment.lastUpdated ? analysisJson.analysis.marketSentiment.lastUpdated : formattedDate
-=======
-        overall: analysisJson && analysisJson.marketSentiment ? analysisJson.marketSentiment : "Neutral",
-        analysts: [],
-        source: "Aggregated from multiple financial news sources",
-        lastUpdated: formattedDate
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
       },
       decision: {
         text: analysisJson && analysisJson.decision ? analysisJson.decision : "No Decision",
@@ -183,7 +172,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       marketIndicators: {
         majorIndices: [],
         sectorPerformance: [],
-<<<<<<< HEAD
         fearGreed: {
           value: 0,
           category: "Neutral",
@@ -195,17 +183,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           source: "CNN Money",
           sourceUrl: "https://money.cnn.com/data/fear-and-greed/",
           asOf: formattedDate
-=======
-        fearAndGreed: {
-          current: 0,
-          previousClose: 0,
-          oneWeekAgo: 0,
-          oneMonthAgo: 0,
-          oneYearAgo: 0,
-          source: "CNN Money",
-          url: "https://money.cnn.com/data/fear-and-greed/",
-          lastUpdated: formattedDate
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         },
         volatilityIndices: [],
         economicEvents: []
@@ -317,7 +294,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       // Map major indices
       if (keyMarketIndicators.majorIndices && Array.isArray(keyMarketIndicators.majorIndices)) {
         fullJsonDataset.marketIndicators.majorIndices = keyMarketIndicators.majorIndices.map(index => {
-<<<<<<< HEAD
           const change = parseFloat(index.change) || 0;
           const isPositive = change >= 0;
           
@@ -330,17 +306,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             price: formattedPrice || "N/A",
             change: parseFloat(change.toFixed(2)),
             isPositive: isPositive
-=======
-          // Format the values with proper decimal places
-          let formattedValue = typeof index.value === 'number' ? parseFloat(index.value.toFixed(2)) : index.value;
-          let formattedChange = typeof index.change === 'number' ? parseFloat(index.change.toFixed(2)) : index.change;
-          
-          return {
-            name: index.name,
-            value: formattedValue,
-            change: formattedChange,
-            isPositive: index.change >= 0
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           };
         });
         
@@ -451,18 +416,12 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       }
       
       // Map fear and greed index
-<<<<<<< HEAD
       if (keyMarketIndicators.fearAndGreedIndex) {
         const fearGreedData = keyMarketIndicators.fearAndGreedIndex || {};
-=======
-      if (keyMarketIndicators.fearAndGreedIndex || keyMarketIndicators.fearAndGreed) {
-        const fearGreedData = keyMarketIndicators.fearAndGreedIndex || keyMarketIndicators.fearAndGreed || {};
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Get the current value from either currentValue or value field
         const currentValue = typeof fearGreedData.currentValue === 'number' ? 
           parseFloat(fearGreedData.currentValue.toFixed(0)) : 
-<<<<<<< HEAD
           (typeof fearGreedData.value === 'number' ? parseFloat(fearGreedData.value.toFixed(0)) : 38);
         
         // Use the existing helper function for classification
@@ -471,16 +430,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         
         // Get the analysis text - don't generate a default if not available
         const analysis = fearGreedData.analysis || generateFearGreedAnalysis(currentValue, fearGreedData.previousClose, fearGreedData.oneWeekAgo);
-=======
-          (typeof fearGreedData.value === 'number' ? parseFloat(fearGreedData.value.toFixed(0)) : null);
-        
-        // Use the existing helper function for classification
-        const currentClassification = fearGreedData.rating || 
-          (currentValue !== null ? getFearGreedClassification(currentValue) : null);
-        
-        // Get the analysis text - don't generate a default if not available
-        const analysis = fearGreedData.analysis || null;
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Helper function to format previous values without fallbacks
         const formatHistoricalValue = (value) => {
@@ -494,13 +443,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         };
         
         // Source information
-<<<<<<< HEAD
         const source = fearGreedData.source || "CNN Money";
         const sourceUrl = fearGreedData.sourceUrl || "https://money.cnn.com/data/fear-and-greed/";
-=======
-        const source = fearGreedData.source || null;
-        const sourceUrl = fearGreedData.sourceUrl || null;
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         const timestamp = fearGreedData.timestamp || fearGreedData.lastUpdated || null;
         
         // Determine color based on the current value
@@ -517,7 +461,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         const formattedTimestamp = timestamp ? formatDate(timestamp) : formattedDate;
         
         // Create the fear and greed index object with the correct structure
-<<<<<<< HEAD
         fullJsonDataset.marketIndicators.fearGreed = {
           value: currentValue,
           category: currentClassification,
@@ -526,32 +469,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           oneMonthAgo: fearGreedData.oneMonthAgo || 21,
           previousDay: fearGreedData.previousClose || 36, // Add explicit previousDay field
           previousValue: fearGreedData.previousValue || fearGreedData.previousClose || 36, // Add alternative field name
-=======
-        fullJsonDataset.marketIndicators.fearGreedIndex = {
-          currentValue: currentValue,
-          currentClassification: currentClassification,
-          previousDay: formatHistoricalValue(fearGreedData.previousClose),
-          oneWeekAgo: formatHistoricalValue(fearGreedData.oneWeekAgo),
-          oneMonthAgo: formatHistoricalValue(fearGreedData.oneMonthAgo),
-          oneYearAgo: formatHistoricalValue(fearGreedData.oneYearAgo),
-          source: source,
-          sourceUrl: sourceUrl,
-          asOf: formattedTimestamp,
-          timestamp: timestamp,
-          analysis: analysis
-        };
-        
-        // Create the structure expected by the template
-        fullJsonDataset.marketIndicators.fearGreed = {
-          value: currentValue,
-          category: currentClassification,
-          description: analysis || generateFearGreedAnalysis(currentValue, fearGreedData.previousClose, fearGreedData.oneWeekAgo),
-          oneWeekAgo: fearGreedData.oneWeekAgo || null,
-          oneMonthAgo: fearGreedData.oneMonthAgo || null,
-          previousClose: fearGreedData.previousClose || null,
-          previousDay: fearGreedData.previousClose || null, // Add explicit previousDay field
-          previousValue: fearGreedData.previousValue || fearGreedData.previousClose || null, // Add alternative field name
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           color: color,
           source: source,
           sourceUrl: sourceUrl,
@@ -559,11 +476,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         };
         
         if (debugMode) {
-<<<<<<< HEAD
           Logger.log(`Mapped Fear & Greed Index: ${JSON.stringify(fullJsonDataset.marketIndicators.fearGreed, null, 2)}`);
-=======
-          Logger.log(`Mapped Fear & Greed Index: ${JSON.stringify(fullJsonDataset.marketIndicators.fearGreedIndex, null, 2)}`);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         }
       } else if (debugMode) {
         Logger.log("No Fear & Greed Index data available in keyMarketIndicators");
@@ -601,7 +514,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     // Populate market sentiment from allData if available
     if (allData && allData.marketSentiment && allData.marketSentiment.data) {
       const marketSentimentData = allData.marketSentiment.data;
-<<<<<<< HEAD
       const newSentiment = marketSentimentData.overall || marketSentimentData.overallSentiment || marketSentimentData.summary || "Neutral";
       
       // Concatenate the new sentiment with the existing one if it exists
@@ -623,13 +535,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         }
         
         fullJsonDataset.marketSentiment.analysts = shuffledAnalysts.map(analyst => {
-=======
-      fullJsonDataset.marketSentiment.overall = marketSentimentData.overall || marketSentimentData.overallSentiment || marketSentimentData.summary || "Neutral";
-      
-      // Check if analysts array exists and is not empty
-      if (marketSentimentData.analysts && Array.isArray(marketSentimentData.analysts) && marketSentimentData.analysts.length > 0) {
-        fullJsonDataset.marketSentiment.analysts = marketSentimentData.analysts.map(analyst => {
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           // Handle different field name possibilities
           const name = analyst.name || analyst.analyst || "Anonymous";
           const comment = analyst.comment || analyst.commentary || "";
@@ -670,7 +575,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     }
     
     // Populate fundamental metrics from allData if available
-<<<<<<< HEAD
     if (allData && allData.fundamentalMetrics) {
       // Define major indices symbols
       const majorIndicesSymbols = ["SPY", "DIA", "QQQ", "IWM"];
@@ -850,73 +754,17 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             } else {
               otherStocks.push(stockObject);
             }
-=======
-    if (allData && allData.fundamentalMetrics && allData.fundamentalMetrics.metrics) {
-      const metrics = allData.fundamentalMetrics.metrics;
-      
-      // Define major indices symbols
-      const majorIndicesSymbols = ["SPY", "DIA", "QQQ", "IWM"];
-      
-      // Define Magnificent Seven symbols
-      const magSevenSymbols = ["AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "NVDA"];
-      
-      // Process metrics for each category
-      const majorIndices = [];
-      const magnificentSeven = [];
-      const otherStocks = [];
-      
-      // Helper function to create stock object
-      const createStockObject = (symbol, data) => {
-        return {
-          symbol: symbol,
-          name: data.name || symbol,
-          price: data.price || 0,
-          priceChange: data.priceChange || 0,
-          percentChange: data.percentChange || 0,
-          marketCap: data.marketCap || "N/A",
-          peRatio: data.peRatio || "N/A",
-          forwardPE: data.forwardPE || "N/A",
-          pegRatio: data.pegRatio || "N/A",
-          priceToBook: data.priceToBook || "N/A",
-          priceToSales: data.priceToSales || "N/A",
-          debtToEquity: data.debtToEquity || "N/A",
-          returnOnEquity: data.returnOnEquity || "N/A",
-          beta: data.beta || "N/A",
-          dividendYield: data.dividendYield || "N/A",
-          averageVolume: data.averageVolume || "N/A",
-          lastUpdated: formattedDate
-        };
-      };
-      
-      // Process all symbols in metrics
-      for (const symbol in metrics) {
-        if (metrics.hasOwnProperty(symbol)) {
-          const stockData = metrics[symbol];
-          const stockObject = createStockObject(symbol, stockData);
-          
-          if (majorIndicesSymbols.includes(symbol)) {
-            majorIndices.push(stockObject);
-          } else if (magSevenSymbols.includes(symbol)) {
-            magnificentSeven.push(stockObject);
-          } else {
-            otherStocks.push(stockObject);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           }
         }
       }
       
       // Sort each category alphabetically by symbol
       majorIndices.sort((a, b) => a.symbol.localeCompare(b.symbol));
-<<<<<<< HEAD
       topHoldings.sort((a, b) => a.symbol.localeCompare(b.symbol));
-=======
-      magnificentSeven.sort((a, b) => a.symbol.localeCompare(b.symbol));
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
       otherStocks.sort((a, b) => a.symbol.localeCompare(b.symbol));
       
       // Update the full JSON dataset
       fullJsonDataset.fundamentalMetrics.majorIndices = majorIndices;
-<<<<<<< HEAD
       fullJsonDataset.fundamentalMetrics.topHoldings = topHoldings;
       fullJsonDataset.fundamentalMetrics.otherStocks = otherStocks;
       
@@ -963,10 +811,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           ]
         });
       }
-=======
-      fullJsonDataset.fundamentalMetrics.magnificentSeven = magnificentSeven;
-      fullJsonDataset.fundamentalMetrics.otherStocks = otherStocks;
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     }
     
     // Populate macroeconomic factors from allData if available
@@ -1061,11 +905,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Add the new fedPolicy structure
         fullJsonDataset.macroeconomicFactors.fedPolicy = {
           futuresPrice: parseFloat(futuresPrice) ? parseFloat(futuresPrice).toFixed(2) : null,
-<<<<<<< HEAD
           impliedRate: parseFloat(impliedRate) ? parseFloat(impliedRate).toFixed(2) : (impliedRate || ''),
-=======
-          impliedRate: parseFloat(impliedRate) ? `${parseFloat(impliedRate).toFixed(2)}%` : `${impliedRate}%`,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           cutProbability: parseFloat(cutProbability) || 0,
           holdProbability: parseFloat(holdProbability) || 0,
           hikeProbability: parseFloat(hikeProbability) || 0,
@@ -1077,11 +917,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           meetingSource: meetingSource,
           meetingSourceUrl: meetingSourceUrl,
           meetingAsOf: meetingAsOf,
-<<<<<<< HEAD
           currentRate: currentRateValue.toString().includes('%') ? currentRateValue : `${currentRateValue}%`,
-=======
-          currentRate: `${currentRateValue}%`,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           rateRange: rateRange,
           guidance: guidance,
           guidanceSource: guidanceSource,
@@ -1095,11 +931,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Add the fedWatch structure
         fullJsonDataset.macroeconomicFactors.fedWatch = {
           currentPrice: parseFloat(futuresPrice) ? parseFloat(futuresPrice).toFixed(2) : null,
-<<<<<<< HEAD
           impliedRate: parseFloat(impliedRate) ? parseFloat(impliedRate).toFixed(2) : (impliedRate || ''),
-=======
-          impliedRate: parseFloat(impliedRate) ? `${parseFloat(impliedRate).toFixed(2)}%` : `${impliedRate}%`,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           probabilities: {
             cut: parseFloat(cutProbability) || 0,
             hold: parseFloat(holdProbability) || 0,
@@ -1252,13 +1084,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             fullJsonDataset.macroeconomicFactors.inflation.expectationsSource = {
               name: inflation.expectations.source.name || null,
               url: inflation.expectations.source.url || null,
-<<<<<<< HEAD
               lastUpdated: inflation.expectations.source.timestamp ? 
                 formatDate(new Date(inflation.expectations.source.timestamp)) : 
-=======
-              lastUpdated: inflation.expectations.lastUpdated ? 
-                formatDate(new Date(inflation.expectations.lastUpdated)) : 
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
                 formattedDate
             };
           }
@@ -1322,7 +1149,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         
         // Create the geopolitical risks structure
         fullJsonDataset.macroeconomicFactors.geopoliticalRisks = {
-<<<<<<< HEAD
           global: geoRisks.global || "Global geopolitical risk level is currently Moderate to High.",
           risks: []
         };
@@ -1357,16 +1183,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           }
         }
         
-=======
-          global: geoRisks.geopoliticalRiskIndex ? 
-            (geoRisks.geopoliticalRiskIndex > 70 ? "High" : 
-             geoRisks.geopoliticalRiskIndex > 40 ? "Moderate to High" : 
-             geoRisks.geopoliticalRiskIndex > 20 ? "Moderate" : "Low") : 
-            "Moderate to High",
-          risks: []
-        };
-        
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         // Add risks if available
         if (Array.isArray(geoRisks.risks)) {
           // Sort risks by impact level (descending)
@@ -1413,58 +1229,29 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Format index level with 2 decimal places
         const indexLevel = typeof sp500Data.sp500Index?.price === 'number' ? 
           parseFloat(sp500Data.sp500Index.price.toFixed(2)) : 
-<<<<<<< HEAD
           (typeof sp500Data.indexLevel === 'number' ? parseFloat(sp500Data.indexLevel.toFixed(2)) : null);
-=======
-          (typeof sp500Data.indexLevel === 'number' ? 
-            parseFloat(sp500Data.indexLevel.toFixed(2)) : null);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Format current PE ratio with 2 decimal places
         const currentPE = typeof sp500Data.trailingPE?.pe === 'number' ? 
           parseFloat(sp500Data.trailingPE.pe.toFixed(2)) : 
-<<<<<<< HEAD
           (typeof sp500Data.valuation?.currentPE === 'number' ? parseFloat(sp500Data.valuation.currentPE.toFixed(2)) : 
             (typeof sp500Data.sp500Index?.pe === 'number' ? parseFloat(sp500Data.sp500Index.pe.toFixed(2)) : null));
-=======
-          (typeof sp500Data.valuation?.currentPE === 'number' ? 
-            parseFloat(sp500Data.valuation.currentPE.toFixed(2)) : 
-            (typeof sp500Data.sp500Index?.pe === 'number' ? 
-              parseFloat(sp500Data.sp500Index.pe.toFixed(2)) : null));
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Format 5-year average PE with 2 decimal places
         const fiveYearAvgPE = typeof sp500Data.trailingPE?.history?.avg5 === 'number' ? 
           parseFloat(sp500Data.trailingPE.history.avg5.toFixed(2)) : 
-<<<<<<< HEAD
           (typeof sp500Data.valuation?.fiveYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.fiveYearAvgPE.toFixed(2)) : 
             (typeof sp500Data.valuation?.historicalAvgPE === 'number' ? parseFloat(sp500Data.valuation.historicalAvgPE.toFixed(2)) : null));
-=======
-          (typeof sp500Data.valuation?.fiveYearAvgPE === 'number' ? 
-            parseFloat(sp500Data.valuation.fiveYearAvgPE.toFixed(2)) : 
-            (typeof sp500Data.valuation?.historicalAvgPE === 'number' ? 
-              parseFloat(sp500Data.valuation.historicalAvgPE.toFixed(2)) : null));
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Format 10-year average PE with 2 decimal places
         const tenYearAvgPE = typeof sp500Data.trailingPE?.history?.avg10 === 'number' ? 
           parseFloat(sp500Data.trailingPE.history.avg10.toFixed(2)) : 
-<<<<<<< HEAD
           (typeof sp500Data.valuation?.tenYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.tenYearAvgPE.toFixed(2)) : null);
-=======
-          (typeof sp500Data.valuation?.tenYearAvgPE === 'number' ? 
-            parseFloat(sp500Data.valuation.tenYearAvgPE.toFixed(2)) : null);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Format TTM EPS with 2 decimal places
         const ttmEPS = typeof sp500Data.earnings?.eps === 'number' ? 
           parseFloat(sp500Data.earnings.eps.toFixed(2)) : 
-<<<<<<< HEAD
           (typeof sp500Data.earnings?.ttmEPS === 'number' ? parseFloat(sp500Data.earnings.ttmEPS.toFixed(2)) : null);
-=======
-          (typeof sp500Data.earnings?.ttmEPS === 'number' ? 
-            parseFloat(sp500Data.earnings.ttmEPS.toFixed(2)) : null);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Calculate target prices at different PE multiples
         const targetAt15x = ttmEPS !== null ? parseFloat((ttmEPS * 15).toFixed(2)) : null;
@@ -1485,12 +1272,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
               // Get the EPS value from eps or value property
               const eps = typeof estimate.eps === 'number' ? 
                 parseFloat(estimate.eps.toFixed(2)) : 
-<<<<<<< HEAD
                 (typeof estimate.value === 'number' ? parseFloat(estimate.value.toFixed(2)) : null);
-=======
-                (typeof estimate.value === 'number' ? 
-                  parseFloat(estimate.value.toFixed(2)) : null);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
               
               // Only add the estimate if we have both year and eps
               if (year && eps !== null) {
@@ -1508,21 +1290,12 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
                 
                 forwardEpsEstimates.push({
                   year: year.toString(),
-<<<<<<< HEAD
                   eps: `$${eps.toFixed(2)}`,
                   targetAt15x: `$${targetAt15x.toFixed(2)}`,
                   percentVsIndex15x: percentVsIndex15x,
                   targetAt17x: `$${targetAt17x.toFixed(2)}`,
                   percentVsIndex17x: percentVsIndex17x,
                   targetAt20x: `$${targetAt20x.toFixed(2)}`,
-=======
-                  eps: eps,
-                  targetAt15x: targetAt15x.toFixed(2),
-                  percentVsIndex15x: percentVsIndex15x,
-                  targetAt17x: targetAt17x.toFixed(2),
-                  percentVsIndex17x: percentVsIndex17x,
-                  targetAt20x: targetAt20x.toFixed(2),
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
                   percentVsIndex20x: percentVsIndex20x
                 });
               }
@@ -1530,42 +1303,8 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           });
         }
         
-<<<<<<< HEAD
         // Sort forward EPS estimates by year in ascending order
         forwardEpsEstimates.sort((a, b) => parseInt(a.year) - parseInt(b.year));
-=======
-        // If no estimates were found, create some default ones
-        if (forwardEpsEstimates.length === 0) {
-          const nextYear = new Date().getFullYear() + 1;
-          const yearAfter = nextYear + 1;
-          
-          // Add next year estimate
-          const nextYearEPS = ttmEPS !== null ? parseFloat((ttmEPS * 1.1).toFixed(2)) : null;
-          forwardEpsEstimates.push({
-            year: nextYear.toString(),
-            eps: nextYearEPS,
-            targetAt15x: nextYearEPS !== null ? (nextYearEPS * 15).toFixed(2) : null,
-            percentVsIndex15x: indexLevel > 0 ? ((nextYearEPS * 15 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt17x: nextYearEPS !== null ? (nextYearEPS * 17).toFixed(2) : null,
-            percentVsIndex17x: indexLevel > 0 ? ((nextYearEPS * 17 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt20x: nextYearEPS !== null ? (nextYearEPS * 20).toFixed(2) : null,
-            percentVsIndex20x: indexLevel > 0 ? ((nextYearEPS * 20 / indexLevel - 1) * 100).toFixed(1) : "0.0"
-          });
-          
-          // Add year after estimate
-          const yearAfterEPS = nextYearEPS !== null ? parseFloat((nextYearEPS * 1.1).toFixed(2)) : null;
-          forwardEpsEstimates.push({
-            year: yearAfter.toString(),
-            eps: yearAfterEPS,
-            targetAt15x: yearAfterEPS !== null ? (yearAfterEPS * 15).toFixed(2) : null,
-            percentVsIndex15x: indexLevel > 0 ? ((yearAfterEPS * 15 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt17x: yearAfterEPS !== null ? (yearAfterEPS * 17).toFixed(2) : null,
-            percentVsIndex17x: indexLevel > 0 ? ((yearAfterEPS * 17 / indexLevel - 1) * 100).toFixed(1) : "0.0",
-            targetAt20x: yearAfterEPS !== null ? (yearAfterEPS * 20).toFixed(2) : null,
-            percentVsIndex20x: indexLevel > 0 ? ((yearAfterEPS * 20 / indexLevel - 1) * 100).toFixed(1) : "0.0"
-          });
-        }
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         
         // Get source information
         const sourceName = sp500Data.sp500Index?.sourceName || "Yahoo Finance";
@@ -1602,17 +1341,10 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             asOf: peAsOf || asOf
           },
           eps: {
-<<<<<<< HEAD
             ttm: ttmEPS !== null ? `$${ttmEPS.toFixed(2)}` : null,
             targetAt15x: targetAt15x !== null ? `$${targetAt15x.toFixed(2)}` : null,
             targetAt17x: targetAt17x !== null ? `$${targetAt17x.toFixed(2)}` : null,
             targetAt20x: targetAt20x !== null ? `$${targetAt20x.toFixed(2)}` : null,
-=======
-            ttm: ttmEPS,
-            targetAt15x: targetAt15x,
-            targetAt17x: targetAt17x,
-            targetAt20x: targetAt20x,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
             source: sourceName,
             sourceUrl: sourceUrl,
             asOf: epsAsOf || asOf
@@ -1753,7 +1485,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           },
           eps: {
             ttm: null,
-<<<<<<< HEAD
             ttmFormatted: null,
             targetAt15x: null,
             targetAt15xFormatted: null,
@@ -1761,11 +1492,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             targetAt17xFormatted: null,
             targetAt20x: null,
             targetAt20xFormatted: null,
-=======
-            targetAt15x: null,
-            targetAt17x: null,
-            targetAt20x: null,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
             source: "Yahoo Finance",
             sourceUrl: "https://finance.yahoo.com/quote/%5EGSPC/analysis/",
             asOf: formattedDate
@@ -1774,7 +1500,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             {
               year: (new Date().getFullYear() + 1).toString(),
               eps: null,
-<<<<<<< HEAD
               epsFormatted: null,
               targetAt15x: null,
               targetAt15xFormatted: null,
@@ -1784,19 +1509,11 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
               percentVsIndex17x: "0.0",
               targetAt20x: null,
               targetAt20xFormatted: null,
-=======
-              targetAt15x: null,
-              percentVsIndex15x: "0.0",
-              targetAt17x: null,
-              percentVsIndex17x: "0.0",
-              targetAt20x: null,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
               percentVsIndex20x: "0.0"
             },
             {
               year: (new Date().getFullYear() + 2).toString(),
               eps: null,
-<<<<<<< HEAD
               epsFormatted: null,
               targetAt15x: null,
               targetAt15xFormatted: null,
@@ -1806,13 +1523,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
               percentVsIndex17x: "0.0",
               targetAt20x: null,
               targetAt20xFormatted: null,
-=======
-              targetAt15x: null,
-              percentVsIndex15x: "0.0",
-              targetAt17x: null,
-              percentVsIndex17x: "0.0",
-              targetAt20x: null,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
               percentVsIndex20x: "0.0"
             }
           ],
@@ -1844,7 +1554,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         },
         eps: {
           ttm: null,
-<<<<<<< HEAD
           ttmFormatted: null,
           targetAt15x: null,
           targetAt15xFormatted: null,
@@ -1852,11 +1561,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           targetAt17xFormatted: null,
           targetAt20x: null,
           targetAt20xFormatted: null,
-=======
-          targetAt15x: null,
-          targetAt17x: null,
-          targetAt20x: null,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
           source: "Yahoo Finance",
           sourceUrl: "https://finance.yahoo.com/quote/%5EGSPC/analysis/",
           asOf: formattedDate
@@ -1865,7 +1569,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           {
             year: (new Date().getFullYear() + 1).toString(),
             eps: null,
-<<<<<<< HEAD
             epsFormatted: null,
             targetAt15x: null,
             targetAt15xFormatted: null,
@@ -1875,19 +1578,11 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             percentVsIndex17x: "0.0",
             targetAt20x: null,
             targetAt20xFormatted: null,
-=======
-            targetAt15x: null,
-            percentVsIndex15x: "0.0",
-            targetAt17x: null,
-            percentVsIndex17x: "0.0",
-            targetAt20x: null,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
             percentVsIndex20x: "0.0"
           },
           {
             year: (new Date().getFullYear() + 2).toString(),
             eps: null,
-<<<<<<< HEAD
             epsFormatted: null,
             targetAt15x: null,
             targetAt15xFormatted: null,
@@ -1897,13 +1592,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             percentVsIndex17x: "0.0",
             targetAt20x: null,
             targetAt20xFormatted: null,
-=======
-            targetAt15x: null,
-            percentVsIndex15x: "0.0",
-            targetAt17x: null,
-            percentVsIndex17x: "0.0",
-            targetAt20x: null,
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
             percentVsIndex20x: "0.0"
           }
         ],
@@ -1951,13 +1639,9 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     Logger.log(`Error in generateFullJsonDataset: ${error}`);
     // Return a minimal dataset with error information
     return {
-<<<<<<< HEAD
       reportDate: new Date().toISOString(),
       reportDateFormatted: formattedDate,
       reportDateDisplay: "As of " + formattedDate,
-=======
-      reportDate: Utilities.formatDate(new Date(), "America/New_York", "MMMM d, yyyy 'at' h:mm a z"),
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
       isTest: debugMode,
       error: {
         message: `Error generating full JSON dataset: ${error.message}`,
@@ -1965,11 +1649,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       },
       metadata: {
         title: PropertiesService.getScriptProperties().getProperty('NEWSLETTER_NAME') || 'Market Pulse Daily',
-<<<<<<< HEAD
         timestamp: new Date().toISOString()
-=======
-        timestamp: Utilities.formatDate(new Date(), "America/New_York", "MMMM d, yyyy 'at' h:mm a z")
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
       }
     };
   }
@@ -2033,12 +1713,7 @@ function testGenerateFullJsonDataset() {
     
     // Enable debug mode for this test
     const scriptProperties = PropertiesService.getScriptProperties();
-<<<<<<< HEAD
     const debugMode = scriptProperties.getProperty('DEBUG_MODE') === 'true';
-=======
-    const originalDebugMode = scriptProperties.getProperty('DEBUG_MODE');
-    scriptProperties.setProperty('DEBUG_MODE', 'true');
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     
     // Get a sample analysis JSON (either from cache or generate a debug one)
     let analysisJson = null;
@@ -2050,7 +1725,6 @@ function testGenerateFullJsonDataset() {
       analysisJson = JSON.parse(cachedAnalysis);
     } else if (debugMode) {
         Logger.log("No cached analysis found, generating debug response");
-<<<<<<< HEAD
         analysisJson = generateDebugOpenAIResponse();
     } else {
       Logger.log("No cached analysis found, getting OpenAI analysis");
@@ -2059,26 +1733,12 @@ function testGenerateFullJsonDataset() {
         Logger.log("Failed to get OpenAI analysis, using debug response");
         analysisJson = generateDebugOpenAIResponse();
       }
-=======
-         analysisJson = generateDebugOpenAIResponse();
-    } else {
-      Logger.log("No JSON analysis available, no report to generate");
-      return {
-        success: false,
-        message: "No JSON analysis available, no report to generate"
-      };
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     }
     
     // Generate the full JSON dataset
     Logger.log("Generating full JSON dataset...");
-<<<<<<< HEAD
     const fullJsonDataset = generateFullJsonDataset(analysisJson, debugMode);
      
-=======
-    const fullJsonDataset = generateFullJsonDataset(analysisJson, true);
-    
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     // Save the full JSON dataset to Google Drive
     const fullJsonFileName = "test-full-json-dataset.json";
     const jsonString = JSON.stringify(fullJsonDataset, null, 2);
@@ -2105,16 +1765,6 @@ function testGenerateFullJsonDataset() {
       Logger.log(`Error calling Lambda service: ${lambdaError}`);
     }
     
-<<<<<<< HEAD
-=======
-    // Restore original debug mode setting
-    if (originalDebugMode) {
-      scriptProperties.setProperty('DEBUG_MODE', originalDebugMode);
-    } else {
-      scriptProperties.deleteProperty('DEBUG_MODE');
-    }
-    
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     return {
       success: true,
       message: "Full JSON dataset generated and saved successfully",
@@ -2187,11 +1837,7 @@ function generateAndSaveFullJsonDataset(analysisJson, debugMode) {
         return fullJsonFileUrl;
       }
       
-<<<<<<< HEAD
       return generateHtmlUsingProvidedLambdaService(jsonString, fullJsonFileUrl, true);
-=======
-      return generateHtmlUsingProvidedLambdaService(jsonString, fullJsonFileUrl, debugMode);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     } catch (lambdaError) {
       if (debugMode) {
         Logger.log(`Error calling Lambda service: ${lambdaError}`);
@@ -2225,7 +1871,6 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
       Logger.log(`Using API key: ${lambdaApiKey.substring(0, 5)}...`);
     }
     
-<<<<<<< HEAD
     // Set up the request options
     const options = {
       'method': 'post',
@@ -2339,131 +1984,20 @@ function generateHtmlUsingProvidedLambdaService(jsonString, jsonFileUrl, debugMo
         jsonUrl: jsonFileUrl,
         htmlUrl: htmlFileUrl
       };
-=======
-    // Call the Lambda service with the JSON data
-    const response = UrlFetchApp.fetch(lambdaUrl, {
-      method: 'post',
-      contentType: 'application/json',
-      payload: jsonString,
-      headers: {
-        'x-api-key': lambdaApiKey
-      },
-      muteHttpExceptions: true
-    });
-    const responseCode = response.getResponseCode();
-    
-    if (debugMode) {
-      Logger.log(`Lambda service response code: ${responseCode}`);
-      Logger.log(`Lambda service response headers: ${JSON.stringify(response.getAllHeaders())}`);
-    }
-    
-    if (responseCode === 200) {
-      const responseText = response.getContentText();
-      if (debugMode) {
-        Logger.log(`Lambda service response: ${responseText.substring(0, 200)}...`);
-      }
-      
-      // Check if the response is HTML (starts with <!DOCTYPE or <html)
-      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-        Logger.log('Received HTML response instead of JSON. This likely indicates an error page from the Lambda service.');
-        // Try to generate HTML using local Lambda as a fallback
-        return generateHtmlUsingLocalLambda(jsonString, jsonFileUrl, debugMode);
-      }
-      
-      try {
-        // Parse the response
-        const responseJson = JSON.parse(responseText);
-        
-        // The Lambda function returns a nested response where the actual response is in the body property as a string
-        let htmlContent;
-        
-        // Check if the response has the expected format
-        if (responseJson.body) {
-          // The body is a string that needs to be parsed
-          const innerBody = JSON.parse(responseJson.body);
-          if (debugMode) {
-            Logger.log(`Inner body: ${JSON.stringify(innerBody).substring(0, 200)}...`);
-          }
-          
-          if (innerBody.html) {
-            htmlContent = innerBody.html;
-          }
-        } else if (responseJson.html) {
-          // Direct format
-          htmlContent = responseJson.html;
-        }
-        
-        if (htmlContent) {
-          // Save the HTML to Google Drive using the saveToGoogleDrive function
-          const htmlFileName = 'MarketPulseDaily.html';
-          const htmlFileUrl = saveToGoogleDrive(htmlFileName, htmlContent);
-          
-          if (debugMode) {
-            Logger.log(`HTML saved to Google Drive: ${htmlFileUrl}`);
-          }
-          
-          return {
-            jsonUrl: jsonFileUrl,
-            htmlUrl: htmlFileUrl
-          };
-        } else {
-          Logger.log('Error: HTML content not found in the response');
-          Logger.log(`Full response: ${responseText}`);
-          
-          // Try to generate HTML using local Lambda as a fallback
-          return generateHtmlUsingLocalLambda(jsonString, jsonFileUrl, debugMode);
-        }
-      } catch (error) {
-        Logger.log(`Error parsing Lambda response: ${error}`);
-        // Try to generate HTML using local Lambda as a fallback
-        return generateHtmlUsingLocalLambda(jsonString, jsonFileUrl, debugMode);
-      }
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     } else {
       // Handle error response
       Logger.log(`Error calling Lambda service: ${responseCode}`);
       Logger.log(`Response content: ${response.getContentText()}`);
       
       // Return just the JSON URL if Lambda service call failed
-<<<<<<< HEAD
       return { jsonUrl: jsonFileUrl };
-=======
-      return jsonFileUrl;
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     }
   } catch (error) {
     // Handle any exceptions
     Logger.log(`Exception calling Lambda service: ${error.toString()}`);
     
     // Return just the JSON URL if Lambda service call failed
-<<<<<<< HEAD
     return { jsonUrl: jsonFileUrl };
-=======
-    return jsonFileUrl;
-  }
-}
-
-/**
- * Test function to generate and save the full JSON dataset
- */
-function testGenerateAndSaveFullJsonDataset() {
-  const debugMode = true;
-  try {
-    // Get the analysis from OpenAI (will use cache if available)
-    const analysisJson = getOpenAITradingAnalysis();
-    
-    // Generate and save the full JSON dataset
-    const result = generateAndSaveFullJsonDataset(analysisJson, debugMode);
-    
-    if (typeof result === 'object' && result.jsonUrl && result.htmlUrl) {
-      Logger.log(`Full JSON dataset saved to: ${result.jsonUrl}`);
-      Logger.log(`HTML saved to: ${result.htmlUrl}`);
-    } else {
-      Logger.log(`Full JSON dataset saved to: ${result}`);
-    }
-  } catch (error) {
-    Logger.log(`Error in test: ${error}`);
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   }
 }
 
@@ -2575,7 +2109,6 @@ function generateInflationAnalysis(inflation) {
   // If no trend is found, return a default message
   return "Inflation is currently at a level of " + inflation.currentValue + ", with a " + inflation.outlook + " outlook and " + inflation.marketImpact + " market impact.";
 }
-<<<<<<< HEAD
 
 /**
  * Test function to generate and save the full JSON dataset
@@ -2749,5 +2282,3 @@ var JsonExport = {
   testGenerateFullJsonDataset: testGenerateFullJsonDataset,
   testGenerateAndSaveFullJsonDataset: testGenerateAndSaveFullJsonDataset
 };
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
