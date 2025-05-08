@@ -14,6 +14,7 @@ COPY lambda.js ./
 COPY analyzeSP500.js ./
 COPY services ./services
 COPY forward_eps_estimates.json ./
+COPY services/sp-500-eps-est.xlsx ./services/
 
 # Stage 2: Use Playwright base image for Chromium/system deps
 FROM mcr.microsoft.com/playwright:v1.52.0-jammy
@@ -27,5 +28,6 @@ COPY --from=build /app/lambda.js ./
 COPY --from=build /app/analyzeSP500.js ./
 COPY --from=build /app/services ./services
 COPY --from=build /app/forward_eps_estimates.json ./
+COPY --from=build /app/services/sp-500-eps-est.xlsx ./services/
 
 CMD [ "node_modules/.bin/aws-lambda-ric", "lambda.handler" ]
