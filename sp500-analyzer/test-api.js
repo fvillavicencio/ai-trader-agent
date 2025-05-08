@@ -16,7 +16,6 @@ if (LAMBDA_API_KEY) {
   headers['x-api-key'] = LAMBDA_API_KEY;
 }
 
-<<<<<<< HEAD
 async function flushCache() {
   try {
     const response = await axios.post(LAMBDA_SERVICE_URL, { action: 'flushCache' }, {
@@ -28,8 +27,6 @@ async function flushCache() {
   }
 }
 
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 async function testLambda() {
   try {
     const response = await axios.post(LAMBDA_SERVICE_URL, {
@@ -45,11 +42,7 @@ async function testLambda() {
   }
 }
 
-<<<<<<< HEAD
 (async () => {
   await flushCache();
   await testLambda();
 })();
-=======
-testLambda();
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
