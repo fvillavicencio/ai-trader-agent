@@ -30,6 +30,5 @@ COPY --from=build /app/services ./services
 COPY --from=build /app/forward_eps_estimates.json ./
 COPY --from=build /app/services/sp-500-eps-est.xlsx ./services/
 
-ENV AWS_LAMBDA_EXEC_WRAPPER=/var/task/node_modules/aws-lambda-ric/bin/index.mjs
 ENV NODE_OPTIONS="--es-module-specifier-resolution=node"
-CMD [ "lambda.handler" ]
+CMD [ "node", "--es-module-specifier-resolution=node", "/var/task/node_modules/aws-lambda-ric/bin/index.mjs", "lambda.handler" ]
