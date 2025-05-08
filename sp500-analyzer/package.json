@@ -3,10 +3,7 @@
   "version": "1.0.0",
   "description": "S&P 500 and Index Analyzer for PE, earnings, and ETF weights.",
   "main": "index.js",
-<<<<<<< HEAD
   "type": "module",
-=======
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   "scripts": {
     "start": "node index.js"
   },
