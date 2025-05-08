@@ -1348,6 +1348,236 @@ function formatStockMetricValue(key, value) {
 }
 
 /**
+<<<<<<< HEAD
+=======
+ * Generates the fundamental metrics section HTML
+ * 
+ * @param {Object} analysis - The analysis data
+ * @return {String} HTML for the fundamental metrics section
+ */
+function generateFundamentalMetricsSection_COPY(analysis) {
+  try {
+    // Get the fundamental metrics data from the cache
+    const cache = CacheService.getScriptCache();
+    const cachedDataJson = cache.get('allData');
+    
+    if (!cachedDataJson) {
+      Logger.log("No cached data found for fundamental metrics");
+      return "";
+    }
+    
+    const cachedData = JSON.parse(cachedDataJson);
+    const fundamentalMetricsData = cachedData?.fundamentalMetrics?.metrics?.metrics;
+    
+    if (!fundamentalMetricsData) {
+      Logger.log("No fundamental metrics data available in cached data");
+      return "";
+    }
+
+    // Organize stocks into categories
+    const majorIndices = [];
+    const magSeven = [];
+    const otherStocks = [];
+    
+    // Define category symbols
+    const indicesSymbols = ['SPY', 'QQQ', 'DIA', 'IWM'];
+    const magSevenSymbols = ['AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA', 'TSLA'];
+
+    // Sort stocks into categories
+    Object.entries(fundamentalMetricsData).forEach(([symbol, metrics]) => {
+      if (indicesSymbols.includes(symbol)) {
+        majorIndices.push(metrics);
+      } else if (magSevenSymbols.includes(symbol)) {
+        magSeven.push(metrics);
+      } else {
+        otherStocks.push(metrics);
+      }
+    });
+
+    // Generate HTML for each category
+    const generateStocksSection = (stocks, title) => {
+      if (!stocks || stocks.length === 0) return '';
+      
+      return `
+        <div class="subsection">
+          <h3>${title}</h3>
+          <div class="stocks-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px 28px; align-items: stretch;">
+            ${stocks.map(stock => {
+              // Get the color based on price change
+              const getColor = (value) => {
+                if (typeof value !== 'number') return '#555';
+                return value >= 0 ? '#4CAF50' : '#f44336';
+              };
+
+              // Create metric items only for non-N/A values
+              const createMetricItem = (label, value, suffix = '') => {
+                if (
+                  value === 'N/A' || value === null || value === undefined ||
+                  value === '' || value === false ||
+                  (typeof value === 'number' && (isNaN(value) || !isFinite(value))) ||
+                  (typeof value === 'string' && ['n/a', 'na', 'nan', 'null', 'undefined', '-'].includes(value.trim().toLowerCase()))
+                ) return '';
+                return `
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 5px; flex-wrap: wrap;">
+                    <div style="color: #000; min-width: 40px; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${label}</div>
+                    <div style="font-weight: bold; color: #000; overflow: hidden; text-overflow: ellipsis;">${formatStockMetricValue(label, value)}</div>
+                  </div>
+                `;
+              };
+
+              // Dynamically render all available metrics from the stock object, excluding non-values
+              const metricLabels = {
+                marketCap: 'Market Cap',
+                peRatio: 'P/E Ratio',
+                forwardPE: 'Forward PE',
+                pegRatio: 'PEG Ratio',
+                pegForwardRatio: 'PEG Forward Ratio',
+                priceToBook: 'Price/Book',
+                priceToSales: 'Price/Sales',
+                debtToEquity: 'Debt/Equity',
+                returnOnEquity: 'ROE',
+                returnOnAssets: 'ROA',
+                profitMargin: 'Profit Margin',
+                dividendYield: 'Dividend Yield',
+                beta: 'Beta',
+                volume: 'Volume',
+                open: 'Open',
+                close: 'Previous Close',
+                dayHigh: 'Day High',
+                dayLow: 'Day Low',
+                fiftyTwoWeekHigh: '52W High',
+                fiftyTwoWeekLow: '52W Low',
+                sector: 'Sector',
+                industry: 'Industry',
+                // Add more fields as needed from StockDataRetriever.gs
+              };
+
+              // Determine company name: prefer 'name', fallback to 'company', fallback to symbol if all else fails
+              let companyName = '';
+              if (stock.name && typeof stock.name === 'string' && stock.name.trim() && stock.name.trim().toUpperCase() !== 'N/A') {
+                companyName = stock.name.trim();
+              } else if (stock.company && typeof stock.company === 'string' && stock.company.trim() && stock.company.trim().toUpperCase() !== 'N/A') {
+                companyName = stock.company.trim();
+              } else {
+                companyName = stock.symbol || '';
+              }
+
+              // Arrow logic: prefer string sign, fallback to number, fallback to neutral
+              let arrow = '';
+              if (typeof stock.priceChange === 'string') {
+                arrow = stock.priceChange.trim().startsWith('-') ? '&#8595;' : '&#8593;';
+              } else if (typeof stock.priceChange === 'number') {
+                arrow = stock.priceChange < 0 ? '&#8595;' : '&#8593;';
+              } else {
+                arrow = '';
+              }
+
+              // Price change display: show string if string, else formatted number, else N/A
+              let priceChangeDisplay = 'N/A';
+              if (typeof stock.priceChange === 'string') {
+                priceChangeDisplay = stock.priceChange;
+              } else if (typeof stock.priceChange === 'number' && isFinite(stock.priceChange)) {
+                priceChangeDisplay = stock.priceChange.toFixed(2);
+              }
+
+              // Percent change display: only if number and finite
+              let percentChangeDisplay = '';
+              if (typeof stock.changesPercentage === 'number' && isFinite(stock.changesPercentage)) {
+                percentChangeDisplay = '(' + stock.changesPercentage.toFixed(2) + '%)';
+              }
+
+              // --- Compose the top-right price line ---
+              // Example: $94.65 ↑5.18 (0.97%)
+              let priceChangeAbs = '';
+              if (typeof stock.priceChange === 'number' && isFinite(stock.priceChange)) {
+                priceChangeAbs = Math.abs(stock.priceChange).toFixed(2);
+              } else if (typeof stock.priceChange === 'string' && stock.priceChange.trim() && stock.priceChange !== 'N/A') {
+                // Try to parse string to number for formatting
+                var num = parseFloat(stock.priceChange.replace(/[$,]/g, ''));
+                priceChangeAbs = isFinite(num) ? num.toFixed(2) : stock.priceChange;
+              }
+              // Compose the top-right price line (restored logic)
+              let priceLine = `$${formatValue(stock.price)}`;
+              if (arrow) priceLine += ` <span style="color: ${getColor(stock.priceChange)};">${arrow}</span>`;
+              if (priceChangeAbs) priceLine += ` <span style="color: ${getColor(stock.priceChange)}; font-weight: normal;">${priceChangeAbs}</span>`;
+              if (percentChangeDisplay && percentChangeDisplay !== '(N/A%)') priceLine += ` <span style="color: ${getColor(stock.priceChange)}; font-weight: normal;">${percentChangeDisplay}</span>`;
+
+              // --- Helper to add $ prefix for open/close ---
+              function renderDollarValue(val) {
+                if (val === undefined || val === null || val === '' || isNaN(val)) return '';
+                return `$${formatValue(val)}`;
+              }
+
+              return `
+                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: none; width: 100%; height: 100%; border: 1px solid ${getColor(stock.priceChange)}; display: flex; flex-direction: column;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 18px; background-color: #f8f9fa;">
+                    <!-- Left: Symbol and Company Name -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 120px;">
+                      <div style="font-weight: bold; font-size: clamp(1.2rem, 3vw, 1.2rem); color: #000; letter-spacing: 1px;">${stock.symbol}</div>
+                      <div style="font-size: clamp(0.8rem, 2vw, 0.9rem); font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 120px;">${companyName}</div>
+                    </div>
+                    <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 110px;">
+                      <div style="font-weight: bold; font-size: clamp(1rem, 3vw, 1.15rem); color: ${getColor(stock.priceChange)}; margin-bottom: 2px; white-space: nowrap;">${priceLine}</div>
+                    </div>
+                  </div>
+                  <!-- Metrics Table -->
+                  <div style="padding: 10px 12px 8px 12px; background-color: white; flex: 1 1 auto;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: clamp(0.95rem, 2vw, 1.05rem); border: none;">
+                      <tbody>
+                        ${Object.keys(metricLabels).map(key => {
+                          if (stock[key] === undefined || stock[key] === null || stock[key] === '') return '';
+                          let displayValue = stock[key];
+                          // Always show $ and 2 decimals for price fields
+                          if (["open", "close", "dayHigh", "dayLow", "fiftyTwoWeekHigh", "fiftyTwoWeekLow"].includes(key)) {
+                            if (typeof stock[key] === 'number' && isFinite(stock[key])) {
+                              displayValue = `$${stock[key].toFixed(2)}`;
+                            } else if (typeof stock[key] === 'string' && stock[key] && stock[key] !== 'N/A') {
+                              var num = parseFloat(stock[key].replace(/[$,]/g, ''));
+                              displayValue = isFinite(num) ? `$${num.toFixed(2)}` : stock[key];
+                            } else {
+                              displayValue = 'N/A';
+                            }
+                          }
+                          if (key === 'marketCap') displayValue = formatMarketCap(stock[key]);
+                          return `<tr><td style="color: #777; padding: 4px 8px 4px 0; border: none;">${metricLabels[key]}</td><td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right; border: none;">${formatStockMetricValue(key, displayValue)}</td></tr>`;
+                        }).join('')}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              `;
+          }).join('')}
+          </div>
+        </div>
+      `;
+    };
+
+    // Generate HTML for all categories
+    
+    const html = `
+      <div class="section">
+        <h2>Fundamental Metrics</h2>
+        ${generateStocksSection(majorIndices, 'Major Indices')}
+        ${generateStocksSection(magSeven, 'Magnificent Seven')}
+        ${generateStocksSection(otherStocks, 'Other Stocks')}
+      </div>
+    `;
+
+    return html;
+  } catch (error) {
+    Logger.log("Error generating fundamental metrics section: " + error);
+    return `
+      <div class="section">
+        <h2>Fundamental Metrics</h2>
+        <p>Error generating fundamental metrics section: ${error}</p>
+      </div>
+    `;
+  }
+}
+
+/**
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
  * Responsive adjustments for inline containers, cards, and badges
  * For symbol/analyst badges (line ~219):
  * Change padding: 2px 8px; font-size: 12px; to padding: 2px 6px; font-size: 11px; on mobile

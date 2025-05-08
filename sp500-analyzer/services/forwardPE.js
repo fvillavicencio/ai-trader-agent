@@ -44,6 +44,7 @@ async function downloadXlsxWithPlaywright(downloadPath) {
 }
 
 /**
+<<<<<<< HEAD
  * Fetches forward EPS estimates from Alpha Vantage API for SPY (S&P 500 ETF)
  * Uses the OVERVIEW endpoint to get EPS and ForwardPE, then calculates forward EPS
  * Falls back to other methods if API fails or rate limit is reached
@@ -154,6 +155,17 @@ export async function getForwardEpsEstimates() {
   console.log('[EPS] Alpha Vantage failed or rate limited, trying S&P Global XLSX...');
   
   // If Alpha Vantage fails, try the S&P Global XLSX approach
+=======
+ * Fetches S&P 500 forward EPS estimates for 2025 and 2026.
+ * - Tries to download the latest file from the web (Axios, then Playwright) to /tmp.
+ * - If successful, uses it and overwrites /tmp copy.
+ * - If all downloads fail, tries to use /tmp copy.
+ * - If /tmp copy does not exist, copies bundled asset from deployment (read-only) dir to /tmp and uses it.
+ * - If all fail, returns an array with a single object containing error information.
+ * Returns an array of objects with lastUpdated (string).
+ */
+export async function getForwardEpsEstimates() {
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   // Paths
   const TMP_XLSX_PATH = '/tmp/sp-500-eps-est.xlsx';
   const BUNDLED_XLSX_PATH = path.resolve(__dirname, 'sp-500-eps-est.xlsx');
@@ -239,13 +251,19 @@ export async function getForwardEpsEstimates() {
   try {
     // Now parse xlsBuffer with xlsx
     if (!xlsBuffer) {
+<<<<<<< HEAD
       console.error('[EPS] All methods to obtain EPS XLSX failed. Falling back to JSON file.');
       return getForwardEpsFromJsonFile();
+=======
+      console.error('[EPS] All methods to obtain EPS XLSX failed. Returning error.');
+      return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     }
 
     workbook = XLSX.read(xlsBuffer, { type: 'buffer' });
     // Find the relevant sheet (usually first)
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
+<<<<<<< HEAD
     
     // Convert to array of arrays for easier scanning
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
@@ -295,6 +313,16 @@ export async function getForwardEpsEstimates() {
     
     console.log(`[EPS] S&P Global data last updated: ${spGlobalLastUpdated}`);
     
+=======
+    // Convert to array of arrays
+    const rows = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+    // DEBUG: Print rows 120 to 140 to inspect ESTIMATES section
+    console.log('==== XLSX ROWS 120-140 ====');
+    for (let i = 120; i < Math.min(rows.length, 140); i++) {
+      console.log(`[${i}]`, rows[i]);
+    }
+    console.log('============================');
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     // Find the 'ESTIMATES' row and extract data rows after it, until 'ACTUALS'
     let estimatesStart = -1;
     let estimatesEnd = rows.length;
@@ -308,6 +336,7 @@ export async function getForwardEpsEstimates() {
       }
     }
     if (estimatesStart === -1) {
+<<<<<<< HEAD
       console.warn('[EPS] Could not find ESTIMATES section in XLSX. Falling back to JSON file.');
       return getForwardEpsFromJsonFile();
     }
@@ -337,10 +366,18 @@ export async function getForwardEpsEstimates() {
       }
     }
     
+=======
+      console.warn('[EPS] Could not find ESTIMATES section in XLSX. Fallback:', usedFallback);
+      return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
+    }
+    // Extract forward EPS for 2025 and 2026 (use column 0 = date, column 2 = operating EPS)
+    const results = [];
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     for (let i = estimatesStart; i < estimatesEnd; i++) {
       const row = rows[i];
       if (!row || typeof row[0] !== 'string' || !row[0].match(/\d{2}\/\d{2}\/\d{4}/)) continue;
       const year = parseInt(row[0].split('/')[2]);
+<<<<<<< HEAD
       
       // Use the OPERATING EARNINGS column (annualized values) instead of column 2 (quarterly values)
       const eps = parseFloat(row[operatingEarningsColumnIndex]);
@@ -351,10 +388,17 @@ export async function getForwardEpsEstimates() {
         const price = row[priceColumnIndex] ? parseFloat(row[priceColumnIndex]) : null;
         
         // No need for adjustment since we're now using the annualized values directly
+=======
+      const quarter = row[0].split('/')[0] + '/' + row[0].split('/')[1];
+      const eps = parseFloat(row[2]);
+      // Only take the 12/31/20XX rows for 2025 and 2026
+      if ((year === 2025 || year === 2026) && row[0].startsWith('12/31') && !isNaN(eps)) {
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
         results.push({
           estimateDate: row[0],
           value: eps,
           source: 'S&P Global',
+<<<<<<< HEAD
           sourceUrl: 'https://www.spglobal.com/spdji/en/',
           lastUpdated: spGlobalLastUpdated, // Use the S&P Global last updated date instead of current date
           year: year,
@@ -415,6 +459,19 @@ async function getForwardEpsFromJsonFile() {
     }));
   } catch (err) {
     console.error('[EPS] Failed to read JSON file:', err && err.message);
+=======
+          lastUpdated: fetchedRemote ? new Date().toISOString().slice(0,10) : (usedFallback === 'tmp' ? fs.statSync(TMP_XLSX_PATH).mtime.toISOString().slice(0,10) : fs.statSync(BUNDLED_XLSX_PATH).mtime.toISOString().slice(0,10))
+        });
+      }
+    }
+    if (results.length === 0) {
+      console.warn('[EPS] Could not extract EPS estimates from XLSX. Fallback:', usedFallback);
+      return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
+    }
+    return results;
+  } catch (err) {
+    console.error('[EPS] Failed to parse XLSX:', err && err.message);
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     return [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
   }
 }

@@ -238,6 +238,7 @@ function sanitizeContent(content, attempt) {
     return sanitized;
 }
 
+<<<<<<< HEAD
 // Retrieve and output Ghost membership list
 async function listGhostMembers() {
     try {
@@ -273,3 +274,7 @@ async function listGhostMembers() {
 
 // List Ghost members (enabled for execution)
 listGhostMembers();
+=======
+// Run the article creation function
+createMarketPulseArticle();
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa

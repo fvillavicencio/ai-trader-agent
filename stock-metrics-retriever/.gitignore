@@ -1,5 +1,9 @@
 node_modules/
+<<<<<<< HEAD
 *.log
 *.zip
 package-lock.json
+=======
+.env
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 .DS_Store

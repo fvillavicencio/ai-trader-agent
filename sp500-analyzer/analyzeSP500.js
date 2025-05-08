@@ -32,6 +32,10 @@ export async function analyzeSP500() {
   // Defensive: Ensure all service results are never null
   const safeSpxObj = spxObj || { price: null, lastUpdated: '', sourceName: 'N/A', sourceUrl: '' };
   const safeEarningsObj = earningsObj || { eps: null, pe: null, price: null, value: null, sourceName: 'N/A', sourceUrl: '', lastUpdated: '', provider: 'N/A' };
+<<<<<<< HEAD
+=======
+  const safeForwardEstimates = Array.isArray(forwardEstimates) && forwardEstimates.length > 0 ? forwardEstimates : [{ estimateDate: '', value: null, source: 'N/A', lastUpdated: '' }];
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   const safePathObj = pathObj || { value: null, lastUpdated: '', sourceName: 'N/A', sourceUrl: '' };
   const safeMaObj = maObj || { latest: null, sma50: null, sma200: null };
 
@@ -49,6 +53,7 @@ export async function analyzeSP500() {
     };
   }
 
+<<<<<<< HEAD
   // Process forward EPS estimates
   let formattedEstimates = [];
   try {
@@ -76,6 +81,11 @@ export async function analyzeSP500() {
   }
 
   freshnessSections.push({ label: 'Trailing P/E', lastUpdated: safeEarningsObj.lastUpdated, sourceName: safeEarningsObj.sourceName });
+=======
+  const forwardDate = safeForwardEstimates[0]?.estimateDate || safeSpxObj.lastUpdated;
+  freshnessSections.push({ label: 'Trailing P/E', lastUpdated: safeEarningsObj.lastUpdated, sourceName: safeEarningsObj.sourceName });
+  freshnessSections.push({ label: 'Forward EPS', lastUpdated: forwardDate, sourceName: safeForwardEstimates[0]?.source || 'N/A' });
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   freshnessSections.push({ label: 'Market Path (RSI)', lastUpdated: safePathObj.lastUpdated, sourceName: safePathObj.sourceName });
 
   // Parallelize ETF holdings fetches
@@ -112,7 +122,11 @@ export async function analyzeSP500() {
   return {
     sp500Index: safeSpxObj,
     trailingPE,
+<<<<<<< HEAD
     forwardEstimates: formattedEstimates || [],
+=======
+    forwardEstimates: safeForwardEstimates,
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     marketPath: safePathObj,
     movingAverages: safeMaObj,
     etfHoldings,
@@ -120,6 +134,7 @@ export async function analyzeSP500() {
     dataFreshness: freshnessSections
   };
 }
+<<<<<<< HEAD
 
 function formatDate(date) {
   const year = date.getFullYear();
@@ -127,3 +142,5 @@ function formatDate(date) {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+=======
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa

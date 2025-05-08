@@ -34,16 +34,25 @@ const PROMPT_ERROR_EMAIL = "fvillavicencio+AI_trading_agent@gmail.com";
 const TEST_EMAIL = "fvillavicencio@gmail.com";
 
 // Schedule configuration
+<<<<<<< HEAD
 const MORNING_SCHEDULE_HOUR = 9;
 const MORNING_SCHEDULE_MINUTE = 0;
 const MIDDAY_SCHEDULE_HOUR = 12;
 const MIDDAY_SCHEDULE_MINUTE = 0;
+=======
+const MORNING_SCHEDULE_HOUR = 8;
+const MORNING_SCHEDULE_MINUTE = 50;
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 const EVENING_SCHEDULE_HOUR = 18;
 const EVENING_SCHEDULE_MINUTE = 0;
 
 // Time zone for scheduling
 const TIME_ZONE = "America/New_York";
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 /**
  * Gets the Perplexity API key from script properties if not hardcoded
  * For better security, use PropertiesService instead of hardcoding the API key

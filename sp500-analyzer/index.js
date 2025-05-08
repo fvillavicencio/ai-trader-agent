@@ -61,6 +61,7 @@ function htmlRSIBlock(pathObj, maObj) {
 }
 
 function htmlForwardPETable(estimates, multiples, currentIndex) {
+<<<<<<< HEAD
   if (!estimates || estimates.length === 0) {
     return '<p>No forward P/E data available</p>';
   }
@@ -81,10 +82,16 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
     spGlobalLastUpdated ? `<p class="text-muted small">S&P Global data as of ${formatTimestamp(spGlobalLastUpdated)}</p>` : '',
     `<div class="responsive-table"><table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th>` +
       multiples.map(m => `<th>${m}x</th><th>% vs Index</th>`).join('') + `<th>Source</th></tr></thead><tbody>`
+=======
+  let lines = [
+    `<div class="forward-pe-block"><div class="responsive-table"><table><thead><tr><th>Scenario</th><th>Year</th><th>Estimate Date</th><th>Forward EPS</th>` +
+      multiples.map(m => `<th>${m}x</th><th>% vs Index</th>`).join('') + `<th>Source URL</th></tr></thead><tbody>`
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   ];
   estimates.forEach(est => {
     // For now, label as 'Base' (can extend if multiple scenarios)
     const scenario = est.scenario || 'Base';
+<<<<<<< HEAD
     // Use est.value for EPS if available (new format), otherwise fall back to est.eps (old format)
     const epsValue = est.value !== undefined ? est.value : est.eps;
     // Use est.year if available, otherwise extract from estimateDate
@@ -102,6 +109,15 @@ function htmlForwardPETable(estimates, multiples, currentIndex) {
         return `<td><strong>${formatUSD(Number(target).toFixed(2))}</strong></td><td>${pct}</td>`;
       }).join('') +
       `<td><a href="${sourceUrl}">${est.source || 'N/A'}</a></td></tr>`);
+=======
+    lines.push(`<tr><td>${scenario}</td><td>${est.year}</td><td>${formatTimestamp(est.estimateDate || '')}</td><td><strong>$${Number(est.eps).toFixed(2)}</strong></td>` +
+      multiples.map(m => {
+        const target = est.eps * m;
+        const pct = currentIndex ? (((target - currentIndex) / currentIndex) * 100).toFixed(1) + '%' : '';
+        return `<td><strong>${formatUSD(Number(target).toFixed(2))}</strong></td><td>${pct}</td>`;
+      }).join('') +
+      `<td><a href="${est.url}">link</a></td></tr>`);
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   });
   lines.push('</tbody></table></div></div>');
   return lines.join('\n');
@@ -308,6 +324,9 @@ async function main() {
   }
 }
 
+<<<<<<< HEAD
 export { htmlForwardPETable };
 
+=======
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 main();

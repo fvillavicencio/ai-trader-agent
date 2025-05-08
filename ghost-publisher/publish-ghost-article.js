@@ -2,6 +2,7 @@ require('dotenv').config();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 const readline = require('readline');
+<<<<<<< HEAD
 const { marketPulseToKoenig } = require('./koenig-blocks');
 const fs = require('fs');
 const path = require('path');
@@ -9,6 +10,11 @@ const path = require('path');
 const GHOST_API_URL = process.env.GHOST_API_URL || 'https://market-pulse-daily.ghost.io';
 const ADMIN_API_KEY = process.env.GHOST_ADMIN_API_KEY;
 console.log('Loaded GHOST_ADMIN_API_KEY:', ADMIN_API_KEY);
+=======
+
+const GHOST_API_URL = process.env.GHOST_API_URL || 'https://market-pulse-daily.ghost.io';
+const ADMIN_API_KEY = process.env.GHOST_ADMIN_API_KEY;
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 const POST_ID = process.env.POST_ID;
 const POST_UUID = process.env.POST_UUID;
 const POST_URL = process.env.POST_URL;
@@ -171,6 +177,7 @@ function promptToPublish() {
     });
 }
 
+<<<<<<< HEAD
 // Load Market Pulse JSON sample
 const mpSamplePath = path.join(__dirname, '../market_pulse_json/market_pulse_daily.sample.json');
 const mpJson = JSON.parse(fs.readFileSync(mpSamplePath, 'utf-8'));
@@ -255,3 +262,10 @@ async function main() {
 }
 
 main();
+=======
+// Main
+(async () => {
+    await listDraftPosts();
+    promptToPublish();
+})();
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
