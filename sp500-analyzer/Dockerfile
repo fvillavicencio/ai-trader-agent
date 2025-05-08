@@ -1,5 +1,5 @@
 # Stage 1: Build dependencies in a clean Node.js environment
-FROM node:20-slim as build
+FROM node:20-slim AS build
 
 WORKDIR /app
 
