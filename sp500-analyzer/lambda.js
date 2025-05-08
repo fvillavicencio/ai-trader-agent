@@ -141,9 +141,26 @@ export const handler = async (event) => {
     const before = Date.now();
     const result = await analyzeSP500();
     const after = Date.now();
-    console.log("[DIAG] analyzeSP500 result keys:", result && typeof result === 'object' ? Object.keys(result) : result);
-    console.log(`[DIAG] analyzeSP500 execution time: ${after - before} ms`);
-    console.log(`[DIAG] Total execution time: ${Date.now() - event.startTime} ms`);
+    console.log('[DIAG] analyzeSP500 execution time:', after - before, 'ms');
+    console.log('[DIAG] Total execution time:', Date.now() - event.startTime, 'ms');
+
+    // Check if the result is HTML content instead of JSON
+    if (typeof result === 'string') {
+      const trimmedResult = result.trim();
+      if (trimmedResult.startsWith('<!DOCTYPE') || trimmedResult.startsWith('<html')) {
+        console.error('[DIAG] analyzeSP500 returned HTML content instead of JSON');
+        return {
+          statusCode: 500,
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            error: "Received HTML content instead of expected data",
+            message: "The data source may be returning an error page. Please check your API keys and try again."
+          })
+        };
+      }
+    }
+    
+    console.log('[DIAG] analyzeSP500 result keys:', result && typeof result === 'object' ? Object.keys(result) : typeof result);
 
     // === SANITIZE OUTPUT: Ensure no .lastUpdated access on null ===
     function sanitize(obj) {

@@ -165,6 +165,7 @@ export async function getForwardEpsEstimates() {
 
   // 1. Try direct Axios download to memory
   try {
+    console.log('[EPS] Attempting to download XLSX via Axios from:', SPGLOBAL_XLSX_URL);
     const response = await axios.get(SPGLOBAL_XLSX_URL, {
       responseType: 'arraybuffer',
       headers: {
@@ -188,15 +189,32 @@ export async function getForwardEpsEstimates() {
       },
       timeout: 15000
     });
-    xlsBuffer = response.data;
-    try {
-      fs.writeFileSync(TMP_XLSX_PATH, xlsBuffer);
-    } catch (writeErr) {
-      console.warn('[EPS] Could not write to /tmp, continuing with in-memory buffer');
+    // Check content type to ensure we're getting an Excel file
+    const contentType = response.headers['content-type'];
+    console.log('[EPS] Response content type:', contentType);
+    
+    if (contentType && (
+      contentType.includes('application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') ||
+      contentType.includes('application/vnd.ms-excel') ||
+      contentType.includes('application/octet-stream')
+    )) {
+      xlsBuffer = response.data;
+      try {
+        fs.writeFileSync(TMP_XLSX_PATH, xlsBuffer);
+      } catch (writeErr) {
+        console.warn('[EPS] Could not write to /tmp, continuing with in-memory buffer');
+      }
+      usedFallback = 'axios';
+      fetchedRemote = true;
+      console.log('[EPS] Downloaded XLSX via Axios:', SPGLOBAL_XLSX_URL);
+    } else {
+      console.warn('[EPS] Received unexpected content type:', contentType);
+      // Check if it's HTML content
+      if (contentType && (contentType.includes('text/html') || contentType.includes('application/xhtml+xml'))) {
+        console.error('[EPS] Received HTML content instead of XLSX. The website may have changed or is returning an error page.');
+      }
+      throw new Error(`Unexpected content type: ${contentType}`);
     }
-    usedFallback = 'axios';
-    fetchedRemote = true;
-    console.log('[EPS] Downloaded XLSX via Axios:', SPGLOBAL_XLSX_URL);
   } catch (err) {
     console.warn('[EPS] Axios download failed:', err && err.message);
     // 2. If Axios fails, try Playwright to /tmp
@@ -246,6 +264,13 @@ export async function getForwardEpsEstimates() {
       return getForwardEpsFromJsonFile();
     }
 
+    // Check if the buffer contains HTML instead of XLSX data
+    const bufferStart = xlsBuffer.toString('utf8', 0, 1000).trim();
+    if (bufferStart.startsWith('<!DOCTYPE') || bufferStart.startsWith('<html')) {
+      console.error('[EPS] Downloaded content is HTML, not XLSX. Falling back to JSON file.');
+      return getForwardEpsFromJsonFile();
+    }
+    
     workbook = XLSX.read(xlsBuffer, { type: 'buffer' });
     // Find the relevant sheet (usually first)
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
