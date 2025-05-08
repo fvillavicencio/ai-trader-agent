@@ -163,7 +163,7 @@ export async function getForwardEpsEstimates() {
   let usedFallback = null;
   let fetchedRemote = false;
 
-  // 1. Try direct Axios download to /tmp
+  // 1. Try direct Axios download to memory
   try {
     const response = await axios.get(SPGLOBAL_XLSX_URL, {
       responseType: 'arraybuffer',
@@ -189,7 +189,11 @@ export async function getForwardEpsEstimates() {
       timeout: 15000
     });
     xlsBuffer = response.data;
-    fs.writeFileSync(TMP_XLSX_PATH, xlsBuffer);
+    try {
+      fs.writeFileSync(TMP_XLSX_PATH, xlsBuffer);
+    } catch (writeErr) {
+      console.warn('[EPS] Could not write to /tmp, continuing with in-memory buffer');
+    }
     usedFallback = 'axios';
     fetchedRemote = true;
     console.log('[EPS] Downloaded XLSX via Axios:', SPGLOBAL_XLSX_URL);
@@ -224,13 +228,12 @@ export async function getForwardEpsEstimates() {
     }
   }
 
-  // 4. If /tmp copy does not exist, copy bundled asset and use it
+  // 4. If no buffer yet, try to use bundled asset
   if (!xlsBuffer && fs.existsSync(BUNDLED_XLSX_PATH)) {
     try {
-      fs.copyFileSync(BUNDLED_XLSX_PATH, TMP_XLSX_PATH);
-      xlsBuffer = fs.readFileSync(TMP_XLSX_PATH);
+      xlsBuffer = fs.readFileSync(BUNDLED_XLSX_PATH);
       usedFallback = 'bundled';
-      console.log('[EPS] Copied bundled XLSX to /tmp and using it:', BUNDLED_XLSX_PATH);
+      console.log('[EPS] Using bundled XLSX:', BUNDLED_XLSX_PATH);
     } catch (err) {
       console.error('[EPS] Failed to copy bundled XLSX to /tmp:', err);
     }
