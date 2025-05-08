@@ -64,6 +64,7 @@ function fetchEconomicEvents() {
         previous: event.previous !== null ? formatNumber(event.previous, event.unit) : 'N/A'
       }));
 
+<<<<<<< HEAD
     // Sort by date (chronologically), then by importance (descending)
     filteredEvents.sort((a, b) => {
       // First sort by date (chronologically)
@@ -78,6 +79,20 @@ function fetchEconomicEvents() {
     const scriptProperties = PropertiesService.getScriptProperties();
     const maxEvents = parseInt(scriptProperties.getProperty('MAX_ECONOMIC_EVENTS')) || 10;
     const topEvents = filteredEvents.slice(0, maxEvents);
+=======
+    // Sort by importance (descending), then by date and time
+    filteredEvents.sort((a, b) => {
+      // First sort by importance (higher is more important)
+      if (b.importance !== a.importance) {
+        return b.importance - a.importance;
+      }
+      // Then sort by date and time
+      return a.date - b.date;
+    });
+
+    // Get the top 7 most important events
+    const topEvents = filteredEvents.slice(0, 7);
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 
     // Format the events for output
     const formattedEvents = topEvents.map(event => {
@@ -185,6 +200,7 @@ function isSignificantEvent(event) {
     'fed',
     'bls',
     'mba',
+<<<<<<< HEAD
     'frb',
     'uscb',
     'umich',
@@ -199,6 +215,9 @@ function isSignificantEvent(event) {
     'us energy information administration',
     'us energy',
     'useia'
+=======
+    'frb'
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   ];
   
   return importantIndicators.some(indicator => 
@@ -360,6 +379,7 @@ function decryptEventInfo(eventName, source) {
     'New Home Sales-Units': {
       name: 'New Home Sales (Number of Units, in Millions)',
       source: 'U.S. Department of Commerce'
+<<<<<<< HEAD
     },
     'Non-Farm Payrolls': {
       name: 'U.S. Non-Farm Payroll Employment Change',
@@ -448,6 +468,8 @@ function decryptEventInfo(eventName, source) {
     'Wholesale Sales MM': {
       name: 'Wholesale Sales Month-over-Month',
       source: 'U.S. Department of Commerce'
+=======
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
     }
   };
 

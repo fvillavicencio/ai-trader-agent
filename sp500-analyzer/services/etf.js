@@ -275,6 +275,7 @@ async function fetchTopHoldingsFromXlsx(symbol) {
   const nameCol = header.findIndex(cell => /name|company/i.test(cell));
   const weightCol = header.findIndex(cell => /weight/i.test(cell));
   if (tickerCol === -1 || weightCol === -1) throw new Error('Could not find Ticker/Symbol/Holding Ticker/Identifier/Holding or Weight column');
+<<<<<<< HEAD
   // Deduplicate and sum weights by symbol
   const holdingsMap = {};
   rows.slice(headerIdx + 1)
@@ -299,13 +300,27 @@ async function fetchTopHoldingsFromXlsx(symbol) {
       name: h.name,
       weight: h.weight.toFixed(2) + '%'
     }));
+=======
+  const holdings = rows.slice(headerIdx + 1)
+    .filter(row => row[tickerCol] && row[weightCol])
+    .map(row => ({
+      symbol: row[tickerCol],
+      name: nameCol !== -1 ? row[nameCol] : '',
+      weight: typeof row[weightCol] === 'number' ? row[weightCol].toFixed(2) + '%' : String(row[weightCol])
+    }))
+    .sort((a, b) => parseFloat(b.weight) - parseFloat(a.weight))
+    .slice(0, 5);
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   const lastUpdated = extractAsOfDate(rows, workbook);
   const safeLastUpdated = typeof lastUpdated === 'string' ? lastUpdated : '';
   console.log(`Returned holdings for ${symbol} from Excel file`);
   return { holdings, lastUpdated: safeLastUpdated };
 }
 
+<<<<<<< HEAD
 // ... (rest of the code remains the same)
+=======
+>>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
 // Scrape State Street site for SPY/DIA 'As of' date
 async function fetchStateStreetAsOfDate(symbol) {
   const urls = {
