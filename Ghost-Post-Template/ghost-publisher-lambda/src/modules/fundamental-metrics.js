@@ -165,75 +165,49 @@ const addSP500AnalysisContent = (data) => {
         <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">S&P 500 Analysis</div>
       </div>
       
-      <div class="row" style="display: flex; flex-direction: row; gap: 12px; justify-content: flex-start; align-items: stretch; margin-bottom: 24px; flex-wrap: wrap;">
-        <!-- Current S&P 500 Index Level -->
-        <div class="index-card" style="flex:1.15; min-width:280px; max-width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-right:8px; gap:0; width:100%; position: relative; padding: 20px 15px; border: 1px solid #e2e8f0;">
-          <div class="index-card-header" style="font-weight: 700; font-size: clamp(1rem,2vw,1.1rem); color: #1e293b; margin-bottom: 14px; text-align:center; letter-spacing:0.01em;">Current S&P 500 Index Level</div>
-          <div class="index-card-value" style="font-size: clamp(2rem, 5vw, 2.4em); font-weight: bold; color: #2563eb; letter-spacing:0.01em; line-height:1; margin-bottom: 7px;">${formatNumber(sp500Data.indexLevel)}</div>
-          <div class="index-card-source" style="font-size: 10px; color: #888; width: 100%; text-align: right; margin-top: 15px; line-height:1.35;">
-            Source: <a href="https://finance.yahoo.com/quote/%5EGSPC/" target="_blank" style="color:#2563eb; text-decoration:underline;">Yahoo Finance</a>, as of ${sp500Data.asOf || 'N/A'}
+      <div class="sp500-snapshot-card" style="background-color: white; border-radius: 8px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;">
+        <h3 class="sp500-snapshot-title" style="font-size: 1.2rem; margin-bottom: 20px;">S&P 500 Market Snapshot</h3>
+        
+        <!-- Top row with key metrics -->
+        <div class="sp500-snapshot-content" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; flex-wrap: wrap;">
+          <!-- Index Level -->
+          <div class="sp500-snapshot-item" style="flex: 1; min-width: 150px; text-align: center; padding: 0 10px;">
+            <div style="font-size: 2.2rem; font-weight: bold; color: #333; margin-bottom: 5px;">${formatNumber(sp500Data.indexLevel)}</div>
+            <div style="color: #666; font-size: 0.9rem;">Current Index Level</div>
+          </div>
+          
+          <!-- P/E Ratio -->
+          <div class="sp500-snapshot-item" style="flex: 1; min-width: 150px; text-align: center; padding: 0 10px; border-left: 1px solid #eee; border-right: 1px solid #eee;">
+            <div style="font-size: 2.2rem; font-weight: bold; color: #2C9464; margin-bottom: 5px;">${formatNumber(sp500Data.peRatio?.current)}×</div>
+            <div style="color: #666; font-size: 0.9rem;">Trailing P/E (TTM)</div>
+            <div style="font-size: 0.8rem; color: #777; margin-top: 5px;">
+              5-yr avg <strong>${formatNumber(sp500Data.peRatio?.fiveYearAvg)}×</strong> • 10-yr avg <strong>${formatNumber(sp500Data.peRatio?.tenYearAvg)}×</strong>
+            </div>
+          </div>
+          
+          <!-- EPS Value -->
+          <div class="sp500-snapshot-item" style="flex: 1; min-width: 150px; text-align: center; padding: 0 10px;">
+            <div style="font-size: 2.2rem; font-weight: bold; color: #2C9464; margin-bottom: 5px;">$${formatNumber(sp500Data.eps?.ttm?.replace('$', ''))}</div>
+            <div style="color: #666; font-size: 0.9rem;">Trailing EPS (TTM)</div>
           </div>
         </div>
-      
-        <!-- S&P 500 Trailing P/E Ratio -->
-        <div class="pe-card" style="flex:1; min-width:280px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 1px solid #e2e8f0; max-width:100%; width:100%; position: relative;">
-          <div style="font-weight: 700; font-size: clamp(1rem,2vw,1.1rem); color: #1e293b; margin-bottom: 15px; text-align:center;">S&P 500 Trailing P/E Ratio</div>
-          
-          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;">
-            <table style="width: 100%; min-width: 400px; border-collapse: collapse; margin-bottom: 10px;">
-              <thead>
-                <tr style="background-color: #0c6e3d; text-align: center; font-weight: 600; color: white;">
-                  <th style="padding: 12px 8px; white-space: nowrap;">Current</th>
-                  <th style="padding: 12px 8px; white-space: nowrap;">5-Year Avg</th>
-                  <th style="padding: 12px 8px; white-space: nowrap;">10-Year Avg</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="text-align: center; background: white;">
-                  <td style="padding: 15px 8px; font-weight: bold; font-size: 1.25rem;">${formatNumber(sp500Data.peRatio?.current)}</td>
-                  <td style="padding: 15px 8px; font-size: 1.25rem;">${formatNumber(sp500Data.peRatio?.fiveYearAvg)}</td>
-                  <td style="padding: 15px 8px; font-size: 1.25rem;">${formatNumber(sp500Data.peRatio?.tenYearAvg)}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div style="font-size: 10px; color: #888; width: 100%; text-align: right; margin-top: 5px;">
-            Source: <a href="${sp500Data.peRatio?.sourceUrl || 'https://finance.yahoo.com/quote/%5EGSPC/'}" target="_blank" style="color:#2563eb; text-decoration:underline;">${sp500Data.peRatio?.source || 'Yahoo Finance'}</a>, as of ${sp500Data.peRatio?.asOf || sp500Data.asOf || 'N/A'}
+        
+        <!-- P/E Ratio Trend Chart -->
+        <div class="sp500-chart-container">
+          <div style="font-size: 1rem; font-weight: 500; color: #444; margin-bottom: 15px; text-align: center;">P/E Ratio Trend (5-Year History)</div>
+          <div style="text-align: center;">
+            ${sp500Data.peRatioChartUrl ? 
+              `<img src="${sp500Data.peRatioChartUrl}" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">` : 
+              sp500Data.historicalPE ? 
+                `<img src="https://image-charts.com/chart?cht=lc&chd=t:${sp500Data.historicalPE[0]},${sp500Data.historicalPE[1]},${sp500Data.historicalPE[2]},${sp500Data.historicalPE[3]},${sp500Data.historicalPE[4]},${sp500Data.peRatio?.current}&chxl=0:|2020|2021|2022|2023|2024|Current&chxt=x,y&chs=600x250&chf=bg,s,FFFFFF&chco=38a169&chm=o,38a169,0,-1,6&chds=20,30&chxr=1,20,30,2&chg=10,10,1,1,0,0,EEEEEE&chls=2" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">` : 
+                `<img src="https://image-charts.com/chart?cht=lc&chd=t:22.5,23.7,25.2,26.6,24.8,24.7&chxl=0:|2020|2021|2022|2023|2024|Current&chxt=x,y&chs=600x250&chf=bg,s,FFFFFF&chco=38a169&chm=o,38a169,0,-1,6&chds=20,30&chxr=1,20,30,2&chg=10,10,1,1,0,0,EEEEEE&chls=2" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">`
+            }
           </div>
         </div>
-      </div>
-      
-      <!-- EPS Information -->
-      <div class="row" style="display: flex; flex-direction: row; gap: 12px; justify-content: flex-start; align-items: stretch; flex-wrap: wrap;">
-        <!-- EPS Card -->
-        <div class="eps-card" style="flex:1; min-width:280px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 15px; display: flex; flex-direction: column; justify-content: center; border: 1px solid #e2e8f0; max-width:100%; width:100%; position: relative;">
-          <div style="font-weight: 700; font-size: clamp(1rem,2vw,1.1rem); color: #1e293b; margin-bottom: 15px; text-align:center;">S&P 500 Earnings Per Share (Trailing 12M)</div>
-          
-          <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;">
-            <table style="width: 100%; min-width: 400px; border-collapse: collapse; margin-bottom: 10px;">
-              <thead>
-                <tr style="background-color: #0c6e3d; text-align: center; font-weight: 600; color: white;">
-                  <th style="padding: 12px 8px; white-space: nowrap;">S&P 500 EPS (TTM)</th>
-                  <th style="padding: 12px 8px; white-space: nowrap;">Target at 15x</th>
-                  <th style="padding: 12px 8px; white-space: nowrap;">Target at 17x</th>
-                  <th style="padding: 12px 8px; white-space: nowrap;">Target at 20x</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr style="text-align: center; background: white;">
-                  <td style="padding: 15px 8px; font-weight: bold; font-size: 1.25rem;">$${formatNumber(sp500Data.eps?.ttm?.replace('$', ''))}</td>
-                  <td style="padding: 15px 8px; font-size: 1.25rem;">$${formatNumber(sp500Data.eps?.targetAt15x?.replace('$', ''))}</td>
-                  <td style="padding: 15px 8px; font-size: 1.25rem;">$${formatNumber(sp500Data.eps?.targetAt17x?.replace('$', ''))}</td>
-                  <td style="padding: 15px 8px; font-size: 1.25rem;">$${formatNumber(sp500Data.eps?.targetAt20x?.replace('$', ''))}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-          
-          <div style="font-size: 10px; color: #888; width: 100%; text-align: right; margin-top: 5px;">
-            Source: <a href="${sp500Data.eps?.sourceUrl || 'https://finance.yahoo.com/quote/%5EGSPC/'}" target="_blank" style="color:#2563eb; text-decoration:underline;">${sp500Data.eps?.source || 'Yahoo Finance'}</a>, as of ${sp500Data.eps?.asOf || sp500Data.asOf || 'N/A'}
-          </div>
+        
+        <!-- Source info -->
+        <div style="font-size: 10px; color: #888; text-align: right; margin-top: 15px;">
+          Source: <a href="${sp500Data.sourceUrl || 'https://finance.yahoo.com/quote/%5EGSPC/'}" target="_blank" style="color:#2563eb; text-decoration:underline;">${sp500Data.source?.name || 'Yahoo Finance'}</a>, as of ${sp500Data.asOf || 'N/A'}
         </div>
       </div>
       
