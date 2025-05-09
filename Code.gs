@@ -68,13 +68,16 @@ function getOpenAITradingAnalysis() {
     const promptTemplate = getTradingAnalysisPrompt();
     Logger.log("Retrieved prompt template from Prompt.gs");
     
-    // Generate the data retrieval text for OpenAI
-    const dataRetrievalText = generateDataRetrievalText();
-    Logger.log("Generated data retrieval text for OpenAI");
+    // Generate the data retrieval JSON for OpenAI
+    const dataRetrievalJson = JsonExport.generateFullJsonDataset(null, false);
+    Logger.log("Generated data retrieval JSON for OpenAI");
     
-    // Combine the prompt template with the data retrieval text
-    const fullPrompt = promptTemplate + dataRetrievalText;
-    Logger.log("Combined prompt template with data retrieval text");
+    // Convert the JSON data to a formatted string
+    const jsonString = JSON.stringify(dataRetrievalJson, null, 2);
+    
+    // Combine the prompt template with the JSON data
+    const fullPrompt = promptTemplate + "\n\n**Retrieved Data (JSON Format):**\n```json\n" + jsonString + "\n```\n";
+    Logger.log("Combined prompt template with JSON data");
     
     // Always send the prompt email before checking cache or submitting to OpenAI
     Logger.log("Sending prompt email before checking cache or submitting to OpenAI...");
@@ -557,13 +560,16 @@ function testGenerateAndEmailPrompt() {
     const promptTemplate = getTradingAnalysisPrompt();
     Logger.log("Retrieved prompt template from Prompt.gs");
     
-    // Generate the data retrieval text for OpenAI
-    const dataRetrievalText = generateDataRetrievalText();
-    Logger.log("Generated data retrieval text for OpenAI");
+    // Generate the data retrieval JSON for OpenAI
+    const dataRetrievalJson = JsonExport.generateFullJsonDataset(null, false);
+    Logger.log("Generated data retrieval JSON for OpenAI");
     
-    // Combine the prompt template with the data retrieval text
-    const fullPrompt = promptTemplate + dataRetrievalText;
-    Logger.log("Combined prompt template with data retrieval text");
+    // Convert the JSON data to a formatted string
+    const jsonString = JSON.stringify(dataRetrievalJson, null, 2);
+    
+    // Combine the prompt template with the JSON data
+    const fullPrompt = promptTemplate + "\n\n**Retrieved Data (JSON Format):**\n```json\n" + jsonString + "\n```\n";
+    Logger.log("Combined prompt template with JSON data");
     
     // Send the prompt via email for review
     sendPromptEmail(fullPrompt);
