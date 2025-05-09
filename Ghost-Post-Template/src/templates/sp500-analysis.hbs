@@ -1,115 +1,46 @@
 {{#if sp500}}
-<div class="section-container sp500-section">
-  <div class="section-title">S&P 500 Analysis</div>
+<div class="sp500-snapshot-card">
+  <h3 class="sp500-snapshot-title">S&P 500 Market Snapshot</h3>
   
-  <div class="sp500-row">
-    <!-- S&P 500 Index Level Card -->
-    <div class="sp500-index-card">
-      <div class="sp500-card-header">S&P 500 Index Level</div>
-      <div class="sp500-index-value">{{sp500.indexLevel}}</div>
-      <div class="sp500-card-source">
-        Source: <a href="{{sp500.sourceUrl}}" target="_blank">{{sp500.source}}</a> ({{sp500.asOf}})
-      </div>
+  <!-- Top row with key metrics -->
+  <div class="sp500-snapshot-content">
+    <!-- Index Level -->
+    <div class="sp500-snapshot-item index-level">
+      <div class="big-number">{{sp500.indexLevel}}</div>
+      <div class="label">Current Index Level</div>
     </div>
     
-    <!-- Trailing P/E Ratio Card -->
-    <div class="sp500-pe-card">
-      <div class="sp500-card-header">Trailing P/E Ratio</div>
-      <div class="sp500-pe-table">
-        <table>
-          <thead>
-            <tr>
-              <th>Current</th>
-              <th>5-Year Avg</th>
-              <th>10-Year Avg</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>{{sp500.trailingPE.current}}</td>
-              <td>{{sp500.trailingPE.fiveYearAvg}}</td>
-              <td>{{sp500.trailingPE.tenYearAvg}}</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="sp500-card-source">
-        Source: <a href="{{sp500.trailingPE.sourceUrl}}" target="_blank">{{sp500.trailingPE.source}}</a> ({{sp500.trailingPE.asOf}})
-      </div>
-    </div>
-  </div>
-  
-  <!-- Earnings Per Share Section -->
-  <div class="sp500-section-title">Earnings Per Share (TTM)</div>
-  <div class="sp500-eps-table">
-    <table>
-      <thead>
-        <tr>
-          <th>TTM EPS</th>
-          <th>Target @ 15x</th>
-          <th>Target @ 17x</th>
-          <th>Target @ 20x</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>${{sp500.earnings.ttm}}</td>
-          <td>${{sp500.earnings.target15x}}</td>
-          <td>${{sp500.earnings.target17x}}</td>
-          <td>${{sp500.earnings.target20x}}</td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="sp500-card-source">
-      Source: <a href="{{sp500.earnings.sourceUrl}}" target="_blank">{{sp500.earnings.source}}</a> ({{sp500.earnings.asOf}})
-    </div>
-  </div>
-  
-  <!-- Forward EPS Projections -->
-  <div class="sp500-section-title">Forward EPS Projections</div>
-  <div class="sp500-forward-eps-table">
-    <table>
-      <thead>
-        <tr>
-          {{#each sp500.forwardEPS.years}}
-            <th>{{this}}</th>
-          {{/each}}
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          {{#each sp500.forwardEPS.values}}
-            <td>${{this}}</td>
-          {{/each}}
-        </tr>
-      </tbody>
-    </table>
-    <div class="sp500-card-source">
-      Source: <a href="{{sp500.forwardEPS.sourceUrl}}" target="_blank">{{sp500.forwardEPS.source}}</a> ({{sp500.forwardEPS.asOf}})
-    </div>
-  </div>
-  
-  <!-- ETF Holdings Section -->
-  <div class="sp500-section-title">Top 5 Weighted Stocks in Major Indices</div>
-  <div class="etf-holdings-cards">
-    {{#each sp500.etfHoldings}}
-      <div class="etf-holding-card">
-        <div class="etf-holding-header">{{this.name}} <span>({{this.symbol}})</span></div>
-        <div class="etf-holding-subheader">Top 5 Holdings:</div>
-        <div class="etf-holding-rows">
-          {{#each this.holdings}}
-            <div class="etf-holding-row">
-              <span class="etf-holding-symbol">{{this.symbol}}</span>
-              <span class="etf-holding-name">{{this.name}}</span>
-              <span class="etf-holding-weight">{{this.weight}}%</span>
-            </div>
-          {{/each}}
+    <!-- P/E Ratio with EPS -->
+    <div class="sp500-snapshot-item pe-ratio-container">
+      <div class="pe-ratio">
+        <div class="big-number highlight">{{sp500.trailingPE.current}}×</div>
+        <div class="label">Trailing P/E (TTM)</div>
+        <div class="context">
+          <span class="avg-value">5-yr avg <strong>{{sp500.trailingPE.fiveYearAvg}}×</strong></span> 
+          <span class="separator">•</span> 
+          <span class="avg-value">10-yr avg <strong>{{sp500.trailingPE.tenYearAvg}}×</strong></span>
         </div>
       </div>
-    {{/each}}
+      <div class="eps-value">
+        <div class="eps-number">$200.27</div>
+        <div class="label">Trailing EPS (TTM)</div>
+      </div>
+    </div>
   </div>
-  <div class="etf-holding-source">
-    Source: <a href="{{sp500.etfSource.sourceUrl}}" target="_blank">{{sp500.etfSource.source}}</a> ({{sp500.etfSource.asOf}})
+  
+  <!-- Second row with chart -->
+  <div class="sp500-chart-container">
+    <div class="chart-title">P/E Ratio Trend (5-Year History)</div>
+    <div class="chart-wrapper">
+      <img src="https://image-charts.com/chart?cht=lc&chd=t:22.5,23.7,25.2,26.6,24.8,24.7&chxl=0:|2020|2021|2022|2023|2024|Current&chxt=x,y&chs=600x250&chf=bg,s,FFFFFF&chco=38a169&chm=o,38a169,0,-1,6&chds=20,30&chxr=1,20,30,2&chg=10,10,1,1,0,0,EEEEEE&chls=2" alt="P/E ratio trend over 5 years" class="full-width-chart">
+    </div>
+  </div>
+  
+  <!-- Footer with source info -->
+  <div class="sp500-snapshot-footer">
+    <div class="source-info">
+      Source: <a href="{{sp500.sourceUrl}}" target="_blank">{{sp500.source}}</a>, as of {{sp500.asOf}}
+    </div>
   </div>
 </div>
 {{/if}}

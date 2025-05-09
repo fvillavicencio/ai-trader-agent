@@ -666,71 +666,201 @@
   margin-bottom: 2rem;
 }
 
-.sp500-metrics {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-}
-
-.sp500-metric-card {
-  background-color: white;
+/* S&P 500 Snapshot Styles */
+.sp500-snapshot-card {
+  background-color: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  padding: 1.25rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
 }
 
-.sp500-metric-label {
-  font-size: 0.9rem;
+.sp500-snapshot-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  margin-bottom: 1.25rem;
+  color: #2d3748;
+}
+
+.sp500-snapshot-content {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid #e2e8f0;
+  padding-bottom: 1.5rem;
+}
+
+.sp500-snapshot-item {
+  flex: 1;
+  text-align: center;
+}
+
+/* Index Level Styling */
+.sp500-snapshot-item.index-level {
+  flex: 1;
+  text-align: center;
+}
+
+.sp500-snapshot-item .big-number {
+  font-size: 2.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: #2d3748;
+}
+
+.sp500-snapshot-item .big-number.highlight {
+  color: #38a169;
+}
+
+.sp500-snapshot-item .label {
+  font-size: 0.875rem;
   color: #718096;
-  margin-bottom: 0.5rem;
+  margin-top: 0.25rem;
 }
 
-.sp500-metric-value {
-  font-size: 1.5rem;
+/* P/E Ratio and EPS Container */
+.pe-ratio-container {
+  flex: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.pe-ratio {
+  flex: 1;
+  text-align: center;
+}
+
+.eps-value {
+  flex: 1;
+  text-align: center;
+  padding-left: 1rem;
+  border-left: 1px solid #e2e8f0;
+}
+
+.eps-number {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #38a169;
+  line-height: 1.2;
+}
+
+.context {
+  font-size: 0.875rem;
+  color: #718096;
+  margin-top: 0.5rem;
+}
+
+.context .avg-value {
+  font-weight: 500;
+}
+
+.context .avg-value strong {
+  color: #4a5568;
   font-weight: 700;
 }
 
-.sp500-targets {
-  margin-top: 1.5rem;
+/* Chart Container */
+.sp500-chart-container {
+  margin: 1.5rem 0;
+  padding: 1rem 0;
 }
 
-.sp500-targets-title {
-  font-size: 1.1rem;
+.chart-title {
+  font-size: 1rem;
   font-weight: 600;
+  color: #4a5568;
   margin-bottom: 1rem;
+  text-align: center;
 }
 
-.sp500-targets-table {
+.chart-wrapper {
+  position: relative;
   width: 100%;
-  border-collapse: separate;
-  border-spacing: 0;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.full-width-chart {
+  max-width: 100%;
+  height: auto;
+  display: inline-block;
+  margin: 0 auto;
   border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
-.sp500-targets-table th {
-  background-color: #2d3748;
-  color: white;
-  font-weight: 600;
-  text-align: left;
-  padding: 0.75rem 1rem;
+/* Responsive chart */
+@media (max-width: 768px) {
+  .full-width-chart {
+    max-width: 100%;
+  }
 }
 
-.sp500-targets-table td {
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
-  background-color: white;
+/* Footer Styling */
+.sp500-snapshot-footer {
+  display: flex;
+  justify-content: flex-end;
+  font-size: 0.875rem;
+  color: #718096;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e2e8f0;
 }
 
-.sp500-targets-table tr:last-child td {
-  border-bottom: none;
+.source-info {
+  text-align: right;
 }
 
-.sp500-targets-table td.negative {
-  color: #e53e3e;
+.forward-eps {
+  font-weight: 500;
+}
+
+.forward-eps strong {
+  color: #38a169;
+  font-weight: 700;
+}
+
+.source-info a {
+  color: #4299e1;
+  text-decoration: none;
+}
+
+.source-info a:hover {
+  text-decoration: underline;
+}
+
+.separator {
+  margin: 0 0.5rem;
+  color: #cbd5e0;
+}
+
+.valuation-price {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #2d3748;
+}
+
+/* Responsive styles for S&P 500 snapshot */
+@media (max-width: 768px) {
+  .sp500-snapshot-content {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  
+  .sp500-snapshot-item {
+    width: 100%;
+  }
+  
+  .valuation-content {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .valuation-item {
+    flex-basis: 100%;
+    margin-bottom: 1rem;
+  }
 }
 
 /* Inflation Section */

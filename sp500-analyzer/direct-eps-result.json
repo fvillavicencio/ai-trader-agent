@@ -1,0 +1,9 @@
+{
+  "eps": 230.7768096,
+  "sourceName": "YCharts",
+  "sourceUrl": "https://ycharts.com/indicators/sp_500_eps",
+  "lastUpdated": "2025-05-09T16:20:34.971Z",
+  "provider": "ycharts",
+  "isAdjusted": true,
+  "adjustmentMethod": "Quarterly to TTM (×4)"
+}

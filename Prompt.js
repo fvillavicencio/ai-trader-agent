@@ -193,7 +193,7 @@ Return exactly:
 }
 
 /**
- * Generates the OpenAI prompt with all the data
+ * Generates the OpenAI prompt with all the data in JSON format
  * 
  * @param {Object} allData - All the retrieved data
  * @return {string} - The generated prompt
@@ -203,13 +203,17 @@ function generateOpenAIPrompt(allData) {
     // Get the base prompt template
     const basePrompt = getTradingAnalysisPrompt();
     
-    // Generate the data retrieval text
-    const dataRetrievalText = generateDataRetrievalText();
+    // Generate the data in JSON format using JsonExport with null analysis
+    // This will create a complete dataset with all available market data
+    const jsonData = JsonExport.generateFullJsonDataset(null, false);
     
-    // Combine the base prompt with the data retrieval text
-    const fullPrompt = basePrompt + dataRetrievalText;
+    // Convert the JSON data to a formatted string
+    const jsonString = JSON.stringify(jsonData, null, 2);
     
-    Logger.log("Generated full OpenAI prompt");
+    // Combine the base prompt with the JSON data
+    const fullPrompt = basePrompt + "\n\n**Retrieved Data (JSON Format):**\n```json\n" + jsonString + "\n```\n";
+    
+    Logger.log("Generated full OpenAI prompt with JSON data");
     
     return fullPrompt;
   } catch (error) {
