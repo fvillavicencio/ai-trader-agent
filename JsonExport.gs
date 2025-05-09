@@ -1502,15 +1502,19 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             (typeof sp500Data.sp500Index?.pe === 'number' ? parseFloat(sp500Data.sp500Index.pe.toFixed(2)) : null));
         
         // Format 5-year average PE with 2 decimal places
-        const fiveYearAvgPE = typeof sp500Data.trailingPE?.history?.avg5 === 'number' ? 
-          parseFloat(sp500Data.trailingPE.history.avg5.toFixed(2)) : 
-          (typeof sp500Data.valuation?.fiveYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.fiveYearAvgPE.toFixed(2)) : 
-            (typeof sp500Data.valuation?.historicalAvgPE === 'number' ? parseFloat(sp500Data.valuation.historicalAvgPE.toFixed(2)) : null));
+        const fiveYearAvgPE = typeof sp500Data.trailingPE?.fiveYearAvg === 'number' ? 
+          parseFloat(sp500Data.trailingPE.fiveYearAvg.toFixed(2)) : 
+          (typeof sp500Data.trailingPE?.history?.fiveYearAvg === 'number' ? parseFloat(sp500Data.trailingPE.history.fiveYearAvg.toFixed(2)) : 
+            (typeof sp500Data.trailingPE?.history?.avg5 === 'number' ? parseFloat(sp500Data.trailingPE.history.avg5.toFixed(2)) : 
+              (typeof sp500Data.valuation?.fiveYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.fiveYearAvgPE.toFixed(2)) : 
+                (typeof sp500Data.valuation?.historicalAvgPE === 'number' ? parseFloat(sp500Data.valuation.historicalAvgPE.toFixed(2)) : null))));
         
         // Format 10-year average PE with 2 decimal places
-        const tenYearAvgPE = typeof sp500Data.trailingPE?.history?.avg10 === 'number' ? 
-          parseFloat(sp500Data.trailingPE.history.avg10.toFixed(2)) : 
-          (typeof sp500Data.valuation?.tenYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.tenYearAvgPE.toFixed(2)) : null);
+        const tenYearAvgPE = typeof sp500Data.trailingPE?.tenYearAvg === 'number' ? 
+          parseFloat(sp500Data.trailingPE.tenYearAvg.toFixed(2)) : 
+          (typeof sp500Data.trailingPE?.history?.tenYearAvg === 'number' ? parseFloat(sp500Data.trailingPE.history.tenYearAvg.toFixed(2)) : 
+            (typeof sp500Data.trailingPE?.history?.avg10 === 'number' ? parseFloat(sp500Data.trailingPE.history.avg10.toFixed(2)) : 
+              (typeof sp500Data.valuation?.tenYearAvgPE === 'number' ? parseFloat(sp500Data.valuation.tenYearAvgPE.toFixed(2)) : null)));
         
         // Format TTM EPS with 2 decimal places
         const ttmEPS = typeof sp500Data.earnings?.eps === 'number' ? 
