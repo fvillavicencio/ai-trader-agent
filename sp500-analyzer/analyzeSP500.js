@@ -51,7 +51,9 @@ export async function analyzeSP500() {
       sourceUrl: safeEarningsObj.sourceUrl,
       lastUpdated: safeEarningsObj.lastUpdated,
       provider: safeEarningsObj.provider,
-      history: safeEarningsObj.history
+      history: safeEarningsObj.history,
+      fiveYearAvg: safeEarningsObj.history?.fiveYearAvg || null,
+      tenYearAvg: safeEarningsObj.history?.tenYearAvg || null
     };
   }
 
@@ -114,6 +116,19 @@ export async function analyzeSP500() {
 
   freshnessSections.push({ label: 'Trailing EPS', lastUpdated: safeEarningsObj.lastUpdated, sourceName: safeEarningsObj.sourceName });
 
+  // Extract historical P/E data if available
+  let historicalPE = null;
+  if (safeEarningsObj && safeEarningsObj.history) {
+    // The historical P/E data should already be properly formatted from the historicalPE.js service
+    // Just pass it through with any necessary additional metadata
+    historicalPE = {
+      ...safeEarningsObj.history,
+      source: safeEarningsObj.history.source || safeEarningsObj.sourceName,
+      sourceUrl: safeEarningsObj.history.sourceUrl || safeEarningsObj.sourceUrl,
+      lastUpdated: safeEarningsObj.history.lastUpdated || safeEarningsObj.lastUpdated
+    };
+  }
+
   console.log("[DIAG] analyzeSP500: finished, returning result");
   return {
     sp500Index: safeSpxObj,
@@ -123,7 +138,9 @@ export async function analyzeSP500() {
     movingAverages: safeMaObj,
     etfHoldings,
     earnings: safeEarningsObj,
-    dataFreshness: freshnessSections
+    dataFreshness: freshnessSections,
+    // Add historical P/E data as a new property
+    historicalPE
   };
 }
 
