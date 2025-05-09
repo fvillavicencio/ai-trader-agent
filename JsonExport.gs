@@ -41,12 +41,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           macroeconomicFactors: {
             geopoliticalRisks: {}
           }
-        },
-        sections: [],
-        keyPoints: [],
-        opportunities: [],
-        risks: [],
-        actionItems: []
+        }
       };
     }
     
@@ -153,6 +148,37 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       // Try to get SP500 data from the Lambda service
       const lambdaResponse = SP500Analyzer();
       
+      // Debug logging for SP500 data
+      if (debugMode) {
+        Logger.log("SP500 Lambda Response:");
+        Logger.log(JSON.stringify(lambdaResponse, null, 2));
+        
+        // Add specific debugging for historicalPE in the raw response
+        if (lambdaResponse && lambdaResponse.historicalPE) {
+          Logger.log("Raw historicalPE data found in Lambda response");
+          Logger.log("historicalPE type: " + typeof lambdaResponse.historicalPE);
+          if (Array.isArray(lambdaResponse.historicalPE)) {
+            Logger.log("historicalPE is an array with " + lambdaResponse.historicalPE.length + " elements");
+            if (lambdaResponse.historicalPE.length > 0) {
+              Logger.log("First historicalPE element: " + JSON.stringify(lambdaResponse.historicalPE[0]));
+            }
+          } else if (typeof lambdaResponse.historicalPE === 'object') {
+            Logger.log("historicalPE is an object with keys: " + Object.keys(lambdaResponse.historicalPE).join(', '));
+            if (lambdaResponse.historicalPE.data) {
+              Logger.log("historicalPE.data type: " + typeof lambdaResponse.historicalPE.data);
+              if (Array.isArray(lambdaResponse.historicalPE.data)) {
+                Logger.log("historicalPE.data is an array with " + lambdaResponse.historicalPE.data.length + " elements");
+                if (lambdaResponse.historicalPE.data.length > 0) {
+                  Logger.log("First historicalPE.data element: " + JSON.stringify(lambdaResponse.historicalPE.data[0]));
+                }
+              }
+            }
+          }
+        } else {
+          Logger.log("No historicalPE data found in raw Lambda response");
+        }
+      }
+      
       // Parse the Lambda response - it comes with a body property containing a JSON string
       if (lambdaResponse && lambdaResponse.body) {
         try {
@@ -241,7 +267,6 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       },
       fundamentalMetrics: {
         majorIndices: [],
-        magnificentSeven: [],
         otherStocks: []
       },
       macroeconomicFactors: {
@@ -310,11 +335,163 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         },
         geopoliticalRisks: {}
       },
-      sp500: {
+      sp500: sp500Data ? {
+        // Index level data
+        indexLevel: sp500Data.sp500Index ? sp500Data.sp500Index.price : 0,
+        source: {
+          name: sp500Data.sp500Index ? sp500Data.sp500Index.sourceName : "Yahoo Finance",
+          url: sp500Data.sp500Index ? sp500Data.sp500Index.sourceUrl : "https://finance.yahoo.com/quote/%5EGSPC/",
+          asOf: sp500Data.sp500Index ? formatDate(sp500Data.sp500Index.lastUpdated) : formattedDate
+        },
+        sourceUrl: sp500Data.sp500Index ? sp500Data.sp500Index.sourceUrl : "https://finance.yahoo.com/quote/%5EGSPC/",
+        asOf: sp500Data.sp500Index ? formatDate(sp500Data.sp500Index.lastUpdated) : formattedDate,
+        
+        // Debug historicalPE data
+        _debug_historicalPE_exists: !!sp500Data.historicalPE,
+        _debug_historicalPE_type: sp500Data.historicalPE ? (Array.isArray(sp500Data.historicalPE) ? 'array' : typeof sp500Data.historicalPE) : 'undefined',
+        _debug_historicalPE_keys: sp500Data.historicalPE && typeof sp500Data.historicalPE === 'object' ? Object.keys(sp500Data.historicalPE) : [],
+        _debug_trailingPE_exists: !!sp500Data.trailingPE,
+        
+        // Historical P/E data
+        historicalPE: sp500Data.historicalPE ? {
+          data: Array.isArray(sp500Data.historicalPE.data) ? sp500Data.historicalPE.data : [],
+          years: sp500Data.historicalPE.years || null,
+          formattedData: sp500Data.historicalPE.formattedData || null,
+          current: sp500Data.historicalPE.current || (sp500Data.trailingPE ? sp500Data.trailingPE.pe : null),
+          fiveYearAvg: sp500Data.historicalPE.fiveYearAvg || null,
+          tenYearAvg: sp500Data.historicalPE.tenYearAvg || null,
+          source: sp500Data.historicalPE.source || "S&P Global",
+          sourceUrl: sp500Data.historicalPE.sourceUrl || "https://www.spglobal.com/spdji/en/",
+          lastUpdated: sp500Data.historicalPE.lastUpdated ? formatDate(sp500Data.historicalPE.lastUpdated) : formattedDate
+        } : null,
+        
+        
+        // Earnings data
+        eps: sp500Data.earnings ? {
+          ttm: sp500Data.earnings.eps ? `$${sp500Data.earnings.eps}` : null,
+          targetAt15x: sp500Data.earnings.eps ? `$${(sp500Data.earnings.eps * 15).toFixed(2)}` : null,
+          targetAt17x: sp500Data.earnings.eps ? `$${(sp500Data.earnings.eps * 17).toFixed(2)}` : null,
+          targetAt20x: sp500Data.earnings.eps ? `$${(sp500Data.earnings.eps * 20).toFixed(2)}` : null,
+          source: sp500Data.earnings ? sp500Data.earnings.sourceName : "Yahoo Finance",
+          sourceUrl: sp500Data.earnings ? sp500Data.earnings.sourceUrl : "https://finance.yahoo.com/quote/%5EGSPC/",
+          asOf: sp500Data.earnings ? formatDate(sp500Data.earnings.lastUpdated) : formattedDate
+        } : null,
+        
+        // Forward EPS estimates
+        forwardEps: sp500Data.forwardEstimates ? sp500Data.forwardEstimates.map(estimate => {
+          const currentIndex = sp500Data.sp500Index ? sp500Data.sp500Index.price : 0;
+          const eps = estimate.eps || estimate.value;
+          return {
+            year: estimate.year.toString(),
+            eps: `$${eps.toFixed(2)}`,
+            targetAt15x: `$${(eps * 15).toFixed(2)}`,
+            percentVsIndex15x: currentIndex ? ((eps * 15 / currentIndex - 1) * 100).toFixed(1) : null,
+            targetAt17x: `$${(eps * 17).toFixed(2)}`,
+            percentVsIndex17x: currentIndex ? ((eps * 17 / currentIndex - 1) * 100).toFixed(1) : null,
+            targetAt20x: `$${(eps * 20).toFixed(2)}`,
+            percentVsIndex20x: currentIndex ? ((eps * 20 / currentIndex - 1) * 100).toFixed(1) : null
+          };
+        }) : [],
+        forwardEpsSource: sp500Data.forwardEstimates && sp500Data.forwardEstimates.length > 0 ? {
+          name: sp500Data.forwardEstimates[0].source || "S&P Global",
+          url: sp500Data.forwardEstimates[0].sourceUrl || "https://www.spglobal.com/spdji/en/",
+          asOf: formatDate(sp500Data.forwardEstimates[0].lastUpdated || new Date())
+        } : null,
+        
+        // ETF holdings data
+        topHoldings: sp500Data.etfHoldings ? sp500Data.etfHoldings.map(etf => ({
+          name: etf.indexName,
+          symbol: etf.symbol,
+          holdings: etf.holdings.map(holding => ({
+            symbol: holding.symbol.trim(),
+            name: holding.name,
+            weight: parseFloat(holding.weight)
+          })),
+          source: etf.sourceName,
+          sourceUrl: etf.sourceUrl,
+          asOf: formatDate(etf.lastUpdated)
+        })) : [],
+        
+        // Market path (RSI) data
+        marketPath: sp500Data.marketPath ? {
+          value: sp500Data.marketPath.value,
+          rsi: sp500Data.marketPath.rsi,
+          source: sp500Data.marketPath.sourceName,
+          sourceUrl: sp500Data.marketPath.sourceUrl,
+          asOf: formatDate(sp500Data.marketPath.lastUpdated)
+        } : null,
+        
+        // Moving averages data
+        movingAverages: sp500Data.movingAverages ? {
+          latest: sp500Data.movingAverages.latest,
+          sma50: sp500Data.movingAverages.sma50,
+          sma200: sp500Data.movingAverages.sma200
+        } : null,
+        
+        // Historical P/E data - extract and process with detailed logging
+        historicalPE: (() => {
+          if (debugMode) {
+            Logger.log("Processing historicalPE data for JSON output");
+            Logger.log("sp500Data.historicalPE exists: " + (sp500Data.historicalPE ? "YES" : "NO"));
+            if (sp500Data.historicalPE) {
+              Logger.log("sp500Data.historicalPE type: " + typeof sp500Data.historicalPE);
+              if (typeof sp500Data.historicalPE === 'object') {
+                Logger.log("sp500Data.historicalPE keys: " + Object.keys(sp500Data.historicalPE).join(", "));
+              }
+            }
+          }
+          
+          // If no historicalPE data exists, return null
+          if (!sp500Data.historicalPE) {
+            if (debugMode) Logger.log("No historicalPE data found, returning null");
+            return null;
+          }
+          
+          // Prepare the data structure
+          let result = {};
+          
+          // Handle the data array
+          if (Array.isArray(sp500Data.historicalPE)) {
+            if (debugMode) Logger.log("historicalPE is an array, using directly as data property");
+            result.data = sp500Data.historicalPE;
+          } else if (sp500Data.historicalPE.data && Array.isArray(sp500Data.historicalPE.data)) {
+            if (debugMode) Logger.log("Using historicalPE.data array");
+            result.data = sp500Data.historicalPE.data;
+          } else {
+            if (debugMode) Logger.log("No valid data array found, using empty array");
+            result.data = [];
+          }
+          
+          // Add other properties with fallbacks
+          result.years = sp500Data.historicalPE.years || null;
+          result.formattedData = sp500Data.historicalPE.formattedData || null;
+          result.current = sp500Data.historicalPE.current || (sp500Data.trailingPE ? sp500Data.trailingPE.pe : null);
+          result.fiveYearAvg = sp500Data.historicalPE.fiveYearAvg || null;
+          result.tenYearAvg = sp500Data.historicalPE.tenYearAvg || null;
+          result.source = sp500Data.historicalPE.source || "S&P Global";
+          result.sourceUrl = sp500Data.historicalPE.sourceUrl || "https://www.spglobal.com/spdji/en/";
+          result.lastUpdated = sp500Data.historicalPE.lastUpdated ? formatDate(sp500Data.historicalPE.lastUpdated) : formattedDate;
+          
+          if (debugMode) {
+            Logger.log("Final historicalPE structure: " + JSON.stringify(result, null, 2));
+            Logger.log("Data array length: " + result.data.length);
+          }
+          
+          return result;
+        })(),
+        
+        // Data freshness information
+        dataFreshness: sp500Data.dataFreshness ? sp500Data.dataFreshness.map(item => ({
+          label: item.label,
+          lastUpdated: formatDate(item.lastUpdated),
+          sourceName: item.sourceName
+        })) : []
+      } : {
+        // Default values if no SP500 data is available
         indexLevel: 0,
         source: {
           name: "Yahoo Finance",
-          url: "https://finance.yahoo.com/quote/%5EGSPC",
+          url: "https://finance.yahoo.com/quote/%5EGSPC/",
           asOf: formattedDate
         },
         valuation: {
@@ -856,7 +1033,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       fullJsonDataset.fundamentalMetrics.otherStocks = otherStocks;
       
       // If we have no data in any category, add some sample data for testing
-      if (debugMode && majorIndices.length === 0 && magnificentSeven.length === 0 && otherStocks.length === 0) {
+      if (debugMode && majorIndices.length === 0 && otherStocks.length === 0) {
         Logger.log("No fundamental metrics data found. Adding sample data for testing.");
         
         // Add sample data for SPY
@@ -879,7 +1056,7 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         });
         
         // Add sample data for AAPL
-        fullJsonDataset.fundamentalMetrics.magnificentSeven.push({
+        fullJsonDataset.fundamentalMetrics.topHoldings.push({
           symbol: "AAPL",
           name: "Apple Inc.",
           price: 169.32,
@@ -1441,7 +1618,20 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             name: sp500Data.forwardEstimates && sp500Data.forwardEstimates[0]?.sourceName || "S&P Global",
             url: sp500Data.forwardEstimates && sp500Data.forwardEstimates[0]?.sourceUrl || "https://www.spglobal.com/spdji/en/indices/equity/sp-500/",
             asOf: forwardEpsAsOf
-          }
+          },
+          
+          // Historical P/E data
+          historicalPE: sp500Data.historicalPE ? {
+            data: Array.isArray(sp500Data.historicalPE.data) ? sp500Data.historicalPE.data : [],
+            years: sp500Data.historicalPE.years || null,
+            formattedData: sp500Data.historicalPE.formattedData || null,
+            current: sp500Data.historicalPE.current || (sp500Data.trailingPE ? sp500Data.trailingPE.pe : null),
+            fiveYearAvg: sp500Data.historicalPE.fiveYearAvg || null,
+            tenYearAvg: sp500Data.historicalPE.tenYearAvg || null,
+            source: sp500Data.historicalPE.source || "S&P Global",
+            sourceUrl: sp500Data.historicalPE.sourceUrl || "https://www.spglobal.com/spdji/en/",
+            lastUpdated: sp500Data.historicalPE.lastUpdated ? formatDate(sp500Data.historicalPE.lastUpdated) : formattedDate
+          } : null
         };
         
         // Add top holdings data if available
@@ -1661,6 +1851,51 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         // Store the SP500 data for later use with RSI
         const sp500AnalysisData = sp500Data;
         
+        // Debug logging for parsed SP500 data structure
+        if (debugMode) {
+          Logger.log("Parsed SP500 Data Structure:");
+          Logger.log("Keys in sp500Data: " + Object.keys(sp500Data).join(', '));
+          
+          // Log specific sections we're interested in
+          if (sp500Data.historicalPE) {
+            Logger.log("historicalPE structure: " + JSON.stringify(sp500Data.historicalPE, null, 2));
+            Logger.log("historicalPE type: " + typeof sp500Data.historicalPE);
+            if (Array.isArray(sp500Data.historicalPE)) {
+              Logger.log("historicalPE is an array with " + sp500Data.historicalPE.length + " elements");
+            } else if (typeof sp500Data.historicalPE === 'object') {
+              Logger.log("historicalPE is an object with keys: " + Object.keys(sp500Data.historicalPE).join(', '));
+              if (sp500Data.historicalPE.data) {
+                Logger.log("historicalPE.data type: " + typeof sp500Data.historicalPE.data);
+                if (Array.isArray(sp500Data.historicalPE.data)) {
+                  Logger.log("historicalPE.data is an array with " + sp500Data.historicalPE.data.length + " elements");
+                  Logger.log("historicalPE.data contents: " + JSON.stringify(sp500Data.historicalPE.data));
+                }
+              }
+            }
+          } else {
+            Logger.log("historicalPE is not present in sp500Data");
+          }
+          
+          if (sp500Data.trailingPE) {
+            Logger.log("trailingPE structure: " + JSON.stringify(sp500Data.trailingPE, null, 2));
+            if (sp500Data.trailingPE.history) {
+              Logger.log("trailingPE.history type: " + typeof sp500Data.trailingPE.history);
+              if (Array.isArray(sp500Data.trailingPE.history)) {
+                Logger.log("trailingPE.history is an array with " + sp500Data.trailingPE.history.length + " elements");
+              } else if (typeof sp500Data.trailingPE.history === 'object') {
+                Logger.log("trailingPE.history is an object with keys: " + Object.keys(sp500Data.trailingPE.history).join(', '));
+                if (sp500Data.trailingPE.history.data) {
+                  Logger.log("trailingPE.history.data type: " + typeof sp500Data.trailingPE.history.data);
+                  if (Array.isArray(sp500Data.trailingPE.history.data)) {
+                    Logger.log("trailingPE.history.data is an array with " + sp500Data.trailingPE.history.data.length + " elements");
+                    Logger.log("trailingPE.history.data contents: " + JSON.stringify(sp500Data.trailingPE.history.data));
+                  }
+                }
+              }
+            }
+          }
+        }
+        
         // Add RSI data from SP500 analysis if available
         try {
           // Use the already fetched SP500 data instead of fetching it again
@@ -1771,7 +2006,10 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             name: "S&P Global",
             url: "https://www.spglobal.com/spdji/en/indices/equity/sp-500/",
             asOf: formattedDate
-          }
+          },
+          
+          // Historical P/E data (null in fallback case)
+          historicalPE: null
         };
       }
     } else {
@@ -1840,7 +2078,10 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           name: "S&P Global",
           url: "https://www.spglobal.com/spdji/en/indices/equity/sp-500/",
           asOf: formattedDate
-        }
+        },
+        
+        // Historical P/E data (null in fallback case)
+        historicalPE: null
       };
     }
     
@@ -1873,6 +2114,83 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     
     if (debugMode) {
       Logger.log("Full JSON dataset generation completed successfully");
+    }
+    
+    // Add debug logging for the final output JSON
+    if (debugMode) {
+      Logger.log("Final JSON output check:");
+      if (fullJsonDataset.sp500) {
+        Logger.log("sp500 section exists in final output: YES");
+        Logger.log("sp500 keys: " + Object.keys(fullJsonDataset.sp500).join(", "));
+        
+        if (fullJsonDataset.sp500.historicalPE) {
+          Logger.log("historicalPE exists in final output: YES");
+          Logger.log("historicalPE type: " + typeof fullJsonDataset.sp500.historicalPE);
+          if (Array.isArray(fullJsonDataset.sp500.historicalPE)) {
+            Logger.log("historicalPE is an array with " + fullJsonDataset.sp500.historicalPE.length + " elements");
+            if (fullJsonDataset.sp500.historicalPE.length > 0) {
+              Logger.log("First few historicalPE elements: " + JSON.stringify(fullJsonDataset.sp500.historicalPE.slice(0, 3)));
+            } else {
+              Logger.log("historicalPE array is empty");
+            }
+          }
+        } else {
+          Logger.log("historicalPE exists in final output: NO");
+          
+          // Debug the extraction process
+          Logger.log("Debugging historicalPE extraction process:");
+          if (sp500Data) {
+            Logger.log("sp500Data exists: YES");
+            Logger.log("sp500Data keys: " + Object.keys(sp500Data).join(", "));
+            
+            if (sp500Data.historicalPE) {
+              Logger.log("sp500Data.historicalPE exists: YES");
+              Logger.log("sp500Data.historicalPE type: " + typeof sp500Data.historicalPE);
+              if (Array.isArray(sp500Data.historicalPE)) {
+                Logger.log("sp500Data.historicalPE is an array with " + sp500Data.historicalPE.length + " elements");
+              } else if (typeof sp500Data.historicalPE === 'object') {
+                Logger.log("sp500Data.historicalPE is an object with keys: " + Object.keys(sp500Data.historicalPE).join(", "));
+                if (sp500Data.historicalPE.data) {
+                  Logger.log("sp500Data.historicalPE.data exists: YES");
+                  Logger.log("sp500Data.historicalPE.data type: " + typeof sp500Data.historicalPE.data);
+                  if (Array.isArray(sp500Data.historicalPE.data)) {
+                    Logger.log("sp500Data.historicalPE.data is an array with " + sp500Data.historicalPE.data.length + " elements");
+                  }
+                } else {
+                  Logger.log("sp500Data.historicalPE.data exists: NO");
+                }
+              }
+            } else {
+              Logger.log("sp500Data.historicalPE exists: NO");
+            }
+            
+            if (sp500Data.trailingPE && sp500Data.trailingPE.history) {
+              Logger.log("sp500Data.trailingPE.history exists: YES");
+              Logger.log("sp500Data.trailingPE.history type: " + typeof sp500Data.trailingPE.history);
+              if (Array.isArray(sp500Data.trailingPE.history)) {
+                Logger.log("sp500Data.trailingPE.history is an array with " + sp500Data.trailingPE.history.length + " elements");
+              } else if (typeof sp500Data.trailingPE.history === 'object') {
+                Logger.log("sp500Data.trailingPE.history is an object with keys: " + Object.keys(sp500Data.trailingPE.history).join(", "));
+                if (sp500Data.trailingPE.history.data) {
+                  Logger.log("sp500Data.trailingPE.history.data exists: YES");
+                  Logger.log("sp500Data.trailingPE.history.data type: " + typeof sp500Data.trailingPE.history.data);
+                  if (Array.isArray(sp500Data.trailingPE.history.data)) {
+                    Logger.log("sp500Data.trailingPE.history.data is an array with " + sp500Data.trailingPE.history.data.length + " elements");
+                  }
+                } else {
+                  Logger.log("sp500Data.trailingPE.history.data exists: NO");
+                }
+              }
+            } else {
+              Logger.log("sp500Data.trailingPE.history exists: NO");
+            }
+          } else {
+            Logger.log("sp500Data exists: NO");
+          }
+        }
+      } else {
+        Logger.log("sp500 section does not exist in final output");
+      }
     }
     
     return fullJsonDataset;
@@ -2515,11 +2833,62 @@ function generateHtmlFromJson(jsonData, debugMode = false) {
   }
 }
 
+/**
+ * Test function specifically for verifying historical PE data extraction
+ */
+function testHistoricalPEExtraction() {
+  // Get SP500 data with debug mode enabled
+  var sp500Data = SP500Analyzer();
+  
+  Logger.log("SP500 Data retrieved: " + (sp500Data ? "YES" : "NO"));
+  
+  // Check if historicalPE exists
+  Logger.log("historicalPE exists: " + (sp500Data.historicalPE ? "YES" : "NO"));
+  
+  if (sp500Data.historicalPE) {
+    Logger.log("historicalPE type: " + typeof sp500Data.historicalPE);
+    
+    if (typeof sp500Data.historicalPE === 'object') {
+      Logger.log("historicalPE keys: " + Object.keys(sp500Data.historicalPE).join(", "));
+    }
+    
+    if (Array.isArray(sp500Data.historicalPE)) {
+      Logger.log("historicalPE is an array with " + sp500Data.historicalPE.length + " elements");
+    } else if (sp500Data.historicalPE.data && Array.isArray(sp500Data.historicalPE.data)) {
+      Logger.log("historicalPE.data is an array with " + sp500Data.historicalPE.data.length + " elements");
+    }
+  }
+  
+  // Generate full JSON dataset with debug mode
+  var fullJson = generateFullJsonDataset(null, true);
+  
+  // Check if historicalPE exists in the final output
+  Logger.log("historicalPE in final JSON: " + (fullJson.sp500.historicalPE ? "YES" : "NO"));
+  
+  if (fullJson.sp500.historicalPE) {
+    Logger.log("Final historicalPE structure: " + JSON.stringify(fullJson.sp500.historicalPE, null, 2));
+    
+    // Save the JSON to Google Drive for inspection
+    var filename = "historical-pe-test-" + new Date().toISOString().replace(/[:.]/g, '-') + ".json";
+    var jsonString = JSON.stringify(fullJson, null, 2);
+    var file = DriveApp.createFile(filename, jsonString, MimeType.JSON);
+    var fileId = file.getId();
+    Logger.log("Saved full JSON to Google Drive with ID: " + fileId);
+    
+    return "Test completed. Historical PE data extraction " + 
+           (fullJson.sp500.historicalPE.data ? "SUCCESSFUL" : "FAILED") + 
+           ". Check logs for details and Google Drive for the full JSON.";
+  } else {
+    return "Test failed. No historicalPE data in final JSON output. Check logs for details.";
+  }
+}
+
 // Export the functions for use in other scripts
 var JsonExport = {
   generateFullJsonDataset: generateFullJsonDataset,
   generateAndSaveFullJsonDataset: generateAndSaveFullJsonDataset,
-  generateHtmlFromJson: generateHtmlFromJson,
   testGenerateFullJsonDataset: testGenerateFullJsonDataset,
-  testGenerateAndSaveFullJsonDataset: testGenerateAndSaveFullJsonDataset
+  testGenerateAndSaveFullJsonDataset: testGenerateAndSaveFullJsonDataset,
+  testHistoricalPEExtraction: testHistoricalPEExtraction,
+  generateHtmlFromJson: generateHtmlFromJson
 };
