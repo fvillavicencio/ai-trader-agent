@@ -3,100 +3,60 @@
     "source": "FactSet",
     "url": "https://www.factset.com/",
     "year": 2025,
-<<<<<<< HEAD
     "eps": 73.98
-=======
-    "eps": 250.00
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "S&P Global",
     "url": "https://www.spglobal.com/",
     "year": 2025,
-<<<<<<< HEAD
     "eps": 73.50
-=======
-    "eps": 248.50
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "Yardeni Research",
     "url": "https://www.yardeni.com/",
     "year": 2025,
-<<<<<<< HEAD
     "eps": 74.20
-=======
-    "eps": 251.20
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "Goldman Sachs",
     "url": "https://www.goldmansachs.com/",
     "year": 2025,
-<<<<<<< HEAD
     "eps": 74.10
-=======
-    "eps": 252.10
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "JP Morgan",
     "url": "https://www.jpmorgan.com/",
     "year": 2025,
-<<<<<<< HEAD
     "eps": 73.30
-=======
-    "eps": 249.30
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "FactSet",
     "url": "https://www.factset.com/",
     "year": 2026,
-<<<<<<< HEAD
     "eps": 79.77
-=======
-    "eps": 265.00
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "S&P Global",
     "url": "https://www.spglobal.com/",
     "year": 2026,
-<<<<<<< HEAD
     "eps": 79.00
-=======
-    "eps": 263.00
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "Yardeni Research",
     "url": "https://www.yardeni.com/",
     "year": 2026,
-<<<<<<< HEAD
     "eps": 80.10
-=======
-    "eps": 266.10
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "Goldman Sachs",
     "url": "https://www.goldmansachs.com/",
     "year": 2026,
-<<<<<<< HEAD
     "eps": 80.50
-=======
-    "eps": 267.50
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   },
   {
     "source": "JP Morgan",
     "url": "https://www.jpmorgan.com/",
     "year": 2026,
-<<<<<<< HEAD
     "eps": 79.20
-=======
-    "eps": 264.20
->>>>>>> e80430d35c78aec5ecc761bbc6b43d16d32918fa
   }
 ]

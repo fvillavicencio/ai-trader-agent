@@ -1,0 +1,53 @@
+{
+  "eps": 230.78,
+  "pe": 24.599016,
+  "price": 564.43,
+  "sourceName": "YCharts",
+  "sourceUrl": "https://ycharts.com/indicators/sp_500_eps",
+  "lastUpdated": "2025-05-09T16:20:35.516Z",
+  "provider": "ycharts",
+  "history": {
+    "data": [
+      26.95,
+      28.6,
+      24.35,
+      22.65,
+      23.63
+    ],
+    "years": [
+      2025,
+      2024,
+      2023,
+      2022,
+      2021
+    ],
+    "formattedData": [
+      {
+        "year": 2025,
+        "value": 26.95
+      },
+      {
+        "year": 2024,
+        "value": 28.6
+      },
+      {
+        "year": 2023,
+        "value": 24.35
+      },
+      {
+        "year": 2022,
+        "value": 22.65
+      },
+      {
+        "year": 2021,
+        "value": 23.63
+      }
+    ],
+    "current": 26.95,
+    "fiveYearAvg": 25.36,
+    "tenYearAvg": 24.85,
+    "lastUpdated": "2025-05-09T16:20:35.157Z",
+    "source": "multpl.com (monthly)",
+    "sourceUrl": "https://www.multpl.com/s-p-500-pe-ratio/table/by-month"
+  }
+}

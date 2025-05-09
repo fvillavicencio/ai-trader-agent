@@ -19,6 +19,7 @@ async function testDeployedLambda() {
     console.log(`Calling Lambda service at: ${serviceUrl}`);
     
     // Call the Lambda function
+    console.log('Making request to:', serviceUrl);
     const response = await axios.post(serviceUrl, {}, {
       headers: {
         'x-api-key': apiKey
@@ -29,6 +30,9 @@ async function testDeployedLambda() {
       throw new Error(`Lambda service error: ${response.status} - ${response.statusText}`);
     }
     
+    // Log raw response
+    console.log('Raw response:', response.data);
+
     // Handle the nested response structure
     const lambdaResponse = response.data;
     console.log('\nLambda response status code:', lambdaResponse.statusCode);

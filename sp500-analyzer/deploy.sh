@@ -9,7 +9,7 @@ ZIP_FILE="lambda-deployment.zip"
 # Create a temporary directory for the deployment package
 echo "Creating deployment package..."
 rm -f $ZIP_FILE
-zip -r $ZIP_FILE . -x "*.git*" "*.xlsx" "*.zip" "node_modules/*" "*.sh" "*.md" "*.sample" "*.env"
+zip -r $ZIP_FILE . -x "*.git*" "*.zip" "node_modules/*" "*.sh" "*.md" "*.sample" "*.env" "*.test.js" "*.spec.js"
 
 # Install production dependencies
 echo "Installing production dependencies..."

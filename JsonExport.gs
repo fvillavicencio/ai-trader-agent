@@ -9,7 +9,7 @@
  * Generates a complete JSON dataset matching the structure of full-sample-data.json
  * This combines data from the OpenAI analysis with additional data from other sources
  * 
- * @param {Object} analysisJson - The analysis result JSON object from OpenAI
+ * @param {Object|null} analysisJson - The analysis result JSON object from OpenAI, or null if not available
  * @param {Boolean} debugMode - Whether to include additional debug information
  * @return {Object} Complete JSON dataset
  */
@@ -18,6 +18,36 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     // Enable debug logging if debugMode is true
     if (debugMode) {
       Logger.log("Generating full JSON dataset with debug mode enabled");
+      if (analysisJson === null) {
+        Logger.log("analysisJson is null, will generate dataset with available data only");
+      }
+    }
+    
+    // Track if analysisJson was originally null
+    const analysisJsonWasNull = analysisJson === null;
+    
+    // If analysisJson is null, create an empty structure to avoid null reference errors
+    if (analysisJsonWasNull) {
+      analysisJson = {
+        originallyNull: true, // Flag to track that this was generated without AI analysis
+        decision: "No Decision",
+        summary: "Generated without AI analysis",
+        justification: "This report was generated with market data only, without AI analysis.",
+        analysis: {
+          marketSentiment: {
+            overall: "Neutral",
+            lastUpdated: new Date().toISOString()
+          },
+          macroeconomicFactors: {
+            geopoliticalRisks: {}
+          }
+        },
+        sections: [],
+        keyPoints: [],
+        opportunities: [],
+        risks: [],
+        actionItems: []
+      };
     }
     
 
@@ -49,6 +79,27 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     const now = new Date();
     // Format the current date
     const formattedDate = formatDate(now);
+    
+    /**
+     * Helper function to get a stock name from its symbol using ETF holdings data
+     * @param {string} symbol - The stock symbol to look up
+     * @param {Array} etfHoldings - Array of ETF holdings objects
+     * @return {string} The stock name if found, or the symbol if not found
+     */
+    function getStockNameFromSymbol(symbol, etfHoldings) {
+      // Check each ETF's holdings for the symbol
+      for (const etf of etfHoldings) {
+        if (etf.holdings && Array.isArray(etf.holdings)) {
+          for (const holding of etf.holdings) {
+            if (holding.symbol === symbol && holding.name) {
+              return holding.name;
+            }
+          }
+        }
+      }
+      // If not found, return the symbol as the name
+      return symbol;
+    }
     
     // Get the newsletter name from script properties
     const props = PropertiesService.getScriptProperties();
@@ -152,8 +203,9 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       reportDateFormatted: formattedDate,
       reportDateDisplay: "As of " + formattedDate,
       isTest: debugMode,
+      // If analysisJson was originally null, add a suffix to the title
       metadata: {
-        title: newsletterName,
+        title: analysisJsonWasNull ? `${newsletterName} (Data Only)` : newsletterName,
         timestamp: formattedDate
       },
       marketSentiment: {
@@ -742,16 +794,51 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
       // Process each symbol in the metrics data
       for (const symbol in metricsData) {
         if (metricsData.hasOwnProperty(symbol) && typeof symbol === 'string' && symbol !== 'validSymbols' && symbol !== 'deprecatedSymbols') {
+          // Check if this is a market index or deprecated name that should be excluded
+          // Use the existing cleanAndReplaceSymbols function if available
+          if (typeof cleanAndReplaceSymbols === 'function') {
+            // Create a temporary array with just this symbol to check if it would be filtered out
+            const cleanedSymbols = cleanAndReplaceSymbols([symbol]);
+            
+            // If the symbol was filtered out (not in the cleaned array), skip it
+            if (cleanedSymbols.length === 0 || cleanedSymbols[0] !== symbol) {
+              if (debugMode) {
+                Logger.log(`Skipping excluded symbol: ${symbol}`);
+              }
+              continue;
+            }
+          }
+          
+          // Also check deprecated symbols list as a fallback
+          if (typeof DEPRECATED_SYMBOLS !== 'undefined' && DEPRECATED_SYMBOLS.includes(symbol)) {
+            if (debugMode) {
+              Logger.log(`Skipping deprecated symbol: ${symbol}`);
+            }
+            continue;
+          }
+          
+          // Additional check for common market indices not caught by other filters
+          if (symbol === 'NASDAQ' || symbol === 'NYSE' || symbol.includes('S&P') || 
+              symbol === 'DOW' || symbol === 'DJIA' || symbol.includes('RUSSELL')) {
+            if (debugMode) {
+              Logger.log(`Skipping market index: ${symbol}`);
+            }
+            continue;
+          }
+          
           const stockData = metricsData[symbol];
           const stockObject = createStockObject(symbol, stockData);
           
           // Only add valid stock objects
           if (stockObject) {
+            // Track which category this stock belongs to
             if (majorIndicesSymbols.includes(symbol)) {
               majorIndices.push(stockObject);
             } else if (filteredTopHoldings.includes(symbol)) {
               topHoldings.push(stockObject);
             } else {
+              // Only add to otherStocks if it's not already in topHoldings
+              // This prevents duplicates when stocks are added to topHoldings later
               otherStocks.push(stockObject);
             }
           }
@@ -1396,6 +1483,160 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           
           // Add to marketIndicators as well to match the template
           fullJsonDataset.marketIndicators.topHoldings = topHoldings;
+          
+          // Check if fundamentalMetrics.topHoldings is empty and populate it with stock data for top holdings
+          if (fullJsonDataset.fundamentalMetrics && 
+              Array.isArray(fullJsonDataset.fundamentalMetrics.topHoldings) && 
+              fullJsonDataset.fundamentalMetrics.topHoldings.length === 0) {
+            
+            if (debugMode) {
+              Logger.log('fundamentalMetrics.topHoldings is empty, populating from ETF holdings data');
+            }
+            
+            // Extract unique symbols from the top 5 holdings of each ETF
+            const topSymbols = new Set();
+            topHoldings.forEach(etf => {
+              if (etf.holdings && Array.isArray(etf.holdings)) {
+                etf.holdings.forEach(holding => {
+                  if (holding.symbol) {
+                    topSymbols.add(holding.symbol);
+                  }
+                });
+              }
+            });
+            
+            // Create stock objects for each top symbol
+            const topHoldingsStocks = [];
+            Array.from(topSymbols).forEach(symbol => {
+              // Check if we already have this stock in majorIndices or otherStocks
+              let stockData = null;
+              
+              // Look for the stock in otherStocks first
+              if (fullJsonDataset.fundamentalMetrics.otherStocks) {
+                stockData = fullJsonDataset.fundamentalMetrics.otherStocks.find(s => s.symbol === symbol);
+              }
+                            // If not found, create a basic stock object
+                if (!stockData) {
+                  stockData = {
+                    symbol: symbol,
+                    name: getStockNameFromSymbol(symbol, sp500Data.etfHoldings),
+                    metrics: []
+                  };
+                  
+                  // Try to get price data from Yahoo Finance
+                  try {
+                    // First try using getYahooFinanceData if available
+                    let yahooData = typeof getYahooFinanceData === 'function' ? 
+                      getYahooFinanceData(symbol) : null;
+                    
+                    // If that doesn't work, try fetching directly from Yahoo Finance
+                    if (!yahooData || !yahooData.price) {
+                      try {
+                        // This is a fallback method to get basic stock data
+                        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}`;
+                        const response = UrlFetchApp.fetch(url, {muteHttpExceptions: true});
+                        const responseData = JSON.parse(response.getContentText());
+                        
+                        if (responseData && responseData.chart && responseData.chart.result && responseData.chart.result[0]) {
+                          const result = responseData.chart.result[0];
+                          const meta = result.meta || {};
+                          const quote = result.indicators.quote[0] || {};
+                          
+                          yahooData = {
+                            price: meta.regularMarketPrice || 0,
+                            change: meta.regularMarketChange || 0,
+                            changePercent: meta.regularMarketChangePercent || 0,
+                            volume: quote.volume ? quote.volume[quote.volume.length - 1] : 0,
+                            name: meta.shortName || symbol
+                          };
+                          
+                          // Update the stock name if we got a better one
+                          if (yahooData.name && yahooData.name !== symbol) {
+                            stockData.name = yahooData.name;
+                          }
+                          
+                          // Add some basic metrics
+                          if (meta.fiftyTwoWeekHigh) {
+                            stockData.metrics.push({
+                              name: "52W High",
+                              value: `$${meta.fiftyTwoWeekHigh.toFixed(2)}`
+                            });
+                          }
+                          
+                          if (meta.fiftyTwoWeekLow) {
+                            stockData.metrics.push({
+                              name: "52W Low",
+                              value: `$${meta.fiftyTwoWeekLow.toFixed(2)}`
+                            });
+                          }
+                          
+                          if (yahooData.volume) {
+                            let volumeStr = yahooData.volume;
+                            if (yahooData.volume >= 1000000) {
+                              volumeStr = (yahooData.volume / 1000000).toFixed(1) + 'M';
+                            } else if (yahooData.volume >= 1000) {
+                              volumeStr = (yahooData.volume / 1000).toFixed(1) + 'K';
+                            }
+                            
+                            stockData.metrics.push({
+                              name: "Volume",
+                              value: volumeStr
+                            });
+                          }
+                          
+                          if (meta.exchangeName) {
+                            stockData.metrics.push({
+                              name: "Exchange",
+                              value: meta.exchangeName
+                            });
+                          }
+                        }
+                      } catch (yahooError) {
+                        if (debugMode) {
+                          Logger.log(`Error fetching Yahoo Finance data directly for ${symbol}: ${yahooError}`);
+                        }
+                      }
+                    }
+                    
+                    // Update stock data with Yahoo Finance data
+                    if (yahooData && yahooData.price) {
+                      stockData.price = yahooData.price;
+                      stockData.priceChange = yahooData.change || 0;
+                      stockData.percentChange = yahooData.changePercent ? 
+                        `${yahooData.changePercent.toFixed(2)}%` : '0.00%';
+                    }
+                  } catch (e) {
+                    if (debugMode) {
+                      Logger.log(`Error getting Yahoo data for ${symbol}: ${e}`);
+                    }
+                  }
+                }
+              
+              // Add to topHoldingsStocks if we have valid data
+              if (stockData) {
+                topHoldingsStocks.push(stockData);
+              }
+            });
+            
+            // Update the fundamentalMetrics.topHoldings array
+            fullJsonDataset.fundamentalMetrics.topHoldings = topHoldingsStocks;
+            
+            // Remove any stocks from otherStocks that are now in topHoldings to prevent duplicates
+            if (fullJsonDataset.fundamentalMetrics.otherStocks && Array.isArray(fullJsonDataset.fundamentalMetrics.otherStocks)) {
+              const topHoldingsSymbols = topHoldingsStocks.map(stock => stock.symbol);
+              fullJsonDataset.fundamentalMetrics.otherStocks = fullJsonDataset.fundamentalMetrics.otherStocks.filter(
+                stock => !topHoldingsSymbols.includes(stock.symbol)
+              );
+              
+              if (debugMode) {
+                Logger.log(`Filtered out duplicate stocks from otherStocks, ${fullJsonDataset.fundamentalMetrics.otherStocks.length} stocks remain`);
+              }
+            }
+            
+            if (debugMode) {
+              Logger.log(`Added ${topHoldingsStocks.length} stocks to fundamentalMetrics.topHoldings`);
+            }
+          }
           
           if (debugMode) {
             Logger.log(`Mapped ${topHoldings.length} ETF holdings`);
