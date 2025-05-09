@@ -212,7 +212,23 @@ function formatSP500AnalysisText(lambdaJson) {
     if (data.trailingPE.history) {
       lines.push('  Historical P/E Context:');
       lines.push('  Current | 5-Year Avg | 10-Year Avg');
-      lines.push(`  ${Number(data.trailingPE.pe).toFixed(2)} | ${Number(data.trailingPE.history.avg5).toFixed(2)} | ${Number(data.trailingPE.history.avg10).toFixed(2)}`);
+      
+      // Get the 5-year and 10-year averages from the appropriate properties
+      const fiveYearAvg = data.trailingPE.fiveYearAvg || 
+                         (data.trailingPE.history && data.trailingPE.history.fiveYearAvg) || 
+                         (data.historicalPE && data.historicalPE.fiveYearAvg) || 
+                         'N/A';
+      
+      const tenYearAvg = data.trailingPE.tenYearAvg || 
+                        (data.trailingPE.history && data.trailingPE.history.tenYearAvg) || 
+                        (data.historicalPE && data.historicalPE.tenYearAvg) || 
+                        'N/A';
+      
+      // Format the values
+      const formattedFiveYearAvg = fiveYearAvg === 'N/A' ? 'N/A' : Number(fiveYearAvg).toFixed(2);
+      const formattedTenYearAvg = tenYearAvg === 'N/A' ? 'N/A' : Number(tenYearAvg).toFixed(2);
+      
+      lines.push(`  ${Number(data.trailingPE.pe).toFixed(2)} | ${formattedFiveYearAvg} | ${formattedTenYearAvg}`);
       lines.push('');
     }
   }
@@ -363,8 +379,11 @@ function formatSP500AnalysisHtml(lambdaJson) {
     const peAsOf = data.trailingPE.lastUpdated ? ', as of ' + formatDate(data.trailingPE.lastUpdated) : '';
     const indexValue = Number(data.sp500Index.price).toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
     const peCurrent = Number(data.trailingPE.pe).toFixed(2);
-    const pe5 = Number(data.trailingPE.history.avg5).toFixed(2);
-    const pe10 = Number(data.trailingPE.history.avg10).toFixed(2);
+    // Access the 5-year and 10-year averages from either trailingPE or historicalPE
+    const pe5 = data.trailingPE.fiveYearAvg ? Number(data.trailingPE.fiveYearAvg).toFixed(2) : 
+               (data.historicalPE && data.historicalPE.fiveYearAvg ? Number(data.historicalPE.fiveYearAvg).toFixed(2) : 'N/A');
+    const pe10 = data.trailingPE.tenYearAvg ? Number(data.trailingPE.tenYearAvg).toFixed(2) : 
+                (data.historicalPE && data.historicalPE.tenYearAvg ? Number(data.historicalPE.tenYearAvg).toFixed(2) : 'N/A');
     html.push('<div class="row" style="display: flex; flex-direction: row; gap: 12px; justify-content: flex-start; align-items: stretch; margin-bottom: 24px; flex-wrap: wrap;">');
     // Index Card
     html.push(`
