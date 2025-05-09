@@ -252,6 +252,137 @@ function generateDataRetrievalText() {
         // we need to filter out deprecated symbols 
 
         formattedText += formatFundamentalMetricsData(fundamentalMetricsData);
+        
+        // Add Top ETF Holdings section directly from SP500 data
+        try {
+          // Clear the SP500 cache first to ensure fresh data
+          if (typeof clearSP500AnalyzerCache === 'function') {
+            clearSP500AnalyzerCache();
+            Logger.log("Cleared SP500 cache before fetching top holdings");
+          }
+          
+          // Get top holdings directly using the improved function
+          Logger.log("Attempting to get top ETF holdings");
+          const topHoldings = getTopIndexHoldings();
+          
+          // If we have top holdings, add them to the prompt
+          if (topHoldings && topHoldings.length > 0) {
+            // Filter out any indices or deprecated symbols
+            const cleanedHoldings = cleanAndReplaceSymbols(topHoldings);
+            Logger.log(`Original holdings: ${topHoldings.length}, Cleaned holdings: ${cleanedHoldings.length}`);
+            
+            // Only add to prompt if we have valid holdings after cleaning
+            if (cleanedHoldings.length > 0) {
+              formattedText += `\n**Top ETF Holdings (${cleanedHoldings.length} unique symbols)**\n`;
+              formattedText += `All unique top holdings: ${cleanedHoldings.join(', ')}\n\n`;
+              Logger.log(`Added ${cleanedHoldings.length} top ETF holdings to the OpenAI prompt`);
+            } else {
+              Logger.log("No valid holdings remained after cleaning");
+            }
+          } else {
+            // If getTopIndexHoldings() didn't return any holdings, try the direct approach
+            Logger.log("No top holdings found from getTopIndexHoldings(), trying direct approach");
+            
+            // Directly call the Lambda function to get fresh data
+            const props = PropertiesService.getScriptProperties();
+            const url = props.getProperty('LAMBDA_SERVICE_URL');
+            const apiKey = props.getProperty('LAMBDA_API_KEY');
+            
+            if (!url || !apiKey) {
+              Logger.log('Missing LAMBDA_SERVICE_URL or LAMBDA_API_KEY in Script Properties');
+            } else {
+              const options = {
+                method: 'post',
+                headers: {
+                  'x-api-key': apiKey
+                },
+                muteHttpExceptions: true
+              };
+              
+              Logger.log("Making direct Lambda call to fetch ETF holdings");
+              try {
+                const response = UrlFetchApp.fetch(url, options);
+                const responseCode = response.getResponseCode();
+                Logger.log(`Lambda API response code: ${responseCode}`);
+                
+                if (responseCode === 200) {
+                  const responseText = response.getContentText();
+                  Logger.log(`Lambda API response length: ${responseText.length} characters`);
+                  
+                  const sp500Data = JSON.parse(responseText);
+                  Logger.log("Successfully parsed Lambda response");
+                  
+                  // Extract ETF holdings using a similar approach to getTopIndexHoldings
+                  let parsedData;
+                  try {
+                    // Parse the body if it's a string
+                    if (sp500Data.body) {
+                      parsedData = typeof sp500Data.body === 'string' ? JSON.parse(sp500Data.body) : sp500Data.body;
+                    } else {
+                      parsedData = sp500Data;
+                    }
+                    
+                    // Find ETF holdings in the data structure
+                    let etfHoldings = null;
+                    if (parsedData.etfHoldings) {
+                      etfHoldings = parsedData.etfHoldings;
+                    } else if (parsedData.data && parsedData.data.etfHoldings) {
+                      etfHoldings = parsedData.data.etfHoldings;
+                    } else if (parsedData.sp500 && parsedData.sp500.etfHoldings) {
+                      etfHoldings = parsedData.sp500.etfHoldings;
+                    }
+                    
+                    // Parse etfHoldings if it's a string
+                    if (etfHoldings && typeof etfHoldings === 'string') {
+                      etfHoldings = JSON.parse(etfHoldings);
+                    }
+                    
+                    // Process ETF holdings if found
+                    if (etfHoldings && Array.isArray(etfHoldings) && etfHoldings.length > 0) {
+                      // Extract unique symbols from all ETF holdings
+                      const topSymbols = new Set();
+                      
+                      etfHoldings.forEach(etf => {
+                        if (etf && etf.holdings && Array.isArray(etf.holdings)) {
+                          // Get top 5 holdings from each ETF
+                          etf.holdings.slice(0, 5).forEach(holding => {
+                            const symbol = holding.symbol || holding.ticker;
+                            if (symbol) {
+                              topSymbols.add(symbol.trim());
+                            }
+                          });
+                        }
+                      });
+                      
+                      // Convert to array and clean symbols
+                      const holdingsArray = Array.from(topSymbols);
+                      const cleanedHoldings = cleanAndReplaceSymbols(holdingsArray);
+                      
+                      // Add to the prompt if we have valid holdings
+                      if (cleanedHoldings.length > 0) {
+                        formattedText += `\n**Top ETF Holdings (${cleanedHoldings.length} unique symbols)**\n`;
+                        formattedText += `All unique top holdings: ${cleanedHoldings.join(', ')}\n\n`;
+                        Logger.log(`Added ${cleanedHoldings.length} top ETF holdings to the OpenAI prompt via direct approach`);
+                      } else {
+                        Logger.log("No valid holdings found via direct approach after cleaning");
+                      }
+                    } else {
+                      Logger.log("No ETF holdings found in the Lambda response");
+                    }
+                  } catch (parseError) {
+                    Logger.log(`Error processing Lambda data for top holdings: ${parseError}`);
+                  }
+                } else {
+                  Logger.log(`Lambda API request failed with code ${responseCode}`);
+                }
+              } catch (fetchError) {
+                Logger.log(`Error fetching from Lambda API: ${fetchError}`);
+              }
+            }
+          }
+        } catch (sp500Error) {
+          Logger.log(`Error retrieving SP500 data for top holdings: ${sp500Error}`);
+        }
       } else {
         formattedText += "**Fundamental Metrics:**\n";
         formattedText += "- Error retrieving fundamental metrics data\n\n";
@@ -701,7 +832,8 @@ function cleanAndReplaceSymbols(symbols) {
     'S&P 500',
     'S&P 400',
     'Russell 2000',
-    'U.S. Treasuries'
+    'U.S. Treasuries',
+    'NASDAQ'
   ].map(n => n.toLowerCase());
 
   // Replace deprecated symbols and filter out deprecated names
@@ -718,9 +850,10 @@ function getTopIndexHoldings() {
   try {
     // Get SP500 analysis data
     const sp500Data = SP500Analyzer();
+    Logger.log('SP500Analyzer returned data: ' + (sp500Data ? 'yes' : 'no'));
     
-    // If no data or no ETF holdings, return empty array
-    if (!sp500Data || !sp500Data.body) {
+    // If no data, return empty array
+    if (!sp500Data) {
       Logger.log('No SP500 data available for top holdings extraction');
       return [];
     }
@@ -728,43 +861,91 @@ function getTopIndexHoldings() {
     // Parse the body if it's a string
     let data;
     try {
-      data = typeof sp500Data.body === 'string' ? JSON.parse(sp500Data.body) : sp500Data.body;
+      // Log the structure of sp500Data for debugging
+      Logger.log('SP500 data structure: ' + JSON.stringify(sp500Data).substring(0, 200) + '...');
+      
+      // Handle different data structures
+      if (sp500Data.body) {
+        data = typeof sp500Data.body === 'string' ? JSON.parse(sp500Data.body) : sp500Data.body;
+        Logger.log('Parsed data from sp500Data.body');
+      } else {
+        // If there's no body property, assume the data is directly in sp500Data
+        data = sp500Data;
+        Logger.log('Using sp500Data directly as data');
+      }
+      
+      // Log the keys in the parsed data
+      Logger.log('Parsed data keys: ' + (data ? Object.keys(data).join(', ') : 'none'));
     } catch (e) {
-      Logger.log('Error parsing SP500 data body: ' + e);
+      Logger.log('Error parsing SP500 data: ' + e);
       return [];
     }
     
-    // If no ETF holdings, return empty array
-    if (!data.etfHoldings || !Array.isArray(data.etfHoldings) || data.etfHoldings.length === 0) {
-      Logger.log('No ETF holdings data available');
+    // Check for ETF holdings in various possible locations in the data structure
+    let etfHoldings = null;
+    
+    if (data.etfHoldings) {
+      etfHoldings = data.etfHoldings;
+      Logger.log('Found etfHoldings directly in data');
+    } else if (data.data && data.data.etfHoldings) {
+      etfHoldings = data.data.etfHoldings;
+      Logger.log('Found etfHoldings in data.data');
+    } else if (data.sp500 && data.sp500.etfHoldings) {
+      etfHoldings = data.sp500.etfHoldings;
+      Logger.log('Found etfHoldings in data.sp500');
+    }
+    
+    // If etfHoldings is a string, try to parse it
+    if (etfHoldings && typeof etfHoldings === 'string') {
+      try {
+        etfHoldings = JSON.parse(etfHoldings);
+        Logger.log('Parsed etfHoldings from string');
+      } catch (e) {
+        Logger.log('Error parsing etfHoldings string: ' + e);
+      }
+    }
+    
+    // If no ETF holdings found, return empty array
+    if (!etfHoldings || !Array.isArray(etfHoldings) || etfHoldings.length === 0) {
+      Logger.log('No ETF holdings data available after parsing');
       return [];
     }
+    
+    Logger.log(`Found ${etfHoldings.length} ETFs with holdings data`);
     
     // Create a map to track symbols and their total weight across all ETFs
     const holdingsMap = new Map();
     
     // Process each ETF's holdings
-    Logger.log(`Processing ${data.etfHoldings.length} ETFs for top holdings`);
-    
-    data.etfHoldings.forEach(etf => {
+    etfHoldings.forEach(etf => {
+      if (!etf) return;
+      
+      // Log the ETF structure for debugging
+      Logger.log(`Processing ETF: ${etf.symbol || 'unknown'} with ${etf.holdings && Array.isArray(etf.holdings) ? etf.holdings.length : 0} holdings`);
+      
       if (etf.holdings && Array.isArray(etf.holdings)) {
-        Logger.log(`Processing ETF: ${etf.symbol} with ${etf.holdings.length} holdings`);
-        
         // Get top 5 holdings from each ETF
         etf.holdings.slice(0, 5).forEach(holding => {
-          // Clean up the symbol - trim whitespace and ensure it's a valid symbol
-          const rawSymbol = holding.symbol;
-          if (!rawSymbol) return;
+          // Handle different holding structures
+          const rawSymbol = holding.symbol || holding.ticker || (typeof holding === 'string' ? holding : null);
+          if (!rawSymbol) {
+            Logger.log('Skipping holding with no symbol: ' + JSON.stringify(holding).substring(0, 100));
+            return;
+          }
           
           // Trim whitespace and ensure it's a valid symbol
           const symbol = rawSymbol.trim();
           if (!symbol) return;
           
+          // Clean the symbol using the existing function
+          const cleanedSymbol = cleanAndReplaceSymbols([symbol])[0];
+          if (!cleanedSymbol) return;
+          
           // If symbol already exists in map, add to its weight
-          if (holdingsMap.has(symbol)) {
-            holdingsMap.set(symbol, holdingsMap.get(symbol) + 1);
+          if (holdingsMap.has(cleanedSymbol)) {
+            holdingsMap.set(cleanedSymbol, holdingsMap.get(cleanedSymbol) + 1);
           } else {
-            holdingsMap.set(symbol, 1);
+            holdingsMap.set(cleanedSymbol, 1);
           }
         });
       }
@@ -780,7 +961,7 @@ function getTopIndexHoldings() {
       .map(entry => entry[0]);
     
     // Make sure we're returning ALL unique holdings (no arbitrary limit)
-    Logger.log(`Extracted ${topHoldings.length} top holdings from SP500Analyzer`);
+    Logger.log(`Extracted ${topHoldings.length} top holdings from SP500Analyzer: ${topHoldings.join(', ')}`);
     return topHoldings;
   } catch (error) {
     Logger.log(`Error getting top index holdings: ${error}`);
@@ -911,5 +1092,87 @@ function formatFundamentalMetricsData(fundamentalMetricsData) {
   } catch (error) {
     Logger.log(`Error formatting fundamental metrics data: ${error}`);
     return "Error formatting fundamental metrics data\n";
+  }
+}
+
+/**
+ * Clears all caches used in the Market Pulse Daily application
+ * This is useful for testing to ensure fresh data is retrieved
+ * 
+ * @return {Object} Result object with success flag and message
+ */
+function clearAllCaches() {
+  try {
+    Logger.log("Clearing all application caches...");
+    const scriptCache = CacheService.getScriptCache();
+    const documentCache = CacheService.getDocumentCache();
+    const userCache = CacheService.getUserCache();
+    
+    // List of known cache keys used across the application
+    const knownCacheKeys = [
+      // SP500 Analysis cache keys
+      'SP500_ANALYSIS',
+      
+      // Market Sentiment cache keys
+      'MARKET_SENTIMENT_DATA',
+      'ANALYST_COMMENTARY',
+      
+      // Key Market Indicators cache keys
+      'KEY_MARKET_INDICATORS',
+      'FEAR_GREED_INDEX',
+      'MARKET_INDICES',
+      'SECTOR_PERFORMANCE',
+      'VOLATILITY_INDICES',
+      'UPCOMING_ECONOMIC_EVENTS',
+      
+      // Fundamental Metrics cache keys
+      'FUNDAMENTAL_METRICS',
+      'STOCK_METRICS_',  // Prefix for stock-specific metrics
+      
+      // Macroeconomic Factors cache keys
+      'TREASURY_YIELDS',
+      'FED_POLICY',
+      'INFLATION_DATA',
+      'GEOPOLITICAL_RISKS',
+      
+      // Yahoo Finance data cache keys
+      'YAHOO_FINANCE_',  // Prefix for stock-specific Yahoo data
+      
+      // OpenAI cache keys
+      'OPENAI_ANALYSIS',
+      'OPENAI_PROMPT'
+    ];
+    
+    // Clear all known cache keys
+    scriptCache.removeAll(knownCacheKeys);
+    
+    // Also try to clear document and user caches if they exist
+    if (documentCache) documentCache.removeAll(knownCacheKeys);
+    if (userCache) userCache.removeAll(knownCacheKeys);
+    
+    // Additionally clear SP500Analyzer cache specifically
+    if (typeof flushSP500Cache === 'function') {
+      flushSP500Cache();
+      Logger.log("Flushed SP500 cache specifically");
+    }
+    
+    // Clear any other module-specific caches
+    if (typeof clearMarketSentimentCache === 'function') clearMarketSentimentCache();
+    if (typeof clearKeyMarketIndicatorsCache === 'function') clearKeyMarketIndicatorsCache();
+    if (typeof clearFundamentalMetricsCache === 'function') clearFundamentalMetricsCache();
+    if (typeof clearMacroeconomicFactorsCache === 'function') clearMacroeconomicFactorsCache();
+    
+    Logger.log("All caches cleared successfully");
+    
+    return {
+      success: true,
+      message: "All application caches cleared successfully"
+    };
+  } catch (error) {
+    Logger.log(`Error clearing caches: ${error}`);
+    return {
+      success: false,
+      message: `Error clearing caches: ${error}`
+    };
   }
 }
