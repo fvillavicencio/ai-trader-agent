@@ -1624,8 +1624,18 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             asOf: forwardEpsAsOf
           },
           
-          // Historical P/E data
-          historicalPE: sp500Data.historicalPE ? {
+          // Historical P/E data - provide both detailed object and simple array for chart
+          historicalPE: sp500Data.historicalPE ? 
+            // For the chart, we need a simple array of the last 5 years of data
+            (Array.isArray(sp500Data.historicalPE.data) && sp500Data.historicalPE.data.length >= 5 ? 
+              // Reverse the array to get the most recent 5 values (chart expects oldest to newest)
+              sp500Data.historicalPE.data.slice(-5).reverse() : 
+              // Fallback if we don't have enough data
+              []) : 
+            null,
+          
+          // Detailed historical P/E data for other uses
+          historicalPEDetails: sp500Data.historicalPE ? {
             data: Array.isArray(sp500Data.historicalPE.data) ? sp500Data.historicalPE.data : [],
             years: sp500Data.historicalPE.years || null,
             formattedData: sp500Data.historicalPE.formattedData || null,
@@ -2012,8 +2022,10 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
             asOf: formattedDate
           },
           
-          // Historical P/E data (null in fallback case)
-          historicalPE: null
+          // Historical P/E data (empty array in fallback case for chart compatibility)
+          historicalPE: [],
+          // Detailed historical P/E data (null in fallback case)
+          historicalPEDetails: null
         };
       }
     } else {
@@ -2084,8 +2096,10 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           asOf: formattedDate
         },
         
-        // Historical P/E data (null in fallback case)
-        historicalPE: null
+        // Historical P/E data (empty array in fallback case for chart compatibility)
+        historicalPE: [],
+        // Detailed historical P/E data (null in fallback case)
+        historicalPEDetails: null
       };
     }
     
