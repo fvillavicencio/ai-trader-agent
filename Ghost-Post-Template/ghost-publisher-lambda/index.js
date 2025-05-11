@@ -9,6 +9,12 @@
 
 const GhostAdminAPI = require('@tryghost/admin-api');
 const path = require('path');
+const axios = require('axios');
+
+// Configure retry settings
+const MAX_RETRIES = 3;
+const RETRY_DELAY_MS = 2000; // Start with 2 second delay
+const RETRY_STATUS_CODES = [429, 500, 502, 503, 504]; // Status codes to retry on
 
 // Import modules
 const { addMarketSentiment } = require('./src/modules/market-sentiment');
@@ -484,34 +490,49 @@ const generateMobiledoc = (data) => {
  * @param {object} api - The Ghost Admin API client
  * @returns {array} - Array of member objects
  */
-const fetchAllMembers = async (api) => {
-  try {
-    const members = [];
-    let page = 1;
-    let hasMore = true;
-    
-    // Fetch all members using pagination
-    while (hasMore) {
-      const response = await api.members.browse({
-        limit: 100,
-        page: page,
-        include: 'email'
+async function fetchAllMembers(api) {
+  let allMembers = [];
+  let page = 1;
+  let hasMore = true;
+  
+  while (hasMore) {
+    try {
+      // Use retry logic for fetching members
+      const response = await retryWithExponentialBackoff(async () => {
+        try {
+          const result = await api.members.browse({
+            limit: 100,
+            page: page,
+            include: 'email,status,tiers'
+          });
+          console.log(`Successfully fetched members page ${page}`);
+          return result;
+        } catch (error) {
+          console.error(`Error fetching members page ${page}: ${error.message}`);
+          if (error.response) {
+            console.error(`Response status: ${error.response.status}`);
+          }
+          throw error; // Re-throw for retry mechanism
+        }
       });
       
       if (response.length === 0) {
         hasMore = false;
       } else {
-        members.push(...response);
+        allMembers = allMembers.concat(response);
         page++;
       }
+    } catch (error) {
+      console.error(`Failed to fetch members after retries: ${error.message}`);
+      // Don't fail the entire function if we can't fetch more members
+      // Just return what we have so far
+      hasMore = false;
     }
-    
-    return members;
-  } catch (error) {
-    console.error('Error fetching members:', error);
-    return [];
   }
-};
+  
+  console.log(`Total members fetched: ${allMembers.length}`);
+  return allMembers;
+}
 
 /**
  * Categorize members by status (paid, free, comped)
@@ -544,6 +565,48 @@ const categorizeMembersByStatus = (members) => {
   
   return result;
 };
+
+/**
+ * Retry function for API calls with exponential backoff
+ * @param {Function} fn - The function to retry
+ * @param {number} maxRetries - Maximum number of retries
+ * @param {number} initialDelay - Initial delay in ms
+ * @param {Array} retryStatusCodes - HTTP status codes to retry on
+ * @returns {Promise} - The result of the function call
+ */
+async function retryWithExponentialBackoff(fn, maxRetries = MAX_RETRIES, initialDelay = RETRY_DELAY_MS, retryStatusCodes = RETRY_STATUS_CODES) {
+    let retries = 0;
+    let delay = initialDelay;
+    
+    while (true) {
+        try {
+            return await fn();
+        } catch (error) {
+            // Check if we should retry based on status code
+            const statusCode = error.statusCode || (error.response && error.response.status);
+            const shouldRetry = retries < maxRetries && 
+                               (retryStatusCodes.includes(statusCode) || 
+                                error.code === 'ECONNRESET' || 
+                                error.code === 'ETIMEDOUT' ||
+                                error.message.includes('timeout'));
+            
+            if (!shouldRetry) {
+                throw error; // Don't retry, just throw the error
+            }
+            
+            // Log retry attempt
+            retries++;
+            console.log(`API call failed with status ${statusCode}. Retrying (${retries}/${maxRetries}) in ${delay}ms...`);
+            console.log(`Error details: ${error.message}`);
+            
+            // Wait before retrying
+            await new Promise(resolve => setTimeout(resolve, delay));
+            
+            // Exponential backoff with jitter
+            delay = Math.min(delay * 2, 10000) * (0.8 + Math.random() * 0.4);
+        }
+    }
+}
 
 /**
  * Lambda handler function
@@ -692,7 +755,22 @@ exports.handler = async (event, context) => {
             mobiledoc: '(mobiledoc content omitted for brevity)'
         }));
         
-        const post = await api.posts.add(postData);
+        // Create the post in Ghost with retry logic
+        console.log('Attempting to create post in Ghost with retry logic...');
+        const post = await retryWithExponentialBackoff(async () => {
+            try {
+                const result = await api.posts.add(postData);
+                console.log('Post creation successful on attempt');
+                return result;
+            } catch (error) {
+                console.error(`Post creation failed: ${error.message}`);
+                if (error.response) {
+                    console.error(`Response status: ${error.response.status}`);
+                    console.error(`Response data: ${JSON.stringify(error.response.data || {})}`);
+                }
+                throw error; // Re-throw for retry mechanism
+            }
+        });
         
         console.log('Post created successfully!');
         console.log('Post URL:', `${ghostUrl}/${post.slug}`);
@@ -707,6 +785,11 @@ exports.handler = async (event, context) => {
         console.log('Free members:', categorizedMembers.free.length);
         console.log('Comped members:', categorizedMembers.comped.length);
         
+        // Generate standalone HTML
+        const { generateStandaloneHTML } = require('./src/utils/html-generator');
+        const html = generateStandaloneHTML(data, mobiledoc, title);
+        console.log('Generated standalone HTML version');
+        
         return {
             statusCode: 200,
             headers: {
@@ -719,7 +802,8 @@ exports.handler = async (event, context) => {
                 message: 'Post created successfully',
                 postUrl: `${ghostUrl}/${post.slug}`,
                 postId: post.id,
-                members: categorizedMembers
+                members: categorizedMembers,
+                html: html // Include the HTML in the response
             })
         };
     } catch (error) {
@@ -727,23 +811,51 @@ exports.handler = async (event, context) => {
         console.error('Error message:', error.message);
         console.error('Error stack:', error.stack);
         
+        // Enhanced error logging
         if (error.details) {
             console.error('Error details:', JSON.stringify(error.details));
         }
         
+        if (error.response) {
+            console.error('Response status:', error.response.status);
+            console.error('Response data:', JSON.stringify(error.response.data || {}));
+        }
+        
+        // Determine appropriate status code
+        let statusCode = 500;
+        if (error.statusCode) {
+            statusCode = error.statusCode;
+        } else if (error.response && error.response.status) {
+            statusCode = error.response.status;
+        }
+        
+        // Determine if this was a Ghost API error
+        const isGhostApiError = error.message && (
+            error.message.includes('Ghost') ||
+            error.message.includes('api') ||
+            (error.response && error.response.data && error.response.data.errors)
+        );
+        
+        // Create detailed error response
+        const errorResponse = {
+            success: false,
+            error: error.message,
+            statusCode: statusCode,
+            isGhostApiError: isGhostApiError,
+            details: error.details || (error.response && error.response.data) || 'No additional details available',
+            timestamp: new Date().toISOString(),
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        };
+        
         return {
-            statusCode: 500,
+            statusCode: statusCode,
             headers: {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
                 'Access-Control-Allow-Methods': 'OPTIONS,POST'
             },
-            body: JSON.stringify({
-                error: error.message,
-                details: error.details || 'No additional details available',
-                stack: error.stack
-            })
+            body: JSON.stringify(errorResponse)
         };
     }
 };

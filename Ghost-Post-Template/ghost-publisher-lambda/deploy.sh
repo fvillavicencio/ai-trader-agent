@@ -8,8 +8,8 @@ echo "📦 Packaging Ghost Publisher Lambda function..."
 FUNCTION_NAME="GhostPublisherFunction"
 RUNTIME="nodejs22.x"
 HANDLER="index.handler"
-TIMEOUT=30
-MEMORY_SIZE=256
+TIMEOUT=120  # Increased to 2 minutes
+MEMORY_SIZE=512  # Increased memory for better performance
 REGION=${AWS_REGION:-"us-east-2"}
 ROLE_NAME="lambda-ghost-publisher-role"
 
