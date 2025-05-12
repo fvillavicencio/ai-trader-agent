@@ -1004,21 +1004,20 @@ exports.handler = async (event, context) => {
             gekkoImageUrl = s3ImageResult.url;
             console.log(`Using selected image URL: ${gekkoImageUrl}`);
         } else {
-            // If for some reason we still don't have an image, construct a path based on sentiment
-            // This uses the S3 base URL and a path pattern that should exist
+            // If for some reason we still don't have an image, use a specific default image based on sentiment
+            // This uses the S3 base URL and specific default images that we know exist
             const baseS3Url = 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com';
-            const sentimentFolderMap = {
-                'bullish': 'bullish/bulls_on_parade',
-                'bearish': 'bearish/bears_in_control',
-                'neutral': 'neutral/mixed_signals',
-                'volatile': 'volatile/wild_ride'
+            const defaultSentimentImages = {
+                'bullish': 'bullish/bulls_on_parade/bull_market_green_arrow.jpg',
+                'bearish': 'bearish/bears_in_control/bear_market_red_arrow.jpg',
+                'neutral': 'neutral/mixed_signals/balanced_scale_market.jpg',
+                'volatile': 'volatile/wild_ride/market_volatility_chart.jpg'
             };
-            const folder = sentimentFolderMap[sentiment] || 'neutral/mixed_signals';
             
-            // We don't hardcode a specific image name, just the folder
-            // The actual image will be selected by Ghost from what's available
-            gekkoImageUrl = `${baseS3Url}/${folder}/`;
-            console.log(`Using fallback image folder: ${gekkoImageUrl}`);
+            // Use a specific image path based on sentiment, or default to a neutral image
+            const imagePath = defaultSentimentImages[sentiment] || defaultSentimentImages['neutral'];
+            gekkoImageUrl = `${baseS3Url}/${imagePath}`;
+            console.log(`Using fallback specific image: ${gekkoImageUrl}`);
         }
             
         // Add image size constraints to the feature image for Ghost

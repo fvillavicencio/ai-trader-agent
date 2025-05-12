@@ -93,12 +93,18 @@ function getS3ImageForTitle(title, sentiment = 'neutral') {
 function getRandomS3ImageForSentiment(sentiment = 'neutral') {
   try {
     // Get all images for this sentiment category from the mappings
+    // Only include paths that end with image extensions to ensure we get specific image files
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
     const sentimentImages = Object.keys(s3ImageMappings).filter(path => 
-      path.startsWith(sentiment + '/') || 
-      // Also include images from subdirectories
-      Object.keys(sentimentFolders || {}).some(key => 
-        key === sentiment && sentimentFolders[key].some(folder => 
-          path.startsWith(folder + '/')
+      // Make sure it's an actual image file
+      imageExtensions.some(ext => path.toLowerCase().endsWith(ext)) &&
+      (
+        path.startsWith(sentiment + '/') || 
+        // Also include images from subdirectories
+        Object.keys(sentimentFolders || {}).some(key => 
+          key === sentiment && sentimentFolders[key].some(folder => 
+            path.startsWith(folder + '/')
+          )
         )
       )
     );
@@ -118,7 +124,10 @@ function getRandomS3ImageForSentiment(sentiment = 'neutral') {
     }
     
     // If no images found for this sentiment, try any sentiment
-    const allImages = Object.keys(s3ImageMappings);
+    const allImages = Object.keys(s3ImageMappings).filter(path => 
+      imageExtensions.some(ext => path.toLowerCase().endsWith(ext))
+    );
+    
     if (allImages.length > 0) {
       const randomImagePath = allImages[Math.floor(Math.random() * allImages.length)];
       const s3Url = s3ImageMappings[randomImagePath] || `${s3Config.baseUrl || ''}/${randomImagePath}`;
@@ -132,8 +141,26 @@ function getRandomS3ImageForSentiment(sentiment = 'neutral') {
       };
     }
     
-    console.warn('No S3 images found in mappings');
-    return null;
+    // If still no images found, use default images based on sentiment
+    console.warn('No S3 images found in mappings, using default image');
+    const defaultImages = {
+      'bullish': 'bullish/bulls_on_parade/bull_market_green_arrow.jpg',
+      'bearish': 'bearish/bears_in_control/bear_market_red_arrow.jpg',
+      'neutral': 'neutral/mixed_signals/balanced_scale_market.jpg',
+      'volatile': 'volatile/wild_ride/market_volatility_chart.jpg'
+    };
+    
+    const defaultImagePath = defaultImages[sentiment] || defaultImages['neutral'];
+    const defaultS3Url = `${s3Config.baseUrl || ''}/${defaultImagePath}`;
+    
+    return {
+      url: defaultS3Url,
+      localPath: defaultImagePath,
+      metadata: {
+        path: defaultImagePath,
+        attribution: 'Photos provided by Pexels'
+      }
+    };
   } catch (error) {
     console.error('Error getting random S3 image:', error);
     return null;
