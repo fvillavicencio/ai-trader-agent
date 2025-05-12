@@ -819,6 +819,39 @@ async function retryWithExponentialBackoff(fn, maxRetries = MAX_RETRIES, initial
 }
 
 /**
+ * Add financial image to the HTML content
+ * @param {string} htmlContent - The HTML content to modify
+ * @param {string} imageUrl - The URL of the image to add
+ * @returns {string} - The modified HTML content with the image
+ */
+const addFinancialImage = (htmlContent, imageUrl) => {
+    // Create the image HTML with a quote
+    const imageHtml = `
+    <div style="text-align: center; margin: 20px 0 30px 0;">
+      <img src="${imageUrl}" alt="Market Insights" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+      <p style="font-style: italic; color: #718096; margin-top: 10px; font-size: 0.9rem;">"Greed, for lack of a better word, is good." - Gordon Gekko</p>
+    </div>
+    `;
+    
+    // Find the position after the header section
+    const headerEndPos = htmlContent.indexOf('</header>');
+    
+    if (headerEndPos !== -1) {
+        // Insert the image HTML after the header closing tag
+        const modifiedHtml = [
+            htmlContent.slice(0, headerEndPos + 9), // +9 to include the </header> tag
+            imageHtml,
+            htmlContent.slice(headerEndPos + 9)
+        ].join('');
+        
+        return modifiedHtml;
+    }
+    
+    // If header not found, return the original content
+    return htmlContent;
+};
+
+/**
  * Lambda handler function
  * @param {object} event - The Lambda event object
  * @param {object} context - The Lambda context object
@@ -946,12 +979,25 @@ exports.handler = async (event, context) => {
             { name: 'Market Pulse' }
         ];
         
+        // Get an appropriate image from S3 bucket based on sentiment
+        const { getS3ImageForTitle } = require('./src/utils/s3-image-selector');
+        
+        // Try to get a Gordon Gekko image or a suitable financial-themed image based on sentiment
+        const sentiment = data.decision && data.decision.sentiment ? data.decision.sentiment : 'neutral';
+        const s3ImageResult = getS3ImageForTitle(title, sentiment);
+        
+        // Use the S3 image URL or fall back to a default image if not available
+        const gekkoImageUrl = s3ImageResult && s3ImageResult.url 
+            ? s3ImageResult.url 
+            : 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bullish/absolutely_vertical/jordan_belfort_wolf_of_wall_street.jpg';
+        
         // Create the post in Ghost
         const postData = {
             title: title,
             mobiledoc: JSON.stringify(mobiledoc),
             status: 'published',
             featured: false,
+            feature_image: gekkoImageUrl,  // Add the feature image
             tags: tags,
             visibility: visibility,
             excerpt: data.decision ? data.decision.summary : 'Market analysis and trading insights',
@@ -997,8 +1043,13 @@ exports.handler = async (event, context) => {
         
         // Generate standalone HTML
         const { generateStandaloneHTML } = require('./src/utils/html-generator');
-        const html = generateStandaloneHTML(data, mobiledoc, title);
-        console.log('Generated standalone HTML version');
+        let html = generateStandaloneHTML(data, mobiledoc, title);
+        
+        // Add financial image to the HTML content
+        console.log('Adding financial image to HTML content...');
+        html = addFinancialImage(html, gekkoImageUrl);
+        
+        console.log('Generated standalone HTML version with financial image');
         
         // Log HTML preview for debugging
         console.log('HTML Preview (first 500 characters):');
