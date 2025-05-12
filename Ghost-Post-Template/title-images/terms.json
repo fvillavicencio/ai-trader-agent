@@ -1,0 +1,270 @@
+{
+  "bullish": {
+    "absolutely_vertical": [
+      "stock market surge professional",
+      "vertical growth chart financial",
+      "skyscraper stock chart upward",
+      "stock market record high professional",
+      "wall street success businessman"
+    ],
+    "blue_horseshoe": [
+      "stock trader success handshake",
+      "business deal handshake",
+      "trading floor success"
+    ],
+    "buy_the_dip": [
+      "buying opportunity stock dip",
+      "stock market dip recovery",
+      "investment opportunity chart"
+    ],
+    "greed_is_good": [
+      "golden bull wall street",
+      "charging bull statue wall street",
+      "money pile businessman"
+    ],
+    "green_across_board": [
+      "all green stock tickers",
+      "green financial charts",
+      "positive market indicators"
+    ],
+    "long_term_value": [
+      "wise investor professional",
+      "long term investment growth",
+      "value investing chart",
+      "patient investor success"
+    ],
+    "lunch_is_for_wimps": [
+      "busy traders wall street",
+      "hectic trading floor",
+      "wall street rush hour"
+    ],
+    "money_never_sleeps": [
+      "new york stock exchange night",
+      "wall street night trading",
+      "financial district night"
+    ],
+    "opportunity_lifetime": [
+      "golden opportunity finance",
+      "stock market breakthrough",
+      "once in lifetime chance"
+    ],
+    "the_show_goes_on": [
+      "stock market celebration champagne",
+      "wall street party",
+      "traders celebrating"
+    ],
+    "to_the_moon": [
+      "rocket launch finance",
+      "skyrocketing stock chart",
+      "astronomical growth finance"
+    ]
+  },
+  "bearish": {
+    "the_bubble_has_popped": [
+      "bursting bubble finance",
+      "soap bubble bursting",
+      "housing bubble collapse"
+    ],
+    "the_correction_is_coming": [
+      "storm clouds financial district",
+      "dark clouds wall street",
+      "ominous sky finance"
+    ],
+    "the_house_of_cards": [
+      "collapsing house of cards finance",
+      "unstable card tower",
+      "fragile financial structure"
+    ],
+    "the_music_stopped": [
+      "empty chairs trading floor",
+      "abandoned party finance",
+      "stopped record player"
+    ],
+    "the_partys_over": [
+      "abandoned trading floor",
+      "empty wall street",
+      "deserted financial district"
+    ],
+    "bears_in_control": [
+      "bear market statue finance",
+      "bear market chart",
+      "grizzly bear finance"
+    ],
+    "blood_in_streets": [
+      "red stock market crash",
+      "bleeding financial chart",
+      "deep red market indicators"
+    ],
+    "bubble_burst": [
+      "economic bubble bursting",
+      "market bubble pop",
+      "financial bubble explosion"
+    ],
+    "dead_cat_bounce": [
+      "temporary market recovery",
+      "brief upward bounce chart",
+      "false recovery finance"
+    ],
+    "falling_knives": [
+      "falling knife finance metaphor",
+      "sharp objects falling",
+      "dangerous catch finance"
+    ],
+    "sell_it_all_today": [
+      "panic selling traders",
+      "stock market sell-off",
+      "emergency exit finance"
+    ],
+    "winter_is_coming": [
+      "frozen financial district",
+      "snow covered wall street",
+      "winter storm finance"
+    ]
+  },
+  "neutral": {
+    "just_wait": [
+      "hourglass finance waiting",
+      "clock waiting room",
+      "patient investor bench"
+    ],
+    "mixed_signals": [
+      "conflicting arrows finance",
+      "mixed direction signs",
+      "contradictory indicators"
+    ],
+    "nobody_knows": [
+      "question mark finance",
+      "confused investor",
+      "uncertain market direction"
+    ],
+    "patience_grasshopper": [
+      "zen garden finance",
+      "meditation business",
+      "patient investor"
+    ],
+    "proceed_with_caution": [
+      "caution sign finance",
+      "yellow warning tape",
+      "careful steps business"
+    ],
+    "stuck_in_middle": [
+      "sideways market chart",
+      "middle ground standoff",
+      "balanced scale finance"
+    ],
+    "the_crossroads": [
+      "crossroads decision finance",
+      "fork in road business",
+      "decision junction"
+    ],
+    "the_details_fuzzy": [
+      "foggy financial skyline",
+      "blurry stock chart",
+      "unclear market direction"
+    ],
+    "the_waiting_game": [
+      "chess financial strategy",
+      "strategic board game",
+      "patient chess player"
+    ],
+    "time_will_tell": [
+      "clock finance waiting",
+      "hourglass time passing",
+      "sundial business patience"
+    ],
+    "walking_the_tightrope": [
+      "balance beam gymnast",
+      "tightrope walker",
+      "careful balance business"
+    ]
+  },
+  "volatile": {
+    "buckle_up": [
+      "car seatbelt warning",
+      "safety restraint",
+      "prepare for turbulence"
+    ],
+    "casino_is_open": [
+      "wall street casino chips",
+      "roulette wheel finance",
+      "stock market gambling"
+    ],
+    "fasten_seatbelts": [
+      "airplane seatbelt sign",
+      "roller coaster safety bar",
+      "buckle up warning"
+    ],
+    "fear_and_greed": [
+      "fear greed index finance",
+      "emotional trading",
+      "market psychology gauge"
+    ],
+    "lightning_bottle": [
+      "lightning storm finance",
+      "captured lightning",
+      "electric storm finance"
+    ],
+    "market_whiplash": [
+      "neck brace finance",
+      "whiplash injury",
+      "sharp market reversal"
+    ],
+    "rollercoaster_day": [
+      "stock chart rollercoaster",
+      "market ups and downs",
+      "volatile trading day"
+    ],
+    "the_perfect_storm": [
+      "multiple storm clouds",
+      "converging hurricanes",
+      "perfect storm brewing"
+    ],
+    "turbulence_ahead": [
+      "airplane turbulence business",
+      "stormy sky finance",
+      "rough ocean waves"
+    ],
+    "wild_ride": [
+      "trading floor chaos",
+      "roller coaster finance",
+      "wild stock chart"
+    ]
+  },
+  "bullish/trend_is_friend": ["uptrend chart finance", "positive trend analysis", "rising market pattern"],
+  
+  "bearish/the_correction_is_coming": ["storm clouds financial district", "dark clouds wall street", "ominous sky finance"],
+  "bearish/the_partys_over": ["abandoned trading floor", "empty wall street", "deserted financial district"],
+  "bearish/the_bubble_has_popped": ["bursting bubble finance", "soap bubble bursting", "housing bubble collapse"],
+  "bearish/the_house_of_cards": ["collapsing house of cards finance", "unstable card tower", "fragile financial structure"],
+  "bearish/sell_it_all_today": ["panic selling traders", "stock market sell-off", "emergency exit finance"],
+  "bearish/the_music_stopped": ["empty chairs trading floor", "abandoned party finance", "stopped record player"],
+  "bearish/bears_in_control": ["bear market statue finance", "bear market chart", "grizzly bear finance"],
+  "bearish/blood_in_streets": ["red stock market crash", "bleeding financial chart", "deep red market indicators"],
+  "bearish/falling_knives": ["falling knife finance metaphor", "sharp objects falling", "dangerous catch finance"],
+  "bearish/dead_cat_bounce": ["temporary market recovery", "brief upward bounce chart", "false recovery finance"],
+  "bearish/winter_is_coming": ["frozen financial district", "snow covered wall street", "winter storm finance"],
+  "bearish/bubble_burst": ["economic bubble bursting", "market bubble pop", "financial bubble explosion"],
+  
+  "neutral/patience_grasshopper": ["zen garden finance", "meditation business", "patient investor"],
+  "neutral/the_details_fuzzy": ["foggy financial skyline", "blurry stock chart", "unclear market direction"],
+  "neutral/just_wait": ["hourglass finance waiting", "clock waiting room", "patient investor bench"],
+  "neutral/nobody_knows": ["question mark finance", "confused investor", "uncertain market direction"],
+  "neutral/the_waiting_game": ["chess financial strategy", "strategic board game", "patient chess player"],
+  "neutral/proceed_with_caution": ["caution sign finance", "yellow warning tape", "careful steps business"],
+  "neutral/mixed_signals": ["conflicting arrows finance", "mixed direction signs", "contradictory indicators"],
+  "neutral/stuck_in_middle": ["sideways market chart", "middle ground standoff", "balanced scale finance"],
+  "neutral/walking_the_tightrope": ["balance beam gymnast", "tightrope walker", "careful balance business"],
+  "neutral/the_crossroads": ["crossroads decision finance", "fork in road business", "decision junction"],
+  "neutral/time_will_tell": ["clock finance waiting", "hourglass time passing", "sundial business patience"],
+  
+  "volatile/turbulence_ahead": ["airplane turbulence business", "stormy sky finance", "rough ocean waves"],
+  "volatile/fasten_seatbelts": ["airplane seatbelt sign", "roller coaster safety bar", "buckle up warning"],
+  "volatile/wild_ride": ["trading floor chaos", "roller coaster finance", "wild stock chart"],
+  "volatile/casino_is_open": ["wall street casino chips", "roulette wheel finance", "stock market gambling"],
+  "volatile/rollercoaster_day": ["stock chart rollercoaster", "market ups and downs", "volatile trading day"],
+  "volatile/market_whiplash": ["neck brace finance", "whiplash injury", "sharp market reversal"],
+  "volatile/the_perfect_storm": ["multiple storm clouds", "converging hurricanes", "perfect storm brewing"],
+  "volatile/lightning_bottle": ["lightning storm finance", "captured lightning", "electric storm finance"],
+  "volatile/buckle_up": ["car seatbelt warning", "safety restraint", "prepare for turbulence"],
+  "volatile/fear_and_greed": ["fear greed index finance", "emotional trading", "market psychology gauge"]
+}

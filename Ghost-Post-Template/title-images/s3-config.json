@@ -1,0 +1,5 @@
+{
+  "bucketName": "market-pulse-daily-title-images",
+  "region": "us-east-2",
+  "baseUrl": "https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com"
+}
