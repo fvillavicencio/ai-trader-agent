@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>S&P 500 EPS Charts (TradingView)</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      max-width: 960px;
+    }
+    h2 {
+      font-size: 1.3em;
+      margin-top: 40px;
+      margin-bottom: 10px;
+    }
+    .tradingview-widget-container {
+      margin-bottom: 30px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Historical (TTM) EPS -->
+  <section id="fundamental-data-historical">
+    <h2>S&P 500 EPS (Historical)</h2>
+    <!-- Macrotrends Historical EPS Chart -->
+    <h3>Macrotrends Historical EPS Chart</h3>
+    <iframe
+      src="https://www.macrotrends.net/assets/php/interactive-chart.php?symbol=SP500EPS&timeframe=monthly"
+      width="100%" height="400" frameborder="0">
+    </iframe>
+    <div style="margin-bottom: 16px;">
+      Interactive 90-year trailing EPS per share.<br>
+      <a href="https://www.macrotrends.net/1324/s-p-500-earnings-history" target="_blank">Source: Macrotrends</a>
+    </div>
+
+    <!-- YCharts EPS Indicator -->
+    <h3>YCharts EPS Indicator</h3>
+    <iframe
+      src="https://ycharts.com/indicators/sp_500_eps"
+      width="100%" height="400" frameborder="0">
+    </iframe>
+    <div style="margin-bottom: 16px;">
+      Free interactive EPS chart (may require subscription for advanced embeds).<br>
+      <a href="https://ycharts.com/indicators/sp_500_eps" target="_blank">Source: YCharts</a>
+    </div>
+
+    <!-- GuruFocus EPS Data -->
+    <h3>GuruFocus EPS Data</h3>
+    <iframe
+      src="https://www.gurufocus.com/economic_indicators/58/sp-500-earnings-per-share"
+      width="100%" height="400" frameborder="0">
+    </iframe>
+    <div style="margin-bottom: 16px;">
+      Downloadable EPS time series and chart.<br>
+      <a href="https://www.gurufocus.com/economic_indicators/58/sp-500-earnings-per-share" target="_blank">Source: GuruFocus</a>
+    </div>
+  </section>
+
+  <!-- Forward Estimates (if available in fundamentals) -->
+  <section id="fundamental-data-forward">
+    <h2>S&P 500 EPS Forward Estimate</h2>
+    <!-- TradingView Widget BEGIN -->
+    <div class="tradingview-widget-container">
+      <div class="tradingview-widget-container__widget"></div>
+      <script type="text/javascript" src="https://s3.tradingview.com/external-embedding/embed-widget-financials.js" async>
+      {
+        "symbol": "FOREXCOM:SPXUSD",
+        "colorTheme": "light",
+        "isTransparent": false,
+        "largeChartUrl": "",
+        "displayMode": "forward_estimate",
+        "width": "100%",
+        "height": "400"
+      }
+      </script>
+    </div>
+    <!-- TradingView Widget END -->
+    </div>
+    <!-- TradingView Fundamental Data widget END -->
+  </section>
+
+</body>
+</html>
