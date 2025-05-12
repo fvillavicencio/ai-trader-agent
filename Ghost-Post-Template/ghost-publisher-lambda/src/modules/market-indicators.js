@@ -495,7 +495,11 @@ const addMarketHeader = (mobiledoc, data) => {
   // Get S&P 500 data
   const sp500 = data.marketIndicators?.majorIndices?.find(index => index.symbol === '^GSPC' || index.name.includes('S&P 500'));
   const sp500Price = sp500 ? formatNumber(sp500.price) : '';
-  const sp500Change = sp500 ? parseFloat(sp500.percentChange || sp500.change) : 0;
+  // Calculate percentage change correctly if not provided
+  const sp500Change = sp500 ? (
+    sp500.percentChange ? parseFloat(sp500.percentChange) : 
+    sp500.change && sp500.price ? ((parseFloat(sp500.change) / parseFloat(sp500.price)) * 100) : 0
+  ) : 0;
   const sp500IsPositive = sp500 ? (sp500.isPositive !== undefined ? sp500.isPositive : sp500Change >= 0) : false;
   const sp500ChangeIcon = sp500IsPositive ? '↑' : '↓';
   const sp500ChangeSign = sp500IsPositive ? '+' : '';
@@ -529,7 +533,7 @@ const addMarketHeader = (mobiledoc, data) => {
         Market Pulse Daily
       </div>
       <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-        <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500ChangeIcon} ${sp500ChangeSign}${sp500Change}%)</span></span> | 
+        <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">${sp500ChangeIcon} ${Math.abs(parseFloat(sp500Change)).toFixed(2)} (${Math.abs(parseFloat(sp500Change)).toFixed(2)}%)</span></span> | 
         <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${getFearGreedColor(fearGreedValue)}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
         <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span>${rsiValue ? ` | <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiValue >= 70 ? 'Overbought' : rsiValue <= 30 ? 'Oversold' : rsiValue >= 60 ? 'Approaching Overbought' : rsiValue <= 40 ? 'Approaching Oversold' : 'Neutral'})</span></span>` : ''}
       </div>
@@ -550,7 +554,11 @@ const addMarketIndicators = (mobiledoc, data) => {
   // Find S&P 500 data
   const sp500 = data.marketIndicators?.majorIndices?.find(i => i.name === 'S&P 500');
   const sp500Price = sp500?.price ? formatNumber(sp500.price) : '0';
-  const sp500Change = sp500?.percentChange || (sp500?.change ? sp500.change + '%' : '0%');
+  // Calculate percentage change correctly if not provided
+  const sp500Change = sp500?.percentChange || 
+    (sp500?.change && sp500?.price ? 
+      ((parseFloat(sp500.change) / parseFloat(sp500.price)) * 100).toFixed(2) + '%' : 
+      '0%');
   const sp500IsPositive = sp500?.isPositive !== undefined ? sp500.isPositive : (parseFloat(sp500?.change || 0) >= 0);
   const sp500Color = sp500IsPositive ? '#48bb78' : '#f56565';
 
@@ -592,7 +600,7 @@ const addMarketIndicators = (mobiledoc, data) => {
             <div class="collapsible-icon" style="font-size: 14px; color: black;">▼</div>
           </div>
           <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-            <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">(${sp500IsPositive ? '↑' : '↓'} ${sp500Change})</span></span> | 
+            <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">${sp500IsPositive ? '↑' : '↓'} ${Math.abs(parseFloat(sp500Change)).toFixed(2)} (${Math.abs(parseFloat(sp500Change)).toFixed(2)}%)</span></span> | 
             <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
             <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span>${rsiValue ? ` | 
             <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiTrend})</span></span>` : ''}
