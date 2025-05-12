@@ -828,7 +828,7 @@ const addFinancialImage = (htmlContent, imageUrl) => {
     // Create the image HTML with a quote
     const imageHtml = `
     <div style="text-align: center; margin: 20px 0 30px 0;">
-      <img src="${imageUrl}" alt="Market Insights" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+      <img src="${imageUrl}" alt="Market Insights" style="max-width: 400px; width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
       <p style="font-style: italic; color: #718096; margin-top: 10px; font-size: 0.9rem;">"Greed, for lack of a better word, is good." - Gordon Gekko</p>
     </div>
     `;
@@ -990,6 +990,10 @@ exports.handler = async (event, context) => {
         const gekkoImageUrl = s3ImageResult && s3ImageResult.url 
             ? s3ImageResult.url 
             : 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bullish/absolutely_vertical/jordan_belfort_wolf_of_wall_street.jpg';
+            
+        // Add image size constraints to the feature image for Ghost
+        // Note: We're not modifying the URL directly as S3 doesn't support image transformations
+        // The size constraint will be handled by Ghost's image processing
         
         // Create the post in Ghost
         const postData = {
