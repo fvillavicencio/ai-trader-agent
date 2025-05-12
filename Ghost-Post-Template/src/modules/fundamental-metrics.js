@@ -461,12 +461,12 @@ const addMagnificentSevenContent = (data) => {
 };
 
 /**
- * Generates the Other Stocks content
+ * Generates the Market Movers content
  * @param {object} data - The data object containing stock information
- * @returns {string} - The HTML content for the Other Stocks section
+ * @returns {string} - The HTML content for the Market Movers section
  */
 const addOtherStocksContent = (data) => {
-  // Get Other Stocks data from the data object
+  // Get Market Movers data from the data object
   const otherStocks = data.fundamentalMetrics?.otherStocks || [];
   
   if (otherStocks.length === 0) {
@@ -476,7 +476,7 @@ const addOtherStocksContent = (data) => {
   return `
     <div class="other-stocks-section" style="margin-bottom: 30px;">
       <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 15px;">
-        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Other Stocks</div>
+        <div style="font-size: 1.1rem; font-weight: bold; color: #4a5568;">Market Movers</div>
       </div>
       
       <div class="stock-cards-container" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; justify-content: center; margin-bottom: 20px;">
