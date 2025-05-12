@@ -33,6 +33,14 @@ try {
 // Import the local image selector for consistent mapping logic
 const { getImageForTitle: getLocalImagePath } = require('./title-image-selector');
 
+// Sentiment folder mappings for fallback selection
+const sentimentFolders = {
+  bullish: ["bullish/bulls_on_parade", "bullish/green_across_board", "bullish/to_the_moon"],
+  bearish: ["bearish/bears_in_control", "bearish/the_correction_is_coming", "bearish/winter_is_coming"],
+  neutral: ["neutral/mixed_signals", "neutral/the_waiting_game", "neutral/the_crossroads"],
+  volatile: ["volatile/wild_ride", "volatile/the_perfect_storm", "volatile/market_whiplash"]
+};
+
 /**
  * Get an S3 URL for an image appropriate for the given title
  * @param {string} title - The title to find an image for
@@ -46,7 +54,8 @@ function getS3ImageForTitle(title, sentiment = 'neutral') {
     
     if (!localImagePath) {
       console.warn('No local image path found for title:', title);
-      return null;
+      // Try to find a random image from the sentiment category
+      return getRandomS3ImageForSentiment(sentiment);
     }
     
     // Check if we have this image in our S3 mappings
@@ -71,6 +80,62 @@ function getS3ImageForTitle(title, sentiment = 'neutral') {
     };
   } catch (error) {
     console.error('Error getting S3 image for title:', error);
+    // Try to find a random image from the sentiment category as a fallback
+    return getRandomS3ImageForSentiment(sentiment);
+  }
+}
+
+/**
+ * Get a random S3 image for a given sentiment category
+ * @param {string} sentiment - The sentiment category (bullish, bearish, neutral, volatile)
+ * @returns {object} - Object containing the S3 URL and metadata
+ */
+function getRandomS3ImageForSentiment(sentiment = 'neutral') {
+  try {
+    // Get all images for this sentiment category from the mappings
+    const sentimentImages = Object.keys(s3ImageMappings).filter(path => 
+      path.startsWith(sentiment + '/') || 
+      // Also include images from subdirectories
+      Object.keys(sentimentFolders || {}).some(key => 
+        key === sentiment && sentimentFolders[key].some(folder => 
+          path.startsWith(folder + '/')
+        )
+      )
+    );
+    
+    if (sentimentImages.length > 0) {
+      // Select a random image from the sentiment category
+      const randomImagePath = sentimentImages[Math.floor(Math.random() * sentimentImages.length)];
+      const s3Url = s3ImageMappings[randomImagePath] || `${s3Config.baseUrl || ''}/${randomImagePath}`;
+      
+      console.log(`Selected random image for sentiment ${sentiment}: ${randomImagePath}`);
+      
+      return {
+        url: s3Url,
+        localPath: randomImagePath,
+        metadata: getImageMetadataFromLocalPath(randomImagePath)
+      };
+    }
+    
+    // If no images found for this sentiment, try any sentiment
+    const allImages = Object.keys(s3ImageMappings);
+    if (allImages.length > 0) {
+      const randomImagePath = allImages[Math.floor(Math.random() * allImages.length)];
+      const s3Url = s3ImageMappings[randomImagePath] || `${s3Config.baseUrl || ''}/${randomImagePath}`;
+      
+      console.log(`Selected random image from all available: ${randomImagePath}`);
+      
+      return {
+        url: s3Url,
+        localPath: randomImagePath,
+        metadata: getImageMetadataFromLocalPath(randomImagePath)
+      };
+    }
+    
+    console.warn('No S3 images found in mappings');
+    return null;
+  } catch (error) {
+    console.error('Error getting random S3 image:', error);
     return null;
   }
 }
@@ -132,6 +197,7 @@ function getImageMetadataFromLocalPath(localPath) {
 
 module.exports = {
   getS3ImageForTitle,
+  getRandomS3ImageForSentiment,
   getImageMetadataFromLocalPath,
   s3Config
 };
