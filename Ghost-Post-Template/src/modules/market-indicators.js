@@ -38,13 +38,25 @@ const addMajorIndices = (mobiledoc, data) => {
             
             // Format percentage change without negative sign
             let percentChange = '';
-            if (index.percentChange) {
-              // If percentChange is provided as a string
-              const numericPart = parseFloat(index.percentChange.replace('%', ''));
+            if (index.percentChange !== undefined) {
+              // If percentChange is provided as a number or string
+              const numericPart = typeof index.percentChange === 'string' ? 
+                parseFloat(index.percentChange.replace('%', '')) : 
+                parseFloat(index.percentChange);
               percentChange = Math.abs(numericPart).toFixed(2) + '%';
-            } else if (index.change) {
-              // If we need to add % to the change value
-              percentChange = Math.abs(parseFloat(index.change)).toFixed(2) + '%';
+            } else if (index.change !== undefined && index.price !== undefined && index.previousClose !== undefined) {
+              // Calculate percentage change from change and previous close
+              const calculatedPercent = (parseFloat(index.change) / parseFloat(index.previousClose)) * 100;
+              percentChange = Math.abs(calculatedPercent).toFixed(2) + '%';
+            } else if (index.change !== undefined && index.price !== undefined) {
+              // If we have price and change but no previous close, estimate percentage
+              const estimatedPrevious = parseFloat(index.price) - parseFloat(index.change);
+              if (estimatedPrevious > 0) {
+                const calculatedPercent = (parseFloat(index.change) / estimatedPrevious) * 100;
+                percentChange = Math.abs(calculatedPercent).toFixed(2) + '%';
+              } else {
+                percentChange = '0.00%';
+              }
             } else {
               percentChange = '0.00%';
             }
