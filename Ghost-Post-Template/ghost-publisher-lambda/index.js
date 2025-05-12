@@ -979,12 +979,22 @@ exports.handler = async (event, context) => {
             { name: 'Market Pulse' }
         ];
         
-        // Get an appropriate image from S3 bucket based on sentiment
+        // Get an appropriate image from S3 bucket based on title and sentiment
         const { getS3ImageForTitle } = require('./src/utils/s3-image-selector');
         
-        // Try to get a Gordon Gekko image or a suitable financial-themed image based on sentiment
+        // Extract sentiment from the decision data or default to neutral
         const sentiment = data.decision && data.decision.sentiment ? data.decision.sentiment : 'neutral';
+        console.log(`Using sentiment "${sentiment}" for image selection`);
+        
+        // Get an appropriate image based on the title and sentiment
+        // This will select from multiple images in each category to avoid repetition
         const s3ImageResult = getS3ImageForTitle(title, sentiment);
+        console.log(`Selected image: ${s3ImageResult ? s3ImageResult.localPath : 'None found'}`);
+        
+        // Log the image metadata if available
+        if (s3ImageResult && s3ImageResult.metadata) {
+            console.log(`Image metadata: ${JSON.stringify(s3ImageResult.metadata)}`);
+        }
         
         // Use the S3 image URL or fall back to a default image if not available
         const gekkoImageUrl = s3ImageResult && s3ImageResult.url 
