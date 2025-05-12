@@ -33,20 +33,30 @@ const addMajorIndices = (mobiledoc, data) => {
           ${data.marketIndicators.majorIndices.map(index => {
             const isPositive = index.isPositive !== undefined ? index.isPositive : parseFloat(index.change) >= 0;
             const changeColor = isPositive ? '#48bb78' : '#f56565';
-            const changeSign = isPositive ? '+' : '';
             const changeIcon = isPositive ? '↑' : '↓';
             
-            // Format percentage change without negative sign
-            let percentChange = '';
-            if (index.percentChange) {
-              // If percentChange is provided as a string
-              const numericPart = parseFloat(index.percentChange.replace('%', ''));
+            // Calculate percentage change based on price and change value
+            let percentChange = '0.00%';
+            let formattedChange = '0.00';
+            
+            if (index.price && index.change !== undefined) {
+              // The change field contains the actual value change, not percentage
+              const changeValue = parseFloat(index.change);
+              formattedChange = Math.abs(changeValue).toFixed(2);
+              
+              // Calculate percentage: (change / price) * 100
+              // We need to calculate what the previous price was
+              const previousPrice = index.price - changeValue;
+              if (previousPrice > 0) {
+                const percentageValue = (changeValue / previousPrice) * 100;
+                percentChange = Math.abs(percentageValue).toFixed(2) + '%';
+              }
+            } else if (index.percentChange !== undefined) {
+              // If percentChange is provided directly
+              const numericPart = typeof index.percentChange === 'string' ? 
+                parseFloat(index.percentChange.replace('%', '')) : 
+                parseFloat(index.percentChange);
               percentChange = Math.abs(numericPart).toFixed(2) + '%';
-            } else if (index.change) {
-              // If we need to add % to the change value
-              percentChange = Math.abs(parseFloat(index.change)).toFixed(2) + '%';
-            } else {
-              percentChange = '0.00%';
             }
             
             return `
@@ -56,7 +66,7 @@ const addMajorIndices = (mobiledoc, data) => {
                   <div style="display: flex; align-items: center; gap: 15px;">
                     <div style="font-size: 0.95rem;">${index.price ? formatNumber(index.price) : ''}</div>
                     <div style="color: ${changeColor}; font-weight: 500; font-size: 0.95rem;">
-                      ${changeIcon} ${changeSign}${percentChange}
+                      ${changeIcon} ${formattedChange} (${percentChange})
                     </div>
                   </div>
                 </div>
