@@ -1005,17 +1005,27 @@ exports.handler = async (event, context) => {
             console.log(`Using selected image URL: ${gekkoImageUrl}`);
         } else {
             // If for some reason we still don't have an image, use a specific default image based on sentiment
-            // This uses the S3 base URL and specific default images that we know exist
+            // Load default images from configuration file
+            const fs = require('fs');
+            const path = require('path');
             const baseS3Url = 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com';
-            const defaultSentimentImages = {
-                'bullish': 'bullish/bulls_on_parade/bull_market_green_arrow.jpg',
-                'bearish': 'bearish/bears_in_control/bear_market_red_arrow.jpg',
-                'neutral': 'neutral/mixed_signals/balanced_scale_market.jpg',
-                'volatile': 'volatile/wild_ride/market_volatility_chart.jpg'
-            };
+            
+            // Load default images from configuration file
+            let defaultSentimentImages = {};
+            try {
+                const defaultImagesPath = path.resolve(__dirname, '../title-images/default-images.json');
+                if (fs.existsSync(defaultImagesPath)) {
+                    defaultSentimentImages = JSON.parse(fs.readFileSync(defaultImagesPath, 'utf8'));
+                    console.log('Loaded default images from configuration file');
+                } else {
+                    console.warn('Default images configuration file not found');
+                }
+            } catch (error) {
+                console.error('Error loading default images:', error);
+            }
             
             // Use a specific image path based on sentiment, or default to a neutral image
-            const imagePath = defaultSentimentImages[sentiment] || defaultSentimentImages['neutral'];
+            const imagePath = defaultSentimentImages[sentiment] || defaultSentimentImages['neutral'] || 'neutral/mixed_signals/default.jpg';
             gekkoImageUrl = `${baseS3Url}/${imagePath}`;
             console.log(`Using fallback specific image: ${gekkoImageUrl}`);
         }

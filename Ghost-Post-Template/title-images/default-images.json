@@ -1,0 +1,6 @@
+{
+  "bullish": "bullish/bulls_on_parade/bull_market_green_arrow.jpg",
+  "bearish": "bearish/bears_in_control/bear_market_red_arrow.jpg",
+  "neutral": "neutral/mixed_signals/balanced_scale_market.jpg",
+  "volatile": "volatile/wild_ride/market_volatility_chart.jpg"
+}

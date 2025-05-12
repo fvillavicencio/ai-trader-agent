@@ -141,14 +141,22 @@ function getRandomS3ImageForSentiment(sentiment = 'neutral') {
       };
     }
     
-    // If still no images found, use default images based on sentiment
+    // If still no images found, use default images based on sentiment from config file
     console.warn('No S3 images found in mappings, using default image');
-    const defaultImages = {
-      'bullish': 'bullish/bulls_on_parade/bull_market_green_arrow.jpg',
-      'bearish': 'bearish/bears_in_control/bear_market_red_arrow.jpg',
-      'neutral': 'neutral/mixed_signals/balanced_scale_market.jpg',
-      'volatile': 'volatile/wild_ride/market_volatility_chart.jpg'
-    };
+    
+    // Load default images from configuration file
+    let defaultImages = {};
+    try {
+      const defaultImagesPath = path.resolve(__dirname, '../../../title-images/default-images.json');
+      if (fs.existsSync(defaultImagesPath)) {
+        defaultImages = JSON.parse(fs.readFileSync(defaultImagesPath, 'utf8'));
+        console.log('Loaded default images from configuration file');
+      } else {
+        console.warn('Default images configuration file not found');
+      }
+    } catch (error) {
+      console.error('Error loading default images:', error);
+    }
     
     const defaultImagePath = defaultImages[sentiment] || defaultImages['neutral'];
     const defaultS3Url = `${s3Config.baseUrl || ''}/${defaultImagePath}`;
