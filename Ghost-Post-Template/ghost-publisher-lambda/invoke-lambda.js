@@ -76,18 +76,37 @@ async function invokeLambda() {
     console.log(JSON.stringify(result, null, 2));
     
     if (result.statusCode === 200) {
+      // Parse the body if it's a string
+      const resultBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+      
       console.log('\n✅ Success!');
-      console.log(`Post URL: ${result.body.postUrl}`);
-      console.log(`Title: ${result.body.title}`);
-      console.log(`\nMembers summary:`);
-      console.log(`- Paid members: ${result.body.members.paid.length}`);
-      console.log(`- Free members: ${result.body.members.free.length}`);
-      console.log(`- Comped members: ${result.body.members.comped.length}`);
+      console.log(`Post URL: ${resultBody.postUrl}`);
+      console.log(`Post ID: ${resultBody.postId}`);
+      
+      if (resultBody.members) {
+        console.log(`\nMembers summary:`);
+        console.log(`- Paid members: ${resultBody.members.paid ? resultBody.members.paid.length : 0}`);
+        console.log(`- Free members: ${resultBody.members.free ? resultBody.members.free.length : 0}`);
+        console.log(`- Comped members: ${resultBody.members.comped ? resultBody.members.comped.length : 0}`);
+      }
       
       // Save the result to a file
-      const outputFile = `lambda-result-${new Date().toISOString().replace(/[:.]/g, '-')}.json`;
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      const outputFile = `lambda-result-${timestamp}.json`;
       fs.writeFileSync(outputFile, JSON.stringify(result, null, 2));
       console.log(`\nResult saved to ${outputFile}`);
+      
+      // Check if HTML content is available and save it
+      try {
+        const resultBody = typeof result.body === 'string' ? JSON.parse(result.body) : result.body;
+        if (resultBody && resultBody.html) {
+          const htmlFile = `market-pulse-${timestamp}.html`;
+          fs.writeFileSync(htmlFile, resultBody.html);
+          console.log(`HTML content saved to ${htmlFile}`);
+        }
+      } catch (error) {
+        console.error('Error saving HTML content:', error);
+      }
     } else {
       console.log('\n❌ Error!');
       console.log(`Error message: ${result.body.error}`);

@@ -33,44 +33,254 @@ const {
 
 /**
  * Generate an engaging title for the post
+ * @param {object} data - The data object containing market information
  * @returns {string} - The generated title
  */
-const generateEngagingTitle = () => {
-  const now = new Date();
+const generateEngagingTitle = (data) => {
+  // Import the catchy titles database
+  const { getRandomCatchyTitle, bullishTitles, bearishTitles, neutralTitles, volatilityTitles } = require('./src/utils/catchy-titles');
   
-  // Format time and date
-  const formatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    hour: 'numeric',
-    minute: 'numeric',
-    hour12: true
-  });
+  // Determine market sentiment based on data
+  let sentiment = 'neutral'; // Default to neutral
+  let justificationText = '';
+  let vixHigh = false;
+  let fearGreedValue = 0;
   
-  const dateFormatter = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'America/New_York',
-    month: 'long',
-    day: 'numeric',
-    year: 'numeric'
-  });
+  // Extract justification text if available
+  if (data && data.justification && data.justification.text) {
+    justificationText = data.justification.text.toLowerCase();
+  }
   
-  const time = formatter.format(now);
-  const date = dateFormatter.format(now);
+  // Check for volatility indicators
+  if (data && data.keyMarketIndicators && 
+      data.keyMarketIndicators.volatilityIndices && 
+      data.keyMarketIndicators.volatilityIndices.vix) {
+    const vixValue = parseFloat(data.keyMarketIndicators.volatilityIndices.vix.value);
+    if (vixValue > 25) {
+      vixHigh = true;
+    }
+  }
   
-  // List of market phrases to choose from
-  const marketPhrases = [
-    "Market Currents", "Market Pulse", "Market Whisper", "Market Musings", "Market Rhythms",
-    "Market Beats", "Market Insights", "Market Signals", "Market Watch", "Market Movements"
-  ];
+  // Check Fear & Greed Index if available
+  if (data && data.keyMarketIndicators && 
+      data.keyMarketIndicators.fearAndGreedIndex && 
+      data.keyMarketIndicators.fearAndGreedIndex.value) {
+    fearGreedValue = parseInt(data.keyMarketIndicators.fearAndGreedIndex.value, 10);
+  }
   
-  // List of emojis to choose from
-  const emojis = ["📊", "📈", "📉", "💰", "🔍", "🎯", "💡", "⚡", "💫", "🌟"];
+  // Determine base sentiment from decision
+  if (data && data.decision) {
+    const action = data.decision.action || '';
+    
+    // Map the OpenAI decision values to our sentiment categories
+    if (action.includes('Buy Now')) {
+      sentiment = 'bullish';
+    } else if (action.includes('Position for Long-Term')) {
+      // Long-term positioning can be bullish but more measured
+      sentiment = justificationText.includes('caution') ? 'neutral' : 'bullish';
+    } else if (action.includes('Sell Now')) {
+      sentiment = 'bearish';
+    } else if (action.includes('Sell Calls')) {
+      // Selling calls is typically bearish or expecting flat markets
+      sentiment = 'bearish';
+    } else if (action.includes('Watch for Better Price Action')) {
+      sentiment = 'neutral';
+    } else if (action.includes('Buy and Hedge')) {
+      // This is cautiously bullish - check justification for tone
+      sentiment = justificationText.includes('risk') || justificationText.includes('caution') ? 'neutral' : 'bullish';
+    } else if (action.includes('Deploy Hedges')) {
+      // Deploying hedges suggests concern - lean bearish unless justification is optimistic
+      sentiment = justificationText.includes('optimis') ? 'neutral' : 'bearish';
+    }
+  }
   
-  // Randomly select a phrase and emoji
-  const phrase = marketPhrases[Math.floor(Math.random() * marketPhrases.length)];
-  const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+  // Further refine sentiment based on justification text and market indicators
+  if (justificationText) {
+    // Check for strongly bearish language
+    if (justificationText.includes('overvaluation') || 
+        justificationText.includes('correction') || 
+        justificationText.includes('downside risk') ||
+        justificationText.includes('bearish')) {
+      // Strengthen bearish sentiment or shift neutral to bearish
+      if (sentiment === 'neutral') sentiment = 'bearish';
+    }
+    
+    // Check for strongly bullish language
+    if (justificationText.includes('undervalued') || 
+        justificationText.includes('strong growth') || 
+        justificationText.includes('upside potential') ||
+        justificationText.includes('bullish')) {
+      // Strengthen bullish sentiment or shift neutral to bullish
+      if (sentiment === 'neutral') sentiment = 'bullish';
+    }
+    
+    // Check for mixed/conflicting signals
+    if (justificationText.includes('mixed signals') || 
+        justificationText.includes('conflicting') || 
+        (justificationText.includes('bullish') && justificationText.includes('bearish'))) {
+      sentiment = 'neutral';
+    }
+  }
   
-  // Return the formatted title
-  return `${phrase} ${emoji} - ${date} ${time} ET`;
+  // Override with volatility sentiment if VIX is high and justification mentions volatility
+  if (vixHigh && justificationText.includes('volatil')) {
+    sentiment = 'volatile';
+  }
+  
+  // Fear & Greed Index can further refine sentiment
+  if (fearGreedValue > 0) {
+    if (fearGreedValue <= 25 && sentiment !== 'volatile') {
+      // Extreme fear - likely bearish unless justification suggests otherwise
+      if (!justificationText.includes('buying opportunity')) {
+        sentiment = 'bearish';
+      }
+    } else if (fearGreedValue >= 75 && sentiment !== 'volatile') {
+      // Extreme greed - could be time for caution
+      if (justificationText.includes('overvalued') || justificationText.includes('caution')) {
+        sentiment = 'bearish';
+      }
+    }
+  }
+  
+  // Get a catchy title based on sentiment
+  const catchyTitle = getRandomCatchyTitle(sentiment);
+  
+  // Map specific titles to coherent emojis
+  const titleToEmojiMap = {
+    // Bullish titles
+    "Greed Is Good": "💰",
+    "Blue Horseshoe Loves This Market": "💙",
+    "Money Never Sleeps": "💵",
+    "Lunch Is For Wimps": "🥪",
+    "Absolutely Vertical": "📈",
+    "Rookie Numbers": "🔢",
+    "Buy The Dip": "📉➡️📈",
+    "The Show Goes On": "🎭",
+    "Tuxedo Time": "🤵",
+    "I'm Jacked! Jacked To The Tits!": "💪",
+    "Opportunity Of A Lifetime": "✨",
+    "It's Time To Get Rich": "💎",
+    "The Upside Looks Tasty": "😋",
+    "Be First, Be Smarter": "🥇",
+    "There's Money To Be Made": "💸",
+    "The Music Is Still Playing": "🎵",
+    "Looking Good, Billy Ray!": "👍",
+    "Feeling Good, Louis!": "🤩",
+    "Buy Low, Sell High": "📊",
+    "Act As If": "🎬",
+    "Everybody Wants The Dream": "💭",
+    "Bulls On Parade": "🐂",
+    "Green Across The Board": "🟢",
+    "Full Steam Ahead": "🚂",
+    "Riding The Bull": "🏇",
+    "To The Moon": "🌕",
+    "Cash Is Flowing": "💦",
+    "Diamond Hands": "💎",
+    "FOMO Activated": "😱",
+    "Printer Goes Brrr": "🖨️",
+    "Tendies For Dinner": "🍗",
+    "Champagne Problems": "🍾",
+    "The Trend Is Your Friend": "📈",
+    "Catching The Wave": "🏄",
+    "The Bulls Are Running": "🐂",
+    "Rocket Emoji Time": "🚀",
+    
+    // Bearish titles
+    "Downward Is Visible": "📉",
+    "The Correction Is Coming": "⚠️",
+    "The Party's Over": "🎉➡️😴",
+    "It's Time To Get Short": "📏",
+    "The Bubble Has Popped": "💥",
+    "The House Of Cards": "🃏",
+    "Dogshit Wrapped In Catshit": "💩",
+    "Sell It All Today": "🏃",
+    "The Music Stopped": "🔇",
+    "There Are Three Ways To Make Money": "3️⃣",
+    "Be First, Be Smarter, Or Cheat": "🥇",
+    "The Dominoes Are Falling": "🀄",
+    "The Worst Is Yet To Come": "⛈️",
+    "Batten Down The Hatches": "⚓",
+    "Bears In Control": "🐻",
+    "Red Wedding": "🔴",
+    "Blood In The Streets": "🩸",
+    "Catching Falling Knives": "🔪",
+    "The Sky Is Falling": "☁️",
+    "Dead Cat Bounce": "🐱",
+    "Abandon Ship": "🚢",
+    "Sell The Rip": "📈➡️📉",
+    "Paper Hands Time": "📄",
+    "Winter Is Coming": "❄️",
+    "The Bears Are Hungry": "🐻",
+    "The Bubble Has Burst": "🫧",
+    "The Tide Is Going Out": "🌊",
+    "Exit Stage Left": "🚪",
+    
+    // Neutral titles
+    "Patience, Grasshopper": "🦗",
+    "The Details Are Fuzzy": "🔍",
+    "Just Wait": "⏳",
+    "Truth Is Like Poetry": "📜",
+    "Nobody Knows": "🤷",
+    "It's All Just The Same Thing": "🔄",
+    "Funny Money": "💰",
+    "The Gray Area": "⚪",
+    "Proceed With Caution": "⚠️",
+    "The Jury Is Still Out": "⚖️",
+    "Stuck In The Middle": "↔️",
+    "The Waiting Game": "⏱️",
+    "Neither Bull Nor Bear": "🐂🐻",
+    "Watching From The Sidelines": "👀",
+    "The Fog Of Markets": "🌫️",
+    "Steady As She Goes": "🚢",
+    "The Calm Before The Storm": "🌤️",
+    "Mixed Signals": "📶",
+    "Tug Of War": "🔄",
+    "The Plot Thickens": "📚",
+    "Walking The Tightrope": "🎪",
+    "The Crossroads": "🚦",
+    "Holding Pattern": "✈️",
+    "Time Will Tell": "⏰",
+    "Wait And See": "👁️",
+    
+    // Volatility titles
+    "Turbulence Ahead": "✈️",
+    "Fasten Your Seatbelts": "🔒",
+    "Wild Ride": "🎢",
+    "It's Time To Get Weird": "🤪",
+    "The Casino Is Open": "🎰",
+    "Rollercoaster Day": "🎢",
+    "Market Whiplash": "💥",
+    "Chaos Reigns": "🌪️",
+    "The Perfect Storm": "⛈️",
+    "Lightning In A Bottle": "⚡",
+    "The Pendulum Swings": "🔄",
+    "Buckle Up": "🔒",
+    "Brace For Impact": "💥",
+    "The Vix Fix": "📊",
+    "Fear And Greed": "😨💰",
+    "Expect The Unexpected": "🎁",
+    "The Only Constant Is Change": "🔄",
+    "The New Normal": "🆕",
+    "The Wild West": "🤠",
+    "The Twilight Zone": "🌗"
+  };
+  
+  // Get the specific emoji for this title, or use a default based on sentiment
+  let emoji = titleToEmojiMap[catchyTitle];
+  
+  // If no specific emoji is mapped, use a default based on sentiment
+  if (!emoji) {
+    const defaultEmojis = {
+      'bullish': "📈",
+      'bearish': "📉",
+      'neutral': "⚖️",
+      'volatile': "🎢"
+    };
+    emoji = defaultEmojis[sentiment];
+  }
+  
+  // Return just the title and emoji without date/time
+  return `${catchyTitle} ${emoji}`;
 };
 
 /**
@@ -638,10 +848,6 @@ exports.handler = async (event, context) => {
             version: 'v5.0'
         });
         
-        // Generate a title for the post
-        const title = generateEngagingTitle();
-        console.log('Generated title:', title);
-        
         // Parse the JSON data from the event
         let data;
         
@@ -698,6 +904,10 @@ exports.handler = async (event, context) => {
         if (!data.decision) {
             console.warn('Warning: Missing decision section in data');
         }
+        
+        // Generate a title for the post based on market data
+        const title = generateEngagingTitle(data);
+        console.log('Generated title:', title);
         
         console.log('Processing data for mobiledoc generation');
         
@@ -789,6 +999,24 @@ exports.handler = async (event, context) => {
         const { generateStandaloneHTML } = require('./src/utils/html-generator');
         const html = generateStandaloneHTML(data, mobiledoc, title);
         console.log('Generated standalone HTML version');
+        
+        // Log HTML preview for debugging
+        console.log('HTML Preview (first 500 characters):');
+        console.log(html.substring(0, 500) + '...');
+        console.log('HTML length:', html.length, 'characters');
+        
+        // Save HTML to file directly
+        try {
+            const fs = require('fs');
+            const path = require('path');
+            const date = new Date().toISOString().slice(0, 10);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+            const htmlFilename = path.resolve(__dirname, `../market-pulse-${date}-${timestamp}.html`);
+            fs.writeFileSync(htmlFilename, html, 'utf8');
+            console.log(`HTML content saved to: ${htmlFilename}`);
+        } catch (error) {
+            console.error('Error saving HTML to file:', error.message);
+        }
         
         return {
             statusCode: 200,

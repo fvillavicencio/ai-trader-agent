@@ -1,18 +1,18 @@
 {
-  "reportDate": "2025-05-09T18:35:29.464Z",
-  "reportDateFormatted": "May 9, 2025 at 2:35 PM EDT",
-  "reportDateDisplay": "As of May 9, 2025 at 2:35 PM EDT",
+  "reportDate": "2025-05-11T22:04:36.940Z",
+  "reportDateFormatted": "May 11, 2025 at 6:04 PM EDT",
+  "reportDateDisplay": "As of May 11, 2025 at 6:04 PM EDT",
   "isTest": false,
   "metadata": {
     "title": "Market Pulse Daily",
-    "timestamp": "May 9, 2025 at 2:35 PM EDT"
+    "timestamp": "May 11, 2025 at 6:04 PM EDT"
   },
   "marketSentiment": {
-    "overall": "Neutral. Mixed sentiment with caution advised due to tech sector headwinds and geopolitical tensions, but optimism in energy stocks and potential rebound in semiconductors.",
+    "overall": "Bearish. The market sentiment is bearish with analysts expressing caution due to inflation concerns and economic slowdowns.",
     "analysts": [
       {
         "name": "Dan Niles",
-        "comment": "Dan Niles maintains a cautious outlook for 2025, citing ongoing inflation concerns and the possibility of an 'AI digestion phase.' He emphasizes the importance of adaptability and holding cash, while remaining selective with tech stocks such as Microsoft, Meta, Apple, Amazon, and Nvidia.",
+        "comment": "Expressed a cautious outlook for 2025, citing inflation worries and potential AI digestion phases",
         "mentionedSymbols": [
           "MSFT",
           "META",
@@ -20,99 +20,116 @@
           "AMZN",
           "NVDA"
         ],
-        "source": "RiskReversal Media"
+        "source": "RiskReversal Media YouTube"
+      },
+      {
+        "name": "Dan Benton",
+        "comment": "Shared his '20 investing rules' for technology, emphasizing the importance of innovation, management quality, and strategic foresight in tech investing",
+        "mentionedSymbols": [
+          "AAPL",
+          "MSFT",
+          "GOOGL",
+          "NVDA",
+          "TSLA"
+        ],
+        "source": "RiskReversal Podcast"
+      },
+      {
+        "name": "Guy Adami",
+        "comment": "Highlighted that banks are not immune to economic slowdowns and are among the most cyclical industries",
+        "mentionedSymbols": [],
+        "source": "RiskReversal Media YouTube"
       },
       {
         "name": "Dan Nathan",
-        "comment": "Dan Nathan recently discussed the resilience of the S&P 500, suggesting that 'the lows are probably in' for the index. He highlighted the durability of consumer spending and the ongoing impact of AI investment, while noting that concerns about a shallow recession may be overstated.",
+        "comment": "Discussed market mayhem and noted that some Trump trades are not performing well, with Tesla trading lower than on Election Day",
         "mentionedSymbols": [
-          "SPX",
-          "QQQ"
+          "TSLA"
         ],
-        "source": "RiskReversal Media"
+        "source": "RiskReversal Media YouTube"
       }
     ],
     "source": "Aggregated from multiple financial news sources",
-    "lastUpdated": "2025-05-09T18:35:05.987Z"
+    "lastUpdated": "2025-05-11T22:02:59.288Z"
   },
   "decision": {
-    "text": "Watch for Better Price Action",
-    "summary": "Current market conditions, characterized by extreme fear and a flat yield curve, suggest caution; however, certain sectors may offer opportunities as sentiment shifts.",
-    "color": "#f59e0b",
-    "icon": "⚠️"
+    "text": "Sell Calls",
+    "summary": "Market sentiment shifts to caution as volatility rises.",
+    "color": "#ef4444",
+    "icon": "📉"
   },
-  "justification": "Given the current extreme fear in the market, as indicated by the Fear & Greed Index, and the flat yield curve suggesting uncertainty, a cautious approach is advised. However, the mixed analyst sentiment, with optimism in energy and potential rebounds in semiconductors, suggests that selective opportunities may exist. The geopolitical risks and upcoming economic events further justify a 'Watch for Better Price Action' decision, as these factors could lead to market volatility and better buying opportunities.",
+  "justification": "The current market environment is characterized by high forward P/E ratios and a rising trend, indicating potential overvaluation. The Fear & Greed Index suggests market optimism, but the VIX indicates high volatility, warranting caution. With geopolitical risks and inflation concerns, selling calls is recommended to generate income in this volatile market.",
   "marketIndicators": {
     "majorIndices": [
       {
         "name": "S&P 500",
-        "price": 5663.19,
-        "change": -0.75,
+        "price": 5659.91,
+        "change": -4.03,
         "isPositive": false
       },
       {
         "name": "Dow Jones Industrial Average",
-        "price": 41276.74,
-        "change": -91.71,
+        "price": 41249.38,
+        "change": -119.02,
         "isPositive": false
       },
       {
         "name": "NASDAQ Composite",
-        "price": 17929.5,
-        "change": 1.36,
+        "price": 17928.92,
+        "change": 0.82,
         "isPositive": true
       },
       {
         "name": "Russell 2000",
-        "price": 2022.58,
-        "change": -3.83,
+        "price": 2023.07,
+        "change": -3.34,
         "isPositive": false
       }
     ],
     "sectorPerformance": [
       {
         "name": "Energy",
-        "change": "1.03"
+        "change": "1"
       },
       {
         "name": "Real Estate",
-        "change": "0.7"
+        "change": "0.6"
       },
       {
         "name": "Consumer Discretionary",
-        "change": "0.44"
+        "change": "0.48"
       },
       {
         "name": "Materials",
-        "change": "0.17"
-      },
-      {
-        "name": "Financials",
-        "change": "0.09"
+        "change": "0.26"
       },
       {
         "name": "Utilities",
-        "change": "-0.02"
+        "change": "0.17"
       },
       {
         "name": "Industrials",
-        "change": "-0.05"
+        "change": "0.08"
+      },
+      {
+        "name": "Financials",
+        "change": "0"
       },
       {
         "name": "Technology",
-        "change": "-0.09"
-      },
-      {
-        "name": "Consumer Staples",
-        "change": "-0.34"
+        "change": "-0.12"
       },
       {
         "name": "Communication Services",
-        "change": "-0.42"
+        "change": "-0.51"
+      },
+      {
+        "name": "Consumer Staples",
+        "change": "-0.58"
       },
       {
         "name": "Healthcare",
-        "change": "-0.53"
+        "change": "-1.09"
       }
     ],
     "fearGreed": {
@@ -126,19 +143,19 @@
       "color": "#8bc34a",
       "source": "CNN Business (via RapidAPI)",
       "sourceUrl": "https://www.cnn.com/markets/fear-and-greed",
-      "asOf": "May 9, 2025 at 2:35 PM EDT"
+      "asOf": "May 11, 2025 at 6:03 PM EDT"
     },
     "volatilityIndices": [
       {
         "name": "CBOE Volatility Index",
-        "value": 22.27,
-        "change": -0.21000000000000085,
+        "value": 21.9,
+        "change": -0.5800000000000018,
         "trend": "Falling"
       },
       {
         "name": "NASDAQ Volatility Index",
-        "value": 25.73,
-        "change": -0.23999999999999844,
+        "value": 25.5,
+        "change": -0.46999999999999886,
         "trend": "Falling"
       }
     ],
@@ -211,7 +228,7 @@
         "event": "CPI Index, NSA",
         "source": "BLS",
         "actual": "N/A",
-        "forecast": "N/A",
+        "forecast": "320.861",
         "previous": "319.799",
         "importance": 3
       },
@@ -278,16 +295,56 @@
     ],
     "indicesSource": "Yahoo Finance",
     "indicesSourceUrl": "https://finance.yahoo.com/quote/^GSPC/",
-    "indicesAsOf": "May 9, 2025 at 2:35 PM EDT",
+    "indicesAsOf": "May 11, 2025 at 6:04 PM EDT",
     "sectorSource": "Yahoo Finance",
     "sectorSourceUrl": "https://finance.yahoo.com/quote/XLE/",
-    "sectorAsOf": "May 9, 2025 at 2:35 PM EDT",
+    "sectorAsOf": "May 11, 2025 at 6:04 PM EDT",
+    "marketFutures": [
+      {
+        "name": "S&P 500 E-mini Futures",
+        "change": 0.29,
+        "isPositive": true
+      },
+      {
+        "name": "Crude Oil Futures",
+        "change": -1.02,
+        "isPositive": false
+      },
+      {
+        "name": "Natural Gas Futures",
+        "change": 0.02,
+        "isPositive": true
+      },
+      {
+        "name": "Soybean Futures",
+        "change": -0.09,
+        "isPositive": false
+      },
+      {
+        "name": "Coffee Futures",
+        "change": -0.59,
+        "isPositive": false
+      },
+      {
+        "name": "German DAX Index",
+        "change": 0.31,
+        "isPositive": true
+      },
+      {
+        "name": "France CAC 40 Index",
+        "change": -0.31,
+        "isPositive": false
+      }
+    ],
+    "futuresSource": "Yahoo Finance",
+    "futuresSourceUrl": "https://finance.yahoo.com/futures/",
+    "futuresAsOf": "May 11, 2025 at 6:04 PM EDT",
     "volatilitySource": "Yahoo Finance",
     "volatilitySourceUrl": "https://finance.yahoo.com/quote/^VIX/",
-    "volatilityAsOf": "May 9, 2025 at 2:35 PM EDT",
+    "volatilityAsOf": "May 11, 2025 at 6:04 PM EDT",
     "source": "Yahoo Finance",
     "sourceUrl": "https://finance.yahoo.com",
-    "asOf": "May 9, 2025 at 2:35 PM EDT",
+    "asOf": "May 11, 2025 at 6:04 PM EDT",
     "topHoldings": [
       {
         "name": "S&P 500",
@@ -330,27 +387,27 @@
           {
             "symbol": "MSFT",
             "name": "Microsoft Corp",
-            "weight": 8.81
+            "weight": 8.83
           },
           {
             "symbol": "AAPL",
             "name": "Apple Inc",
-            "weight": 8.03
+            "weight": 8.06
           },
           {
             "symbol": "NVDA",
             "name": "NVIDIA Corp",
-            "weight": 7.75
+            "weight": 7.71
           },
           {
             "symbol": "AMZN",
             "name": "Amazon.com Inc",
-            "weight": 5.51
+            "weight": 5.54
           },
           {
             "symbol": "AVGO",
             "name": "Broadcom Inc",
-            "weight": 4.36
+            "weight": 4.37
           }
         ],
         "source": "Invesco",
@@ -393,10 +450,10 @@
       }
     ],
     "rsi": {
-      "value": 87.6,
+      "value": 87.2,
       "source": "Tradier (RSI)",
       "sourceUrl": "https://developer.tradier.com/documentation/markets/get-timesales",
-      "asOf": "May 9, 2025 at 2:35 PM EDT"
+      "asOf": "May 11, 2025 at 6:03 PM EDT"
     }
   },
   "fundamentalMetrics": {
@@ -404,13 +461,21 @@
       {
         "symbol": "DIA",
         "name": "SPDR Dow Jones Industrial Average ETF",
-        "price": 412.59,
-        "priceChange": -1.29,
-        "percentChange": "-0.32%",
+        "price": 412.45,
+        "priceChange": -1.43,
+        "percentChange": "-34.55%",
         "metrics": [
           {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "0.94"
+          },
+          {
             "name": "Volume",
-            "value": "1.0M"
+            "value": "1.7M"
           },
           {
             "name": "52W High",
@@ -419,19 +484,35 @@
           {
             "name": "52W Low",
             "value": "$366.32"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
           }
         ]
       },
       {
         "symbol": "IWM",
         "name": "iShares Russell 2000 ETF",
-        "price": 200.73,
-        "priceChange": -0.45,
-        "percentChange": "-0.23%",
+        "price": 200.84,
+        "priceChange": -0.34,
+        "percentChange": "-16.90%",
         "metrics": [
           {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.18"
+          },
+          {
             "name": "Volume",
-            "value": "11.2M"
+            "value": "17.0M"
           },
           {
             "name": "52W High",
@@ -440,19 +521,35 @@
           {
             "name": "52W Low",
             "value": "$171.73"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
           }
         ]
       },
       {
         "symbol": "QQQ",
         "name": "Invesco QQQ Trust, Series 1",
-        "price": 487.81,
-        "priceChange": -0.48,
-        "percentChange": "-0.10%",
+        "price": 488.02,
+        "priceChange": -0.27,
+        "percentChange": "-5.53%",
         "metrics": [
           {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.13"
+          },
+          {
             "name": "Volume",
-            "value": "20.4M"
+            "value": "26.8M"
           },
           {
             "name": "52W High",
@@ -461,19 +558,35 @@
           {
             "name": "52W Low",
             "value": "$402.39"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
           }
         ]
       },
       {
         "symbol": "SPY",
         "name": "SPDR S&P 500",
-        "price": 564.36,
-        "priceChange": -0.7,
-        "percentChange": "-0.13%",
+        "price": 564.23,
+        "priceChange": -0.83,
+        "percentChange": "-14.69%",
         "metrics": [
           {
+            "name": "ROE",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.00"
+          },
+          {
             "name": "Volume",
-            "value": "23.2M"
+            "value": "36.7M"
           },
           {
             "name": "52W High",
@@ -482,22 +595,61 @@
           {
             "name": "52W Low",
             "value": "$481.80"
+          },
+          {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
+            "name": "Industry",
+            "value": "Asset Management"
           }
         ]
       }
     ],
-    "magnificentSeven": [],
     "otherStocks": [
       {
         "symbol": "GOOGL",
         "name": "Alphabet Inc",
-        "price": 152.4151,
-        "priceChange": -1.87,
-        "percentChange": "-1.21%",
+        "price": 152.75,
+        "priceChange": -1.53,
+        "percentChange": "-99.17%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "5.51"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "6.73"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.07"
+          },
+          {
+            "name": "ROE",
+            "value": "34.55%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.22%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.29%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.01"
+          },
+          {
             "name": "Volume",
-            "value": "21.8M"
+            "value": "32.1M"
           },
           {
             "name": "52W High",
@@ -508,42 +660,53 @@
             "value": "$140.53"
           },
           {
+            "name": "Sector",
+            "value": "Communication Services"
+          },
+          {
             "name": "Industry",
-            "value": "Internet Content &amp; Information"
-          }
-        ]
-      },
-      {
-        "symbol": "SPX",
-        "name": "S&P 500 Index",
-        "price": 5659.8,
-        "priceChange": -4.14,
-        "percentChange": "-0.08%",
-        "metrics": [
-          {
-            "name": "Volume",
-            "value": "0"
-          },
-          {
-            "name": "52W High",
-            "value": "$6147.43"
-          },
-          {
-            "name": "52W Low",
-            "value": "$4835.04"
+            "value": "Internet Content & Information"
           }
         ]
       },
       {
         "symbol": "TSLA",
         "name": "Tesla Inc",
-        "price": 298.7,
-        "priceChange": 13.88,
-        "percentChange": "4.88%",
+        "price": 298.3,
+        "priceChange": 13.48,
+        "percentChange": "473.28%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "12.86"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "13.28"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.10"
+          },
+          {
+            "name": "ROE",
+            "value": "9.03%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.06%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.07%"
+          },
+          {
+            "name": "Beta",
+            "value": "2.43"
+          },
+          {
             "name": "Volume",
-            "value": "108.2M"
+            "value": "130.5M"
           },
           {
             "name": "52W High",
@@ -554,8 +717,12 @@
             "value": "$167.41"
           },
           {
+            "name": "Sector",
+            "value": "Consumer Cyclical"
+          },
+          {
             "name": "Industry",
-            "value": "Auto Manufacturers"
+            "value": "Auto - Manufacturers"
           }
         ]
       }
@@ -564,13 +731,45 @@
       {
         "symbol": "AAPL",
         "name": "Apple Inc",
-        "price": 198.93,
-        "priceChange": 1.44,
-        "percentChange": "0.73%",
+        "price": 198.43,
+        "priceChange": 0.94,
+        "percentChange": "47.60%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "44.54"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "8.94"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "1.47"
+          },
+          {
+            "name": "ROE",
+            "value": "151.31%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.26%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.24%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.27"
+          },
+          {
             "name": "Volume",
-            "value": "22.6M"
+            "value": "35.0M"
           },
           {
             "name": "52W High",
@@ -581,6 +780,10 @@
             "value": "$169.21"
           },
           {
+            "name": "Sector",
+            "value": "Technology"
+          },
+          {
             "name": "Industry",
             "value": "Consumer Electronics"
           }
@@ -589,13 +792,41 @@
       {
         "symbol": "AMZN",
         "name": "Amazon.com Inc",
-        "price": 192.33,
-        "priceChange": 0.25,
-        "percentChange": "0.13%",
+        "price": 193.052,
+        "priceChange": 0.972,
+        "percentChange": "50.60%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "6.69"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "3.60"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.44"
+          },
+          {
+            "name": "ROE",
+            "value": "24.26%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.09%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.09%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.31"
+          },
+          {
             "name": "Volume",
-            "value": "19.3M"
+            "value": "28.9M"
           },
           {
             "name": "52W High",
@@ -606,21 +837,57 @@
             "value": "$151.61"
           },
           {
+            "name": "Sector",
+            "value": "Consumer Cyclical"
+          },
+          {
             "name": "Industry",
-            "value": "Internet Retail"
+            "value": "Specialty Retail"
           }
         ]
       },
       {
         "symbol": "AVGO",
         "name": "Broadcom Inc",
-        "price": 208.035,
-        "priceChange": 0.27,
-        "percentChange": "0.13%",
+        "price": 208.2,
+        "priceChange": 0.43,
+        "percentChange": "20.70%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "14.01"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "15.11"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.95"
+          },
+          {
+            "name": "ROE",
+            "value": "14.75%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.04%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.11%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.01%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.06"
+          },
+          {
             "name": "Volume",
-            "value": "6.6M"
+            "value": "12.2M"
           },
           {
             "name": "52W High",
@@ -631,6 +898,10 @@
             "value": "$128.50"
           },
           {
+            "name": "Sector",
+            "value": "Technology"
+          },
+          {
             "name": "Industry",
             "value": "Semiconductors"
           }
@@ -639,13 +910,45 @@
       {
         "symbol": "GS",
         "name": "The Goldman Sachs Group Inc",
-        "price": 568.04,
-        "priceChange": 2.34,
-        "percentChange": "0.42%",
+        "price": 567.1,
+        "priceChange": 1.4,
+        "percentChange": "24.75%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "103.02"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "3.51"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.04"
+          },
+          {
+            "name": "ROE",
+            "value": "16.33%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.01%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.27%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.02%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.31"
+          },
+          {
             "name": "Volume",
-            "value": "864.7K"
+            "value": "1.3M"
           },
           {
             "name": "52W High",
@@ -656,21 +959,57 @@
             "value": "$437.37"
           },
           {
+            "name": "Sector",
+            "value": "Financial Services"
+          },
+          {
             "name": "Industry",
-            "value": "Capital Markets"
+            "value": "Financial - Capital Markets"
           }
         ]
       },
       {
         "symbol": "HD",
         "name": "The Home Depot Inc",
-        "price": 363.63,
-        "priceChange": -1.23,
-        "percentChange": "-0.34%",
+        "price": 362.71,
+        "priceChange": -2.15,
+        "percentChange": "-58.93%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "54.13"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "2.54"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "9.38"
+          },
+          {
+            "name": "ROE",
+            "value": "317.28%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.15%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.09%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.02%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.06"
+          },
+          {
             "name": "Volume",
-            "value": "935.1K"
+            "value": "1.5M"
           },
           {
             "name": "52W High",
@@ -681,21 +1020,57 @@
             "value": "$323.77"
           },
           {
+            "name": "Sector",
+            "value": "Consumer Cyclical"
+          },
+          {
             "name": "Industry",
-            "value": "Home Improvement Retail"
+            "value": "Home Improvement"
           }
         ]
       },
       {
         "symbol": "META",
         "name": "Meta Platforms Inc",
-        "price": 592.38,
-        "priceChange": -5.63,
-        "percentChange": "-0.95%",
+        "price": 592.49,
+        "priceChange": -5.52,
+        "percentChange": "-92.31%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "8.09"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "9.02"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.27"
+          },
+          {
+            "name": "ROE",
+            "value": "38.69%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.23%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.38%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.24"
+          },
+          {
             "name": "Volume",
-            "value": "7.5M"
+            "value": "10.3M"
           },
           {
             "name": "52W High",
@@ -706,21 +1081,57 @@
             "value": "$442.65"
           },
           {
+            "name": "Sector",
+            "value": "Communication Services"
+          },
+          {
             "name": "Industry",
-            "value": "Internet Content &amp; Information"
+            "value": "Internet Content & Information"
           }
         ]
       },
       {
         "symbol": "MSFT",
         "name": "Microsoft Corp",
-        "price": 437.88,
-        "priceChange": -0.29,
-        "percentChange": "-0.07%",
+        "price": 438.72,
+        "priceChange": 0.55,
+        "percentChange": "12.55%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "10.13"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "13.85"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.19"
+          },
+          {
+            "name": "ROE",
+            "value": "32.74%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.17%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.36%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.01%"
+          },
+          {
+            "name": "Beta",
+            "value": "0.98"
+          },
+          {
             "name": "Volume",
-            "value": "9.0M"
+            "value": "14.6M"
           },
           {
             "name": "52W High",
@@ -731,21 +1142,57 @@
             "value": "$344.79"
           },
           {
+            "name": "Sector",
+            "value": "Technology"
+          },
+          {
             "name": "Industry",
-            "value": "Software—Infrastructure"
+            "value": "Software - Infrastructure"
           }
         ]
       },
       {
         "symbol": "NVDA",
         "name": "NVIDIA Corp",
-        "price": 116.611,
-        "priceChange": -0.76,
-        "percentChange": "-0.65%",
+        "price": 116.65,
+        "priceChange": -0.72,
+        "percentChange": "-61.34%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "36.01"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "22.28"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.13"
+          },
+          {
+            "name": "ROE",
+            "value": "115.44%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.65%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.56%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.00%"
+          },
+          {
+            "name": "Beta",
+            "value": "2.11"
+          },
+          {
             "name": "Volume",
-            "value": "101.0M"
+            "value": "131.0M"
           },
           {
             "name": "52W High",
@@ -756,6 +1203,10 @@
             "value": "$86.62"
           },
           {
+            "name": "Sector",
+            "value": "Technology"
+          },
+          {
             "name": "Industry",
             "value": "Semiconductors"
           }
@@ -764,13 +1215,45 @@
       {
         "symbol": "SHW",
         "name": "Sherwin-Williams Co",
-        "price": 352.415,
-        "priceChange": -1.16,
-        "percentChange": "-0.33%",
+        "price": 351.86,
+        "priceChange": -1.71,
+        "percentChange": "-48.36%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "21.25"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "3.74"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "3.10"
+          },
+          {
+            "name": "ROE",
+            "value": "66.63%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.11%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.12%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.01%"
+          },
+          {
+            "name": "Beta",
+            "value": "1.25"
+          },
+          {
             "name": "Volume",
-            "value": "791.4K"
+            "value": "1.3M"
           },
           {
             "name": "52W High",
@@ -781,21 +1264,57 @@
             "value": "$282.09"
           },
           {
+            "name": "Sector",
+            "value": "Basic Materials"
+          },
+          {
             "name": "Industry",
-            "value": "Specialty Chemicals"
+            "value": "Chemicals - Specialty"
           }
         ]
       },
       {
         "symbol": "UNH",
         "name": "UnitedHealth Group Inc",
-        "price": 380.03,
-        "priceChange": -5.52,
-        "percentChange": "-1.44%",
+        "price": 380.64,
+        "priceChange": -4.91,
+        "percentChange": "-127.35%",
         "metrics": [
           {
+            "name": "Price/Book",
+            "value": "0.00"
+          },
+          {
+            "name": "Price/Sales",
+            "value": "1.17"
+          },
+          {
+            "name": "Debt/Equity",
+            "value": "0.00"
+          },
+          {
+            "name": "ROE",
+            "value": "31.88%"
+          },
+          {
+            "name": "ROA",
+            "value": "0.05%"
+          },
+          {
+            "name": "Profit Margin",
+            "value": "0.04%"
+          },
+          {
+            "name": "Dividend Yield",
+            "value": "0.02%"
+          },
+          {
+            "name": "Beta",
+            "value": "0.57"
+          },
+          {
             "name": "Volume",
-            "value": "5.0M"
+            "value": "7.6M"
           },
           {
             "name": "52W High",
@@ -803,11 +1322,15 @@
           },
           {
             "name": "52W Low",
-            "value": "$385.37"
+            "value": "$378.54"
+          },
+          {
+            "name": "Sector",
+            "value": "Healthcare"
           },
           {
             "name": "Industry",
-            "value": "Healthcare Plans"
+            "value": "Medical - Healthcare Plans"
           }
         ]
       }
@@ -824,16 +1347,16 @@
       "currentRate": {
         "target": "4.25% - 4.50%",
         "effectiveRate": "4.33%",
-        "lastUpdated": "May 9, 2025 at 2:35 PM EDT"
+        "lastUpdated": "May 11, 2025 at 6:04 PM EDT"
       },
       "nextMeeting": {
         "date": "June 17-18 2025",
         "probabilities": {
           "increase": "0.0",
-          "decrease": "27.4",
-          "noChange": "72.6"
+          "decrease": "24.0",
+          "noChange": "76.0"
         },
-        "lastUpdated": "May 9, 2025 at 2:35 PM EDT"
+        "lastUpdated": "May 11, 2025 at 6:04 PM EDT"
       }
     },
     "treasuryYields": {
@@ -841,89 +1364,89 @@
         {
           "maturity": "3-Month",
           "rate": 4.34,
-          "change": 0.009999999999999787,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "change": 0,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "1-Year",
-          "rate": 4,
-          "change": 0.020000000000000018,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4.05,
+          "change": 0.04999999999999982,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "2-Year",
-          "rate": 3.78,
-          "change": 0,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 3.9,
+          "change": 0.1200000000000001,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "5-Year",
-          "rate": 3.87,
-          "change": -0.029999999999999805,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4,
+          "change": 0.1299999999999999,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "10-Year",
-          "rate": 4.26,
-          "change": -0.040000000000000036,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4.37,
+          "change": 0.11000000000000032,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "30-Year",
-          "rate": 4.77,
-          "change": -0.040000000000000036,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4.83,
+          "change": 0.0600000000000005,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         }
       ],
       "yieldCurve": {
         "status": "Flat",
         "inverted": false,
-        "tenYearTwoYearSpread": 0.48,
-        "lastUpdated": "May 9, 2025 at 2:35 PM EDT",
+        "tenYearTwoYearSpread": 0.4700000000000002,
+        "lastUpdated": "May 11, 2025 at 6:04 PM EDT",
         "color": "#ff9800",
-        "description": "The yield curve is relatively flat with the 10Y-2Y spread at 0.48%. This suggests market uncertainty about future economic conditions."
+        "description": "The yield curve is relatively flat with the 10Y-2Y spread at 0.47%. This suggests market uncertainty about future economic conditions."
       },
       "yields": [
         {
           "maturity": "3-Month",
           "rate": 4.34,
-          "change": 0.009999999999999787,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "change": 0,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "1-Year",
-          "rate": 4,
-          "change": 0.020000000000000018,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4.05,
+          "change": 0.04999999999999982,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "2-Year",
-          "rate": 3.78,
-          "change": 0,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 3.9,
+          "change": 0.1200000000000001,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "5-Year",
-          "rate": 3.87,
-          "change": -0.029999999999999805,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4,
+          "change": 0.1299999999999999,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "10-Year",
-          "rate": 4.26,
-          "change": -0.040000000000000036,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4.37,
+          "change": 0.11000000000000032,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         },
         {
           "maturity": "30-Year",
-          "rate": 4.77,
-          "change": -0.040000000000000036,
-          "timestamp": "2025-05-07T00:00:00.000Z"
+          "rate": 4.83,
+          "change": 0.0600000000000005,
+          "timestamp": "2025-05-08T00:00:00.000Z"
         }
       ],
       "source": "Federal Reserve Economic Data (FRED)",
       "sourceUrl": "https://fred.stlouisfed.org/",
-      "asOf": "May 9, 2025 at 2:35 PM EDT"
+      "asOf": "May 11, 2025 at 6:04 PM EDT"
     },
     "inflation": {
       "cpi": {
@@ -931,12 +1454,12 @@
         "core": 2.8,
         "fiveYear": null,
         "tenYear": null,
-        "asOf": "May 9, 2025 at 2:35 PM EDT"
+        "asOf": "May 11, 2025 at 6:04 PM EDT"
       },
       "pce": {
         "headline": 2.3,
         "core": 2.6,
-        "lastUpdated": "May 9, 2025 at 2:35 PM EDT"
+        "lastUpdated": "May 11, 2025 at 6:04 PM EDT"
       },
       "expectations": [
         {
@@ -947,12 +1470,12 @@
         {
           "period": "5-Year",
           "value": 2.39,
-          "asOf": "May 7, 2025 at 8:00 PM EDT"
+          "asOf": "May 8, 2025 at 8:00 PM EDT"
         },
         {
           "period": "10-Year",
           "value": 2.29,
-          "asOf": "May 7, 2025 at 8:00 PM EDT"
+          "asOf": "May 8, 2025 at 8:00 PM EDT"
         }
       ],
       "trendAnalysis": {
@@ -960,27 +1483,27 @@
         "color": "#ff9800",
         "source": "Bureau of Labor Statistics",
         "sourceUrl": "https://www.bls.gov/cpi/",
-        "asOf": "May 9, 2025 at 2:35 PM EDT"
+        "asOf": "May 11, 2025 at 6:04 PM EDT"
       },
       "trend": {
         "direction": "Stable",
         "outlook": "Inflation is being closely monitored by the Federal Reserve for potential policy adjustments.",
         "marketImpact": "Changes in inflation may impact interest rates and asset valuations across markets.",
-        "asOf": "May 9, 2025 at 2:35 PM EDT",
+        "asOf": "May 11, 2025 at 6:04 PM EDT",
         "source": "Bureau of Labor Statistics",
         "sourceUrl": "https://www.bls.gov/cpi/"
       },
       "source": "Bureau of Labor Statistics",
       "sourceUrl": "https://www.bls.gov/cpi/",
-      "lastUpdated": "May 9, 2025 at 2:35 PM EDT",
+      "lastUpdated": "May 11, 2025 at 6:04 PM EDT",
       "expectationsSource": {
         "name": "St. Louis Fed (FRED API)",
         "url": "https://fred.stlouisfed.org/series/EXPINF1YR",
-        "lastUpdated": "May 9, 2025 at 2:35 PM EDT"
+        "lastUpdated": "May 11, 2025 at 6:04 PM EDT"
       }
     },
     "geopoliticalRisks": {
-      "global": "High levels of geopolitical risk from the Russia-Ukraine war, Israel-Hamas conflict, US-China trade tensions, cybersecurity threats, and global trade protectionism",
+      "global": "Global geopolitical risk level is currently Moderate to High, with several ongoing conflicts and tensions affecting market stability",
       "risks": [
         {
           "name": "US-China Tensions",
@@ -1009,22 +1532,22 @@
       ],
       "source": "Aggregated from multiple geopolitical risk assessments",
       "sourceUrl": "https://www.cfr.org/global-conflict-tracker",
-      "lastUpdated": "May 9, 2025 at 2:35 PM EDT"
+      "lastUpdated": "May 11, 2025 at 6:04 PM EDT"
     },
     "fedPolicy": {
-      "futuresPrice": "95.72",
-      "impliedRate": "4.28",
-      "cutProbability": 27.4,
-      "holdProbability": 72.6,
+      "futuresPrice": "95.69",
+      "impliedRate": "4.31",
+      "cutProbability": 24,
+      "holdProbability": 76,
       "hikeProbability": 0,
       "futuresSource": "Yahoo Finance",
       "futuresSourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F",
-      "futuresAsOf": "May 9, 2025 at 2:16 PM EDT",
+      "futuresAsOf": "May 9, 2025 at 4:59 PM EDT",
       "nextMeeting": "June 17-18 2025",
       "lastMeeting": "May 6-7 2025",
       "meetingSource": "Federal Reserve Meeting Calendar",
       "meetingSourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-      "meetingAsOf": "May 9, 2025 at 2:35 PM EDT",
+      "meetingAsOf": "May 11, 2025 at 6:04 PM EDT",
       "currentRate": "4.33%",
       "rateRange": "4.25% - 4.50%",
       "guidance": "Although swings in net exports have affected the data, recent indicators suggest that economic activity has continued to expand at a solid pace. The unemployment rate has stabilized at a low level in recent months, and labor market conditions remain solid. Inflation remains somewhat elevated.",
@@ -1033,42 +1556,41 @@
       "guidanceAsOf": "May 7, 2025 at 2:00 PM EDT",
       "rateSource": "Federal Reserve Bank of St. Louis",
       "rateSourceUrl": "https://fred.stlouisfed.org/series/FEDFUNDS",
-      "rateAsOf": "May 9, 2025 at 2:35 PM EDT"
+      "rateAsOf": "May 11, 2025 at 6:04 PM EDT"
     },
     "fedWatch": {
-      "currentPrice": "95.72",
-      "impliedRate": "4.28",
+      "currentPrice": "95.69",
+      "impliedRate": "4.31",
       "probabilities": {
-        "cut": 27.4,
-        "hold": 72.6,
+        "cut": 24,
+        "hold": 76,
         "hike": 0
       },
       "source": "Yahoo Finance",
       "sourceUrl": "https://query1.finance.yahoo.com/v8/finance/chart/ZQ=F",
-      "asOf": "May 9, 2025 at 2:16 PM EDT"
+      "asOf": "May 9, 2025 at 4:59 PM EDT"
     },
     "meetingSchedule": {
       "lastMeeting": "May 6-7 2025",
       "nextMeeting": "June 17-18 2025",
       "source": "Federal Reserve Meeting Calendar",
       "sourceUrl": "https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm",
-      "asOf": "May 9, 2025 at 2:35 PM EDT"
+      "asOf": "May 11, 2025 at 6:04 PM EDT"
     }
   },
   "sp500": {
-    "indexLevel": 5663.17,
+    "indexLevel": 5659.91,
     "source": {
       "name": "Yahoo Finance",
       "url": "https://finance.yahoo.com/quote/%5EGSPC/",
-      "asOf": "May 9, 2025 at 2:35 PM EDT"
+      "asOf": "May 9, 2025 at 9:30 AM EDT"
     },
     "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
-    "asOf": "May 9, 2025 at 2:35 PM EDT",
-    "historicalPE": [22.5, 23.7, 25.2, 26.6, 24.8],
+    "asOf": "May 9, 2025 at 9:30 AM EDT",
     "peRatio": {
-      "current": 24.61,
-      "fiveYearAvg": 24.56,
-      "tenYearAvg": 23.79,
+      "current": 24.6,
+      "fiveYearAvg": 25.36,
+      "tenYearAvg": 24.85,
       "source": "Yahoo Finance",
       "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC/",
       "asOf": "May 2, 2025 at 12:00 AM EDT"
@@ -1087,7 +1609,7 @@
         "year": "2025",
         "eps": "$261.04",
         "targetAt15x": "$3915.60",
-        "percentVsIndex15x": "-30.9",
+        "percentVsIndex15x": "-30.8",
         "targetAt17x": "$4437.68",
         "percentVsIndex17x": "-21.6",
         "targetAt20x": "$5220.80",
@@ -1099,15 +1621,66 @@
         "targetAt15x": "$4477.20",
         "percentVsIndex15x": "-20.9",
         "targetAt17x": "$5074.16",
-        "percentVsIndex17x": "-10.4",
+        "percentVsIndex17x": "-10.3",
         "targetAt20x": "$5969.60",
-        "percentVsIndex20x": "5.4"
+        "percentVsIndex20x": "5.5"
       }
     ],
     "forwardEpsSource": {
       "name": "S&P Global",
       "url": "https://www.spglobal.com/spdji/en/",
-      "asOf": "May 8, 2025 at 8:00 PM EDT"
+      "asOf": "May 10, 2025 at 8:00 PM EDT"
+    },
+    "historicalPE": [
+      23.63,
+      22.65,
+      24.35,
+      28.6,
+      26.91
+    ],
+    "historicalPEDetails": {
+      "data": [
+        26.91,
+        28.6,
+        24.35,
+        22.65,
+        23.63
+      ],
+      "years": [
+        2025,
+        2024,
+        2023,
+        2022,
+        2021
+      ],
+      "formattedData": [
+        {
+          "year": 2025,
+          "value": 26.91
+        },
+        {
+          "year": 2024,
+          "value": 28.6
+        },
+        {
+          "year": 2023,
+          "value": 24.35
+        },
+        {
+          "year": 2022,
+          "value": 22.65
+        },
+        {
+          "year": 2021,
+          "value": 23.63
+        }
+      ],
+      "current": 26.91,
+      "fiveYearAvg": 25.36,
+      "tenYearAvg": 24.85,
+      "source": "multpl.com (monthly)",
+      "sourceUrl": "https://www.multpl.com/s-p-500-pe-ratio/table/by-month",
+      "lastUpdated": "May 11, 2025 at 6:03 PM EDT"
     },
     "topHoldings": [
       {
@@ -1151,27 +1724,27 @@
           {
             "symbol": "MSFT",
             "name": "Microsoft Corp",
-            "weight": 8.81
+            "weight": 8.83
           },
           {
             "symbol": "AAPL",
             "name": "Apple Inc",
-            "weight": 8.03
+            "weight": 8.06
           },
           {
             "symbol": "NVDA",
             "name": "NVIDIA Corp",
-            "weight": 7.75
+            "weight": 7.71
           },
           {
             "symbol": "AMZN",
             "name": "Amazon.com Inc",
-            "weight": 5.51
+            "weight": 5.54
           },
           {
             "symbol": "AVGO",
             "name": "Broadcom Inc",
-            "weight": 4.36
+            "weight": 4.37
           }
         ],
         "source": "Invesco",
