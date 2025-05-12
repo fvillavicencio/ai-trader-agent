@@ -996,10 +996,30 @@ exports.handler = async (event, context) => {
             console.log(`Image metadata: ${JSON.stringify(s3ImageResult.metadata)}`);
         }
         
-        // Use the S3 image URL or fall back to a default image if not available
-        const gekkoImageUrl = s3ImageResult && s3ImageResult.url 
-            ? s3ImageResult.url 
-            : 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bullish/absolutely_vertical/jordan_belfort_wolf_of_wall_street.jpg';
+        // Get the S3 image URL from the image selector result
+        // The image selector now handles fallbacks internally with random selection
+        let gekkoImageUrl = '';
+        
+        if (s3ImageResult && s3ImageResult.url) {
+            gekkoImageUrl = s3ImageResult.url;
+            console.log(`Using selected image URL: ${gekkoImageUrl}`);
+        } else {
+            // If for some reason we still don't have an image, construct a path based on sentiment
+            // This uses the S3 base URL and a path pattern that should exist
+            const baseS3Url = 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com';
+            const sentimentFolderMap = {
+                'bullish': 'bullish/bulls_on_parade',
+                'bearish': 'bearish/bears_in_control',
+                'neutral': 'neutral/mixed_signals',
+                'volatile': 'volatile/wild_ride'
+            };
+            const folder = sentimentFolderMap[sentiment] || 'neutral/mixed_signals';
+            
+            // We don't hardcode a specific image name, just the folder
+            // The actual image will be selected by Ghost from what's available
+            gekkoImageUrl = `${baseS3Url}/${folder}/`;
+            console.log(`Using fallback image folder: ${gekkoImageUrl}`);
+        }
             
         // Add image size constraints to the feature image for Ghost
         // Note: We're not modifying the URL directly as S3 doesn't support image transformations
@@ -1062,6 +1082,23 @@ exports.handler = async (event, context) => {
         // Add financial image to the HTML content
         console.log('Adding financial image to HTML content...');
         html = addFinancialImage(html, gekkoImageUrl);
+        
+        // Add a direct fix for the S&P 500 display format in the final HTML output
+        console.log('Applying direct fix for S&P 500 display format...');
+        
+        // Log a sample of the HTML to help debug
+        const htmlSample = html.substring(html.indexOf('S&P 500:') - 50, html.indexOf('S&P 500:') + 150);
+        console.log('HTML sample around S&P 500:', htmlSample);
+        
+        // This regex pattern matches S&P 500 display with parentheses and percentage - more flexible pattern
+        const sp500Pattern = /<span style="white-space: nowrap;">S&P 500: ([\d,]+) <span style="color: (#[0-9a-f]+)">\(([↑↓]) ([^%\)]+)%\)<\/span><\/span>/g;
+        html = html.replace(sp500Pattern, '<span style="white-space: nowrap;">S&P 500: $1 <span style="color: $2">$3 $4</span></span>');
+        
+        // Add a second pattern to catch any other variations
+        const sp500PatternAlt = /<span style="white-space: nowrap;">S&P 500: ([\d,]+) <span style="color: (#[0-9a-f]+)">[\(\s]*([↑↓]) ([\-0-9\.]+)%?[\)\s]*<\/span><\/span>/g;
+        html = html.replace(sp500PatternAlt, '<span style="white-space: nowrap;">S&P 500: $1 <span style="color: $2">$3 $4</span></span>');
+        
+        console.log('Completed direct fix for S&P 500 display format');
         
         console.log('Generated standalone HTML version with financial image');
         
