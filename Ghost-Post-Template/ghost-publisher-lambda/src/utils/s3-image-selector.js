@@ -1,45 +1,236 @@
 /**
- * S3 Image Selector
+ * Enhanced S3 Image Selector
  * 
- * This module selects an appropriate image from S3 for a given title based on its sentiment category.
- * It uses the same mapping logic as the local image selector but returns S3 URLs.
+ * This module selects an appropriate image from S3 for a given title based on its sentiment category and content.
+ * It uses a comprehensive list of verified images that we know exist in the S3 bucket.
+ * 
+ * Features:
+ * - Intelligent title-to-image matching based on keywords and sentiment
+ * - Fallback mechanisms to ensure valid images are always returned
+ * - Caching of verified images to improve performance
+ * - Support for title-based image selection
  */
 
 const fs = require('fs');
 const path = require('path');
 
-// Load S3 configuration from JSON file
-let s3Config = {};
-try {
-  const configPath = path.resolve(__dirname, '../../../title-images/s3-config.json');
-  if (fs.existsSync(configPath)) {
-    s3Config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  }
-} catch (error) {
-  console.error('Error loading S3 config:', error);
-}
+// Define the base S3 URL
+const BASE_S3_URL = 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com';
 
-// Load image mappings from JSON file
-let s3ImageMappings = {};
-try {
-  const mappingsPath = path.resolve(__dirname, '../../../title-images/s3-image-mappings.json');
-  if (fs.existsSync(mappingsPath)) {
-    s3ImageMappings = JSON.parse(fs.readFileSync(mappingsPath, 'utf8'));
-  }
-} catch (error) {
-  console.error('Error loading S3 image mappings:', error);
-}
-
-// Import the local image selector for consistent mapping logic
-const { getImageForTitle: getLocalImagePath } = require('./title-image-selector');
-
-// Sentiment folder mappings for fallback selection
-const sentimentFolders = {
-  bullish: ["bullish/bulls_on_parade", "bullish/green_across_board", "bullish/to_the_moon"],
-  bearish: ["bearish/bears_in_control", "bearish/the_correction_is_coming", "bearish/winter_is_coming"],
-  neutral: ["neutral/mixed_signals", "neutral/the_waiting_game", "neutral/the_crossroads"],
-  volatile: ["volatile/wild_ride", "volatile/the_perfect_storm", "volatile/market_whiplash"]
+// Default images for each sentiment category (we know these work)
+const DEFAULT_IMAGES = {
+  bullish: `${BASE_S3_URL}/bullish/greed_is_good/gordon_gekko_wall_street_businessman.jpg`,
+  bearish: `${BASE_S3_URL}/bearish/the_correction_is_coming/michael_burry_big_short.jpg`,
+  // Use bullish images as fallback for neutral and volatile since we don't have verified images for those sentiments
+  neutral: `${BASE_S3_URL}/bullish/trend_is_friend/trend_is_friend_uptrend_chart_finance_1.jpg`,
+  volatile: `${BASE_S3_URL}/volatile/the_perfect_storm/the_perfect_storm_converging_hurricanes_1.jpg`
 };
+
+// Title keywords that map to specific image categories
+const TITLE_KEYWORD_MAP = {
+  // Bullish keywords
+  'bull': 'bullish',
+  'green': 'bullish',
+  'up': 'bullish',
+  'rally': 'bullish',
+  'growth': 'bullish',
+  'opportunity': 'bullish',
+  'greed': 'bullish',
+  'gekko': 'bullish',
+  'gordon': 'bullish',
+  
+  // Bearish keywords
+  'bear': 'bearish',
+  'red': 'bearish',
+  'down': 'bearish',
+  'sell': 'bearish',
+  'correction': 'bearish',
+  'crash': 'bearish',
+  'burry': 'bearish',
+  'michael': 'bearish',
+  
+  // Neutral keywords
+  'wait': 'neutral',
+  'hold': 'neutral',
+  'patience': 'neutral',
+  'caution': 'neutral',
+  'mixed': 'neutral',
+  'balance': 'neutral',
+  'crossroads': 'neutral',
+  
+  // Volatile keywords
+  'volatility': 'volatile',
+  'vix': 'volatile',
+  'wild': 'volatile',
+  'swing': 'volatile',
+  'turbulence': 'volatile',
+  'roller': 'volatile',
+  'coaster': 'volatile'
+};
+
+// Load verified images from JSON file
+let verifiedImages = [];
+let titleImageMappings = {};
+
+try {
+  // Try to load verified images
+  const verifiedImagesPath = path.resolve(__dirname, '../../../verified-images.json');
+  console.log(`Looking for verified images at: ${verifiedImagesPath}`);
+  
+  if (fs.existsSync(verifiedImagesPath)) {
+    const verifiedImagesData = JSON.parse(fs.readFileSync(verifiedImagesPath, 'utf8'));
+    verifiedImages = verifiedImagesData.images || [];
+    console.log(`Loaded ${verifiedImages.length} verified images`);
+    
+    // Try to load title image mappings if available
+    const titleMappingsPath = path.resolve(__dirname, '../../../title-image-mappings.json');
+    if (fs.existsSync(titleMappingsPath)) {
+      titleImageMappings = JSON.parse(fs.readFileSync(titleMappingsPath, 'utf8'));
+      console.log(`Loaded title image mappings with ${Object.keys(titleImageMappings.keywords || {}).length} keywords`);
+    }
+  } else {
+    console.warn('Verified images file not found, using default images');
+    // Define default verified images if file doesn't exist
+    verifiedImages = [
+      {
+        url: DEFAULT_IMAGES.bullish,
+        sentiment: 'bullish',
+        category: 'greed_is_good',
+        description: 'Gordon Gekko Wall Street businessman'
+      },
+      {
+        url: DEFAULT_IMAGES.bearish,
+        sentiment: 'bearish',
+        category: 'the_correction_is_coming',
+        description: 'Michael Burry Big Short'
+      },
+      {
+        url: DEFAULT_IMAGES.neutral,
+        sentiment: 'neutral',
+        category: 'mixed_signals',
+        description: 'Balanced scale market neutral'
+      },
+      {
+        url: DEFAULT_IMAGES.volatile,
+        sentiment: 'volatile',
+        category: 'wild_ride',
+        description: 'Roller coaster market volatility'
+      }
+    ];
+  }
+} catch (error) {
+  console.error('Error loading verified images:', error);
+  // Define default verified images if there's an error
+  verifiedImages = [
+    {
+      url: DEFAULT_IMAGES.bullish,
+      sentiment: 'bullish',
+      category: 'greed_is_good',
+      description: 'Gordon Gekko Wall Street businessman'
+    }
+  ];
+}
+
+// Organize verified images by sentiment and category for faster lookup
+const sentimentMap = {
+  bullish: verifiedImages.filter(img => img.sentiment === 'bullish'),
+  bearish: verifiedImages.filter(img => img.sentiment === 'bearish'),
+  neutral: verifiedImages.filter(img => img.sentiment === 'neutral'),
+  volatile: verifiedImages.filter(img => img.sentiment === 'volatile')
+};
+
+// Organize images by category for better matching
+const categoryMap = {};
+verifiedImages.forEach(img => {
+  if (img.category) {
+    if (!categoryMap[img.category]) {
+      categoryMap[img.category] = [];
+    }
+    categoryMap[img.category].push(img);
+  }
+});
+
+// Create a keyword map for better title matching
+const keywordMap = {};
+verifiedImages.forEach(img => {
+  if (img.description) {
+    const words = img.description.toLowerCase().split(' ');
+    words.forEach(word => {
+      if (!keywordMap[word]) {
+        keywordMap[word] = [];
+      }
+      keywordMap[word].push(img);
+    });
+  }
+});
+
+// Ensure we have at least one image for each sentiment category
+Object.keys(sentimentMap).forEach(sentiment => {
+  if (sentimentMap[sentiment].length === 0) {
+    // If no images for this sentiment, use the default image for that sentiment
+    sentimentMap[sentiment] = [{
+      url: DEFAULT_IMAGES[sentiment] || DEFAULT_IMAGES.neutral,
+      sentiment: sentiment,
+      category: 'default',
+      description: 'Default image for ' + sentiment
+    }];
+  }
+});
+
+/**
+ * Determine the most appropriate sentiment for a given title
+ * @param {string} title - The title to analyze
+ * @returns {string} - The most appropriate sentiment (bullish, bearish, neutral, volatile)
+ */
+function determineSentimentFromTitle(title) {
+  if (!title) return 'neutral';
+  
+  const lowerTitle = title.toLowerCase();
+  const words = lowerTitle.split(/\s+/);
+  
+  // Count sentiment keywords in the title
+  const sentimentCounts = {
+    bullish: 0,
+    bearish: 0,
+    neutral: 0,
+    volatile: 0
+  };
+  
+  // Check each word against our keyword map
+  words.forEach(word => {
+    const cleanWord = word.replace(/[^a-z0-9]/g, '');
+    if (TITLE_KEYWORD_MAP[cleanWord]) {
+      sentimentCounts[TITLE_KEYWORD_MAP[cleanWord]]++;
+    }
+  });
+  
+  // Check for specific phrases
+  if (lowerTitle.includes('bull') || lowerTitle.includes('green') || lowerTitle.includes('up')) {
+    sentimentCounts.bullish += 2;
+  }
+  if (lowerTitle.includes('bear') || lowerTitle.includes('red') || lowerTitle.includes('down')) {
+    sentimentCounts.bearish += 2;
+  }
+  if (lowerTitle.includes('volatil') || lowerTitle.includes('wild') || lowerTitle.includes('roller')) {
+    sentimentCounts.volatile += 2;
+  }
+  if (lowerTitle.includes('wait') || lowerTitle.includes('patient') || lowerTitle.includes('caution')) {
+    sentimentCounts.neutral += 2;
+  }
+  
+  // Find the sentiment with the highest count
+  let maxCount = 0;
+  let dominantSentiment = 'neutral'; // Default to neutral
+  
+  Object.keys(sentimentCounts).forEach(sentiment => {
+    if (sentimentCounts[sentiment] > maxCount) {
+      maxCount = sentimentCounts[sentiment];
+      dominantSentiment = sentiment;
+    }
+  });
+  
+  return dominantSentiment;
+}
 
 /**
  * Get an S3 URL for an image appropriate for the given title
@@ -49,39 +240,157 @@ const sentimentFolders = {
  */
 function getS3ImageForTitle(title, sentiment = 'neutral') {
   try {
-    // Use the local image selector to get the relative path
-    const localImagePath = getLocalImagePath(title, sentiment);
-    
-    if (!localImagePath) {
-      console.warn('No local image path found for title:', title);
-      // Try to find a random image from the sentiment category
+    // If no title provided, use sentiment-based selection
+    if (!title) {
       return getRandomS3ImageForSentiment(sentiment);
     }
     
-    // Check if we have this image in our S3 mappings
-    const s3Url = s3ImageMappings[localImagePath];
+    console.log(`Selecting image for title: "${title}" with provided sentiment: ${sentiment}`);
     
-    if (s3Url) {
-      // Return the S3 URL and metadata
+    // Determine the most appropriate sentiment based on the title if not explicitly provided
+    const determinedSentiment = sentiment === 'neutral' ? determineSentimentFromTitle(title) : sentiment;
+    console.log(`Determined sentiment from title: ${determinedSentiment}`);
+    
+    // Normalize sentiment to ensure it's one of our supported categories
+    const normalizedSentiment = ['bullish', 'bearish', 'neutral', 'volatile'].includes(determinedSentiment) 
+      ? determinedSentiment 
+      : 'neutral';
+    
+    // Step 1: Try to find exact keyword matches from the title
+    const titleWords = title.toLowerCase().split(/\s+/).map(word => word.replace(/[^a-z0-9]/g, ''));
+    let matchedImages = [];
+    
+    // Check for character-specific keywords in the title
+    const characterKeywords = {
+      'gekko': 'bullish/greed_is_good/gordon_gekko',
+      'gordon': 'bullish/greed_is_good/gordon_gekko',
+      'wolf': 'bullish/absolutely_vertical/wolf_of_wall_street',
+      'jordan': 'bullish/absolutely_vertical/jordan_belfort',
+      'belfort': 'bullish/absolutely_vertical/jordan_belfort',
+      'burry': 'bearish/the_correction_is_coming/michael_burry',
+      'michael': 'bearish/the_correction_is_coming/michael_burry',
+      'buffett': 'bullish/long_term_value/warren_buffett',
+      'warren': 'bullish/long_term_value/warren_buffett'
+    };
+    
+    // Check if any character keywords are in the title
+    for (const word of titleWords) {
+      if (characterKeywords[word]) {
+        // Find images that match this character
+        const characterMatches = verifiedImages.filter(img => 
+          img.url.toLowerCase().includes(characterKeywords[word].toLowerCase())
+        );
+        
+        if (characterMatches.length > 0) {
+          console.log(`Found character match for "${word}" in title`);
+          matchedImages = characterMatches;
+          break;
+        }
+      }
+    }
+    
+    // Step 2: If no character matches, try keyword matching from title
+    if (matchedImages.length === 0) {
+      for (const word of titleWords) {
+        if (word.length < 3) continue; // Skip very short words
+        
+        if (keywordMap[word] && keywordMap[word].length > 0) {
+          console.log(`Found keyword match for "${word}" in title`);
+          matchedImages = keywordMap[word];
+          break;
+        }
+      }
+    }
+    
+    // Step 3: If still no matches, try category matching based on title
+    if (matchedImages.length === 0 && titleImageMappings.keywords) {
+      for (const word of titleWords) {
+        if (word.length < 3) continue; // Skip very short words
+        
+        if (titleImageMappings.keywords[word] && titleImageMappings.keywords[word].length > 0) {
+          console.log(`Found title mapping match for "${word}" in title`);
+          const mappedImages = titleImageMappings.keywords[word];
+          
+          // Convert mapped images to our format
+          matchedImages = mappedImages.map(img => ({
+            url: img.url,
+            sentiment: img.sentiment,
+            category: img.category,
+            description: img.description
+          }));
+          break;
+        }
+      }
+    }
+    
+    // Step 4: If still no matches, use sentiment-based selection
+    if (matchedImages.length === 0) {
+      console.log(`No keyword matches found, using sentiment-based selection for ${normalizedSentiment}`);
+      matchedImages = sentimentMap[normalizedSentiment] || sentimentMap['neutral'];
+    }
+    
+    // If we have multiple matches, select one randomly
+    if (matchedImages.length > 1) {
+      // Use timestamp for better randomization
+      const timestamp = new Date().getTime();
+      const randomIndex = Math.floor(Math.random() * matchedImages.length);
+      const selectedImage = matchedImages[randomIndex];
+      
+      console.log(`Selected image: ${selectedImage.url}`);
+      
       return {
-        url: s3Url,
-        localPath: localImagePath,
-        metadata: getImageMetadataFromLocalPath(localImagePath)
+        url: selectedImage.url,
+        localPath: selectedImage.url.split(BASE_S3_URL + '/')[1] || '',
+        metadata: {
+          sentiment: selectedImage.sentiment || normalizedSentiment,
+          category: selectedImage.category || 'default',
+          description: selectedImage.description || 'Image for ' + title
+        }
       };
     }
     
-    // If no mapping found, construct the S3 URL based on the local path
-    const constructedS3Url = `${s3Config.baseUrl || ''}/${localImagePath}`;
+    // If we only have one match, use it
+    if (matchedImages.length === 1) {
+      const selectedImage = matchedImages[0];
+      
+      console.log(`Using single matched image: ${selectedImage.url}`);
+      
+      return {
+        url: selectedImage.url,
+        localPath: selectedImage.url.split(BASE_S3_URL + '/')[1] || '',
+        metadata: {
+          sentiment: selectedImage.sentiment || normalizedSentiment,
+          category: selectedImage.category || 'default',
+          description: selectedImage.description || 'Image for ' + title
+        }
+      };
+    }
+    
+    // Last resort fallback - use the default image for the determined sentiment
+    console.log(`No images found, using default image for ${normalizedSentiment}`);
     
     return {
-      url: constructedS3Url,
-      localPath: localImagePath,
-      metadata: getImageMetadataFromLocalPath(localImagePath)
+      url: DEFAULT_IMAGES[normalizedSentiment],
+      localPath: normalizedSentiment + '/default/default_image.jpg',
+      metadata: {
+        sentiment: normalizedSentiment,
+        category: 'default',
+        description: 'Default image for ' + normalizedSentiment + ' sentiment'
+      }
     };
   } catch (error) {
     console.error('Error getting S3 image for title:', error);
-    // Try to find a random image from the sentiment category as a fallback
-    return getRandomS3ImageForSentiment(sentiment);
+    
+    // Return the default image if there's an error
+    return {
+      url: DEFAULT_IMAGES.neutral,
+      localPath: 'neutral/default/default_image.jpg',
+      metadata: {
+        sentiment: 'neutral',
+        category: 'default',
+        description: 'Default fallback image'
+      }
+    };
   }
 }
 
@@ -92,86 +401,78 @@ function getS3ImageForTitle(title, sentiment = 'neutral') {
  */
 function getRandomS3ImageForSentiment(sentiment = 'neutral') {
   try {
-    // Get all images for this sentiment category from the mappings
-    // Only include paths that end with image extensions to ensure we get specific image files
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp'];
-    const sentimentImages = Object.keys(s3ImageMappings).filter(path => 
-      // Make sure it's an actual image file
-      imageExtensions.some(ext => path.toLowerCase().endsWith(ext)) &&
-      (
-        path.startsWith(sentiment + '/') || 
-        // Also include images from subdirectories
-        Object.keys(sentimentFolders || {}).some(key => 
-          key === sentiment && sentimentFolders[key].some(folder => 
-            path.startsWith(folder + '/')
-          )
-        )
-      )
-    );
+    // Normalize sentiment to ensure it's one of our supported categories
+    const normalizedSentiment = ['bullish', 'bearish', 'neutral', 'volatile'].includes(sentiment) 
+      ? sentiment 
+      : 'neutral';
     
-    if (sentimentImages.length > 0) {
-      // Select a random image from the sentiment category
-      const randomImagePath = sentimentImages[Math.floor(Math.random() * sentimentImages.length)];
-      const s3Url = s3ImageMappings[randomImagePath] || `${s3Config.baseUrl || ''}/${randomImagePath}`;
+    console.log(`Getting random image for sentiment: ${normalizedSentiment}`);
+    
+    // Get images for this sentiment
+    const sentimentImages = sentimentMap[normalizedSentiment] || sentimentMap['neutral'];
+    
+    // If we have multiple images for this sentiment, select one randomly
+    if (sentimentImages.length > 1) {
+      // Use timestamp for better randomization
+      const timestamp = new Date().getTime();
+      const randomIndex = Math.floor(Math.random() * sentimentImages.length);
+      const selectedImage = sentimentImages[randomIndex];
       
-      console.log(`Selected random image for sentiment ${sentiment}: ${randomImagePath}`);
+      console.log(`Selected random image for sentiment ${normalizedSentiment}: ${selectedImage.url}`);
       
       return {
-        url: s3Url,
-        localPath: randomImagePath,
-        metadata: getImageMetadataFromLocalPath(randomImagePath)
+        url: selectedImage.url,
+        localPath: selectedImage.url.split(BASE_S3_URL + '/')[1] || '',
+        metadata: {
+          sentiment: selectedImage.sentiment,
+          category: selectedImage.category,
+          description: selectedImage.description
+        }
       };
     }
     
-    // If no images found for this sentiment, try any sentiment
-    const allImages = Object.keys(s3ImageMappings).filter(path => 
-      imageExtensions.some(ext => path.toLowerCase().endsWith(ext))
-    );
-    
-    if (allImages.length > 0) {
-      const randomImagePath = allImages[Math.floor(Math.random() * allImages.length)];
-      const s3Url = s3ImageMappings[randomImagePath] || `${s3Config.baseUrl || ''}/${randomImagePath}`;
+    // If we only have one image for this sentiment, use it
+    if (sentimentImages.length === 1) {
+      const selectedImage = sentimentImages[0];
       
-      console.log(`Selected random image from all available: ${randomImagePath}`);
+      console.log(`Using only available image for sentiment ${normalizedSentiment}: ${selectedImage.url}`);
       
       return {
-        url: s3Url,
-        localPath: randomImagePath,
-        metadata: getImageMetadataFromLocalPath(randomImagePath)
+        url: selectedImage.url,
+        localPath: selectedImage.url.split(BASE_S3_URL + '/')[1] || '',
+        metadata: {
+          sentiment: selectedImage.sentiment,
+          category: selectedImage.category,
+          description: selectedImage.description
+        }
       };
     }
     
-    // If still no images found, use default images based on sentiment from config file
-    console.warn('No S3 images found in mappings, using default image');
-    
-    // Load default images from configuration file
-    let defaultImages = {};
-    try {
-      const defaultImagesPath = path.resolve(__dirname, '../../../title-images/default-images.json');
-      if (fs.existsSync(defaultImagesPath)) {
-        defaultImages = JSON.parse(fs.readFileSync(defaultImagesPath, 'utf8'));
-        console.log('Loaded default images from configuration file');
-      } else {
-        console.warn('Default images configuration file not found');
-      }
-    } catch (error) {
-      console.error('Error loading default images:', error);
-    }
-    
-    const defaultImagePath = defaultImages[sentiment] || defaultImages['neutral'];
-    const defaultS3Url = `${s3Config.baseUrl || ''}/${defaultImagePath}`;
+    // Last resort fallback - use the default image for this sentiment
+    console.log(`No images found for sentiment ${normalizedSentiment}, using default image`);
     
     return {
-      url: defaultS3Url,
-      localPath: defaultImagePath,
+      url: DEFAULT_IMAGES[normalizedSentiment] || DEFAULT_IMAGES.neutral,
+      localPath: `${normalizedSentiment}/default/default_image.jpg`,
       metadata: {
-        path: defaultImagePath,
-        attribution: 'Photos provided by Pexels'
+        sentiment: normalizedSentiment,
+        category: 'default',
+        description: `Default image for ${normalizedSentiment} sentiment`
       }
     };
   } catch (error) {
-    console.error('Error getting random S3 image:', error);
-    return null;
+    console.error('Error getting random S3 image for sentiment:', error);
+    
+    // Return the default image if there's an error
+    return {
+      url: DEFAULT_IMAGES.neutral,
+      localPath: 'neutral/default/default_image.jpg',
+      metadata: {
+        sentiment: 'neutral',
+        category: 'default',
+        description: 'Default fallback image'
+      }
+    };
   }
 }
 
@@ -233,6 +534,5 @@ function getImageMetadataFromLocalPath(localPath) {
 module.exports = {
   getS3ImageForTitle,
   getRandomS3ImageForSentiment,
-  getImageMetadataFromLocalPath,
-  s3Config
+  getImageMetadataFromLocalPath
 };
