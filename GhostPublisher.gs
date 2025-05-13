@@ -5,6 +5,7 @@
  * @param {Object} options - Additional options
  * @param {boolean} options.draftOnly - Force the post to be created as a draft
  * @param {boolean} options.skipMembersFetch - Skip fetching members from Ghost API
+ * @param {boolean} options.returnHtml - Request HTML content in the response
  * @returns {Object} - The response from Lambda API
  */
 function publishToGhostWithLambda(jsonData, options = {}) {
@@ -22,7 +23,8 @@ function publishToGhostWithLambda(jsonData, options = {}) {
       ghostApiKey: ghostApiKey,
       newsletterId: newsletterId,
       jsonData: jsonData,
-      draftOnly: !!options.draftOnly  // Pass the draftOnly parameter to the Lambda function
+      draftOnly: !!options.draftOnly,  // Pass the draftOnly parameter to the Lambda function
+      returnHtml: !!options.returnHtml  // Request HTML content in the response
     };
     
     // For testing purposes, we'll log the payload structure (without sensitive data)
@@ -53,8 +55,23 @@ function publishToGhostWithLambda(jsonData, options = {}) {
       Logger.log('Lambda API response: ' + responseText);
       
       if (responseCode >= 200 && responseCode < 300) {
-        lambdaResponse = JSON.parse(responseText);
-        Logger.log('Article successfully ' + (options.draftOnly ? 'saved as draft' : 'published') + ' to Ghost!');
+        // Check if the response is HTML directly
+        if (options.returnHtml && (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html'))) {
+          lambdaResponse = { html: responseText };
+          Logger.log('HTML content received directly from Lambda');
+        } else {
+          // Parse as JSON
+          lambdaResponse = JSON.parse(responseText);
+          Logger.log('Article successfully ' + (options.draftOnly ? 'saved as draft' : 'published') + ' to Ghost!');
+          
+          // Check if the response body contains HTML
+          if (options.returnHtml && lambdaResponse.body && 
+              typeof lambdaResponse.body === 'string' && 
+              (lambdaResponse.body.startsWith('<!DOCTYPE') || lambdaResponse.body.startsWith('<html'))) {
+            lambdaResponse.html = lambdaResponse.body;
+            Logger.log('HTML content extracted from Lambda response body');
+          }
+        }
       } else {
         Logger.log('Error ' + (options.draftOnly ? 'creating draft' : 'publishing') + ' article to Ghost. Response: ' + responseText);
       }
@@ -169,10 +186,109 @@ function publishToGhostWithLambda(jsonData, options = {}) {
       members: members
     };
     
+    // If HTML content was requested but not found in the Lambda response,
+    // add a note to the response
+    if (options.returnHtml && !response.html) {
+      response.htmlStatus = "HTML content was requested but not returned by the Lambda function";
+    }
+    
     return response;
   } catch (error) {
     Logger.log('Error in publishToGhostWithLambda: ' + error.toString());
     throw error;
+  }
+}
+
+/**
+ * Test function for the publishToGhostWithLambda function
+ * Retrieves the JSON payload from Google Drive and sends it to the Lambda function
+ */
+/**
+ * Test function for the publishToGhostWithLambda function with returnHtml option
+ * This demonstrates how to make a single call to both publish content and retrieve HTML
+ */
+function testPublishToGhostWithHtmlRetrieval() {
+  try {
+    // Get script properties
+    var props = PropertiesService.getScriptProperties();
+    var folderName = props.getProperty('GOOGLE_FOLDER_NAME');
+    var jsonFileName = "market_pulse_data.json";
+    var htmlFileName = props.getProperty('GOOGLE_FILE_NAME') || 'MarketPulseDaily.html';
+    
+    // Find the folder by name
+    var folderIterator = DriveApp.getFoldersByName(folderName);
+    if (!folderIterator.hasNext()) {
+      throw new Error('Folder ' + folderName + ' not found');
+    }
+    var folder = folderIterator.next();
+    Logger.log('Searching for file: ' + jsonFileName + ' in folder: ' + folderName);
+
+    // Search for the JSON file in the specified folder
+    var files = folder.getFilesByName(jsonFileName);
+    if (!files.hasNext()) {
+      throw new Error('File ' + jsonFileName + ' not found in folder ' + folderName);
+    }
+    var file = files.next();
+    Logger.log('Found file: ' + file.getName());
+    
+    // Read the JSON content
+    var jsonContent = file.getBlob().getDataAsString();
+    var jsonData = JSON.parse(jsonContent);
+    Logger.log('JSON data loaded successfully with keys: ' + Object.keys(jsonData).join(', '));
+    
+    // Call publishToGhostWithLambda with returnHtml option
+    // This makes a single call to both publish the content and retrieve the HTML
+    var result = publishToGhostWithLambda(jsonData, {
+      draftOnly: true, // Use draft mode for testing
+      returnHtml: true  // Request HTML in the response
+    });
+    
+    // Check if HTML was returned
+    if (result && result.html) {
+      Logger.log('HTML content successfully retrieved from Ghost Lambda');
+      Logger.log('HTML content length: ' + result.html.length + ' characters');
+      
+      // Save the HTML to Google Drive
+      var htmlFile;
+      var htmlFiles = folder.getFilesByName(htmlFileName);
+      if (htmlFiles.hasNext()) {
+        htmlFile = htmlFiles.next();
+        Logger.log('Found existing HTML file: ' + htmlFileName);
+        htmlFile.setContent(result.html);
+      } else {
+        htmlFile = folder.createFile(htmlFileName, result.html);
+        Logger.log('Created new HTML file: ' + htmlFileName);
+      }
+      
+      var htmlFileUrl = htmlFile.getUrl();
+      Logger.log('HTML file saved to Google Drive: ' + htmlFileUrl);
+      
+      return {
+        success: true,
+        message: 'HTML content successfully retrieved and saved',
+        htmlUrl: htmlFileUrl,
+        postUrl: result.postUrl,
+        postId: result.postId
+      };
+    } else {
+      Logger.log('No HTML content returned from Ghost Lambda');
+      if (result && result.htmlStatus) {
+        Logger.log('HTML status: ' + result.htmlStatus);
+      }
+      
+      return {
+        success: false,
+        message: 'No HTML content returned from Ghost Lambda',
+        error: result.htmlStatus || 'Unknown error'
+      };
+    }
+  } catch (error) {
+    Logger.log('Error in testPublishToGhostWithHtmlRetrieval: ' + error.toString());
+    return {
+      success: false,
+      message: 'Error testing Ghost HTML retrieval',
+      error: error.toString()
+    };
   }
 }
 
