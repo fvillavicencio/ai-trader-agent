@@ -492,17 +492,31 @@ const addRSI = (mobiledoc, data) => {
 const addMarketHeader = (mobiledoc, data) => {
   if (!data) return;
   
-  // Get S&P 500 data
-  const sp500 = data.marketIndicators?.majorIndices?.find(index => index.symbol === '^GSPC' || index.name.includes('S&P 500'));
+  // Get S&P 500 data directly from marketIndicators.majorIndices
+  const sp500 = data.marketIndicators?.majorIndices?.find(index => index.name.includes('S&P 500'));
+  
+  // Format the price with commas
   const sp500Price = sp500 ? formatNumber(sp500.price) : '';
-  // Calculate percentage change correctly if not provided
-  const sp500Change = sp500 ? (
-    sp500.percentChange ? parseFloat(sp500.percentChange) : 
-    sp500.change && sp500.price ? ((parseFloat(sp500.change) / parseFloat(sp500.price)) * 100) : 0
-  ) : 0;
-  const sp500IsPositive = sp500 ? (sp500.isPositive !== undefined ? sp500.isPositive : sp500Change >= 0) : false;
+  
+  // Get the actual price change value directly from the change field (as absolute value)
+  const sp500ActualChange = sp500 && sp500.change !== undefined ? Math.abs(parseFloat(sp500.change)) : 0;
+  
+  // Calculate percentage change from the actual change and price (as absolute value)
+  let sp500PercentChange = 0;
+  if (sp500 && sp500.change !== undefined && sp500.price) {
+    // Get the raw change value (with sign) for calculation
+    const rawChange = parseFloat(sp500.change);
+    // Calculate the previous price by subtracting the change from the current price
+    const previousPrice = parseFloat(sp500.price) - rawChange;
+    // Calculate the percentage change and take the absolute value
+    sp500PercentChange = Math.abs((rawChange / previousPrice) * 100);
+  }
+  
+  // Determine if the change is positive based on the isPositive property or the sign of the change
+  const sp500IsPositive = sp500 ? (sp500.isPositive !== undefined ? sp500.isPositive : parseFloat(sp500.change) >= 0) : false;
+  // Set the arrow icon based on whether the change is positive or negative
   const sp500ChangeIcon = sp500IsPositive ? '↑' : '↓';
-  const sp500ChangeSign = sp500IsPositive ? '+' : '';
+  // Set the color based on whether the change is positive or negative
   const sp500Color = sp500IsPositive ? '#48bb78' : '#f56565';
 
   // Get Fear & Greed data
@@ -533,7 +547,7 @@ const addMarketHeader = (mobiledoc, data) => {
         Market Pulse Daily
       </div>
       <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-        <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">${sp500ChangeIcon} ${Math.abs(parseFloat(sp500Change)).toFixed(2)} (${Math.abs(parseFloat(sp500Change)).toFixed(2)}%)</span></span> | 
+        <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">${sp500ChangeIcon} ${Math.abs(sp500ActualChange).toFixed(2)} (${Math.abs(parseFloat(sp500PercentChange)).toFixed(2)}%)</span></span> | 
         <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${getFearGreedColor(fearGreedValue)}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
         <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span>${rsiValue ? ` | <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiValue >= 70 ? 'Overbought' : rsiValue <= 30 ? 'Oversold' : rsiValue >= 60 ? 'Approaching Overbought' : rsiValue <= 40 ? 'Approaching Oversold' : 'Neutral'})</span></span>` : ''}
       </div>
@@ -554,13 +568,33 @@ const addMarketIndicators = (mobiledoc, data) => {
   // Find S&P 500 data
   const sp500 = data.marketIndicators?.majorIndices?.find(i => i.name === 'S&P 500');
   const sp500Price = sp500?.price ? formatNumber(sp500.price) : '0';
+  // Get the actual change value
+  const sp500ActualChange = sp500?.change ? parseFloat(sp500.change) : 0;
+  
   // Calculate percentage change correctly if not provided
-  const sp500Change = sp500?.percentChange || 
-    (sp500?.change && sp500?.price ? 
-      ((parseFloat(sp500.change) / parseFloat(sp500.price)) * 100).toFixed(2) + '%' : 
-      '0%');
-  const sp500IsPositive = sp500?.isPositive !== undefined ? sp500.isPositive : (parseFloat(sp500?.change || 0) >= 0);
+  let sp500PercentChange = 0;
+  if (sp500?.change !== undefined && sp500?.price) {
+    // Get the raw change value (with sign) for calculation
+    const rawChange = parseFloat(sp500.change);
+    // Calculate the previous price by subtracting the change from the current price
+    const previousPrice = parseFloat(sp500.price) - rawChange;
+    // Calculate the percentage change
+    sp500PercentChange = (rawChange / previousPrice) * 100;
+  }
+  
+  const sp500IsPositive = sp500?.isPositive !== undefined ? sp500.isPositive : (sp500ActualChange >= 0);
   const sp500Color = sp500IsPositive ? '#48bb78' : '#f56565';
+
+  // Debug logging for S&P 500 values
+  console.log('DEBUG - S&P 500 Raw Data:', JSON.stringify(sp500));
+  console.log('DEBUG - S&P 500 Price:', sp500Price);
+  console.log('DEBUG - S&P 500 Actual Change:', sp500ActualChange);
+  console.log('DEBUG - S&P 500 Actual Change (abs):', Math.abs(sp500ActualChange));
+  console.log('DEBUG - S&P 500 Percent Change:', sp500PercentChange);
+  console.log('DEBUG - S&P 500 Percent Change (abs):', Math.abs(sp500PercentChange));
+  console.log('DEBUG - S&P 500 Color:', sp500Color);
+  console.log('DEBUG - S&P 500 Change Icon:', sp500IsPositive ? '↑' : '↓');
+  console.log('DEBUG - S&P 500 Template String:', `S&P 500: ${sp500Price} <span style="color: ${sp500Color}">${sp500IsPositive ? '↑' : '↓'} ${Math.abs(sp500ActualChange).toFixed(2)} (${Math.abs(sp500PercentChange).toFixed(2)}%)</span>`);
 
   // Get Fear & Greed data
   const fearGreedData = data.fearGreed || data.marketIndicators?.fearGreed;
@@ -600,7 +634,7 @@ const addMarketIndicators = (mobiledoc, data) => {
             <div class="collapsible-icon" style="font-size: 14px; color: black;">▼</div>
           </div>
           <div style="margin-top: 10px; line-height: 1.5; color: black; font-size: 1.2rem; font-weight: normal; text-align: center; width: 100%; display: flex; flex-wrap: wrap; justify-content: center; gap: 5px;">
-            <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">${sp500IsPositive ? '↑' : '↓'} ${Math.abs(parseFloat(sp500Change)).toFixed(2)} (${Math.abs(parseFloat(sp500Change)).toFixed(2)}%)</span></span> | 
+            <span style="white-space: nowrap;">S&P 500: ${sp500Price} <span style="color: ${sp500Color}">${sp500IsPositive ? '↑' : '↓'} ${Math.abs(sp500ActualChange).toFixed(2)} (${Math.abs(sp500PercentChange).toFixed(2)}%)</span></span> | 
             <span style="white-space: nowrap;">Fear & Greed Index: <span style="color: ${fearGreedColor}">${fearGreedValue} (${fearGreedCategory})</span></span> | 
             <span style="white-space: nowrap;">VIX: <span style="color: ${vixColor}">${vixValue} (${vixTrend})</span></span>${rsiValue ? ` | 
             <span style="white-space: nowrap;">RSI: <span style="color: ${rsiColor}">${rsiValue} (${rsiTrend})</span></span>` : ''}
