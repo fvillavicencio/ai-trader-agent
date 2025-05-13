@@ -980,16 +980,20 @@ exports.handler = async (event, context) => {
         ];
         
         // Get an appropriate image from S3 bucket based on title and sentiment
-        const { getS3ImageForTitle } = require('./src/utils/s3-image-selector');
+        const { initializeImageSelector, getS3ImageForTitle } = require('./src/utils/s3-image-selector');
+        
+        // Initialize the image selector
+        await initializeImageSelector();
         
         // Extract sentiment from the decision data or default to neutral
         const sentiment = data.decision && data.decision.sentiment ? data.decision.sentiment : 'neutral';
         console.log(`Using sentiment "${sentiment}" for image selection`);
         
-        // Get an appropriate image based on the title and sentiment
-        // This will select from multiple images in each category to avoid repetition
+        // Select an image for the title based on sentiment
+        console.log(`Selecting image for title: "${title}" with sentiment: ${sentiment}`);
         const s3ImageResult = getS3ImageForTitle(title, sentiment);
-        console.log(`Selected image: ${s3ImageResult ? s3ImageResult.localPath : 'None found'}`);
+        console.log(`Selected image: ${s3ImageResult.url}`);
+        console.log(`Image path: ${s3ImageResult.localPath}`);
         
         // Log the image metadata if available
         if (s3ImageResult && s3ImageResult.metadata) {
@@ -1000,9 +1004,12 @@ exports.handler = async (event, context) => {
         // The image selector now handles fallbacks internally with random selection
         let gekkoImageUrl = '';
         
+        // Known working image URL to use as a last resort fallback - Gordon Gekko image
+        const KNOWN_WORKING_IMAGE = 'https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bullish/greed_is_good/gordon_gekko_wall_street_businessman.jpg';
+        
         if (s3ImageResult && s3ImageResult.url) {
             gekkoImageUrl = s3ImageResult.url;
-            console.log(`Using selected image URL: ${gekkoImageUrl}`);
+            console.log(`Using dynamically selected image URL: ${gekkoImageUrl}`);
         } else {
             // If for some reason we still don't have an image, use a specific default image based on sentiment
             // Load default images from configuration file
@@ -1025,10 +1032,18 @@ exports.handler = async (event, context) => {
             }
             
             // Use a specific image path based on sentiment, or default to a neutral image
-            const imagePath = defaultSentimentImages[sentiment] || defaultSentimentImages['neutral'] || 'neutral/mixed_signals/default.jpg';
+            const imagePath = defaultSentimentImages[sentiment] || defaultSentimentImages['neutral'] || 'bearish/the_correction_is_coming/michael_burry_big_short.jpg';
             gekkoImageUrl = `${baseS3Url}/${imagePath}`;
             console.log(`Using fallback specific image: ${gekkoImageUrl}`);
         }
+        
+        // Final safety check - if the image URL is empty or invalid, use the known working image
+        if (!gekkoImageUrl || gekkoImageUrl.trim() === '' || !gekkoImageUrl.startsWith('http')) {
+            console.log(`Image URL invalid or empty, using known working image as final fallback`);
+            gekkoImageUrl = KNOWN_WORKING_IMAGE;
+        }
+        
+        console.log(`FINAL IMAGE URL being used for post: ${gekkoImageUrl}`);
             
         // Add image size constraints to the feature image for Ghost
         // Note: We're not modifying the URL directly as S3 doesn't support image transformations
@@ -1040,7 +1055,7 @@ exports.handler = async (event, context) => {
             mobiledoc: JSON.stringify(mobiledoc),
             status: 'published',
             featured: false,
-            feature_image: gekkoImageUrl,  // Add the feature image
+            feature_image: gekkoImageUrl,  // Add the feature image - this should be a valid S3 URL
             tags: tags,
             visibility: visibility,
             excerpt: data.decision ? data.decision.summary : 'Market analysis and trading insights',
@@ -1097,18 +1112,7 @@ exports.handler = async (event, context) => {
         
         // Log a sample of the HTML to help debug
         const htmlSample = html.substring(html.indexOf('S&P 500:') - 50, html.indexOf('S&P 500:') + 150);
-        console.log('HTML sample around S&P 500:', htmlSample);
-        
-        // This regex pattern matches S&P 500 display with parentheses and percentage - more flexible pattern
-        const sp500Pattern = /<span style="white-space: nowrap;">S&P 500: ([\d,]+) <span style="color: (#[0-9a-f]+)">\(([↑↓]) ([^%\)]+)%\)<\/span><\/span>/g;
-        html = html.replace(sp500Pattern, '<span style="white-space: nowrap;">S&P 500: $1 <span style="color: $2">$3 $4</span></span>');
-        
-        // Add a second pattern to catch any other variations
-        const sp500PatternAlt = /<span style="white-space: nowrap;">S&P 500: ([\d,]+) <span style="color: (#[0-9a-f]+)">[\(\s]*([↑↓]) ([\-0-9\.]+)%?[\)\s]*<\/span><\/span>/g;
-        html = html.replace(sp500PatternAlt, '<span style="white-space: nowrap;">S&P 500: $1 <span style="color: $2">$3 $4</span></span>');
-        
-        console.log('Completed direct fix for S&P 500 display format');
-        
+        console.log('HTML sample around S&P 500:', htmlSample); 
         console.log('Generated standalone HTML version with financial image');
         
         // Log HTML preview for debugging
