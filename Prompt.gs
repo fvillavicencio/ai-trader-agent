@@ -60,6 +60,10 @@ Allowed values for "decision":
 - **Market Sentiment**:
   - Include one single-line summary for each analyst in the data provided in the marketSentiment section.
   - Include any ticker for any stock mentioned by each analyst (if any) in the marketSentiment section.
+  - Analyze if analyst views converge or diverge from each other.
+  - Identify if analyst views align with what the metrics and data suggest.
+  - Highlight specific companies or sectors that look more interesting at the time of report generation.
+
 ---
 
 ### 4. Volatility & Hedging
@@ -78,23 +82,31 @@ Allowed values for "decision":
 ---
 
 ### 6. Composite Sentiment Score
-- For each data pillar—forward P/E, Fear/Greed, VIX, and your top 3 economic indicators (Core PCE, CPI, Jobs, Treasury)—assign **Low/Mid/High** (0/50/100).
+- For each data pillar—forward P/E, Fear/Greed, VIX, and your top 3 economic indicators (Core PCE, CPI, Jobs, Treasury)—assign **Low/Mid/High** (0/50/100).
 - Average to a 0–100 score, then map to:
-  - ≥ 70 → “Bullish”
+  - ≥ 70 → “Bullish”
   - 40–69 → “Neutral”
-  - < 40 → “Bearish”
+  - < 40 → “Bearish”
 - Include this as "compositeSentiment".
 
 ---
 
-### 7. Constraints:
+### 7. Significant Market Moves
+- Identify any stock or ETF with a daily change greater than 2% (up or down).
+- Analyze potential causes for these significant moves.
+- Provide specific commentary on these moves in the analysis section.
+- Consider if these moves represent potential opportunities or warnings for investors.
+
+---
+
+### 8. Constraints:
 - Use only the data below—no external references.
 - Cite sources in the justification where appropriate.
 - Be concise, original, and professional.
 
 ---
 
-### 8. Output Format
+### 9. Output Format
 Return exactly:
 {
   "decision": "<one of the 7 options>",
@@ -109,6 +121,12 @@ Return exactly:
     "hedgingRecommendation": "<Deploy Hedges|Sell Calls|None>",
     "marketSentiment": {
       "overall": "Brief overall market sentiment analysis",
+      "analystConsensus": {
+        "convergence": "Strong|Moderate|Weak",
+        "alignmentWithData": "Strong|Moderate|Weak",
+        "interestingSectors": ["Sector1", "Sector2"],
+        "interestingCompanies": ["TICKER1", "TICKER2"]
+      },
       "analysts": [
         {
           "analyst": "Analyst Name",
@@ -136,6 +154,15 @@ Return exactly:
         "trend": "Rising|Falling|Flat",
         "analysis": "Brief analysis"
       },
+      "significantMoves": [
+        {
+          "symbol": "TICKER",
+          "percentChange": <number>,
+          "direction": "Up|Down",
+          "potentialCause": "Brief explanation of potential cause",
+          "opportunity": "Brief assessment of whether this represents an opportunity or warning"
+        }
+      ],
       "macroSignals": {
         "dollar": "Up|Down|Flat",
         "gold": "Up|Down|Flat",
