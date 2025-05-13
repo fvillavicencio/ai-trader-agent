@@ -270,8 +270,118 @@ function clearOpenAIAnalysisCache() {
  * Test function to run the trading analysis and display the result
  */
 function testTradingAnalysis() {
+  Logger.log("========== STARTING TEST TRADING ANALYSIS ==========");
+  Logger.log("IMPORTANT: CLEARING ALL CACHES NOW");
+  
+  // Force cache clearing directly
+  try {
+    const scriptCache = CacheService.getScriptCache();
+    const documentCache = CacheService.getDocumentCache();
+    
+    // List of critical cache keys to clear
+    const keysToForceClean = [
+      'MARKET_SENTIMENT_DATA',
+      'KEY_MARKET_INDICATORS',
+      'GEOPOLITICAL_RISKS_DATA',
+      'GEOPOLITICAL_RISKS',
+      'OPENAI_ANALYSIS_CACHE',
+      'OPENAI_ANALYSIS',
+      'SP500_ANALYSIS'
+    ];
+    
+    // Clear each key individually and log the result
+    keysToForceClean.forEach(key => {
+      scriptCache.remove(key);
+      if (documentCache) documentCache.remove(key);
+      Logger.log(`CACHE CLEARED: ${key}`);
+    });
+    
+    Logger.log("CACHE CLEARING COMPLETE - VERIFIED");
+  } catch (error) {
+    Logger.log(`ERROR CLEARING CACHE: ${error}`);
+  }
+  
+  // Add a small delay to ensure cache clearing completes
+  Utilities.sleep(10);
+  
+  // Run the trading analysis
+  Logger.log("Running test trading analysis...");
   const result = runTradingAnalysis();
-  Logger.log(result);
+  
+  Logger.log("========== TEST TRADING ANALYSIS COMPLETE ==========");
+  return result;
+}
+
+/**
+ * Parses the analysis result from OpenAI to extract the decision and justification
+ * @param {Object} analysisResult - The analysis result from OpenAI
+ * @return {Object} An object containing the decision and justification
+ */
+function parseAnalysisResult(analysisResult) {
+  try {
+    // Check if analysisResult is valid
+    if (!analysisResult || typeof analysisResult !== 'object') {
+      Logger.log('Invalid analysis result format');
+      return { decision: 'HOLD', justification: 'Invalid analysis result format' };
+    }
+    
+    // Extract the decision and justification
+    const decision = analysisResult.tradingDecision || 'HOLD';
+    const justification = analysisResult.justification || 'No justification provided';
+    
+    return { decision, justification };
+  } catch (error) {
+    Logger.log('Error parsing analysis result: ' + error);
+    return { decision: 'HOLD', justification: 'Error parsing analysis result: ' + error };
+  }
+}
+
+/**
+ * Calculates the next analysis time based on the current time and schedule configuration
+ * @param {Date} currentTime - The current time
+ * @return {Date} - The next scheduled analysis time
+ */
+function calculateNextAnalysisTime(currentTime) {
+  try {
+    // Get the schedule configuration from Config.gs
+    const morningHour = MORNING_SCHEDULE_HOUR;
+    const morningMinute = MORNING_SCHEDULE_MINUTE;
+    const middayHour = MIDDAY_SCHEDULE_HOUR;
+    const middayMinute = MIDDAY_SCHEDULE_MINUTE;
+    const eveningHour = EVENING_SCHEDULE_HOUR;
+    const eveningMinute = EVENING_SCHEDULE_MINUTE;
+    
+    // Create a new Date object for the next analysis time
+    const nextTime = new Date(currentTime);
+    
+    // Get the current hour and minute
+    const currentHour = currentTime.getHours();
+    const currentMinute = currentTime.getMinutes();
+    
+    // Determine which schedule is next
+    if (currentHour < morningHour || (currentHour === morningHour && currentMinute < morningMinute)) {
+      // Next analysis is this morning
+      nextTime.setHours(morningHour, morningMinute, 0, 0);
+    } else if (currentHour < middayHour || (currentHour === middayHour && currentMinute < middayMinute)) {
+      // Next analysis is midday
+      nextTime.setHours(middayHour, middayMinute, 0, 0);
+    } else if (currentHour < eveningHour || (currentHour === eveningHour && currentMinute < eveningMinute)) {
+      // Next analysis is this evening
+      nextTime.setHours(eveningHour, eveningMinute, 0, 0);
+    } else {
+      // Next analysis is tomorrow morning
+      nextTime.setDate(nextTime.getDate() + 1);
+      nextTime.setHours(morningHour, morningMinute, 0, 0);
+    }
+    
+    return nextTime;
+  } catch (error) {
+    Logger.log('Error calculating next analysis time: ' + error);
+    // Return a default time (24 hours from now) if there's an error
+    const defaultTime = new Date(currentTime);
+    defaultTime.setDate(defaultTime.getDate() + 1);
+    return defaultTime;
+  }
 }
 
 /**

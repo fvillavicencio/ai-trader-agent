@@ -100,7 +100,7 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
                   <div style="font-weight: bold; margin-bottom: 5px;">${risk.name}</div>
                   <div style="color: #555; margin-bottom: 5px;">${risk.description}</div>
                   <div style="font-size: 10px; color: #757575;">
-                    Region: ${risk.region} • Source: <a href="${risk.sourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${risk.source}</a>
+                    Region: ${risk.region} • Source: <a href="${risk.url || risk.sourceUrl || '#'}" target="_blank" style="color: #3182ce; text-decoration: none;">${risk.source}</a>
                   </div>
                 </div>
                 <div style="width: 80px; text-align: center; background-color: ${riskColor}; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
