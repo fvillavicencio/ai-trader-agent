@@ -1,40 +1,72 @@
 /**
-* The main prompt to ensure the sources consulted are relevant
+* The main prompt to ensure the sources consulted are relevant and recent
 */
 function getMacroeconomicfactorsPrompt() {
-  return `Search and analyze current geopolitical risks impacting financial markets within the last week.
-    
-    Focus on insights from these authoritative sources:
-    - Think Tanks: CFR, Brookings, Carnegie, Chatham House, Atlantic Council, CSIS, RAND, Wilson Center
-    - Defense Analysis: Geopolitical Futures, Jane's, FPRI, Understanding War
-    - Financial Institutions: BlackRock, EBA, ECB, Banking Supervision
-    - News: Foreign Affairs, Foreign Policy, Economist, Diplomat, War on the Rocks
-    - Government Sources: State Department, ECFR, Crisis Group, NATO, UN
-    - Academic Journals: JSTOR, MIT International Security, Taylor & Francis Security Studies
-    - Market Analysis: S&P Global, RMAS, Wellington Management
-    - Media: NYT, Bloomberg, CNN, The Atlantic, BBC, Reuters, Al Jazeera
+  const currentDate = new Date();
+  const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy");
+  
+  return `Search for CURRENT geopolitical risks impacting financial markets RIGHT NOW (within the last 48 hours).
 
-    Format your response as a valid JSON object with the following structure:
+Current Date: ${formattedDate}
+
+CRITICAL TASK: Find the MOST SIGNIFICANT geopolitical developments affecting financial markets. Search for SPECIFIC events, policy changes, conflicts, or tensions that have ACTUAL MARKET IMPACT.
+
+Focus on these sources (in order of priority):
+1. Bloomberg, Financial Times, Reuters (highest priority)
+2. Wall Street Journal, CNBC
+3. Major bank research (Goldman Sachs, JPMorgan, Morgan Stanley)
+
+DO NOT return generic, ongoing situations without specific new developments. Each risk MUST have:
+1. A SPECIFIC recent development or event from the last 48 hours
+2. DIRECT quotes from market analysts or officials
+3. CLEAR market impact (specific sectors, assets, or indices affected)
+4. EXACT source with URL to the specific article
+
+Format your response as a valid JSON object with the following structure:
+{
+  "geopoliticalRiskIndex": 50, // A number from 0-100 representing overall risk level
+  "risks": [
     {
-      "geopoliticalRiskIndex": 50, // A number from 0-100 representing overall risk level
-      "risks": [
-        {
-          "type": "Event/Conflict/Policy",
-          "name": "Brief name of the risk",
-          "description": "Detailed description of the risk",
-          "region": "Affected region",
-          "impactLevel": "a number from 1 to 10, with 1 being least impactful and 10 being the most catastrophic",
-          "marketImpact": "Description of potential market impact",
-          "source": "Source of information",
-          "url": "URL to source"
-        }
-      ],
-      "source": "Data sources used",
-      "sourceUrl": "URL to primary source",
-      "lastUpdated": "Date in which that source was last updated"
+      "type": "Event/Conflict/Policy",
+      "name": "Brief name of the risk",
+      "description": "Detailed description with SPECIFIC recent developments",
+      "region": "Affected region",
+      "impactLevel": "a number from 1 to 10, with 1 being least impactful and 10 being the most catastrophic",
+      "marketImpact": "Description of potential market impact with SPECIFIC sectors and assets",
+      "source": "Exact source name",
+      "url": "Direct URL to specific article",
+      "lastUpdated": "YYYY-MM-DD" // Date of the most recent information (must be within last 24 hours)
     }
-    
-    Include 5 of the most significant current geopolitical risks. Ensure all data is accurate and from reputable sources.`;
+  ],
+  "source": "Data sources used",
+  "sourceUrl": "URL to primary source",
+  "lastUpdated": "YYYY-MM-DD" // Today's date
+}
+
+CRITICAL GUIDELINES:
+1. Focus on QUALITY over QUANTITY - 3-5 well-documented risks with SPECIFIC details are better than many generic ones.
+2. ONLY include risks with VERIFIED recent developments and CLEAR market impact.
+3. If you cannot find specific details for a risk, OMIT it completely rather than including generic information.
+4. Each risk MUST have a specific event or development from the past 48 hours.
+5. Each risk MUST include the EXACT publication date (YYYY-MM-DD) and complete URL to the source.
+6. Each risk MUST include specific market impacts (sectors, assets, indices affected).
+7. You MUST assess the impact level based on actual market movements, not theoretical impacts.
+8. You MUST format the response as a valid JSON object with no additional text or markdown.
+
+Here's an example of a well-formatted risk entry:
+{
+  "type": "Policy",
+  "name": "EU Digital Markets Act Enforcement",
+  "description": "The European Commission announced today that it is launching formal investigations into tech giants for non-compliance with the Digital Markets Act. Competition Commissioner stated: 'We are taking decisive action to ensure fair digital markets.'",
+  "region": "Europe",
+  "impactLevel": 7,
+  "marketImpact": "Tech stocks fell 2.3% on the news, with specific impact on platform companies. Analysts expect compliance costs to reduce Q3 earnings by 5-8% for affected firms.",
+  "source": "Financial Times",
+  "url": "https://www.ft.com/content/actual-article-url",
+  "lastUpdated": "2025-05-12"
+}
+
+Your response should ONLY include the JSON object, without any additional text.`;
 }
 
 /**
@@ -1126,26 +1158,28 @@ function retrieveGeopoliticalRisksFromPerplexity() {
     // Set up the API request
     const url = "https://api.perplexity.ai/chat/completions";
     const payload = {
-      model: "sonar-pro",
+      model: "sonar-pro",  // Valid Perplexity model with web search capability
       messages: [
         {
           role: "system",
-          content: "You are a geopolitical analyst specializing in identifying risks that impact financial markets. Provide accurate, up-to-date information in JSON format only."
+          content: "You are a geopolitical risk analyst for a major investment bank. Find ONLY VERIFIED, SPECIFIC geopolitical developments with ACTUAL market impact from the past 48 hours. Focus on quality over quantity - 3-5 well-documented risks with specific details are better than many generic ones. Return ONLY valid JSON with no explanations or markdown formatting."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      temperature: 0.2,
-      max_tokens: 4000
+      temperature: 0.0,  // Zero temperature for maximum factuality
+      max_tokens: 4000,  // Increased token limit for comprehensive results
+      top_p: 1.0  // Maximum sampling for complete coverage
     };
     
     const options = {
       method: 'post',
       contentType: 'application/json',
       headers: {
-        'Authorization': 'Bearer ' + apiKey
+        'Authorization': 'Bearer ' + apiKey,
+        'Accept': 'application/json'
       },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
@@ -1162,17 +1196,56 @@ function retrieveGeopoliticalRisksFromPerplexity() {
     const responseData = JSON.parse(response.getContentText());
     const content = responseData.choices[0].message.content;
     
-    // Extract JSON from the response
-    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
+    // Add debugging to log the raw response
+    Logger.log("Raw Perplexity response (first 500 chars):");
+    Logger.log(content.substring(0, 500) + "...");
     
-    if (!jsonMatch) {
-      throw new Error("Could not extract JSON from Perplexity response");
+    // Extract JSON from the response with improved handling
+    let geopoliticalData;
+    try {
+      // First try to parse the entire response as JSON
+      geopoliticalData = JSON.parse(content);
+    } catch (e) {
+      // If that fails, try to extract JSON from markdown code blocks
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error("Could not extract JSON from Perplexity response: " + content.substring(0, 200) + "...");
+      }
+      
+      try {
+        geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+      } catch (parseError) {
+        throw new Error("Failed to parse extracted JSON: " + parseError + "\nExtracted content: " + 
+                      (jsonMatch[1] || jsonMatch[0]).substring(0, 200) + "...");
+      }
     }
     
-    const geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-
-    // Map numeric impact to qualitative and sort descending (robust to either impactLevel or impact fields)
+    // Validate the structure
+    if (!geopoliticalData || !Array.isArray(geopoliticalData.risks)) {
+      throw new Error("Invalid geopolitical data structure: missing risks array");
+    }
+    
+    // Validate and enrich each risk
     if (Array.isArray(geopoliticalData.risks)) {
+      // Keep only risks with proper descriptions and sources
+      geopoliticalData.risks = geopoliticalData.risks.filter(risk => 
+        risk.description && risk.description.length > 100 && 
+        risk.source && risk.url && 
+        risk.url.startsWith('http')
+      );
+      
+      // Ensure we have at least 3 risks
+      if (geopoliticalData.risks.length < 3) {
+        throw new Error("Insufficient valid risks returned: " + geopoliticalData.risks.length);
+      }
+      
+      // Limit to top 5 risks by impact
+      if (geopoliticalData.risks.length > 5) {
+        geopoliticalData.risks = geopoliticalData.risks.slice(0, 5);
+      }
+      
+      // Map numeric impact to qualitative and sort descending
       geopoliticalData.risks.forEach(risk => {
         // Accept impact as either 'impactLevel' or 'impact' (prefer number)
         let impactNum = null;
@@ -1184,6 +1257,8 @@ function retrieveGeopoliticalRisksFromPerplexity() {
           impactNum = Number(risk.impactLevel);
         }
         if (impactNum !== null) {
+          // Store the numeric value for reference
+          risk._impactNum = impactNum;
           // Map to qualitative
           if (impactNum >= 9) {
             risk.impactLevel = 'Severe';
@@ -1194,13 +1269,16 @@ function retrieveGeopoliticalRisksFromPerplexity() {
           } else {
             risk.impactLevel = 'Low';
           }
-          // Store the numeric value for sorting
-          risk._impactNum = impactNum;
         }
       });
+      
       // Sort descending by numeric impact if present
       geopoliticalData.risks.sort((a, b) => (b._impactNum || 0) - (a._impactNum || 0));
     }
+    
+    // Log the extracted data
+    Logger.log("Extracted geopolitical data (first 500 chars):");
+    Logger.log(JSON.stringify(geopoliticalData, null, 2).substring(0, 500) + "...");
 
     // Add timestamp
     geopoliticalData.lastUpdated = new Date();

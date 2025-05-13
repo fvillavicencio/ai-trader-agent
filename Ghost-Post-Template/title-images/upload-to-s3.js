@@ -11,8 +11,9 @@ const { execSync } = require('child_process');
 // Configuration
 const S3_BUCKET = 'market-pulse-daily-title-images';
 const AWS_REGION = 'us-east-2';
-const BASE_DIR = __dirname;
+const BASE_DIR = path.join(__dirname, 'downloaded-images');
 const IMAGE_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.gif'];
+const UPLOAD_LIMIT = 350; // Limit the number of images to upload
 
 // Function to recursively find all image files
 function findImageFiles(dir, fileList = []) {
@@ -82,10 +83,52 @@ async function uploadImagesToS3() {
   const mappings = {};
   let successCount = 0;
   
+  // Group files by category to ensure even distribution
+  const filesByCategory = {};
+  
+  // Extract category from file path
+  for (const filePath of imageFiles) {
+    const relativePath = path.relative(BASE_DIR, filePath);
+    const pathParts = relativePath.split(path.sep);
+    
+    // Category is the first directory level (e.g., 'bullish', 'bearish', etc.)
+    const category = pathParts[0];
+    
+    if (!filesByCategory[category]) {
+      filesByCategory[category] = [];
+    }
+    
+    filesByCategory[category].push(filePath);
+  }
+  
+  // Calculate how many images to take from each category
+  const categories = Object.keys(filesByCategory);
+  const imagesPerCategory = Math.min(
+    Math.ceil(UPLOAD_LIMIT / categories.length),
+    Math.max(...Object.values(filesByCategory).map(files => files.length))
+  );
+  
+  console.log(`Uploading approximately ${imagesPerCategory} images per category...`);
+  
+  // Select files to upload with even distribution
+  const filesToUpload = [];
+  
+  for (const category of categories) {
+    const categoryFiles = filesByCategory[category];
+    // Shuffle the files to get a random selection
+    const shuffled = [...categoryFiles].sort(() => 0.5 - Math.random());
+    // Take up to the calculated number per category
+    filesToUpload.push(...shuffled.slice(0, imagesPerCategory));
+  }
+  
+  // Limit to the total upload limit
+  const limitedFiles = filesToUpload.slice(0, UPLOAD_LIMIT);
+  
+  console.log(`Selected ${limitedFiles.length} files for upload with even distribution.`);
   console.log('Starting upload to S3...');
   
   // Upload each file
-  for (const filePath of imageFiles) {
+  for (const filePath of limitedFiles) {
     const result = uploadFileToS3(filePath);
     
     if (result.success) {
