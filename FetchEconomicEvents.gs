@@ -221,6 +221,18 @@ function decryptEventInfo(eventName, source) {
   
   // Map of event names to their decrypted versions
   const eventDecryption = {
+    'CPI Index, NSA': {
+      name: 'Consumer Price Index (Not Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Core CPI Index, SA': {
+      name: 'Core Consumer Price Index (Seasonally Adjusted)',
+      source: 'U.S. Bureau of Labor Statistics'
+    },
+    'Cleveland Fed CPI': {
+      name: 'Cleveland Fed Consumer Price Index Estimates',
+      source: 'Federal Reserve Bank of Cleveland'
+    },
     'Philly Fed 6M Index': {
       name: 'Philadelphia Fed Business Outlook Survey 6-Month Index',
       source: 'Federal Reserve Bank of Philadelphia'
@@ -451,10 +463,17 @@ function decryptEventInfo(eventName, source) {
     }
   };
 
+  // Map of source abbreviations to full names
+  const sourceMapping = {
+    'BLS': 'U.S. Bureau of Labor Statistics',
+    'FRB Clevland': 'Federal Reserve Bank of Cleveland',
+    'FRB Cleveland': 'Federal Reserve Bank of Cleveland'
+  };
+
   // Get decrypted info or use original if not found
   const decrypted = eventDecryption[baseName] || {
     name: baseName,
-    source: source
+    source: sourceMapping[source] || source
   };
 
   return {

@@ -177,6 +177,64 @@ function publishToGhostWithLambda(jsonData, options = {}) {
 }
 
 /**
+ * Test function for the publishToGhostWithLambda function
+ * Retrieves the JSON payload from Google Drive and sends it to the Lambda function
+ */
+function testPublishToGhostWithLambda() {
+  try {
+    // Get script properties
+    var props = PropertiesService.getScriptProperties();
+    var folderName = props.getProperty('GOOGLE_FOLDER_NAME');
+    var jsonFileName = "market_pulse_data.json";
+    
+    // Find the folder by name
+    var folderIterator = DriveApp.getFoldersByName(folderName);
+    if (!folderIterator.hasNext()) {
+      throw new Error('Folder ' + folderName + ' not found');
+    }
+    var folder = folderIterator.next();
+    Logger.log('Searching for file: ' + jsonFileName + ' in folder: ' + folderName);
+
+    // Search for the JSON file in the specified folder
+    var files = folder.getFilesByName(jsonFileName);
+    if (!files.hasNext()) {
+      throw new Error('File ' + jsonFileName + ' not found in folder ' + folderName);
+    }
+    var file = files.next();
+    Logger.log('Found file: ' + file.getName() + ' with ID: ' + file.getId());
+
+    // Get the JSON content from the file
+    var jsonContent = file.getBlob().getDataAsString();
+    var jsonData;
+    
+    try {
+      // Parse the JSON content
+      jsonData = JSON.parse(jsonContent);
+      Logger.log('Successfully parsed JSON data with keys: ' + Object.keys(jsonData).join(', '));
+    } catch (parseError) {
+      Logger.log('Error parsing JSON: ' + parseError.toString());
+      throw new Error('Invalid JSON format in file: ' + parseError.message);
+    }
+    
+    // Call the function with the JSON data
+    // Set draftOnly to false to actually publish the article to Ghost
+    const result = publishToGhostWithLambda(jsonData, { 
+      isTest: true,
+      draftOnly: false  // Changed from true to false to actually publish the article
+    });
+    
+    // Log the result
+    Logger.log('Test publishToGhostWithLambda result:');
+    Logger.log(JSON.stringify(result, null, 2));
+    
+    return result;
+  } catch (error) {
+    Logger.log('Error in testPublishToGhostWithLambda: ' + error.toString());
+    throw error;
+  }
+}
+
+/**
  * Generate teaser HTML for the teaser email
  * @param {Object} opts - Options for the teaser HTML
  * @param {string} opts.decision - The decision text
