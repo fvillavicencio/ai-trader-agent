@@ -367,9 +367,10 @@ Search specifically for these financial analysts and prominent figures:
 Focus on these sources (in order of priority):
 1. CNBC TV segments and articles (highest priority)
 2. Bloomberg TV and articles
-3. Wall Street Journal, Financial Times, Reuters
-4. Twitter/X posts from verified analysts
-5. Seeking Alpha, Yahoo Finance
+3. Unusualwhales, Cheddarflow
+4. Wall Street Journal, Financial Times, Reuters, MSNBC
+5. Twitter/X posts from verified analysts
+6. Seeking Alpha, Yahoo Finance, Reddit
 
 For EACH analyst and figure, you MUST include:
 1. SPECIFIC recent commentary (direct quotes when possible)
@@ -417,7 +418,7 @@ Format your response as a valid JSON object with the following structure:
     ]
   },
   "overallSentiment": "Bullish/Neutral/Bearish",
-  "summary": "Detailed summary of the overall market sentiment with specific sectors and catalysts"
+  "summary": "Detailed summary of the overall market sentiment with specific sectors and catalysts. Consider if there are patterns, contradciting opinions or consensus across all sources/analysts"
 }
 
 Here's an example of a well-formatted analyst entry:

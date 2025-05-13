@@ -196,25 +196,27 @@ function retrievePerplexityMarketSentiment() {
     // Call the Perplexity API
     const url = "https://api.perplexity.ai/chat/completions";
     const payload = {
-      model: "sonar-pro",
+      model: "sonar-pro",  // Valid Perplexity model with web search capability
       messages: [
         {
           role: "system",
-          content: "You are a financial analyst specializing in market sentiment analysis. You MUST ALWAYS provide accurate, up-to-date information about current market sentiment in the exact JSON format specified in the user's prompt. NEVER respond with explanations, apologies, or any text outside the JSON format. Always include specific details about analysts' comments and sentiment indicators."
+          content: "You are a financial market analyst with access to real-time market data. ONLY include analysts for whom you can find ACTUAL recent commentary from the past 48 hours. DO NOT include any 'no recent commentary found' messages. If you can't find commentary for an analyst, simply omit them from the results. Return ONLY valid JSON with no explanations or markdown formatting."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      temperature: 0.2,
-      max_tokens: 4000
+      temperature: 0.0,  // Zero temperature for maximum factuality
+      max_tokens: 4000,  // Increased token limit for comprehensive results
+      top_p: 1.0  // Maximum sampling for complete coverage
     };
     const options = {
       method: 'post',
       contentType: 'application/json',
       headers: {
-        'Authorization': 'Bearer ' + apiKey
+        'Authorization': 'Bearer ' + apiKey,
+        'Accept': 'application/json'
       },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
@@ -234,22 +236,49 @@ function retrievePerplexityMarketSentiment() {
     const responseData = JSON.parse(response.getContentText());
     Logger.log(`Perplexity API Response - Status: Success, Tokens: ${responseData.usage ? responseData.usage.total_tokens : 'unknown'}`);
     
-    // Parse the response
-    const content = responseData.choices[0].message.content;
-    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
+    // Add debugging to log the raw response
+    Logger.log("Raw Perplexity response (first 500 chars):");
+    Logger.log(responseData.choices[0].message.content.substring(0, 500) + "...");
     
+    // Extract JSON from the response with improved handling
+    const content = responseData.choices[0].message.content;
     let jsonData;
-    if (jsonMatch) {
-      // Parse the JSON
-      jsonData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-      Logger.log("Successfully extracted market sentiment JSON using regex pattern");
-    } else {
-      // If we can't extract JSON, return an error
-      throw new Error("Could not extract JSON from Perplexity response");
+    
+    try {
+      // First try to parse the entire response as JSON
+      jsonData = JSON.parse(content);
+      Logger.log("Successfully parsed entire response as JSON");
+    } catch (e) {
+      // If that fails, try to extract JSON from markdown code blocks
+      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error("Could not extract JSON from Perplexity response: " + content.substring(0, 200) + "...");
+      }
+      
+      try {
+        jsonData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
+        Logger.log("Successfully extracted market sentiment JSON using regex pattern");
+      } catch (parseError) {
+        throw new Error("Failed to parse extracted JSON: " + parseError + "\nExtracted content: " + 
+                     (jsonMatch[1] || jsonMatch[0]).substring(0, 200) + "...");
+      }
     }
     
     // Ensure the data has the expected structure
-    if (!jsonData.analysts || !Array.isArray(jsonData.analysts)) {
+    if (jsonData && jsonData.analysts && Array.isArray(jsonData.analysts)) {
+      Logger.log(`Found ${jsonData.analysts.length} analysts in the response`);
+      
+      // Filter out analysts with no commentary or with "no recent commentary found" messages
+      jsonData.analysts = jsonData.analysts.filter(analyst => {
+        if (!analyst.commentary) return false;
+        if (analyst.commentary.toLowerCase().includes("no recent commentary")) return false;
+        if (analyst.commentary.toLowerCase().includes("could not be found")) return false;
+        return true;
+      });
+      
+      Logger.log(`After filtering, ${jsonData.analysts.length} analysts with actual commentary remain`);
+    } else {
       throw new Error("Invalid market sentiment data structure: missing analysts array");
     }
     
@@ -324,15 +353,29 @@ function getOpenAIMarketSentimentPrompt() {
   const analystNames = getAnalystNames();
   const prominentFigures = getProminentFinancialFigures();
   
-  return `You are a financial analyst assistant. Analyze recent market sentiment from financial analysts and other financial experts.
+  return `You are a financial analyst assistant with access to the most current market information. Your task is to provide ONLY VERIFIED, RECENT market sentiment analysis from financial analysts and experts.
 
 Current Date: ${formattedDate}
 
-Task: Generate a comprehensive market sentiment analysis based on recent commentary from financial analysts and other financial experts. Include the following:
+CRITICAL TASK: Search the web for the MOST RECENT commentary (within the last 48 hours) from financial analysts and experts. ONLY include analysts for whom you can find ACTUAL recent commentary.
 
-1. Recent commentary from financial analysts (${analystNames.join(", ")})
-2. Recent insights from ${prominentFigures.join(", ")}, and other prominent financial figures if available
-3. Recent sentiment indicators from major financial institutions
+Search specifically for these financial analysts and prominent figures:
+- Financial Analysts: ${analystNames.join(", ")}
+- Prominent Figures: ${prominentFigures.join(", ")}
+- Major Institutions: AAII, CNN Money, Bank of America, Goldman Sachs, JPMorgan
+
+Focus on these sources (in order of priority):
+1. CNBC TV segments and articles (highest priority)
+2. Bloomberg TV and articles
+3. Wall Street Journal, Financial Times, Reuters
+4. Twitter/X posts from verified analysts
+5. Seeking Alpha, Yahoo Finance
+
+For EACH analyst and figure, you MUST include:
+1. SPECIFIC recent commentary (direct quotes when possible)
+2. The EXACT source with publication date
+3. SPECIFIC stocks mentioned (with ticker symbols)
+4. CLEAR sentiment classification (Bullish/Neutral/Bearish)
 
 Format your response as a valid JSON object with the following structure:
 
@@ -341,11 +384,11 @@ Format your response as a valid JSON object with the following structure:
     {
       "name": "Analyst Name",
       "firm": "Firm Name",
-      "commentary": "Direct quote or summary of their commentary",
+      "commentary": "Direct quote or summary of their commentary with specific details and market insights",
       "sentiment": "Bullish/Neutral/Bearish",
       "mentionedStocks": ["AAPL", "MSFT"],
       "source": "Source Name",
-      "url": "https://source-url.com",
+      "url": "https://source-url.com/exact-article-url",
       "lastUpdated": "YYYY-MM-DD"
     }
   ],
@@ -353,27 +396,51 @@ Format your response as a valid JSON object with the following structure:
     {
       "name": "Indicator Name",
       "value": "Current Value",
-      "interpretation": "What this value suggests",
+      "interpretation": "What this value suggests with specific market implications",
       "trend": "Increasing/Decreasing/Stable",
       "mentionedStocks": ["AAPL", "MSFT"],
       "source": "Source Name",
-      "url": "https://source-url.com",
+      "url": "https://source-url.com/exact-article-url",
       "lastUpdated": "YYYY-MM-DD"
     }
   ],
+  "patternAnalysis": {
+    "commonThemes": ["Detailed description of common themes across analysts with specific sectors and trends"],
+    "contradictions": ["Specific areas where analysts disagree with examples"],
+    "emergingTrends": ["Emerging trends mentioned by multiple analysts with supporting evidence"],
+    "frequentlyMentionedStocks": [
+      {
+        "symbol": "AAPL",
+        "mentionCount": 5,
+        "sentimentBreakdown": {"Bullish": 3, "Neutral": 1, "Bearish": 1}
+      }
+    ]
+  },
   "overallSentiment": "Bullish/Neutral/Bearish",
-  "summary": "Brief summary of the overall market sentiment"
+  "summary": "Detailed summary of the overall market sentiment with specific sectors and catalysts"
 }
 
-Important guidelines:
-1. For each analyst, include their most recent commentary (within the last week if possible)
-2. For each analyst, identify any specific stocks they mentioned and include them in the mentionedStocks array
-3. For each analyst and sentiment indicator, include the lastUpdated field with the date the commentary or data was published
-4. For each sentiment indicator, include the most recent value and what it suggests
-5. Provide a brief summary of the overall market sentiment
-6. Ensure all data is accurate and from reputable sources
-7. Include complete URLs (not just domain names) for all sources
-8. Format the response as a valid JSON object
+Here's an example of a well-formatted analyst entry:
+{
+  "name": "Jim Cramer",
+  "firm": "CNBC",
+  "commentary": "I'm seeing real strength in semiconductor stocks. Taiwan Semiconductor's earnings were spectacular, and this bodes well for the entire sector. As I said on Mad Money yesterday, 'The AI boom is far from over, and chip stocks will continue to lead the market.'",
+  "sentiment": "Bullish",
+  "mentionedStocks": ["TSM", "NVDA", "AMD", "INTC"],
+  "source": "CNBC Mad Money",
+  "url": "https://www.cnbc.com/2025/05/11/cramer-semiconductor-stocks-still-have-room-to-run.html",
+  "lastUpdated": "2025-05-11"
+}
+
+CRITICAL GUIDELINES:
+1. ONLY include analysts and figures for whom you can find ACTUAL recent commentary. DO NOT include any "no recent commentary found" messages or placeholders.
+2. If you cannot find recent commentary from an analyst or figure, simply OMIT them completely from the results.
+3. For each analyst and prominent figure, include ONLY their MOST RECENT commentary (within the last 48 hours).
+4. You MUST identify patterns, commonalities, and contradictions across all analyst commentary and include this analysis in the patternAnalysis section.
+5. You MUST identify frequently mentioned stocks across all analysts and include sentiment breakdowns for these stocks.
+6. You MUST include complete URLs to the source of each commentary or data point.
+7. You MUST include the exact publication date (YYYY-MM-DD) for each commentary or data point in the lastUpdated field.
+8. You MUST format the response as a valid JSON object.
 
 Your response should ONLY include the JSON object, without any additional text.`;
 }

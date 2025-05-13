@@ -12,9 +12,10 @@ Current Date: ${formattedDate}
 CRITICAL TASK: Find the MOST SIGNIFICANT geopolitical developments affecting financial markets. Search for SPECIFIC events, policy changes, conflicts, or tensions that have ACTUAL MARKET IMPACT.
 
 Focus on these sources (in order of priority):
-1. Bloomberg, Financial Times, Reuters (highest priority)
-2. Wall Street Journal, CNBC
-3. Major bank research (Goldman Sachs, JPMorgan, Morgan Stanley)
+1. Bloomberg, Financial Times, Reuters, Wall Street Journal, CNBC, S&P Global, Moody's, Fitch Ratings
+2. Major bank research (Goldman Sachs, JPMorgan, Morgan Stanley)
+3. Major news outlets (NPR, CNN, Yahoo Finance, New York Times, Al Jazeera, BBC)
+4. Recognized Thinktanks (National Bureau of Economic Research (NBER), Brookings Institution, Center for Economic and Policy Research (CEPR), Peterson Institute for International Economics (PIIE), Bruegel)
 
 DO NOT return generic, ongoing situations without specific new developments. Each risk MUST have:
 1. A SPECIFIC recent development or event from the last 48 hours
