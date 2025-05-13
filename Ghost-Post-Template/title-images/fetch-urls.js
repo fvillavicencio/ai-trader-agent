@@ -14,7 +14,7 @@ const TERMS_FILE     = path.join(__dirname, 'terms.json');
 const OUTPUT_FILE    = path.join(__dirname, 'image-urls.txt');
 
 // How many images per term to pull
-const IMAGES_PER_TERM = 2; // Two images per title category
+const IMAGES_PER_TERM = 6; // Increased to get more images per category
 
 async function fetchImages(query, perPage = IMAGES_PER_TERM) {
   // Add randomness to the search by randomly selecting quality terms
@@ -80,18 +80,73 @@ async function main() {
   // Keep track of all image URLs to prevent similar images
   const usedImageUrls = new Set();
 
-  for (const [category, queries] of Object.entries(terms)) {
-    out.write(`# ${category}\n`);
-    jsonOutput[category] = [];
-    
-    for (const q of queries) {
-      console.log(`Searching "${q}" in ${category}...`);
-      try {
-        // Try to get more images to have options after filtering duplicates
-        const images = await fetchImages(q, IMAGES_PER_TERM * 5);
+  // Process all categories in terms.json
+  for (const [categoryKey, categoryValue] of Object.entries(terms)) {
+    // Check if this is a nested category or a flat category with an array
+    if (Array.isArray(categoryValue)) {
+      // This is a flat category like "bullish/trend_is_friend": ["query1", "query2"]
+      const category = categoryKey;
+      const queries = categoryValue;
+      
+      // Create category in output
+      if (!jsonOutput[category]) {
+        jsonOutput[category] = [];
+      }
+      out.write(`# ${category}\n`);
+      
+      // Process each query in this category
+      for (const q of queries) {
+        console.log(`Searching "${q}" in ${category}...`);
+        await processQuery(q, category, out, jsonOutput, usedImageIds, usedImageUrls);
+      }
+    } else {
+      // This is a nested category like "bullish": { "subcategory1": [...], "subcategory2": [...] }
+      const mainCategory = categoryKey;
+      
+      // Process each subcategory
+      for (const [subCategory, queries] of Object.entries(categoryValue)) {
+        const fullCategory = `${mainCategory}/${subCategory}`;
         
-        // Filter out any images that have already been used in other categories
-        const uniqueImages = images.filter(img => {
+        // Create category in output
+        if (!jsonOutput[fullCategory]) {
+          jsonOutput[fullCategory] = [];
+        }
+        out.write(`# ${fullCategory}\n`);
+        
+        // Process each query in this subcategory
+        for (const q of queries) {
+          console.log(`Searching "${q}" in ${fullCategory}...`);
+          await processQuery(q, fullCategory, out, jsonOutput, usedImageIds, usedImageUrls);
+        }
+      }
+    }
+    
+    out.write('\n');
+  }
+
+  out.end();
+  
+  // Write the JSON file
+  fs.writeFileSync(
+    path.join(__dirname, 'image-data.json'), 
+    JSON.stringify(jsonOutput, null, 2), 
+    'utf8'
+  );
+  
+  console.log(`✅ Done! See ${OUTPUT_FILE} and image-data.json`);
+}
+
+// Helper function to process a single query
+async function processQuery(q, category, out, jsonOutput, usedImageIds, usedImageUrls) {
+  try {
+    // Try to get more images to have options after filtering duplicates
+    const images = await fetchImages(q, IMAGES_PER_TERM * 5);
+    
+    // Filter out any images that have already been used in other categories
+    const uniqueImages = images.filter(img => {
+      // Check if this exact image has been used
+      if (usedImageIds.has(img.id)) {
+        return false;
           // Check if this exact image has been used
           if (usedImageIds.has(img.id)) {
             return false;
