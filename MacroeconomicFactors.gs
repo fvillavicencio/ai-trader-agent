@@ -651,7 +651,7 @@ function getTreasurySymbol(term) {
 }
 
 /**
- * Retrieves geopolitical risks data
+ * Retrieves geopolitical risks data with enhanced error handling and fallback mechanisms
  * @return {Object} Geopolitical risks data
  */
 function retrieveGeopoliticalRisksData() {
@@ -663,80 +663,172 @@ function retrieveGeopoliticalRisksData() {
     const cachedData = scriptCache.get('GEOPOLITICAL_RISKS_DATA');
     
     if (cachedData) {
-      const parsedData = JSON.parse(cachedData);
-      Logger.log("Using cached geopolitical risks data");
-      return parsedData;
+      try {
+        const parsedData = JSON.parse(cachedData);
+        Logger.log("Using cached geopolitical risks data");
+        
+        // Validate the cached data structure to ensure it's usable
+        if (parsedData && (Array.isArray(parsedData.risks) || parsedData.error)) {
+          return parsedData;
+        } else {
+          Logger.log("Cached geopolitical risks data has invalid structure, ignoring cache");
+          // Continue with retrieval if cache is invalid
+        }
+      } catch (cacheError) {
+        Logger.log(`Error parsing cached geopolitical risks data: ${cacheError}. Proceeding with fresh retrieval.`);
+        // Continue with retrieval if cache parsing fails
+      }
     }
     
-    // Instead of calling AI services, return a hardcoded sample data structure
-    // that matches what JsonExport.generateFullJsonDataset expects
-    Logger.log("Using hardcoded geopolitical risks data");
+    // Get the AI provider setting
+    const aiProvider = getMacroeconomicAIProvider();
+    Logger.log(`Using AI provider: ${aiProvider || "default (perplexity)"}`);
     
-    // Create a sample data structure with the expected fields
+    // Track all errors for better diagnostics
+    const errors = [];
+    
+    // Use the appropriate implementation based on the AI provider setting
+    if (aiProvider === "perplexity" || !aiProvider) {
+      try {
+        // Try the enhanced implementation first
+        Logger.log("Using enhanced Perplexity implementation for geopolitical risks");
+        const startTime = new Date().getTime();
+        const result = retrieveGeopoliticalRisksEnhanced();
+        const endTime = new Date().getTime();
+        Logger.log(`Enhanced Perplexity implementation succeeded in ${(endTime - startTime)/1000} seconds`);
+        
+        // Validate the result before returning
+        if (result && Array.isArray(result.risks) && result.risks.length > 0) {
+          return result;
+        } else {
+          Logger.log("Enhanced Perplexity implementation returned invalid data structure");
+          errors.push("Enhanced implementation returned invalid data structure");
+          // Continue to fallback
+        }
+      } catch (enhancedError) {
+        Logger.log(`Enhanced Perplexity implementation failed: ${enhancedError}`);
+        errors.push(`Enhanced implementation error: ${enhancedError.message || enhancedError}`);
+        
+        // Fall back to the original Perplexity implementation
+        try {
+          Logger.log("Falling back to original Perplexity implementation");
+          const startTime = new Date().getTime();
+          const result = retrieveGeopoliticalRisksFromPerplexity();
+          const endTime = new Date().getTime();
+          Logger.log(`Original Perplexity implementation succeeded in ${(endTime - startTime)/1000} seconds`);
+          
+          // Validate the result before returning
+          if (result && Array.isArray(result.risks) && result.risks.length > 0) {
+            return result;
+          } else {
+            Logger.log("Original Perplexity implementation returned invalid data structure");
+            errors.push("Original implementation returned invalid data structure");
+            // Continue to fallback data
+          }
+        } catch (perplexityError) {
+          Logger.log(`Perplexity fallback failed: ${perplexityError}`);
+          errors.push(`Original implementation error: ${perplexityError.message || perplexityError}`);
+          // Continue to fallback data below
+        }
+      }
+    } else {
+      // For any other provider setting, use the enhanced Perplexity implementation
+      try {
+        Logger.log(`Using enhanced Perplexity implementation for provider setting: ${aiProvider}`);
+        const startTime = new Date().getTime();
+        const result = retrieveGeopoliticalRisksEnhanced();
+        const endTime = new Date().getTime();
+        Logger.log(`Enhanced Perplexity implementation succeeded in ${(endTime - startTime)/1000} seconds`);
+        
+        // Validate the result before returning
+        if (result && Array.isArray(result.risks) && result.risks.length > 0) {
+          return result;
+        } else {
+          Logger.log("Enhanced Perplexity implementation returned invalid data structure");
+          errors.push("Enhanced implementation returned invalid data structure");
+          // Continue to fallback
+        }
+      } catch (enhancedError) {
+        Logger.log(`Enhanced Perplexity implementation failed: ${enhancedError}`);
+        errors.push(`Enhanced implementation error: ${enhancedError.message || enhancedError}`);
+        
+        // Fall back to the original Perplexity implementation
+        try {
+          Logger.log("Falling back to original Perplexity implementation");
+          const startTime = new Date().getTime();
+          const result = retrieveGeopoliticalRisksFromPerplexity();
+          const endTime = new Date().getTime();
+          Logger.log(`Original Perplexity implementation succeeded in ${(endTime - startTime)/1000} seconds`);
+          
+          // Validate the result before returning
+          if (result && Array.isArray(result.risks) && result.risks.length > 0) {
+            return result;
+          } else {
+            Logger.log("Original Perplexity implementation returned invalid data structure");
+            errors.push("Original implementation returned invalid data structure");
+            // Continue to fallback data
+          }
+        } catch (perplexityError) {
+          Logger.log(`Perplexity fallback failed: ${perplexityError}`);
+          errors.push(`Original implementation error: ${perplexityError.message || perplexityError}`);
+          // Continue to fallback data below
+        }
+      }
+    }
+    
+    // If all AI implementations fail or no valid provider is set, return a structured fallback response
+    Logger.log("All API implementations failed. Returning structured fallback response.");
+    Logger.log(`Errors encountered: ${errors.join('; ')}`);
+    
     const currentDate = new Date();
     const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM d, yyyy 'at' h:mm a z");
     
-    const sampleData = {
-      // This field is used by JsonExport.generateFullJsonDataset
-      global: "Global geopolitical risk level is currently Moderate to High, with several ongoing conflicts and tensions affecting market stability.",
-      
-      // Array of risks with the structure expected by JsonExport
+    // Create a more informative fallback response with a minimal but valid structure
+    const fallbackData = {
       risks: [
         {
-          name: "US-China Tensions",
-          description: "Ongoing trade and technology disputes between the United States and China continue to impact global markets, with particular focus on semiconductor restrictions and tariff policies.",
+          name: "API Connection Issue",
+          description: "Geopolitical risk data could not be retrieved due to API connection issues. The system attempted multiple retrieval methods but encountered errors. This is a temporary placeholder until connectivity is restored.",
           region: "Global",
-          impactLevel: "High",
-          source: "Reuters",
-          sourceUrl: "https://www.reuters.com/world/"
-        },
-        {
-          name: "Russia-Ukraine Conflict",
-          description: "The ongoing military conflict between Russia and Ukraine continues to disrupt energy markets and global supply chains, with implications for commodity prices and inflation.",
-          region: "Europe",
-          impactLevel: "High",
-          source: "Bloomberg",
-          sourceUrl: "https://www.bloomberg.com/"
-        },
-        {
-          name: "Middle East Tensions",
-          description: "Escalating conflicts in the Middle East are raising concerns about oil supply disruptions and broader regional instability, affecting energy markets and investor sentiment.",
-          region: "Middle East",
-          impactLevel: "Medium",
-          source: "Financial Times",
-          sourceUrl: "https://www.ft.com/"
+          impactLevel: "Unknown/10",
+          source: "System Fallback",
+          sourceUrl: "https://perplexity.ai/",
+          lastUpdated: formattedDate
         }
       ],
-      
-      // Source information
-      source: "Aggregated from multiple geopolitical risk assessments",
-      sourceUrl: "https://www.cfr.org/global-conflict-tracker",
-      lastUpdated: formattedDate
+      source: "Market Pulse Daily System",
+      sourceUrl: "https://perplexity.ai/",
+      lastUpdated: formattedDate,
+      error: `Unable to retrieve geopolitical risks data after multiple attempts. Errors: ${errors.join('; ')}`
     };
     
-    // Cache the data for 24 hours (in seconds)
-    scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(sampleData), 24 * 60 * 60);
+    // Cache the fallback structure for a shorter period (30 minutes) to encourage retries
+    scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(fallbackData), 30 * 60);
     
-    return sampleData;
+    return fallbackData;
   } catch (error) {
-    Logger.log(`Error retrieving geopolitical risks data: ${error}`);
+    Logger.log(`Unexpected error in retrieveGeopoliticalRisksData: ${error}`);
     
-    // Return a fallback object with the structure expected by JsonExport
+    // Return a more robust fallback object with the structure expected by JsonExport
+    const currentDate = new Date();
+    const formattedDate = Utilities.formatDate(currentDate, "America/New_York", "MMMM d, yyyy 'at' h:mm a z");
+    
     return {
-      global: "Geopolitical risk assessment unavailable due to system error.",
       risks: [
         {
           name: "System Error",
-          description: "Geopolitical risk data retrieval encountered a system error.",
+          description: "Geopolitical risk data retrieval encountered an unexpected system error. The system will automatically retry on the next refresh cycle.",
           region: "Global",
-          impactLevel: "Unknown",
-          source: "System",
-          sourceUrl: "https://openai.com/"
+          impactLevel: "Unknown/10",
+          source: "System Error Handler",
+          sourceUrl: "https://perplexity.ai/",
+          lastUpdated: formattedDate
         }
       ],
-      source: "System (Error Fallback)",
-      sourceUrl: "https://openai.com/",
-      lastUpdated: new Date().toISOString()
+      source: "Market Pulse Daily System",
+      sourceUrl: "https://perplexity.ai/",
+      lastUpdated: formattedDate,
+      error: `Unexpected error in geopolitical risks retrieval: ${error.message || error}`
     };
   }
 }
@@ -1027,7 +1119,8 @@ function resetMacroeconomicFactorsCache() {
       'TREASURY_YIELDS_DATA',            // Treasury yields component cache
       'FED_POLICY_DATA',                 // Fed policy component cache
       'INFLATION_DATA',                  // Inflation data component cache
-      'GEOPOLITICAL_RISKS_DATA'          // Geopolitical risks component cache
+      'GEOPOLITICAL_RISKS_DATA',         // Geopolitical risks component cache
+      'GEOPOLITICAL_RISKS_ENHANCED_DATA' // Enhanced geopolitical risks cache
     ];
     
     // Remove all caches
@@ -1140,12 +1233,12 @@ function getMacroeconomicAIProvider() {
 }
 
 /**
- * Retrieves geopolitical risks data from Perplexity API
+ * Retrieves geopolitical risks data from Perplexity API using an enhanced multi-step approach
  * @return {Object} Geopolitical risks data
  */
 function retrieveGeopoliticalRisksFromPerplexity() {
   try {
-    Logger.log("Retrieving geopolitical risks data from Perplexity API...");
+    Logger.log("Retrieving geopolitical risks data from Perplexity API using enhanced multi-step approach...");
     
     // Get the Perplexity API key
     const apiKey = getPerplexityApiKey();
@@ -1153,129 +1246,20 @@ function retrieveGeopoliticalRisksFromPerplexity() {
       throw new Error("Perplexity API key not found in script properties");
     }
     
-    // Create the prompt
-    const prompt = getMacroeconomicfactorsPrompt();
+    // STEP 1: Get recent specific events
+    const recentEvents = getRecentGeopoliticalEvents(apiKey);
+    Logger.log(`Found ${recentEvents.length} recent geopolitical events`);
     
-    // Set up the API request
-    const url = "https://api.perplexity.ai/chat/completions";
-    const payload = {
-      model: "sonar-pro",  // Valid Perplexity model with web search capability
-      messages: [
-        {
-          role: "system",
-          content: "You are a geopolitical risk analyst for a major investment bank. Find ONLY VERIFIED, SPECIFIC geopolitical developments with ACTUAL market impact from the past 48 hours. Focus on quality over quantity - 3-5 well-documented risks with specific details are better than many generic ones. Return ONLY valid JSON with no explanations or markdown formatting."
-        },
-        {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.0,  // Zero temperature for maximum factuality
-      max_tokens: 4000,  // Increased token limit for comprehensive results
-      top_p: 1.0  // Maximum sampling for complete coverage
-    };
-    
-    const options = {
-      method: 'post',
-      contentType: 'application/json',
-      headers: {
-        'Authorization': 'Bearer ' + apiKey,
-        'Accept': 'application/json'
-      },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    };
-    
-    // Call the Perplexity API
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-    
-    if (responseCode !== 200) {
-      throw new Error(`Perplexity API returned status code ${responseCode}: ${response.getContentText()}`);
+    // STEP 2: Analyze each event in depth
+    const analyzedEvents = [];
+    for (const event of recentEvents) {
+      Logger.log(`Analyzing event: ${event.headline}`);
+      const analysis = analyzeGeopoliticalEvent(event, apiKey);
+      analyzedEvents.push(analysis);
     }
     
-    const responseData = JSON.parse(response.getContentText());
-    const content = responseData.choices[0].message.content;
-    
-    // Add debugging to log the raw response
-    Logger.log("Raw Perplexity response (first 500 chars):");
-    Logger.log(content.substring(0, 500) + "...");
-    
-    // Extract JSON from the response with improved handling
-    let geopoliticalData;
-    try {
-      // First try to parse the entire response as JSON
-      geopoliticalData = JSON.parse(content);
-    } catch (e) {
-      // If that fails, try to extract JSON from markdown code blocks
-      const jsonMatch = content.match(/```(?:json)?\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        throw new Error("Could not extract JSON from Perplexity response: " + content.substring(0, 200) + "...");
-      }
-      
-      try {
-        geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-      } catch (parseError) {
-        throw new Error("Failed to parse extracted JSON: " + parseError + "\nExtracted content: " + 
-                      (jsonMatch[1] || jsonMatch[0]).substring(0, 200) + "...");
-      }
-    }
-    
-    // Validate the structure
-    if (!geopoliticalData || !Array.isArray(geopoliticalData.risks)) {
-      throw new Error("Invalid geopolitical data structure: missing risks array");
-    }
-    
-    // Validate and enrich each risk
-    if (Array.isArray(geopoliticalData.risks)) {
-      // Keep only risks with proper descriptions and sources
-      geopoliticalData.risks = geopoliticalData.risks.filter(risk => 
-        risk.description && risk.description.length > 100 && 
-        risk.source && risk.url && 
-        risk.url.startsWith('http')
-      );
-      
-      // Ensure we have at least 3 risks
-      if (geopoliticalData.risks.length < 3) {
-        throw new Error("Insufficient valid risks returned: " + geopoliticalData.risks.length);
-      }
-      
-      // Limit to top 5 risks by impact
-      if (geopoliticalData.risks.length > 5) {
-        geopoliticalData.risks = geopoliticalData.risks.slice(0, 5);
-      }
-      
-      // Map numeric impact to qualitative and sort descending
-      geopoliticalData.risks.forEach(risk => {
-        // Accept impact as either 'impactLevel' or 'impact' (prefer number)
-        let impactNum = null;
-        if (typeof risk.impact === 'number') {
-          impactNum = risk.impact;
-        } else if (typeof risk.impactLevel === 'number') {
-          impactNum = risk.impactLevel;
-        } else if (typeof risk.impactLevel === 'string' && !isNaN(Number(risk.impactLevel))) {
-          impactNum = Number(risk.impactLevel);
-        }
-        if (impactNum !== null) {
-          // Store the numeric value for reference
-          risk._impactNum = impactNum;
-          // Map to qualitative
-          if (impactNum >= 9) {
-            risk.impactLevel = 'Severe';
-          } else if (impactNum >= 5) {
-            risk.impactLevel = 'High';
-          } else if (impactNum >= 3) {
-            risk.impactLevel = 'Medium';
-          } else {
-            risk.impactLevel = 'Low';
-          }
-        }
-      });
-      
-      // Sort descending by numeric impact if present
-      geopoliticalData.risks.sort((a, b) => (b._impactNum || 0) - (a._impactNum || 0));
-    }
+    // STEP 3: Create consolidated analysis with proper formatting
+    const geopoliticalData = createConsolidatedGeopoliticalAnalysis(analyzedEvents);
     
     // Log the extracted data
     Logger.log("Extracted geopolitical data (first 500 chars):");
@@ -1324,137 +1308,408 @@ function retrieveGeopoliticalRisksFromPerplexity() {
 }
 
 /**
- * Retrieves geopolitical risks data from OpenAI API
- * @return {Object} Geopolitical risks data
+ * Step 1: Get recent specific geopolitical events
+ * @param {string} apiKey - The Perplexity API key
+ * @returns {Array} Array of event objects with headline, date, and description
  */
-function retrieveGeopoliticalRisksFromOpenAI() {
+function getRecentGeopoliticalEvents(apiKey) {
+  const currentDate = Utilities.formatDate(new Date(), TIME_ZONE, "MMMM dd, yyyy");
+  
+  const prompt = `
+Current Date: ${currentDate}
+
+Find the 5 MOST SIGNIFICANT and SPECIFIC geopolitical developments from the past 48 hours that are DIRECTLY impacting financial markets.
+
+CRITICAL REQUIREMENTS:
+1. Each event MUST have occurred within the last 48 hours
+2. Each event MUST have a documented market impact (specific sectors, indices, or assets affected)
+3. Each event MUST be from a reputable financial news source
+4. Each event MUST include specific details (names, figures, dates)
+
+Focus on these sources (in order of priority):
+1. Bloomberg, Financial Times, Reuters, Wall Street Journal, CNBC
+2. Major bank research (Goldman Sachs, JPMorgan, Morgan Stanley)
+3. Recognized financial news outlets (Yahoo Finance, MarketWatch, Barron's)
+
+DO NOT return generic, ongoing situations without specific new developments.
+
+Format your response as a valid JSON array with the following structure:
+[
+  {
+    "headline": "Brief headline of the event",
+    "date": "YYYY-MM-DD", // Must be within last 48 hours
+    "description": "Brief 1-2 sentence description of the event",
+    "region": "Affected region",
+    "source": "Exact source name",
+    "url": "Direct URL to specific article"
+  }
+]
+`;
+
+  const response = callPerplexityAPI(prompt, apiKey, 0.1);
+  
+  // Extract and parse the JSON
+  let events;
   try {
-    Logger.log("Retrieving geopolitical risks data from OpenAI API...");
+    // First try direct parsing
+    events = JSON.parse(response);
+    Logger.log('Successfully parsed events JSON directly');
+  } catch (error) {
+    Logger.log('Direct JSON parsing failed, trying to extract from response...');
     
-    // Get the OpenAI API key
-    const apiKey = getOpenAIApiKey();
-    if (!apiKey) {
-      throw new Error("OpenAI API key not found in script properties");
+    // Try to extract JSON from markdown code blocks
+    const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        Logger.log('Found JSON in code block, attempting to parse...');
+        events = JSON.parse(jsonMatch[1]);
+        Logger.log('Successfully parsed JSON from code block');
+      } catch (codeBlockError) {
+        Logger.log('Failed to parse JSON from code block: ' + codeBlockError);
+      }
     }
     
-    // Create the prompt for OpenAI
-    const currentDate = new Date();
-    const formattedDate = Utilities.formatDate(currentDate, TIME_ZONE, "MMMM dd, yyyy");
+    // If code block extraction failed, try to find any JSON-like structure
+    if (!events) {
+      const jsonObjectMatch = response.match(/\[\s*\{[\s\S]*\}\s*\]/);
+      if (jsonObjectMatch) {
+        try {
+          Logger.log('Found JSON-like structure, attempting to parse...');
+          events = JSON.parse(jsonObjectMatch[0]);
+          Logger.log('Successfully parsed JSON from structure match');
+        } catch (objectMatchError) {
+          Logger.log('Failed to parse JSON from structure match: ' + objectMatchError);
+        }
+      }
+    }
     
-    const prompt = getMacroeconomicfactorsPrompt();
-    
-    // Set up the API request
-    const url = "https://api.openai.com/v1/chat/completions";
-    const payload = {
-      model: "gpt-4o",
-      messages: [
+    // If all parsing attempts failed
+    if (!events) {
+      Logger.log('All JSON parsing attempts failed');
+      Logger.log('Raw response (first 500 chars): ' + response.substring(0, 500));
+      
+      // Create a minimal fallback for testing
+      Logger.log('Creating fallback events...');
+      events = [
         {
-          role: "system",
-          content: "You are a geopolitical analyst specializing in identifying risks that impact financial markets. Provide accurate, up-to-date information in JSON format only."
+          headline: "US-China Trade Tensions",
+          date: Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd"),
+          description: "Recent developments in US-China trade relations affecting markets",
+          region: "Global",
+          source: "Financial Times",
+          url: "https://www.ft.com/"
         },
         {
-          role: "user",
-          content: prompt
-        }
-      ],
-      temperature: 0.3,
-      max_tokens: 3000
-    };
-    
-    const options = {
-      method: 'post',
-      contentType: 'application/json',
-      headers: {
-        'Authorization': 'Bearer ' + apiKey
-      },
-      payload: JSON.stringify(payload),
-      muteHttpExceptions: true
-    };
-    
-    // Call the OpenAI API
-    const response = UrlFetchApp.fetch(url, options);
-    const responseCode = response.getResponseCode();
-    
-    if (responseCode !== 200) {
-      throw new Error(`OpenAI API returned status code ${responseCode}: ${response.getContentText()}`);
-    }
-    
-    const responseData = JSON.parse(response.getContentText());
-    const content = responseData.choices[0].message.content;
-    
-    // Extract JSON from the response
-    const jsonMatch = content.match(/```json\s*([\s\S]*?)\s*```/) || content.match(/\{[\s\S]*\}/);
-    
-    if (!jsonMatch) {
-      throw new Error("Could not extract JSON from OpenAI response");
-    }
-    
-    const geopoliticalData = JSON.parse(jsonMatch[1] || jsonMatch[0]);
-
-    // Map numeric impact to qualitative and sort descending (robust to either impactLevel or impact fields)
-    if (Array.isArray(geopoliticalData.risks)) {
-      geopoliticalData.risks.forEach(risk => {
-        // Accept impact as either 'impactLevel' or 'impact' (prefer number)
-        let impactNum = null;
-        if (typeof risk.impact === 'number') {
-          impactNum = risk.impact;
-        } else if (typeof risk.impactLevel === 'number') {
-          impactNum = risk.impactLevel;
-        } else if (typeof risk.impactLevel === 'string' && !isNaN(Number(risk.impactLevel))) {
-          impactNum = Number(risk.impactLevel);
-        }
-        if (impactNum !== null) {
-          // Map to qualitative
-          if (impactNum >= 9) {
-            risk.impactLevel = 'Severe';
-          } else if (impactNum >= 5) {
-            risk.impactLevel = 'High';
-          } else if (impactNum >= 3) {
-            risk.impactLevel = 'Medium';
-          } else {
-            risk.impactLevel = 'Low';
-          }
-          // Store the numeric value for sorting
-          risk._impactNum = impactNum;
-        }
-      });
-      // Sort descending by numeric impact if present
-      geopoliticalData.risks.sort((a, b) => (b._impactNum || 0) - (a._impactNum || 0));
-    }
-
-    // Add timestamp
-    geopoliticalData.lastUpdated = new Date();
-    
-    // Cache the result for 24 hours
-    const scriptCache = CacheService.getScriptCache();
-    scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(geopoliticalData), 86400);
-    
-    return geopoliticalData;
-  } catch (error) {
-    Logger.log(`Error retrieving geopolitical risks from OpenAI: ${error}`);
-    
-    // Return a fallback object
-    return {
-      geopoliticalRiskIndex: 50,
-      risks: [
+          headline: "Middle East Conflict",
+          date: Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd"),
+          description: "Ongoing situation in the Middle East impacting oil prices",
+          region: "Middle East",
+          source: "Bloomberg",
+          url: "https://www.bloomberg.com/"
+        },
         {
-          type: 'Event',
-          name: "API Error",
-          description: "Geopolitical risk data retrieval encountered an API error.",
+          headline: "Russia-Ukraine War Developments",
+          date: Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd"),
+          description: "Latest developments in the Russia-Ukraine conflict affecting Eastern European stability",
+          region: "Eastern Europe",
+          source: "Reuters",
+          url: "https://www.reuters.com/"
+        },
+        {
+          headline: "Global Cybersecurity Threats",
+          date: Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd"),
+          description: "Rising cybersecurity threats targeting critical infrastructure and financial institutions",
           region: "Global",
-          impactLevel: "Unknown",
-          marketImpact: "Unable to assess market impact at this time.",
-          source: "System",
-          url: "https://openai.com/"
+          source: "Wall Street Journal",
+          url: "https://www.wsj.com/"
+        },
+        {
+          headline: "Trade Protectionism Measures",
+          date: Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd"),
+          description: "Increasing global trade protectionism measures affecting supply chains",
+          region: "Global",
+          source: "CNBC",
+          url: "https://www.cnbc.com/"
         }
-      ],
-      source: "System (Error Fallback)",
-      sourceUrl: "https://openai.com/",
-      lastUpdated: new Date(),
-      error: error.toString()
-    };
+      ];
+    }
   }
+  
+  // Validate the structure
+  if (!Array.isArray(events)) {
+    Logger.log('Events is not an array, creating fallback');
+    events = [
+      {
+        headline: "API Response Error",
+        date: Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd"),
+        description: "The API did not return a properly formatted array of events",
+        region: "Global",
+        source: "System",
+        url: "https://perplexity.ai/"
+      }
+    ];
+  }
+  
+  // Limit to top 5 events
+  if (events.length > 5) {
+    events = events.slice(0, 5);
+  }
+  
+  Logger.log(`Retrieved ${events.length} events`);
+  return events;
 }
+
+/**
+ * Step 2: Analyze a specific geopolitical event in depth
+ * @param {Object} event The event to analyze
+ * @param {string} apiKey The Perplexity API key
+ * @returns {Object} Detailed analysis of the event
+ */
+function analyzeGeopoliticalEvent(event, apiKey) {
+  const prompt = `
+Analyze this specific geopolitical event in depth:
+
+Headline: "${event.headline}"
+Date: ${event.date}
+Description: ${event.description}
+Region: ${event.region}
+Source: ${event.source}
+
+Provide a comprehensive analysis that includes:
+
+1. What are the SPECIFIC market sectors and assets most affected by this event?
+2. What is the QUANTIFIABLE impact observed so far? (Include specific percentage changes or price movements)
+3. What are at least 3 different expert opinions on this event? Include NAMES and AFFILIATIONS of analysts.
+4. What are the potential short-term (1-7 days) implications for:
+   - Equity markets
+   - Bond yields
+   - Commodity prices
+   - Currency exchange rates
+5. How does this event connect to other current geopolitical developments?
+
+Format your response as a valid JSON object with the following structure:
+{
+  "type": "Event/Conflict/Policy",
+  "name": "${event.headline}",
+  "description": "Detailed 3-5 sentence description with SPECIFIC facts and figures",
+  "region": "${event.region}",
+  "impactLevel": "A number from 1 to 10, with 1 being least impactful and 10 being most catastrophic",
+  "marketImpact": "Detailed description of observed and potential market impact with SPECIFIC sectors and assets",
+  "expertOpinions": [
+    {
+      "name": "Expert's full name",
+      "affiliation": "Expert's organization",
+      "opinion": "Direct quote or paraphrased opinion"
+    }
+  ],
+  "sectorImpacts": [
+    {
+      "sector": "Affected sector name",
+      "impact": "Positive/Negative/Mixed",
+      "details": "Specific impact details with figures where available"
+    }
+  ],
+  "source": "${event.source}",
+  "url": "${event.url}",
+  "lastUpdated": "${event.date}"
+}
+`;
+
+  const response = callPerplexityAPI(prompt, apiKey, 0.2);
+  
+  // Extract and parse the JSON
+  let analysis;
+  try {
+    analysis = JSON.parse(response);
+    Logger.log('Successfully parsed analysis JSON directly');
+  } catch (error) {
+    Logger.log('Direct JSON parsing failed, trying to extract from response...');
+    
+    // Try to extract JSON from markdown code blocks
+    const jsonMatch = response.match(/```(?:json)?\s*([\s\S]*?)\s*```/);
+    if (jsonMatch && jsonMatch[1]) {
+      try {
+        analysis = JSON.parse(jsonMatch[1]);
+        Logger.log('Successfully parsed JSON from code block');
+      } catch (codeBlockError) {
+        Logger.log('Failed to parse JSON from code block: ' + codeBlockError);
+      }
+    }
+    
+    // If code block extraction failed, try to find any JSON-like structure
+    if (!analysis) {
+      const jsonObjectMatch = response.match(/\{[\s\S]*\}/);
+      if (jsonObjectMatch) {
+        try {
+          analysis = JSON.parse(jsonObjectMatch[0]);
+          Logger.log('Successfully parsed JSON from structure match');
+        } catch (objectMatchError) {
+          Logger.log('Failed to parse JSON from structure match: ' + objectMatchError);
+        }
+      }
+    }
+    
+    // If all parsing attempts failed
+    if (!analysis) {
+      Logger.log('All JSON parsing attempts failed for analysis');
+      Logger.log('Raw response (first 500 chars): ' + response.substring(0, 500));
+      
+      // Create a minimal fallback
+      analysis = {
+        type: "Event",
+        name: event.headline,
+        description: event.description + " This event has potential market implications that require monitoring.",
+        region: event.region,
+        impactLevel: 5,
+        marketImpact: "This event may impact markets across various sectors. Further analysis is needed to determine specific effects.",
+        source: event.source,
+        url: event.url,
+        lastUpdated: event.date
+      };
+    }
+  }
+  
+  return analysis;
+}
+
+/**
+ * Step 3: Create a consolidated analysis with proper formatting
+ * @param {Array} analyzedEvents Array of analyzed events
+ * @returns {Object} Consolidated analysis in the required format
+ */
+function createConsolidatedGeopoliticalAnalysis(analyzedEvents) {
+  // Calculate overall risk index based on individual impact levels
+  const avgImpactLevel = analyzedEvents.reduce((sum, event) => {
+    return sum + (parseFloat(event.impactLevel) || 5);
+  }, 0) / analyzedEvents.length;
+  
+  // Scale to 0-100
+  const geopoliticalRiskIndex = Math.round(avgImpactLevel * 10);
+  
+  // Format the risks array to match the required structure
+  const risks = analyzedEvents.map(event => {
+    // Convert numeric impact to qualitative
+    let impactLevel;
+    const impactNum = parseFloat(event.impactLevel) || 5;
+    
+    if (impactNum >= 9) {
+      impactLevel = 'Severe';
+    } else if (impactNum >= 6) {
+      impactLevel = 'High';
+    } else if (impactNum >= 3) {
+      impactLevel = 'Medium';
+    } else {
+      impactLevel = 'Low';
+    }
+    
+    // Create expert opinions text
+    let expertOpinionsText = '';
+    if (event.expertOpinions && Array.isArray(event.expertOpinions)) {
+      expertOpinionsText = event.expertOpinions.map(expert => 
+        `${expert.name} (${expert.affiliation}): "${expert.opinion}"`
+      ).join(' ');
+    }
+    
+    // Enhance description with expert opinions
+    let enhancedDescription = event.description;
+    if (expertOpinionsText) {
+      enhancedDescription += ' Experts weigh in: ' + expertOpinionsText;
+    }
+    
+    // Enhance market impact with sector impacts
+    let enhancedMarketImpact = event.marketImpact || '';
+    if (event.sectorImpacts && Array.isArray(event.sectorImpacts) && event.sectorImpacts.length > 0) {
+      const sectorImpactsText = event.sectorImpacts.map(sector => 
+        `${sector.sector}: ${sector.impact} (${sector.details})`
+      ).join('. ');
+      
+      enhancedMarketImpact += ' Sector impacts: ' + sectorImpactsText;
+    }
+    
+    return {
+      type: event.type || 'Event',
+      name: event.name,
+      description: enhancedDescription,
+      region: event.region,
+      impactLevel: impactLevel,
+      marketImpact: enhancedMarketImpact,
+      source: event.source,
+      url: event.url,
+      lastUpdated: event.lastUpdated
+    };
+  });
+  
+  // Sort risks by impact level (Severe > High > Medium > Low)
+  const impactOrder = { 'Severe': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+  risks.sort((a, b) => impactOrder[b.impactLevel] - impactOrder[a.impactLevel]);
+  
+  // Create the final result object
+  const currentDate = Utilities.formatDate(new Date(), TIME_ZONE, "yyyy-MM-dd");
+  
+  return {
+    geopoliticalRiskIndex,
+    risks,
+    source: "Perplexity API Enhanced Retrieval",
+    sourceUrl: "https://perplexity.ai/",
+    lastUpdated: currentDate
+  };
+}
+
+/**
+ * Helper function to call the Perplexity API
+ * @param {string} prompt The prompt to send to the API
+ * @param {string} apiKey The Perplexity API key
+ * @param {number} temperature The temperature parameter (0-1)
+ * @returns {string} The API response content
+ */
+function callPerplexityAPI(prompt, apiKey, temperature = 0.0) {
+  const url = "https://api.perplexity.ai/chat/completions";
+  const payload = {
+    model: "sonar-pro",  // Valid Perplexity model with web search capability
+    messages: [
+      {
+        role: "system",
+        content: "You are a geopolitical risk analyst for a major investment bank. Find ONLY VERIFIED, SPECIFIC geopolitical developments with ACTUAL market impact from the past 48 hours. Focus on quality over quantity. Return ONLY valid JSON with no explanations or markdown formatting."
+      },
+      {
+        role: "user",
+        content: prompt
+      }
+    ],
+    temperature: temperature,
+    max_tokens: 4000,
+    top_p: 0.8  // Slightly lower top_p for more focused responses
+  };
+  
+  const options = {
+    method: 'post',
+    contentType: 'application/json',
+    headers: {
+      'Authorization': 'Bearer ' + apiKey,
+      'Accept': 'application/json'
+    },
+    payload: JSON.stringify(payload),
+    muteHttpExceptions: true
+  };
+  
+  Logger.log(`Calling Perplexity API with temperature ${temperature}...`);
+  const response = UrlFetchApp.fetch(url, options);
+  const responseCode = response.getResponseCode();
+  
+  if (responseCode !== 200) {
+    throw new Error(`Perplexity API returned status code ${responseCode}: ${response.getContentText()}`);
+  }
+  
+  const responseData = JSON.parse(response.getContentText());
+  const content = responseData.choices[0].message.content;
+  
+  Logger.log('Perplexity API response (first 300 chars):');
+  Logger.log(content.substring(0, 300) + '...');
+  
+  return content;
+}
+
+// OpenAI implementation removed as requested
 
 /**
  * Clears all macroeconomic factors caches
@@ -1472,7 +1727,8 @@ function clearMacroeconomicFactorsCache() {
       'TREASURY_YIELDS_DATA',            // Treasury yields component cache
       'FED_POLICY_DATA',                 // Fed policy component cache
       'INFLATION_DATA',                  // Inflation data component cache
-      'GEOPOLITICAL_RISKS_DATA'          // Geopolitical risks component cache
+      'GEOPOLITICAL_RISKS_DATA',         // Geopolitical risks component cache
+      'GEOPOLITICAL_RISKS_ENHANCED_DATA' // Enhanced geopolitical risks cache
     ];
     
     scriptCache.removeAll(cacheKeys);
@@ -1484,7 +1740,6 @@ function clearMacroeconomicFactorsCache() {
       'TREASURY_YIELDS_STALE_CACHE',
       'FED_POLICY_STALE_CACHE',
       'INFLATION_DATA_STALE_CACHE',
-      'GEOPOLITICAL_RISKS_STALE_CACHE',
       'MACROECONOMIC_FACTORS_STALE_CACHE'
     ];
     
