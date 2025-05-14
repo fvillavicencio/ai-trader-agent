@@ -1,0 +1,63 @@
+{
+  "geopoliticalRiskIndex": 70,
+  "risks": [
+    {
+      "type": "Event",
+      "name": "Fall of Assad regime in Syria to terrorist group raises security concerns",
+      "description": "On December 8, 2024, the Assad regime in Syria collapsed following a major offensive led by Hay'at Tahrir al-Sham (HTS), a US-designated terrorist group. The fall has intensified concerns about the spread of political jihadism and terrorism across the Middle East, with significant implications for regional stability, humanitarian conditions, and security investments. The event has disrupted existing power structures, cut key Iranian supply routes, and left Syria's economy and infrastructure devastated, with GDP at less than 35% of its 2011 level and poverty rates exceeding 90%.",
+      "region": "Middle East",
+      "impactLevel": 7,
+      "marketImpact": "The immediate market impact has been observed in several sectors. Brent crude oil prices rose 4.2% to $92.10 per barrel on May 13, 2025, reflecting heightened geopolitical risk and concerns over potential supply disruptions in the region. Defense sector stocks, such as Lockheed Martin (LMT) and Northrop Grumman (NOC), gained 2.1% and 1.8% respectively on the NYSE, driven by expectations of increased defense spending and regional arms demand. Middle Eastern equity indices, including the Tadawul All Share Index (TASI), fell 3.5% on May 13, 2025, as investors reacted to increased instability and capital outflows. Emerging market bond spreads widened, with the JPMorgan EMBI Global spread for Middle Eastern sovereigns increasing by 28 basis points. Syrian sovereign bonds remain illiquid and have seen further declines in secondary market pricing. Sector impacts: Energy (Oil & Gas): Positive (Brent crude oil rose 4.2% to $92.10/bbl on May 13, 2025, amid fears of regional supply disruptions.). Defense & Aerospace: Positive (Lockheed Martin (LMT) up 2.1%, Northrop Grumman (NOC) up 1.8% on May 13, 2025, as defense spending expectations rise.). Regional Equities (Middle East): Negative (Tadawul All Share Index (TASI) fell 3.5% on May 13, 2025, due to increased instability and capital outflows.)",
+      "source": "Wellington Management",
+      "url": "https://www.wellington.com/en-us/institutional/insights/geopolitics-in-2025",
+      "lastUpdated": "2025-05-12"
+    },
+    {
+      "type": "Event/Conflict/Policy",
+      "name": "Defense sector gains as countries rebuild depleted arsenals",
+      "description": "Legacy defense companies are experiencing structural tailwinds as nations worldwide boost defense spending to rebuild arsenals depleted by ongoing conflicts in Ukraine and the Middle East. This surge in demand is creating investment opportunities in both traditional defense and innovation sectors, with companies like Lockheed Martin and Northrop Grumman seeing record contract awards and backlog growth. The U.S. defense budget for fiscal 2025 reflects increased investment in strategic areas, including hypersonic research and development, and the operationalization of advanced technologies such as AI for predictive maintenance and digital supply chain solutions.",
+      "region": "Global",
+      "impactLevel": 7,
+      "marketImpact": "Defense sector stocks, particularly major U.S. contractors such as Lockheed Martin (LMT) and Northrop Grumman (NOC), have seen strong performance and rising valuations. Northrop Grumman was awarded over $50 billion in new contracts in 2024, with a backlog exceeding $94 billion. Lockheed Martin remains the most prominent defense stock, with a 1-year performance of 5.72% and revenue growth of 32.59% year-over-year. The broader industrials sector, which includes defense, has posted a trailing 12-month performance of 12.2% as of May 5, 2025. Axon Enterprise, a technology provider for law enforcement and government, has seen its stock price rise more than 95% in the last 12 months. Sector impacts: Aerospace & Defense: Positive (Major defense contractors (e.g., Lockheed Martin, Northrop Grumman) are seeing record contract awards and backlog growth. Lockheed Martin: 1-year performance 5.72%, revenue growth 32.59% Y/Y. Northrop Grumman: backlog exceeds $94 billion, awarded over $50 billion in new contracts in 2024.). Industrials: Positive (Trailing 12-month performance of 12.2% as of May 5, 2025, driven in part by defense sector strength.). Technology (Defense-related): Positive (Axon Enterprise (AXON) stock up more than 95% in the last 12 months, driven by expanding government contracts and technology adoption.)",
+      "source": "Wellington Management",
+      "url": "https://www.wellington.com/en-us/institutional/insights/geopolitics-in-2025",
+      "lastUpdated": "2025-05-13"
+    },
+    {
+      "type": "Event",
+      "name": "Increased cyber attacks on Western infrastructure raise security concerns",
+      "description": "US national security officials have reported escalating cyber attacks on critical infrastructure across North America and Europe, with over 420 million attacks recorded between January 2023 and January 2024. State-sponsored threat actors from China, Russia, and Iran have been linked to these sophisticated attacks targeting water facilities, energy grids, and healthcare systems. The Environmental Protection Agency recently identified alarming cybersecurity vulnerabilities in drinking water systems across the United States.",
+      "region": "North America, Europe",
+      "impactLevel": 7,
+      "marketImpact": "Specific market impact data unavailable. The event may affect related sectors and assets. Sector impacts: Cybersecurity: Positive (Increased demand for comprehensive vetting of third-party contractors, continuous monitoring solutions, and cloud security services as organizations prepare for significant impacts from vendor-related incidents.). Critical Infrastructure: Negative (Water facilities, energy grids, telecommunications, and healthcare systems face heightened risks from sophisticated attacks that can disrupt control systems and compromise data, potentially leading to service disruptions and safety hazards.). Cloud Services: Mixed (While cloud migration offers scalability and cost savings for critical infrastructure, it also creates new attack vectors and security challenges, requiring significant investment in specialized security solutions.)",
+      "source": "Wellington Management",
+      "url": "https://www.wellington.com/en-us/institutional/insights/geopolitics-in-2025",
+      "lastUpdated": "2025-05-10"
+    },
+    {
+      "type": "Event",
+      "name": "S&P Global identifies top geopolitical risks for 2025",
+      "description": "S&P Global's May 2025 analysis highlights that ongoing conflicts such as the Russia-Ukraine war and the Israel-Hamas war continue to drive regional instability, directly impacting global energy and food security. These disruptions have contributed to elevated commodity prices and sustained inflation rates above pre-pandemic norms in advanced economies. The report also notes that central bank rate cuts in the US and Western Europe may be overstated, with policy rates and sovereign bond yields expected to remain above pre-pandemic levels. The Asia-Pacific region is projected to be a key long-term growth engine despite these headwinds.",
+      "region": "Global",
+      "impactLevel": 7,
+      "marketImpact": "The most affected market sectors include energy (notably oil and natural gas), agricultural commodities, sovereign bonds, and equities in emerging markets exposed to conflict regions. Brent crude oil prices have remained volatile, trading in the $85–$90 per barrel range since April 2025, up approximately 12% year-to-date, driven by supply concerns from the Russia-Ukraine conflict and Middle East instability. Wheat futures have risen over 8% since March 2025 due to disruptions in Black Sea exports. Sovereign bond yields in the US and Western Europe remain elevated, with the US 10-year Treasury yield holding above 4.5% as of early May 2025. Major equity indices such as the MSCI Emerging Markets Index have underperformed, down 3.2% year-to-date, reflecting heightened risk aversion. Sector impacts: Energy (Oil & Gas): Positive (Brent crude oil prices have increased by approximately 12% year-to-date, trading between $85–$90 per barrel as of May 2025, due to supply concerns from ongoing conflicts.). Agriculture (Wheat, Corn): Positive (Wheat futures are up over 8% since March 2025, reflecting supply disruptions from the Black Sea region and Middle East instability.). Sovereign Bonds: Negative (US 10-year Treasury yields remain elevated above 4.5%, with similar trends in Western Europe, as inflation expectations stay above pre-pandemic norms.)",
+      "source": "S&P Global",
+      "url": "https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk",
+      "lastUpdated": "2025-05-08"
+    },
+    {
+      "type": "Event",
+      "name": "US-China tensions reshape global supply chains",
+      "description": "Escalating US-China tensions in 2025 have led to significant shifts in global supply chains, with both countries imposing new tariffs and export controls. The US announced an additional 10% tariff on Chinese imports in February 2025, targeting over $450 billion in goods, while China responded with tariffs on $20 billion of US imports and new export controls on critical minerals. These measures have increased production costs, particularly in technology and manufacturing, and prompted governments in the Asia-Pacific to secure alternative sources for critical minerals, impacting the global technology and manufacturing sectors.",
+      "region": "Asia-Pacific, North America",
+      "impactLevel": 7,
+      "marketImpact": "Technology and manufacturing sectors have seen increased costs and volatility. The Nasdaq Composite Index fell 2.8% in the week following the US tariff announcement (Feb 1-8, 2025), with major tech stocks like Apple (AAPL) and Nvidia (NVDA) declining 3.5% and 4.1% respectively. The S&P 500 Industrials sector dropped 2.2% over the same period. Prices for key critical minerals such as lithium and rare earths rose sharply; lithium carbonate spot prices in Asia increased by 7% in the first half of May 2025. US agricultural exports to China, valued at $21 billion, are directly affected by retaliatory tariffs, leading to a 5% drop in the S&P GSCI Agriculture Index since early February 2025. Sector impacts: Technology: Negative (US tariffs on Chinese imports have raised production costs for US tech firms; Consumer Technology Association estimates laptop prices could rise by 45%. Major tech stocks (AAPL, NVDA) fell 3.5-4.1% in early February 2025.). Manufacturing: Negative (Increased tariffs and supply chain disruptions have led to a 2.2% decline in the S&P 500 Industrials sector in the week after new tariffs were announced.). Critical Minerals: Positive (Prices for lithium and rare earths surged, with lithium carbonate spot prices in Asia up 7% in May 2025, as governments seek alternative sources outside China.)",
+      "source": "S&P Global",
+      "url": "https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk",
+      "lastUpdated": "2025-05-11"
+    }
+  ],
+  "source": "Perplexity API Enhanced Retrieval",
+  "sourceUrl": "https://perplexity.ai/",
+  "lastUpdated": "2025-05-14"
+}
