@@ -23,7 +23,7 @@
     [
       "html",
       {
-        "html": "\n    <div class=\"decision-banner\" style=\"background-color: #f59e0b; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; border-radius: 1rem; margin: 1.5rem 0;\">\n      <div class=\"decision-text\" id=\"decision\" style=\"color: white; font-weight: bold; text-align: center; font-size: clamp(1.6rem, 5vw, 2.8rem); line-height: 1.1; display: flex; align-items: center; justify-content: center; width: 100%;\">\n        <span style=\"margin-right: 10px;\">⚠️</span>\n        Watch for Better Price Action\n      </div>\n      <div style=\"font-size: 16px; color: white; margin-top: 8px; text-align: center;\">Market dances on a tightrope as tech shines but risks loom.</div>\n    </div>\n  "
+        "html": "\n    <div class=\"decision-banner\" style=\"background-color: #f59e0b; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; border-radius: 1rem; margin: 1.5rem 0;\">\n      <div class=\"decision-text\" id=\"decision\" style=\"color: white; font-weight: bold; text-align: center; font-size: clamp(1.6rem, 5vw, 2.8rem); line-height: 1.1; display: flex; align-items: center; justify-content: center; width: 100%;\">\n        <span style=\"margin-right: 10px;\">⚠️</span>\n        Hold – Awaiting Stronger Signal\n      </div>\n      <div style=\"font-size: 16px; color: white; margin-top: 8px; text-align: center;\">Market dances on a tightrope as tech shines but risks loom.</div>\n    </div>\n  "
       }
     ],
     [
@@ -320,7 +320,7 @@
     "lastUpdated": "2025-05-02T12:44:44.063Z"
   },
   "decision": {
-    "text": "Watch for Better Price Action",
+    "text": "Hold – Awaiting Stronger Signal",
     "summary": "Market dances on a tightrope as tech shines but risks loom.",
     "color": "#f59e0b",
     "icon": "⚠️"

@@ -83,7 +83,7 @@ const generateEngagingTitle = (data) => {
     } else if (action.includes('Sell Calls')) {
       // Selling calls is typically bearish or expecting flat markets
       sentiment = 'bearish';
-    } else if (action.includes('Watch for Better Price Action')) {
+    } else if (action.includes('Hold – Awaiting Stronger Signal')) {
       sentiment = 'neutral';
     } else if (action.includes('Buy and Hedge')) {
       // This is cautiously bullish - check justification for tone

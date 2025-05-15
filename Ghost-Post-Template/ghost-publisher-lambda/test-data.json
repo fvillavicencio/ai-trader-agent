@@ -36,12 +36,12 @@
     "lastUpdated": "2025-05-09T18:35:05.987Z"
   },
   "decision": {
-    "text": "Watch for Better Price Action",
+    "text": "Hold – Awaiting Stronger Signal",
     "summary": "Current market conditions, characterized by extreme fear and a flat yield curve, suggest caution; however, certain sectors may offer opportunities as sentiment shifts.",
     "color": "#f59e0b",
     "icon": "⚠️"
   },
-  "justification": "Given the current extreme fear in the market, as indicated by the Fear & Greed Index, and the flat yield curve suggesting uncertainty, a cautious approach is advised. However, the mixed analyst sentiment, with optimism in energy and potential rebounds in semiconductors, suggests that selective opportunities may exist. The geopolitical risks and upcoming economic events further justify a 'Watch for Better Price Action' decision, as these factors could lead to market volatility and better buying opportunities.",
+  "justification": "Given the current extreme fear in the market, as indicated by the Fear & Greed Index, and the flat yield curve suggesting uncertainty, a cautious approach is advised. However, the mixed analyst sentiment, with optimism in energy and potential rebounds in semiconductors, suggests that selective opportunities may exist. The geopolitical risks and upcoming economic events further justify a 'Hold – Awaiting Stronger Signal' decision, as these factors could lead to market volatility and better buying opportunities.",
   "marketIndicators": {
     "majorIndices": [
       {
