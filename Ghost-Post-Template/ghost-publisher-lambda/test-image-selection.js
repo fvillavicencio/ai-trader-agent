@@ -3,8 +3,16 @@
  * This script tests the improved image selection logic with various titles and sentiments
  */
 
-// Import the actual image selector module
+// Import the required modules
 const { getS3ImageForTitle } = require('./src/utils/s3-image-selector');
+const imageCatalog = require('./src/utils/image-catalog');
+
+// Initialize the image catalog before testing
+async function initialize() {
+  console.log('Initializing image catalog for testing...');
+  await imageCatalog.initializeImageCatalog();
+  console.log('Image catalog initialized successfully');
+}
 
 // Test titles for each sentiment category
 const testTitles = {
@@ -61,33 +69,94 @@ function testImageSelection(title, sentiment) {
 }
 
 // Run tests for all sentiment categories and titles
-console.log('=== TESTING ENHANCED IMAGE SELECTION ===');
-
-// Test with specific titles for each sentiment
-Object.keys(testTitles).forEach(sentiment => {
-  console.log(`\n\n== TESTING ${sentiment.toUpperCase()} TITLES ==`);
+async function runTests() {
+  // First initialize the catalog
+  await initialize();
   
-  testTitles[sentiment].forEach(title => {
-    testImageSelection(title, sentiment);
-  });
+  console.log('=== TESTING ENHANCED IMAGE SELECTION ===');
+  console.log('Testing with the updated logic that includes time-based and title-based factors');
+  
+  // Track selected images to check for duplicates
+  const selectedImages = new Set();
+  const imageResults = [];
+  
+  // Test with specific titles for each sentiment
+  for (const sentiment of Object.keys(testTitles)) {
+    console.log(`\n\n== TESTING ${sentiment.toUpperCase()} TITLES ==`);
+    
+    for (const title of testTitles[sentiment]) {
+      const result = testImageSelection(title, sentiment);
+      if (result) {
+        selectedImages.add(result.url);
+        imageResults.push({
+          title,
+          sentiment,
+          imageUrl: result.url,
+          category: result.metadata.category
+        });
+      }
+      
+      // Add a small delay between tests to ensure time component changes
+      await new Promise(resolve => setTimeout(resolve, 50));
+    }
+  }
+
+  // Test with mixed sentiment and title
+  console.log('\n\n== TESTING MIXED SENTIMENT AND TITLE ==');
+  const mixedResult1 = testImageSelection('Bulls On Parade', 'bearish'); // Bullish title with bearish sentiment
+  const mixedResult2 = testImageSelection('The Correction Is Coming', 'bullish'); // Bearish title with bullish sentiment
+  
+  if (mixedResult1) selectedImages.add(mixedResult1.url);
+  if (mixedResult2) selectedImages.add(mixedResult2.url);
+  
+  // Test with random sentiment detection from title
+  console.log('\n\n== TESTING SENTIMENT DETECTION FROM TITLE ==');
+  const titlesForSentimentDetection = [
+    'Markets Rally as Fed Signals Rate Cut',
+    'Stocks Plunge on Recession Fears',
+    'Investors Cautious Ahead of Earnings',
+    'Wild Swings Continue as VIX Spikes'
+  ];
+  
+  for (const title of titlesForSentimentDetection) {
+    const result = testImageSelection(title, null); // Pass null to force sentiment detection
+    if (result) selectedImages.add(result.url);
+    await new Promise(resolve => setTimeout(resolve, 50));
+  }
+  
+  // Test the same title multiple times to see if we get different images
+  console.log('\n\n== TESTING SAME TITLE MULTIPLE TIMES ==');
+  const sameTitle = 'Market Analysis for Today';
+  const sameTitleResults = [];
+  
+  for (let i = 0; i < 5; i++) {
+    console.log(`\nTest #${i+1} with title: "${sameTitle}"`);
+    const result = testImageSelection(sameTitle, 'neutral');
+    if (result) {
+      sameTitleResults.push(result.url);
+    }
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  
+  // Check for duplicates with the same title
+  const uniqueSameTitleImages = new Set(sameTitleResults);
+  console.log(`\nSame title test results: ${sameTitleResults.length} tests, ${uniqueSameTitleImages.size} unique images`);
+  if (uniqueSameTitleImages.size < sameTitleResults.length) {
+    console.log('WARNING: Same title produced duplicate images despite our improvements');
+  } else {
+    console.log('SUCCESS: Same title produced different images each time!');
+  }
+  
+  // Summary of all tests
+  console.log('\n=== TEST SUMMARY ===');
+  console.log(`Total tests run: ${imageResults.length + 2 + titlesForSentimentDetection.length + sameTitleResults.length}`);
+  console.log(`Unique images selected: ${selectedImages.size}`);
+  console.log(`Duplicate rate: ${100 - (selectedImages.size / (imageResults.length + 2 + titlesForSentimentDetection.length + sameTitleResults.length) * 100).toFixed(2)}%`);
+  
+  console.log('\n=== TEST COMPLETE ===');
+}
+
+// Run the tests
+runTests().catch(error => {
+  console.error('Error running tests:', error);
 });
-
-// Test with mixed sentiment and title
-console.log('\n\n== TESTING MIXED SENTIMENT AND TITLE ==');
-testImageSelection('Bulls On Parade', 'bearish'); // Bullish title with bearish sentiment
-testImageSelection('The Correction Is Coming', 'bullish'); // Bearish title with bullish sentiment
-
-// Test with random sentiment selection based on title
-console.log('\n\n== TESTING SENTIMENT DETECTION FROM TITLE ==');
-const titlesForSentimentDetection = [
-  'Markets Rally as Fed Signals Rate Cut',
-  'Stocks Plunge on Recession Fears',
-  'Investors Cautious Ahead of Earnings',
-  'Wild Swings Continue as VIX Spikes'
-];
-
-titlesForSentimentDetection.forEach(title => {
-  testImageSelection(title, 'neutral'); // Use neutral so it will detect from title
-});
-
-console.log('\n=== TEST COMPLETE ===');
