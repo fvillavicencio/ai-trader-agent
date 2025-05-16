@@ -36,6 +36,8 @@ function publishToGhostWithLambda(jsonData, options = {}) {
     
     // Make the actual API call to the Lambda function
     let lambdaResponse = null;
+    let publishError = null;
+    
     try {
       Logger.log('Calling Lambda API to ' + (options.draftOnly ? 'create draft' : 'publish') + ' article...');
       const response = UrlFetchApp.fetch(lambdaApiUrl, {
@@ -61,24 +63,59 @@ function publishToGhostWithLambda(jsonData, options = {}) {
           Logger.log('HTML content received directly from Lambda');
         } else {
           // Parse as JSON
-          lambdaResponse = JSON.parse(responseText);
-          Logger.log('Article successfully ' + (options.draftOnly ? 'saved as draft' : 'published') + ' to Ghost!');
-          
-          // Check if the response body contains HTML
-          if (options.returnHtml && lambdaResponse.body && 
-              typeof lambdaResponse.body === 'string' && 
-              (lambdaResponse.body.startsWith('<!DOCTYPE') || lambdaResponse.body.startsWith('<html'))) {
-            lambdaResponse.html = lambdaResponse.body;
-            Logger.log('HTML content extracted from Lambda response body');
+          try {
+            lambdaResponse = JSON.parse(responseText);
+            Logger.log('Article successfully ' + (options.draftOnly ? 'saved as draft' : 'published') + ' to Ghost!');
+            
+            // Check if the response body contains HTML
+            if (options.returnHtml && lambdaResponse.body && 
+                typeof lambdaResponse.body === 'string' && 
+                (lambdaResponse.body.startsWith('<!DOCTYPE') || lambdaResponse.body.startsWith('<html'))) {
+              lambdaResponse.html = lambdaResponse.body;
+              Logger.log('HTML content extracted from Lambda response body');
+            }
+          } catch (parseError) {
+            publishError = 'Failed to parse Lambda response: ' + parseError.toString();
+            Logger.log(publishError);
           }
         }
       } else {
-        Logger.log('Error ' + (options.draftOnly ? 'creating draft' : 'publishing') + ' article to Ghost. Response: ' + responseText);
+        publishError = 'Error ' + responseCode + ' ' + (options.draftOnly ? 'creating draft' : 'publishing') + ' article to Ghost. Response: ' + responseText;
+        Logger.log(publishError);
       }
     } catch (apiError) {
-      Logger.log('Error calling Lambda API: ' + apiError.toString());
+      publishError = 'Error calling Lambda API: ' + apiError.toString();
+      Logger.log(publishError);
     }
     
+    // If there was an error publishing, log it and send an error email
+    if (publishError) {
+      const errorMessage = `Failed to publish article to Ghost:\n\n` +
+                         `Error: ${publishError}\n\n` +
+                         `Payload sent to Lambda: ${JSON.stringify({
+                           ghostUrl: ghostUrl,
+                           newsletterId: newsletterId,
+                           draftOnly: !!options.draftOnly,
+                           jsonDataKeys: Object.keys(jsonData)
+                         }, null, 2)}`;
+      
+      Logger.log('Sending error notification email...');
+      try {
+        sendErrorEmail('Ghost Publishing Failed', errorMessage);
+      } catch (emailError) {
+        Logger.log('Failed to send error email: ' + emailError);
+      }
+      
+      // Return error response
+      return {
+        success: false,
+        error: publishError,
+        message: 'Failed to publish article to Ghost',
+        timestamp: new Date().toISOString()
+      };
+    }
+    
+    // At this point, the article was published successfully
     // Extract decision and summary for teaser email
     const decision = jsonData.decision ? jsonData.decision.text || jsonData.decision : 'Market Update';
     const summary = jsonData.justification ? jsonData.justification.summary || jsonData.justification : '';
@@ -150,41 +187,54 @@ function publishToGhostWithLambda(jsonData, options = {}) {
     
     // Create a draft email - use the TEST_EMAIL as recipient if in debug mode
     // or create a draft without sending if not in debug mode
-    if (debugMode) {
-      // In debug mode, create a draft to the test email
-      const draft = GmailApp.createDraft(
-        TEST_EMAIL,
-        subject,
-        'This email requires HTML to view properly.',
-        {
-          htmlBody: teaserHtmlBody,
-          name: 'Market Pulse Daily'
-        }
-      );
-      Logger.log('Draft teaser email created with subject: ' + subject + ' to recipient: ' + TEST_EMAIL);
-    } else {
-      // Not in debug mode, just create a draft without a recipient (will be in Drafts folder)
-      const draft = GmailApp.createDraft(
-        '',  // No recipient
-        subject,
-        'This email requires HTML to view properly.',
-        {
-          htmlBody: teaserHtmlBody,
-          name: 'Market Pulse Daily',
-          bcc: members.all.join(',')  // Add all members as BCC
-        }
-      );
-      Logger.log('Draft teaser email created with subject: ' + subject + ' (no recipient, will be in Drafts folder)');
+    try {
+      if (debugMode) {
+        // In debug mode, create a draft to the test email
+        const draft = GmailApp.createDraft(
+          TEST_EMAIL,
+          subject,
+          'This email requires HTML to view properly.',
+          {
+            htmlBody: teaserHtmlBody,
+            name: 'Market Pulse Daily'
+          }
+        );
+        Logger.log('Draft teaser email created with subject: ' + subject + ' to recipient: ' + TEST_EMAIL);
+      } else {
+        // Not in debug mode, just create a draft without a recipient (will be in Drafts folder)
+        const draft = GmailApp.createDraft(
+          '',  // No recipient
+          subject,
+          'This email requires HTML to view properly.',
+          {
+            htmlBody: teaserHtmlBody,
+            name: 'Market Pulse Daily',
+            bcc: members.all.join(',')  // Add all members as BCC
+          }
+        );
+        Logger.log('Draft teaser email created with subject: ' + subject + ' (no recipient, will be in Drafts folder)');
+      }
+    } catch (emailError) {
+      const errorMsg = 'Failed to create draft email: ' + emailError.toString();
+      Logger.log(errorMsg);
+      sendErrorEmail('Email Draft Creation Failed', errorMsg);
+      throw new Error(errorMsg);
     }
     
     // Create a response that matches the Lambda function's response format
-    // Use the actual Lambda response if available, otherwise create a mock response
-    const response = lambdaResponse || {
-      message: "Draft teaser email created successfully" + (options.draftOnly ? " (draft only mode)" : ""),
-      postUrl: postUrl,
-      postId: "draft-" + Utilities.getUuid(),
-      members: members
+    const response = {
+      success: true,
+      message: "Article successfully published and teaser email created" + (options.draftOnly ? " (draft only mode)" : ""),
+      postUrl: lambdaResponse?.postUrl || postUrl,
+      postId: lambdaResponse?.postId || "draft-" + Utilities.getUuid(),
+      members: members,
+      timestamp: new Date().toISOString()
     };
+    
+    // Merge any additional fields from the Lambda response
+    if (lambdaResponse) {
+      Object.assign(response, lambdaResponse);
+    }
     
     // If HTML content was requested but not found in the Lambda response,
     // add a note to the response
@@ -378,7 +428,7 @@ function generateTeaserTeaserHtml(opts) {
     </div>
     <div style="text-align:center; margin: 32px 0 0 0;">
       <a href="${opts.reportUrl}" style="display:inline-block; background:#1a365d; color:#fff; font-weight:600; padding:16px 36px; border-radius:6px; font-size:1.1em; text-decoration:none; box-shadow:0 2px 8px rgba(26,54,93,0.08);">Read the Full Market Pulse Report &rarr;</a>
-      <div style="margin-top:12px; color:#444; font-size:1em;">Unlock deeper insights and actionable trade ideas—click above to access the full analysis. <span style="color:#c0392b; font-weight:bold;">(Paid subscription required)</span></div>
+      <div style="margin-top:12px; color:#444; font-size:1em;">Unlock deeper insights and actionable trade ideas—click above to access the full analysis. <span style="color:#c0392b; font-weight:bold;">(Subscription required)</span></div>
     </div>
   </div>
 </body>

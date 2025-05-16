@@ -1,16 +1,5 @@
-**/**
-!*.gs
-!appsscript.json
-!Setup.gs
-!Code.gs
-!Config.gs
-!Email.gs
-!Prompt.gs
-node_modules/
-.env
-local_test.js
-package.json
-package-lock.json
-README.md
-DEPLOYMENT_GUIDE.md
-deploy.js
+# Ignore everything by default
+/*
+
+# But include .gs files only in the project root
+!/*.gs
