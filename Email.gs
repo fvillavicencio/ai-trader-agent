@@ -40,7 +40,7 @@ function sendTradeDecisionEmail(analysisJson, newTemplate=false) {
         }
         
         // Save the JSON to Google Drive
-        const folderName = props.getProperty('GOOGLE_FOLDER_NAME') || 'Market Pulse Daily';
+        const folderName = props.getProperty('GOOGLE_FOLDER_NAME') || 'Trading Analysis Emails';
         const jsonFileName = props.getProperty('JSON_FILE_NAME') || 'market_pulse_data.json';
         
         // Find or create the folder
