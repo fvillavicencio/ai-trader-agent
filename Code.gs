@@ -961,7 +961,8 @@ function mondayMorningTradingAnalysis() {
 function saveJsonToGoogleDrive(jsonData, fileName) {
   try {
     // Create or get the folder
-    const folderName = "Trading Analysis Emails";
+    const props = PropertiesService.getScriptProperties();
+    const folderName = props.getProperty('GOOGLE_FOLDER_NAME') || 'Market Pulse Daily';
     const folder = getOrCreateFolder(folderName);
     
     // Check if file already exists and delete it
