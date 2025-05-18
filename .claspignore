@@ -14,6 +14,18 @@ Code
 # Ignore all .js files
 **/*.js
 
+# Ignore all HTML files
+**/*.html
+*.html
+
+# Ignore all JSON files
+**/*.json
+*.json
+
 # Ignore node_modules and other project folders
 node_modules/
 perplexity-retrieval-lambda/
+Ghost-Post-Template/
+local_dev/
+market-pulse-handlebars/
+market-pulse-lambda/

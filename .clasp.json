@@ -5,15 +5,13 @@
   "scriptExtensions": [
     ".gs"
   ],
-  "htmlExtensions": [
-    ".html"
-  ],
-  "jsonExtensions": [
-    ".json"
-  ],
+  "htmlExtensions": [],
+  "jsonExtensions": [],
   "filePushOrder": [],
   "ignore": [
     "**/*.js",
+    "**/*.html",
+    "**/*.json",
     "node_modules/**/*",
     "perplexity-retrieval-lambda/**/*"
   ]
