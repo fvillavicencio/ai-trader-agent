@@ -3,7 +3,6 @@
   "rootDir": "",
   "projectId": "yes",
   "scriptExtensions": [
-    ".js",
     ".gs"
   ],
   "htmlExtensions": [
@@ -12,5 +11,10 @@
   "jsonExtensions": [
     ".json"
   ],
-  "filePushOrder": []
+  "filePushOrder": [],
+  "ignore": [
+    "**/*.js",
+    "node_modules/**/*",
+    "perplexity-retrieval-lambda/**/*"
+  ]
 }
