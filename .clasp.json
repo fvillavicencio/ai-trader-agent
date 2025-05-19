@@ -6,12 +6,14 @@
     ".gs"
   ],
   "htmlExtensions": [],
-  "jsonExtensions": [],
+  "jsonExtensions": [
+    ".json"
+  ],
   "filePushOrder": [],
   "ignore": [
     "**/*.js",
     "**/*.html",
-    "**/*.json",
+    "!appsscript.json",
     "node_modules/**/*",
     "perplexity-retrieval-lambda/**/*"
   ]

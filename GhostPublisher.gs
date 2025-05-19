@@ -428,7 +428,7 @@ function generateTeaserTeaserHtml(opts) {
     </div>
     <div style="text-align:center; margin: 32px 0 0 0;">
       <a href="${opts.reportUrl}" style="display:inline-block; background:#1a365d; color:#fff; font-weight:600; padding:16px 36px; border-radius:6px; font-size:1.1em; text-decoration:none; box-shadow:0 2px 8px rgba(26,54,93,0.08);">Read the Full Market Pulse Report &rarr;</a>
-      <div style="margin-top:12px; color:#444; font-size:1em;">Unlock deeper insights and actionable trade ideas—click above to access the full analysis. <span style="color:#c0392b; font-weight:bold;">(Subscription required)</span></div>
+      <div style="margin-top:12px; color:#444; font-size:1em;">For self-directed retail investors with a short-term horizon, our newsletter delivers concise, income-focused market signals—dividend plays, option-income strategies, and timely buy/sell alerts—to help you generate steady cash flow while managing risk. <span style="color:#c0392b; font-weight:bold;">(Subscription required)</span></div>
     </div>
   </div>
 </body>

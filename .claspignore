@@ -18,9 +18,10 @@ Code
 **/*.html
 *.html
 
-# Ignore all JSON files
+# Ignore all JSON files except appsscript.json
 **/*.json
 *.json
+!appsscript.json
 
 # Ignore node_modules and other project folders
 node_modules/
