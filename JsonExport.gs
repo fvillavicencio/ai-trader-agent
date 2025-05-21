@@ -2221,6 +2221,19 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     }
     
     // Add forward P/E ratio to SP500 data if it doesn't exist
+    Logger.log("Checking conditions for forward P/E calculation:");
+    Logger.log("- sp500 exists: " + (fullJsonDataset.sp500 ? "YES" : "NO"));
+    Logger.log("- forwardPE doesn't exist: " + (!fullJsonDataset.sp500?.forwardPE ? "YES" : "NO"));
+    Logger.log("- forwardEps exists: " + (fullJsonDataset.sp500?.forwardEps ? "YES" : "NO"));
+    Logger.log("- indexLevel exists: " + (fullJsonDataset.sp500?.indexLevel ? "YES" : "NO"));
+    
+    if (fullJsonDataset.sp500?.forwardEps) {
+      Logger.log("forwardEps array length: " + fullJsonDataset.sp500.forwardEps.length);
+      if (fullJsonDataset.sp500.forwardEps.length > 0) {
+        Logger.log("First forwardEps item: " + JSON.stringify(fullJsonDataset.sp500.forwardEps[0]));
+      }
+    }
+    
     if (fullJsonDataset.sp500 && !fullJsonDataset.sp500.forwardPE && fullJsonDataset.sp500.forwardEps && fullJsonDataset.sp500.indexLevel) {
       // Calculate forward P/E using the first (most recent) forward EPS estimate
       const currentForwardEps = fullJsonDataset.sp500.forwardEps[0];
