@@ -2264,7 +2264,18 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
     }
     
     // Ensure the forward P/E ratio is also in marketIndicators.sp500 for the Ghost-Post-Template
-    if (fullJsonDataset.sp500 && fullJsonDataset.sp500.forwardPE && fullJsonDataset.marketIndicators && fullJsonDataset.marketIndicators.sp500) {
+    if (fullJsonDataset.sp500 && fullJsonDataset.sp500.forwardPE) {
+      // Make sure marketIndicators exists
+      if (!fullJsonDataset.marketIndicators) {
+        fullJsonDataset.marketIndicators = {};
+      }
+      
+      // Make sure marketIndicators.sp500 exists
+      if (!fullJsonDataset.marketIndicators.sp500) {
+        fullJsonDataset.marketIndicators.sp500 = {};
+      }
+      
+      // Copy the forward P/E ratio
       fullJsonDataset.marketIndicators.sp500.forwardPE = { ...fullJsonDataset.sp500.forwardPE };
       Logger.log("Copied forward P/E ratio to marketIndicators.sp500.forwardPE for Ghost-Post-Template");
     }
