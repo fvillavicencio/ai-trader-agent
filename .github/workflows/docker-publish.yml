@@ -28,7 +28,8 @@ jobs:
 
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest -f sp500-analyzer/Dockerfile ./sp500-analyzer
+          cd sp500-analyzer
+          docker build -t ${{ secrets.ECR_REGISTRY }}/${{ secrets.ECR_REPOSITORY }}:latest .
 
       - name: Push Docker image to ECR
         run: |
