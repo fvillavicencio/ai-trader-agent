@@ -365,6 +365,15 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
           lastUpdated: sp500Data.historicalPE.lastUpdated ? formatDate(sp500Data.historicalPE.lastUpdated) : formattedDate
         } : null,
         
+        // Forward P/E ratio data
+        forwardPE: sp500Data.forwardPE ? {
+          current: sp500Data.forwardPE.current,
+          eps: sp500Data.forwardPE.eps,
+          year: sp500Data.forwardPE.year,
+          source: sp500Data.forwardPE.source || "FactSet",
+          sourceUrl: sp500Data.forwardPE.sourceUrl || "https://www.factset.com/",
+          lastUpdated: sp500Data.forwardPE.lastUpdated ? formatDate(sp500Data.forwardPE.lastUpdated) : formattedDate
+        } : null,
         
         // Earnings data
         eps: sp500Data.earnings ? {

@@ -1,4 +1,4 @@
-{{#if sp500}}
+{{#if marketIndicators.sp500}}
 <div class="sp500-analysis-section" style="margin-bottom: 30px;">
   <h2>S&P 500 Analysis</h2>
   
@@ -8,23 +8,37 @@
     <!-- Top row with key metrics -->
     <div class="sp500-snapshot-content" style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; flex-wrap: wrap;">
       <!-- Index Level -->
-      <div class="sp500-snapshot-item" style="flex: 1; min-width: 150px; text-align: center; padding: 0 10px;">
-        <div style="font-size: 2.2rem; font-weight: bold; color: #333; margin-bottom: 5px;">{{sp500.indexLevel}}</div>
+      <div class="sp500-snapshot-item" style="flex: 1; min-width: 120px; text-align: center; padding: 0 10px;">
+        <div style="font-size: 2.2rem; font-weight: bold; color: #333; margin-bottom: 5px;">{{marketIndicators.sp500.indexLevel}}</div>
         <div style="color: #666; font-size: 0.9rem;">Current Index Level</div>
       </div>
       
-      <!-- P/E Ratio -->
-      <div class="sp500-snapshot-item" style="flex: 1; min-width: 150px; text-align: center; padding: 0 10px; border-left: 1px solid #eee; border-right: 1px solid #eee;">
-        <div style="font-size: 2.2rem; font-weight: bold; color: #2C9464; margin-bottom: 5px;">{{sp500.peRatio.current}}×</div>
+      <!-- Forward P/E Ratio -->
+      <div class="sp500-snapshot-item" style="flex: 1; min-width: 120px; text-align: center; padding: 0 10px; border-left: 1px solid #eee;">
+        {{#if marketIndicators.sp500.forwardPE}}
+        <div style="font-size: 2.2rem; font-weight: bold; color: #3182CE; margin-bottom: 5px;">{{marketIndicators.sp500.forwardPE.current}}×</div>
+        <div style="color: #666; font-size: 0.9rem;">Forward P/E ({{marketIndicators.sp500.forwardPE.year}})</div>
+        <div style="font-size: 0.8rem; color: #777; margin-top: 5px;">
+          Based on EPS: <strong>${{marketIndicators.sp500.forwardPE.eps}}</strong>
+        </div>
+        {{else}}
+        <div style="font-size: 2.2rem; font-weight: bold; color: #3182CE; margin-bottom: 5px;">--×</div>
+        <div style="color: #666; font-size: 0.9rem;">Forward P/E</div>
+        {{/if}}
+      </div>
+      
+      <!-- Trailing P/E Ratio -->
+      <div class="sp500-snapshot-item" style="flex: 1; min-width: 120px; text-align: center; padding: 0 10px; border-left: 1px solid #eee; border-right: 1px solid #eee;">
+        <div style="font-size: 2.2rem; font-weight: bold; color: #2C9464; margin-bottom: 5px;">{{marketIndicators.sp500.peRatio.current}}×</div>
         <div style="color: #666; font-size: 0.9rem;">Trailing P/E (TTM)</div>
         <div style="font-size: 0.8rem; color: #777; margin-top: 5px;">
-          5-yr avg <strong>{{sp500.peRatio.fiveYearAvg}}×</strong> • 10-yr avg <strong>{{sp500.peRatio.tenYearAvg}}×</strong>
+          5-yr avg <strong>{{marketIndicators.sp500.peRatio.fiveYearAvg}}×</strong> • 10-yr avg <strong>{{marketIndicators.sp500.peRatio.tenYearAvg}}×</strong>
         </div>
       </div>
       
       <!-- EPS Value -->
-      <div class="sp500-snapshot-item" style="flex: 1; min-width: 150px; text-align: center; padding: 0 10px;">
-        <div style="font-size: 2.2rem; font-weight: bold; color: #2C9464; margin-bottom: 5px;">${{sp500.eps.ttm}}</div>
+      <div class="sp500-snapshot-item" style="flex: 1; min-width: 120px; text-align: center; padding: 0 10px;">
+        <div style="font-size: 2.2rem; font-weight: bold; color: #2C9464; margin-bottom: 5px;">${{marketIndicators.sp500.eps.ttm}}</div>
         <div style="color: #666; font-size: 0.9rem;">Trailing EPS (TTM)</div>
       </div>
     </div>
@@ -33,11 +47,11 @@
     <div class="sp500-chart-container">
       <div style="font-size: 1rem; font-weight: 500; color: #444; margin-bottom: 15px; text-align: center;">P/E Ratio Trend (5-Year History)</div>
       <div style="text-align: center;">
-        {{#if sp500.peRatioChartUrl}}
-          <img src="{{sp500.peRatioChartUrl}}" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">
+        {{#if marketIndicators.sp500.peRatioChartUrl}}
+          <img src="{{marketIndicators.sp500.peRatioChartUrl}}" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">
         {{else}}
-          {{#if sp500.historicalPE}}
-          <img src="https://image-charts.com/chart?cht=lc&chd=t:{{sp500.historicalPE.[0]}},{{sp500.historicalPE.[1]}},{{sp500.historicalPE.[2]}},{{sp500.historicalPE.[3]}},{{sp500.historicalPE.[4]}},{{sp500.peRatio.current}}&chxl=0:|2020|2021|2022|2023|2024|Current&chxt=x,y&chs=600x250&chf=bg,s,FFFFFF&chco=38a169&chm=o,38a169,0,-1,6&chds=20,30&chxr=1,20,30,2&chg=10,10,1,1,0,0,EEEEEE&chls=2" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">
+          {{#if marketIndicators.sp500.historicalPE}}
+          <img src="https://image-charts.com/chart?cht=lc&chd=t:{{marketIndicators.sp500.historicalPE.[0]}},{{marketIndicators.sp500.historicalPE.[1]}},{{marketIndicators.sp500.historicalPE.[2]}},{{marketIndicators.sp500.historicalPE.[3]}},{{marketIndicators.sp500.historicalPE.[4]}},{{marketIndicators.sp500.peRatio.current}}&chxl=0:|2020|2021|2022|2023|2024|Current&chxt=x,y&chs=600x250&chf=bg,s,FFFFFF&chco=38a169&chm=o,38a169,0,-1,6&chds=20,30&chxr=1,20,30,2&chg=10,10,1,1,0,0,EEEEEE&chls=2" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">
           {{else}}
           <img src="https://image-charts.com/chart?cht=lc&chd=t:22.5,23.7,25.2,26.6,24.8,24.7&chxl=0:|2020|2021|2022|2023|2024|Current&chxt=x,y&chs=600x250&chf=bg,s,FFFFFF&chco=38a169&chm=o,38a169,0,-1,6&chds=20,30&chxr=1,20,30,2&chg=10,10,1,1,0,0,EEEEEE&chls=2" alt="P/E ratio trend over 5 years" style="max-width: 100%; height: auto; border-radius: 4px;">
           {{/if}}
@@ -47,12 +61,12 @@
     
     <!-- Source info -->
     <div style="font-size: 10px; color: #888; text-align: right; margin-top: 15px;">
-      Source: <a href="{{sp500.sourceUrl}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{sp500.source}}</a>, as of {{sp500.asOf}}
+      Source: <a href="{{marketIndicators.sp500.sourceUrl}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{marketIndicators.sp500.source}}</a>, as of {{marketIndicators.sp500.asOf}}
     </div>
   </div>
   
   <!-- S&P 500 Forward EPS & Implied Index Values -->
-  {{#if sp500.forwardEps}}
+  {{#if marketIndicators.sp500.forwardEps}}
   <div class="forward-eps-container" style="margin: 20px 0; padding: 28px 32px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
     <div class="forward-eps-header label-col" style="font-weight: bold; font-size: clamp(1.1rem,2vw,1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">S&P 500 Forward EPS & Implied Index Values</div>
     <div style="overflow-x: auto; -webkit-overflow-scrolling: touch; max-width: 100%;">
@@ -67,7 +81,7 @@
           </tr>
         </thead>
         <tbody>
-          {{#each sp500.forwardEps}}
+          {{#each marketIndicators.sp500.forwardEps}}
             <tr style="text-align: center; background: white;">
               <td style="padding: 15px 8px; font-weight: bold; font-size: 0.95rem;">{{this.year}}</td>
               <td style="padding: 15px 8px; font-weight: bold; font-size: 0.95rem;">{{this.eps}}</td>
@@ -95,7 +109,7 @@
       </table>
     </div>
     <div class="forward-eps-source" style="font-size: 10px; color: #888; margin-top: 8px; text-align: right;">
-      Source: <a href="{{sp500.forwardEpsSource.url}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{sp500.forwardEpsSource.name}}</a>, as of {{sp500.forwardEpsSource.asOf}}
+      Source: <a href="{{marketIndicators.sp500.forwardEpsSource.url}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{marketIndicators.sp500.forwardEpsSource.name}}</a>, as of {{marketIndicators.sp500.forwardEpsSource.asOf}}
     </div>
   </div>
   {{/if}}

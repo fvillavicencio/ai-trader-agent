@@ -347,6 +347,18 @@ function processData(data) {
       };
     }
     
+    // Copy Forward P/E ratio data
+    if (sampleData.sp500.forwardPE) {
+      sampleData.marketIndicators.sp500.forwardPE = {
+        current: sampleData.sp500.forwardPE.current,
+        eps: sampleData.sp500.forwardPE.eps,
+        year: sampleData.sp500.forwardPE.year,
+        source: sampleData.sp500.forwardPE.source,
+        sourceUrl: sampleData.sp500.forwardPE.sourceUrl,
+        asOf: sampleData.sp500.forwardPE.lastUpdated || sampleData.sp500.forwardPE.asOf
+      };
+    }
+    
     // Copy EPS data
     if (sampleData.sp500.eps) {
       sampleData.marketIndicators.sp500.eps = {
