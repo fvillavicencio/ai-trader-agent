@@ -59,6 +59,7 @@ export async function analyzeSP500() {
 
   // Process forward EPS estimates
   let formattedEstimates = [];
+  let forwardPE = null;
   try {
     console.log('[DIAG] analyzeSP500: fetching forward EPS estimates');
     const forwardEpsEstimates = await getForwardEpsEstimates();
@@ -74,6 +75,39 @@ export async function analyzeSP500() {
       sourceUrl: est.sourceUrl,
       lastUpdated: formatDate(new Date())
     }));
+    
+    // Calculate forward P/E ratio if we have the necessary data
+    if (formattedEstimates.length > 0 && safeSpxObj.price) {
+      const currentForwardEps = formattedEstimates[0];
+      let epsValue = currentForwardEps.value || currentForwardEps.eps;
+      
+      // Extract numeric value from EPS string if needed
+      if (typeof epsValue === 'string' && epsValue.startsWith('$')) {
+        epsValue = epsValue.substring(1);
+      }
+      epsValue = parseFloat(epsValue);
+      
+      if (!isNaN(epsValue) && epsValue > 0) {
+        // Calculate forward P/E ratio
+        const forwardPERatio = safeSpxObj.price / epsValue;
+        
+        // Create the forward P/E object
+        forwardPE = {
+          current: parseFloat(forwardPERatio.toFixed(2)),
+          eps: currentForwardEps.eps || currentForwardEps.value,
+          year: currentForwardEps.year,
+          source: currentForwardEps.source || "S&P Global",
+          sourceUrl: currentForwardEps.sourceUrl || "https://www.spglobal.com/spdji/en/",
+          lastUpdated: currentForwardEps.lastUpdated || formatDate(new Date())
+        };
+        
+        console.log(`[DIAG] analyzeSP500: calculated forward P/E ratio: ${forwardPERatio.toFixed(2)} based on EPS: ${epsValue} and index level: ${safeSpxObj.price}`);
+      } else {
+        console.log(`[DIAG] analyzeSP500: could not calculate forward P/E - invalid EPS value: ${epsValue}`);
+      }
+    } else {
+      console.log("[DIAG] analyzeSP500: could not calculate forward P/E - missing required data (price or forwardEps)");
+    }
     
     const forwardDate = formattedEstimates[0]?.estimateDate || safeSpxObj.lastUpdated;
     freshnessSections.push({ label: 'Forward EPS', lastUpdated: forwardDate, sourceName: formattedEstimates[0]?.source || 'N/A' });
@@ -133,6 +167,7 @@ export async function analyzeSP500() {
   return {
     sp500Index: safeSpxObj,
     trailingPE,
+    forwardPE, // Add the forward P/E ratio to the returned data
     forwardEstimates: formattedEstimates || [],
     marketPath: safePathObj,
     movingAverages: safeMaObj,
