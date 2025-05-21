@@ -181,7 +181,7 @@ const addSP500AnalysisContent = (data) => {
             <div style="font-size: 2.2rem; font-weight: bold; color: #2C9464; margin-bottom: 5px;">${formatNumber(sp500Data.peRatio?.current)}×</div>
             <div style="color: #666; font-size: 0.9rem;">Trailing P/E (TTM)</div>
             <div style="font-size: 0.8rem; color: #777; margin-top: 5px;">
-              5-yr avg <strong>${formatNumber(sp500Data.peRatio?.fiveYearAvg)}×</strong>
+              5-yr avg <strong>${formatNumber(sp500Data.peRatio?.fiveYearAvg)}×</strong> | 10-yr avg <strong>${formatNumber(sp500Data.peRatio?.tenYearAvg)}×</strong>
             </div>
           </div>
           
@@ -189,8 +189,9 @@ const addSP500AnalysisContent = (data) => {
           <div class="sp500-snapshot-item" style="flex: 1; min-width: 120px; text-align: center; padding: 0 10px; border-left: 1px solid #eee; border-right: 1px solid #eee;">
             <div style="font-size: 2.2rem; font-weight: bold; color: #2563eb; margin-bottom: 5px;">${formatNumber(sp500Data.forwardPE?.current)}×</div>
             <div style="color: #666; font-size: 0.9rem;">Forward P/E (${sp500Data.forwardPE?.year || 'FWD'})</div>
+            <!-- No additional averages needed here -->
             <div style="font-size: 0.8rem; color: #777; margin-top: 5px;">
-              10-yr avg <strong>${formatNumber(sp500Data.peRatio?.tenYearAvg)}×</strong>
+              &nbsp;
             </div>
           </div>
           
