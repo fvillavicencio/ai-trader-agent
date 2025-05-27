@@ -257,32 +257,52 @@ async function analyzeGeopoliticalRisks() {
     
     // Process the OpenAI output to ensure it's compatible with JsonExport.gs expectations
     const compatibleOutput = {
+      // Create the proper structure with macroeconomicFactors.geopoliticalRisks
+      macroeconomicFactors: {
+        geopoliticalRisks: {
+          global: analyzedData.global || "Global geopolitical risk level is currently elevated due to multiple factors.",
+          risks: [],
+          source: "Aggregated from multiple geopolitical risk assessments",
+          sourceUrl: "https://www.cfr.org/global-conflict-tracker",
+          lastUpdated: new Date().toISOString()
+        }
+      },
+      // Keep other top-level properties
       geopoliticalRiskIndex: analyzedData.geopoliticalRiskIndex || 0,
-      global: analyzedData.global || "Global geopolitical risk level is currently elevated due to multiple factors.",
-      summary: analyzedData.summary || "The current geopolitical landscape is characterized by multiple significant risks that could impact global markets and economic stability.",
-      risks: [],
-      source: "OpenAI Analysis of Multiple Sources",
-      sourceUrl: "https://openai.com/",
-      lastUpdated: analyzedData.lastUpdated || new Date().toISOString(),
-      // Keep the original analysis for reference
-      originalAnalysis: analyzedData
+      summary: analyzedData.summary || "No summary available"
     };
-    
-    // Process each risk to ensure it matches the format expected by JsonExport.gs
+
+    // Add the risks if available and sort them by impact level
     if (Array.isArray(analyzedData.risks)) {
-      compatibleOutput.risks = analyzedData.risks.map(risk => {
-        // Format the risk object to match what JsonExport.gs expects
-        return {
-          name: risk.name || 'Unknown Risk',
-          description: risk.description || 'No description available',
-          region: risk.region || 'Global',
-          impactLevel: risk.impactLevel || 'Medium',
-          source: risk.source || 'Aggregated Analysis',
-          sourceUrl: risk.sourceUrl || '',
-          // Store related sources as a separate property that won't interfere with JsonExport.gs
-          relatedSources: risk.relatedSources || []
+      // First map the risks to the correct format
+      const formattedRisks = analyzedData.risks.map(risk => ({
+        name: risk.name || 'Unknown Risk',
+        description: risk.description || 'No description available',
+        region: risk.region || 'Global',
+        impactLevel: risk.impactLevel || 'Medium',
+        source: risk.source || 'Unknown Source',
+        sourceUrl: risk.sourceUrl || '#'
+      }));
+      
+      // Sort risks by impact level (descending)
+      const sortedRisks = formattedRisks.sort((a, b) => {
+        // Convert string impact levels to numeric for sorting
+        const impactOrder = {
+          'Severe': 4,
+          'High': 3,
+          'Medium': 2,
+          'Low': 1,
+          'Unknown': 0
         };
+        
+        const aImpact = impactOrder[a.impactLevel] || 0;
+        const bImpact = impactOrder[b.impactLevel] || 0;
+        
+        return bImpact - aImpact;
       });
+      
+      // Assign the sorted risks to the output
+      compatibleOutput.macroeconomicFactors.geopoliticalRisks.risks = sortedRisks;
     }
     
     // Replace the analyzed data with the compatible format
