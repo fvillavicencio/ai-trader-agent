@@ -1,5 +1,22 @@
 [
   {
+    "id": "risk-42",
+    "name": "Iran Snuggles Up with the Houthis in Yemen - Zeihan on Geopolitics",
+    "description": "Iran Snuggles Up with the Houthis in Yemen  Zeihan on Geopolitics",
+    "source": "Peter Zeihan via Google News",
+    "sourceUrl": "https://news.google.com/rss/articles/CBMib0FVX3lxTE90UjRaTm13ZjhyaF8zWFI0aGNacWlwdlNSV25BakZhUjdZZEY3Ny1jMlBNMm55eUp0RG5KdHExZEpkWlh6OGh3RU11bGU2ZFdVc1RrVTBiaGx3MG9FMnduLVB0dEQ3MVVMRkJxWnVKdw?oc=5",
+    "publishedDate": "Tue, 27 May 2025 15:03:21 GMT",
+    "impactLevel": 7,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "zeihan",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
     "id": "risk-1",
     "name": "Can Syria Recover?",
     "description": "Sanctions relief is not enough.",
@@ -14,7 +31,7 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.418Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-2",
@@ -31,10 +48,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.418Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-60",
+    "id": "risk-43",
     "name": "The Fire Hose of Chaos: How Do You Lose 100 Million People? - Zeihan on Geopolitics",
     "description": "The Fire Hose of Chaos: How Do You Lose 100 Million People?  Zeihan on Geopolitics",
     "source": "Peter Zeihan via Google News",
@@ -48,7 +65,7 @@
       "geopolitical"
     ],
     "retrievalChannel": "zeihan",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-3",
@@ -65,7 +82,24 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-20",
+    "name": "King Charles emphasizes Canada’s ‘self-determination’ as he opens parliament after Trump’s annexation threats - CNN",
+    "description": "King Charles emphasizes Canada’s ‘self-determination’ as he opens parliament after Trump’s annexation threats  CNN",
+    "source": "Google News",
+    "sourceUrl": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOZGlhTmp3cjZRNnhqZ0Y0dEZ0MU8weVRxV3pFOTBYR2h2dm5DaWp1cmZ3UWVONjhxMHhycGk0a0VaWWVvY0FqdjdTaVdyMi0tallWTFBQZFhxdUZNUnRSLXFUNWsxUWN4Y3pacWZLMGFhc283YjdNbDdlejA5R2owekhkX1BKdGo3NHJRRTN5NGI0QdIBlwFBVV95cUxOR1hrMjEySDNySTg5cDFlQkNoWFpWdVJFVzRTN19vTnpCdXRVWF9Bc2RuVEx4Y193WWFmMkJtaGZYQTR0d3RRa1BNUzBjR1hxb0tTU3VvQzdRUnJpRmFhTzYxZVg1c2tjRDJoVW41RlpnZFY3ZFltMElMMWdLWmlWUzJuUGIzc3V3TmZjSGUwRF8zREFUcnhF?oc=5",
+    "publishedDate": "Tue, 27 May 2025 22:17:00 GMT",
+    "impactLevel": 6,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "googleNews",
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-5",
@@ -82,24 +116,7 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-30",
-    "name": "King Charles emphasizes Canada’s ‘self-determination’ as he opens parliament after Trump’s annexation threats - CNN",
-    "description": "King Charles emphasizes Canada’s ‘self-determination’ as he opens parliament after Trump’s annexation threats  CNN",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMikgFBVV95cUxOZGlhTmp3cjZRNnhqZ0Y0dEZ0MU8weVRxV3pFOTBYR2h2dm5DaWp1cmZ3UWVONjhxMHhycGk0a0VaWWVvY0FqdjdTaVdyMi0tallWTFBQZFhxdUZNUnRSLXFUNWsxUWN4Y3pacWZLMGFhc283YjdNbDdlejA5R2owekhkX1BKdGo3NHJRRTN5NGI0QdIBlwFBVV95cUxOR1hrMjEySDNySTg5cDFlQkNoWFpWdVJFVzRTN19vTnpCdXRVWF9Bc2RuVEx4Y193WWFmMkJtaGZYQTR0d3RRa1BNUzBjR1hxb0tTU3VvQzdRUnJpRmFhTzYxZVg1c2tjRDJoVW41RlpnZFY3ZFltMElMMWdLWmlWUzJuUGIzc3V3TmZjSGUwRF8zREFUcnhF?oc=5",
-    "publishedDate": "Tue, 27 May 2025 19:01:00 GMT",
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-8",
@@ -116,7 +133,7 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-9",
@@ -133,27 +150,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-11",
-    "name": "New US-backed aid group begins distributing food in war-torn Gaza",
-    "description": "The Gaza Humanitarian Foundation began distributing aid in the war-torn Gaza Strip, even as the group remains shrouded in controversy and questions.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/new-us-backed-aid-group-begins-distributing-food-war-torn-gaza",
-    "publishedDate": "Tue, 27 May 2025 09:55:09 -0400",
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-27",
+    "id": "risk-17",
     "name": "US DIA 2025 Threat Assessment warns of growing complexity in global threats, national security - Industrial Cyber",
     "description": "US DIA 2025 Threat Assessment warns of growing complexity in global threats, national security  Industrial Cyber",
     "source": "Google News",
@@ -167,44 +167,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-13",
-    "name": "Germany's chancellor ends weapons range limits for Ukraine despite Russian nuclear threats",
-    "description": "Germany lifts range restrictions on weapons to Ukraine, allowing attacks on Russian military positions. Chancellor Merz emphasizes Western support amid conflict.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/germanys-chancellor-ends-weapons-range-limits-ukraine-despite-russian-nuclear-threats",
-    "publishedDate": "Tue, 27 May 2025 02:21:19 -0400",
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-34",
-    "name": "Beer drinkers beware: Scientists find 'forever chemicals' exceeding EPA limits in American brews - Fox News",
-    "description": "Beer drinkers beware: Scientists find 'forever chemicals' exceeding EPA limits in American brews  Fox News",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQbVJEdW1GRlctekVoR2lVN1VyRGRsY3NFVEljOWJnYjgyOFpFMUoyT0xkWDRfcFVvYzA5SzAzcmxFVDZIaWM0ck4xekRLREpNS3FWUmRzdDJBRjdMSWF3RHJkbS1LM1RhSUpxTTVQbUdMNFBXbEhxZjFwa3k1WGNrYzJ4OV84ZS0tUkhkbjFMc3hvNkJmOFhpVmdmR2ZNenlXVkxLWnRFY1VmVzRybHNvcHJsdGR5bnBFa2FrN3NR0gHDAUFVX3lxTFBiejVMNEpTRDBpbW8wMFRaWXV2VHoyQ0loZzlqMzRQMTMyaVBzd19LSElxbDNneWZWSWh0c3VlV0phb2IteFRkTjBsaTJXeF9LZkFNTXNmNzVsYlJNYV94UHJJb1UxcUZkVGdhRU5UODNycktoRjlnYU1vbWpiQWJIUmt6LXZNNncxUU5tYkFJOURuMWNWck1SUHB2TEFicXZlelU4OHBZOW80SDVkaExUM3lQNmU3U1ZaNkVMaFRIbXBwaw?oc=5",
-    "publishedDate": "Tue, 27 May 2025 03:09:00 GMT",
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-24",
+    "id": "risk-14",
     "name": "Gold Prices Swing Amid Geopolitical Tensions and Trump’s Tariff Policies - BBN Times",
     "description": "Gold Prices Swing Amid Geopolitical Tensions and Trump’s Tariff Policies  BBN Times",
     "source": "Google News",
@@ -218,15 +184,15 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-17",
+    "id": "risk-21",
     "name": "Trump's criticism of South Africa's violent crime crisis receives unexpected local support",
     "description": "Analysts say that President Donald Trump has helped South Africans by criticizing the country's president over woeful crimefighting at a stormy Oval Office \"ambush\" last week",
-    "source": "Fox News World",
+    "source": "Fox News",
     "sourceUrl": "https://www.foxnews.com/world/trumps-criticism-south-africas-violent-crime-crisis-receives-unexpected-local-support",
-    "publishedDate": "Mon, 26 May 2025 09:09:04 -0400",
+    "publishedDate": "2025-05-26T13:09:04Z",
     "impactLevel": 6,
     "regions": [
       "Global"
@@ -234,11 +200,11 @@
     "categories": [
       "geopolitical"
     ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "retrievalChannel": "newsApi",
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-40",
+    "id": "risk-22",
     "name": "Your Memorial Day cookout might be more expensive this year – thanks to tariffs | CNN Business",
     "description": "Memorial Day marks the unofficial start to summer, but this year, it may also kick off a season of higher prices.",
     "source": "CNN",
@@ -252,44 +218,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "newsApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-18",
-    "name": "Trump’s gamble in normalizing relations with Syria in the face of Iran: ‘high-risk, high-reward’",
-    "description": "Trump's Syria policy shift lifts sanctions, aiming to deter Iranian influence and stabilize the region, despite risks of empowering jihadist elements.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/trumps-gamble-normalizing-relations-syria-face-iran-high-risk-high-reward",
-    "publishedDate": "Mon, 26 May 2025 06:00:57 -0400",
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-19",
-    "name": "Philippine lawmaker criticizes US for new travel warning: 'Unfair treatment from our number 1 ally'",
-    "description": "A Philippine lawmaker slammed the U.S. for its travel advisory for the Asian country, with the politician arguing that the warning is \"unfair\" coming from \"our number one ally.\"",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/philippine-lawmaker-criticizes-us-new-travel-warning-unfair-treatment-from-our-number-1-ally",
-    "publishedDate": "Mon, 26 May 2025 05:48:00 -0400",
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-28",
     "name": "DIA Releases 2025 Worldwide Threat Assessment: Cyber, Cartels, and Global Military Buildup Dominate Outlook - HSToday",
     "description": "DIA Releases 2025 Worldwide Threat Assessment: Cyber, Cartels, and Global Military Buildup Dominate Outlook  HSToday",
     "source": "Google News",
@@ -303,10 +235,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-26",
+    "id": "risk-16",
     "name": "Blood Batteries: How Congo’s Conflict Is Shaking the World’s Rare Earths Market - orfonline.org",
     "description": "Blood Batteries: How Congo’s Conflict Is Shaking the World’s Rare Earths Market  orfonline.org",
     "source": "Google News",
@@ -320,27 +252,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-37",
-    "name": "Critical minerals: the global race is on - BBC",
-    "description": "Critical minerals: the global race is on  BBC",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMiUEFVX3lxTE9qNlExN25mTFNfWjZNcUY5WWY5ODlBR0VXd1BhOGhFMHF0aFg5UlVZMnoxYWNkb0hXMDNnY0NiLTZmaHZOOVdGY29wUFZuMXhP?oc=5",
-    "publishedDate": "Sun, 25 May 2025 23:26:20 GMT",
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-41",
+    "id": "risk-23",
     "name": "Winemakers finding Trump's tariffs hard to swallow",
     "description": "Wine producers in both France and the US are unhappy at the US president's trade actions.",
     "source": "BBC News",
@@ -354,10 +269,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "newsApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-42",
+    "id": "risk-24",
     "name": "Trump delays 50% EU tariffs until July 9 | CNN Business",
     "description": "President Donald Trump said Sunday that he has agreed to give the European Union an extension until July 9 on tariffs, after a “very nice call” from European Commission President Ursula von der Leyen.",
     "source": "CNN",
@@ -371,15 +286,15 @@
       "geopolitical"
     ],
     "retrievalChannel": "newsApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-59",
-    "name": "This inflation gauge has barely moved since Trump’s ‘liberation day’ tariffs",
-    "description": "",
-    "source": "MarketWatch",
+    "id": "risk-38",
+    "name": "Neil deGrasse Tyson is raising alarms over deep cuts to U.S. science and education funding, warning the impact is so severe it would be seen as an “act of war” if caused by a foreign power. He called out the issue in a post on X, accusing the government of undermining America’s",
+    "description": "Neil deGrasse Tyson is raising alarms over deep cuts to U.S. science and education funding, warning the impact is so severe it would be seen as an “act of war” if caused by a foreign power. He called out the issue in a post on X, accusing the government of undermining America’s",
+    "source": "Benzinga",
     "sourceUrl": "",
-    "publishedDate": 1748381585,
+    "publishedDate": 1748385000,
     "impactLevel": 6,
     "regions": [
       "Global"
@@ -387,16 +302,16 @@
     "categories": [
       "geopolitical"
     ],
-    "retrievalChannel": "rapidApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-58",
-    "name": "S&P 500 Gains and Losses Today: Index Rises After Trump Extends EU Tariff Deadline",
-    "description": "",
-    "source": "investopedia.com",
+    "id": "risk-36",
+    "name": "The TACO trade. Might as well reset all tariffs back to 0%. No country will negotiate with someone that the entire world knows is completely full of shit and will not go through on anything.",
+    "description": "The TACO trade. Might as well reset all tariffs back to 0%. No country will negotiate with someone that the entire world knows is completely full of shit and will not go through on anything.",
+    "source": "SpencerHakimian",
     "sourceUrl": "",
-    "publishedDate": 1748381444,
+    "publishedDate": 1748384876,
     "impactLevel": 6,
     "regions": [
       "Global"
@@ -404,16 +319,16 @@
     "categories": [
       "geopolitical"
     ],
-    "retrievalChannel": "rapidApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-55",
-    "name": "An Antiwar Movement Is Stirring in Israel",
-    "description": "",
-    "source": "ny times",
+    "id": "risk-31",
+    "name": "Russia Downs 112 Ukrainian Drones in 3-Hour Barrage Russia intercepted 112 drones, mostly over southern and central regions, in one of the largest attacks to date. Moscow also repelled 8 drones as cross-border strikes escalate on both sides.",
+    "description": "Russia Downs 112 Ukrainian Drones in 3-Hour Barrage Russia intercepted 112 drones, mostly over southern and central regions, in one of the largest attacks to date. Moscow also repelled 8 drones as cross-border strikes escalate on both sides.",
+    "source": "PiQSuite",
     "sourceUrl": "",
-    "publishedDate": 1748381414,
+    "publishedDate": 1748384444,
     "impactLevel": 6,
     "regions": [
       "Global"
@@ -421,42 +336,8 @@
     "categories": [
       "geopolitical"
     ],
-    "retrievalChannel": "rapidApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-48",
-    "name": "NVIDIA UNDER PRESSURE TO SHOW GROWTH DESPITE TRUMP TARIFFS – AXS",
-    "description": "",
-    "source": "FirstSquawk",
-    "sourceUrl": "",
-    "publishedDate": 1748381118,
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rapidApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-47",
-    "name": "TRUMP'S TURNABOUTS ON TARIFFS AND CURRENCY LEAVE YEN ADRIFT – NIKKEI",
-    "description": "",
-    "source": "FirstSquawk",
-    "sourceUrl": "",
-    "publishedDate": 1748381110,
-    "impactLevel": 6,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rapidApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-4",
@@ -473,7 +354,7 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-6",
@@ -490,7 +371,7 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-7",
@@ -507,7 +388,7 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
     "id": "risk-10",
@@ -524,10 +405,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-21",
+    "id": "risk-11",
     "name": "Geopolitical tensions reshape maritime risk landscape – Allianz - Insurance Business America",
     "description": "Geopolitical tensions reshape maritime risk landscape – Allianz  Insurance Business America",
     "source": "Google News",
@@ -541,44 +422,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-31",
-    "name": "Canadians are boycotting the US. Are American travelers still welcome in Canada? - CNN",
-    "description": "Canadians are boycotting the US. Are American travelers still welcome in Canada?  CNN",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMif0FVX3lxTFBfdmxUZVc4NFVpRUg0aVlDSDFELVVwSnNORU40UTYwOG1nakg2blBKN29iaVZxdkJjbU9raVhsRFlyQ2dXeUhUWTRZUWluMU5pVVpJZ3RVQlpWY0RGY2ZJX0xBRFFFZERhYWVEVnZqRWZ5MVFkY1MySXdGdzRIdEXSAYQBQVVfeXFMTVR6NmhjTkZ5aHQtWThMVlVpUXFQYUttY2FSeVBoQTI3N0tvU3ZMc09CM3ZVbDBZZ2haMXFHajAxdzFRT1d4NlNBVU9kSlc4YkRBc3ZFdE03RTU3c1dRem5ESGNFZFk1dmw3TGRjU1o1ZUtWSkNfTi1vYTIzdzY2M2lTV3Bp?oc=5",
-    "publishedDate": "Tue, 27 May 2025 15:04:00 GMT",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-39",
-    "name": "Iran Snuggles Up with the Houthis in Yemen - Zeihan on Geopolitics",
-    "description": "Iran Snuggles Up with the Houthis in Yemen  Zeihan on Geopolitics",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMib0FVX3lxTE90UjRaTm13ZjhyaF8zWFI0aGNacWlwdlNSV25BakZhUjdZZEY3Ny1jMlBNMm55eUp0RG5KdHExZEpkWlh6OGh3RU11bGU2ZFdVc1RrVTBiaGx3MG9FMnduLVB0dEQ3MVVMRkJxWnVKdw?oc=5",
-    "publishedDate": "Tue, 27 May 2025 15:03:21 GMT",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-22",
+    "id": "risk-12",
     "name": "Geopolitical risks could derail positive marine loss trends: Allianz - Insurance Insider",
     "description": "Geopolitical risks could derail positive marine loss trends: Allianz  Insurance Insider",
     "source": "Google News",
@@ -592,129 +439,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-36",
-    "name": "Premier League fixtures release date 2025-26: When and how schedule is produced - BBC",
-    "description": "Premier League fixtures release date 2025-26: When and how schedule is produced  BBC",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBHSDV0cXJkd0treUxqaXctRkVtVzdVVmJvN0t4ZHB4RXJPOWhWcnltWWI1X3ZpeTR4NTd6ZzFHSW5SR2tYQkRpay1KOVh0MVZvVWstSTJvZ21kQUpfT2o0WjlsWVZZTE0?oc=5",
-    "publishedDate": "Tue, 27 May 2025 14:42:03 GMT",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-35",
-    "name": "'It's a big appeal to come back to Norfolk' - BBC",
-    "description": "'It's a big appeal to come back to Norfolk'  BBC",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE5KeGxmQUtsUk9VMXZfY2ZSbzlBZDAxUVZJT18xck9scmNTNlJldGhyLXNmQ0pudi1OXzJKS3VKaHkwbGRfdTg2dXBPLTYwMHIycUctX09QSHBDZ0RwQlN6T1BHXzRrVkE?oc=5",
-    "publishedDate": "Tue, 27 May 2025 14:14:59 GMT",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-38",
-    "name": "Will anyone miss the flood committee? - BBC",
-    "description": "Will anyone miss the flood committee?  BBC",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE05b2MyR0I5anZMRXAxeWtURVpsRjAzR0t5Ylg4dDdQOVhxQ29FWjBLRHhBMS1hRWRRT1dUdW44VDBiSE9NZXlXb3E4d01pMV9xY1VEN0RjUFlBZ9IBX0FVX3lxTFA5dGFGMmp2QnZSUDFtOWstTnhLUHlpdVlFWEhJWTVld09mS21SYW5PQUQ4UUhudWROeDREU0ZnWnlBaDVhM2pBWWRJVW1mclZzN3hjYndZaldUZHRsRm44?oc=5",
-    "publishedDate": "Tue, 27 May 2025 13:22:12 GMT",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-32",
-    "name": "Battle over Space Command HQ location heats up as lawmakers press new Air Force secretary - Fox News",
-    "description": "Battle over Space Command HQ location heats up as lawmakers press new Air Force secretary  Fox News",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMirwFBVV95cUxQMWxrQWF0QXBLVWk4NFZ4V2NwVzcxSWpEeUZxTGhaZElTVUtKeHdJcG5XWm9JZ1VxU1hIMk5GWTUwdFVmdWJFNUZtTHoxLUZMOXRfQThLRWFoNXBSV3k0QnozUGJRcE1XbS0yVmRHeWVlVU1MQmtxcHZaWU82QVRIY0w2S21vcVYxRVFSUkR2RFVYQnFOa0RsR2dyanVObTRzLXM5Y1NGRHVEdWI0ZFE00gG0AUFVX3lxTE5tSlNyQmtHZGYwLUt6RE5rTHRhU2ZFOEJnbGxlMWZpWGdNMklobGVqbnFNQUlkamFVRWxXNnRBR05ReWQ1TTJnQV9zQzRfS2s3bG9wVVZabURfTk9pSV9TdUoxei1iOEo2bHdwZmZ3dGVGNk5pVDJnX1BQWDRqVlB5YVREcFBwb0x1Y0NkTXZaTURoSDUzbXRDenFQVVQxWVIyb3RTRHpLSmNYN3V1cllLUDE3MA?oc=5",
-    "publishedDate": "Tue, 27 May 2025 13:00:00 GMT",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-12",
-    "name": "Trump admin urged to support striking Iranian truckers: 'Potential to paralyze regime'",
-    "description": "An expert says a nationwide strike among truck drivers in Iran could give the Trump administration an upper hand in nuclear negotiations if the U.S. offers support and aid to the workers.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/trump-admin-urged-support-striking-iranian-truckers-potential-paralyze-regime",
-    "publishedDate": "Tue, 27 May 2025 08:31:07 -0400",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-14",
-    "name": "King Charles III visits Canada as show of support for country coveted by Trump",
-    "description": "King Charles III arrived in Canada for a symbolic visit showing support for the country amid U.S. President Donald Trump's threats to make it the 51st U.S. state.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/king-charles-iii-visits-canada-show-support-country-coveted-trump",
-    "publishedDate": "Tue, 27 May 2025 02:11:03 -0400",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-15",
-    "name": "Scientists 'strike gold' in shocking discovery from Hawaiian volcanic rocks",
-    "description": "Researchers at Göttingen University find gold and ruthenium in Hawaiian volcanic rocks, suggesting core materials are reaching the Earth's surface.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/scientists-strike-gold-shocking-discovery-from-hawaiian-volcanic-rocks",
-    "publishedDate": "Mon, 26 May 2025 21:53:11 -0400",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-43",
+    "id": "risk-25",
     "name": "Here’s what to expect for gas prices this Memorial Day | CNN Business",
     "description": "Gas prices are holding steady for the nearly 40 million Americans expected to hit the road on Memorial Day.",
     "source": "CNN",
@@ -728,10 +456,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "newsApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-44",
+    "id": "risk-26",
     "name": "No, Trump. ‘Crazy’ Putin hasn’t changed. The question is, have you? | CNN",
     "description": "“I’ve always had a very good relationship with Vladimir Putin of Russia, but something has happened to him,” observed President Donald Trump, reacting to the intensive Russian drone and missile strikes on Ukraine over the weekend.",
     "source": "CNN",
@@ -745,27 +473,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "newsApi",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-16",
-    "name": "Emmanuel Macron's wife seen shoving him in the face in viral clip as France's first couple arrives in Vietnam",
-    "description": "French President Emmanuel Macron was spotted being shoved in the face by his wife, Brigitte Macron, in a viral clip that he dismissed as playfighting.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/emmanuel-macrons-wife-seen-shoving-him-face-viral-clip-frances-first-couple-arrives-vietnam",
-    "publishedDate": "Mon, 26 May 2025 14:02:09 -0400",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-29",
+    "id": "risk-19",
     "name": "Macron dismisses viral video showing apparent shove from wife Brigitte - CNN",
     "description": "Macron dismisses viral video showing apparent shove from wife Brigitte  CNN",
     "source": "Google News",
@@ -779,27 +490,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-33",
-    "name": "King Charles and Prince Harry ‘extremely unlikely’ to reconcile despite monarch's Canada trip: expert - Fox News",
-    "description": "King Charles and Prince Harry ‘extremely unlikely’ to reconcile despite monarch's Canada trip: expert  Fox News",
-    "source": "Google News",
-    "sourceUrl": "https://news.google.com/rss/articles/CBMixwFBVV95cUxPRnRBTG5YRTJDYmVNeVhsZEpOeGk0d3pzTEZjcDV3RGpzMFRVeEZRVkt4M19DUkJzdEVtbWRnWFZLSmhTcTc2VUFkenp4M3FBN1FPT1RPMVU2MGhORldtdUlzMVhMWFBGTUlTMDhtd18wOTlvVkYyZmZBWGVzQkdnUWRMcGRRRTZidEFmMThPWV9kQV9HaGtMUExEclFJemRsUi01T1hoOFdnZUxOVFRQcWdnaFE0OURKRzZuN1dJeUYzMlM1WnVZ0gHMAUFVX3lxTE10TjFMUjl1V0dpV0JBb3I5alpDbUJrMklQVUd5MEJDTmxMUGtralRfVzdtZHdnTENEZHpnUUY2cjExUTFjZVktdUV2dU5EU0YtemdqZFNEZGl5bG5EVXVqWUxqUzZrdkZiUTEwYTRGcTRtZjEtcjlMQVd0V3R6cEVRQ0taZWZkS1hrMjlUZ21oUC13VHJMWjU3d21GU1lWNWoycFpHYl9FVjlOM2hNUllIT1c1cmQzWHdHN2VsbFVRQkRnRk03OEJ2cGJaVw?oc=5",
-    "publishedDate": "Mon, 26 May 2025 09:00:00 GMT",
-    "impactLevel": 5,
-    "regions": [
-      "Global"
-    ],
-    "categories": [
-      "geopolitical"
-    ],
-    "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
-  },
-  {
-    "id": "risk-25",
+    "id": "risk-15",
     "name": "Oxford department launches programme offering ‘exclusive Oxford experience’ - Cherwell",
     "description": "Oxford department launches programme offering ‘exclusive Oxford experience’  Cherwell",
     "source": "Google News",
@@ -813,10 +507,10 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-23",
+    "id": "risk-13",
     "name": "AstraZeneca’s Financial Health at Risk: Navigating Geopolitical and Economic Challenges - TipRanks",
     "description": "AstraZeneca’s Financial Health at Risk: Navigating Geopolitical and Economic Challenges  TipRanks",
     "source": "Google News",
@@ -830,15 +524,15 @@
       "geopolitical"
     ],
     "retrievalChannel": "googleNews",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "timestamp": "2025-05-27T22:55:40.421Z"
   },
   {
-    "id": "risk-20",
-    "name": "Russia, Ukraine swap hundreds of prisoners hours after Moscow launches massive aerial assault",
-    "description": "Russia and Ukraine swapped hundreds of prisoners Sunday just hours after Moscow launched one of the largest aerial assaults on Ukraine in the ongoing war.",
-    "source": "Fox News World",
-    "sourceUrl": "https://www.foxnews.com/world/russia-ukraine-swap-hundreds-prisoners-hours-after-moscow-launches-massive-aerial-assault",
-    "publishedDate": "Mon, 26 May 2025 01:41:42 -0400",
+    "id": "risk-41",
+    "name": "Ethereum price target shifts to $3K after SharpLink adopts ETH ‘treasury strategy’",
+    "description": "Ethereum price target shifts to $3K after SharpLink adopts ETH ‘treasury strategy’",
+    "source": "cointelegraph",
+    "sourceUrl": "",
+    "publishedDate": 1748385240,
     "impactLevel": 5,
     "regions": [
       "Global"
@@ -846,7 +540,194 @@
     "categories": [
       "geopolitical"
     ],
-    "retrievalChannel": "rss",
-    "timestamp": "2025-05-27T21:53:43.419Z"
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-40",
+    "name": "OKC’s Jalen Williams is key as Thunder look to clinch the West, Wolves try to stay alive in Game 5",
+    "description": "OKC’s Jalen Williams is key as Thunder look to clinch the West, Wolves try to stay alive in Game 5",
+    "source": "globeandmail",
+    "sourceUrl": "",
+    "publishedDate": 1748385215,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-39",
+    "name": "CGC DEADLINE: ROSEN, A LEADING LAW FIRM, Encourages Canopy Growth Corporation Investors to Secure Counsel Before Important June 3 Deadline in Securities Class Action - CGC",
+    "description": "CGC DEADLINE: ROSEN, A LEADING LAW FIRM, Encourages Canopy Growth Corporation Investors to Secure Counsel Before Important June 3 Deadline in Securities Class Action - CGC",
+    "source": "accessnewswire.com",
+    "sourceUrl": "",
+    "publishedDate": 1748385180,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-37",
+    "name": "Sui Price Analysis: Bullish Momentum Rises After Sui Foundation Loans Cetus Protocol",
+    "description": "Sui Price Analysis: Bullish Momentum Rises After Sui Foundation Loans Cetus Protocol",
+    "source": "coinpedia.org",
+    "sourceUrl": "",
+    "publishedDate": 1748384976,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-35",
+    "name": "Markets Update - 5/27/25 Update on US equity and bond markets, US economic reports, the Fed, and select commodities with charts! $SPX #Nasdaq $NDX $RUT #FOMC #UST $TNX $DXY #WTI $GLD $IBIT $UNG #oott",
+    "description": "Markets Update - 5/27/25 Update on US equity and bond markets, US economic reports, the Fed, and select commodities with charts! $SPX #Nasdaq $NDX $RUT #FOMC #UST $TNX $DXY #WTI $GLD $IBIT $UNG #oott",
+    "source": "neilksethi",
+    "sourceUrl": "",
+    "publishedDate": 1748384718,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-34",
+    "name": "Rogan & Rodgers Unleash Big Pharma's Worst Nightmare...",
+    "description": "Rogan & Rodgers Unleash Big Pharma's Worst Nightmare...",
+    "source": "zerohedge",
+    "sourceUrl": "",
+    "publishedDate": 1748384710,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-33",
+    "name": "BIT: Better Than A Bond Index Fund, But Still Expensive",
+    "description": "BIT: Better Than A Bond Index Fund, But Still Expensive",
+    "source": "Seeking Alpha",
+    "sourceUrl": "",
+    "publishedDate": 1748384604,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-32",
+    "name": "Trump to Pardon Reality Stars Todd and Julie Chrisley Trump pledged to pardon the Chrisleys, jailed for tax evasion and bank fraud, in a call with their daughter Savannah. The couple’s prison terms were already reduced; Trump says release could come “by tomorrow.”",
+    "description": "Trump to Pardon Reality Stars Todd and Julie Chrisley Trump pledged to pardon the Chrisleys, jailed for tax evasion and bank fraud, in a call with their daughter Savannah. The couple’s prison terms were already reduced; Trump says release could come “by tomorrow.”",
+    "source": "PiQSuite",
+    "sourceUrl": "",
+    "publishedDate": 1748384568,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-30",
+    "name": "US Health Secretary Robert F. Kennedy Jr. said in a social media post that COVID-19 vaccines for pregnant women and healthy children have been removed from the CDC's recommended immunization schedule",
+    "description": "US Health Secretary Robert F. Kennedy Jr. said in a social media post that COVID-19 vaccines for pregnant women and healthy children have been removed from the CDC's recommended immunization schedule",
+    "source": "Reuters",
+    "sourceUrl": "",
+    "publishedDate": 1748384430,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-29",
+    "name": "Rolling Vancouver Whitecaps set for emotional rematch against Minnesota United",
+    "description": "Rolling Vancouver Whitecaps set for emotional rematch against Minnesota United",
+    "source": "globeandmail",
+    "sourceUrl": "",
+    "publishedDate": 1748384409,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-28",
+    "name": "Forbes 2025 AI 50 List - Top Artificial Intelligence Companies Ranked",
+    "description": "Forbes 2025 AI 50 List - Top Artificial Intelligence Companies Ranked",
+    "source": "Forbes",
+    "sourceUrl": "",
+    "publishedDate": 1748384407,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
+  },
+  {
+    "id": "risk-27",
+    "name": "Encounter regains 100% of Yeneena Copper in Paterson Province",
+    "description": "Encounter regains 100% of Yeneena Copper in Paterson Province",
+    "source": "financialjuice",
+    "sourceUrl": "",
+    "publishedDate": 1748384248,
+    "impactLevel": 5,
+    "regions": [
+      "Global"
+    ],
+    "categories": [
+      "geopolitical"
+    ],
+    "retrievalChannel": "InsightSentry",
+    "timestamp": "2025-05-27T22:55:40.421Z"
   }
 ]

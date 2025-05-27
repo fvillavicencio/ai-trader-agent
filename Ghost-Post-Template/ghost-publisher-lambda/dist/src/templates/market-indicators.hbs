@@ -1,0 +1,95 @@
+<div class="section">
+  <h2>Market Indicators</h2>
+  
+  {{#if marketIndicators.majorIndices.length}}
+    <div class="subsection">
+      <div class="subsection-title">Major Indices</div>
+      <div class="indices-container">
+        {{#each marketIndicators.majorIndices}}
+          <div class="index-card" style="border-left-color: {{getChangeColor percentChange}};">
+            <div class="index-name">{{name}}</div>
+            <div class="index-price">{{formatNumber price}}</div>
+            <div class="index-change" style="color: {{getChangeColor percentChange}};">
+              {{getChangeIcon percentChange}} {{formatNumber change}} ({{formatPercent percentChange}})
+            </div>
+          </div>
+        {{/each}}
+      </div>
+      {{#with (first marketIndicators.majorIndices)}}
+        <div class="data-source">
+          Source: <a href="https://finance.yahoo.com/markets/">Yahoo Finance</a>, {{formatDate timestamp}}
+        </div>
+      {{/with}}
+    </div>
+  {{/if}}
+  
+  {{#if marketIndicators.sectorPerformance.length}}
+    <div class="subsection">
+      <div class="subsection-title">Sector Performance</div>
+      <div class="sectors-container">
+        {{#each marketIndicators.sectorPerformance}}
+          <div class="sector-card" style="border-left-color: {{getChangeColor percentChange}};">
+            <div class="sector-name">{{name}}</div>
+            <div class="sector-change" style="color: {{getChangeColor percentChange}};">
+              {{getChangeIcon percentChange}} {{formatPercent percentChange}}
+            </div>
+          </div>
+        {{/each}}
+      </div>
+      {{#with (first marketIndicators.majorIndices)}}
+        <div class="data-source">
+          Source: <a href="https://finance.yahoo.com/sectors/">Yahoo Finance</a>, {{formatDate timestamp}}
+        </div>
+      {{/with}}
+    </div>
+  {{/if}}
+  
+  {{#if marketIndicators.marketFutures.length}}
+    <div class="subsection">
+      <div class="subsection-title">Market Futures</div>
+      <div class="futures-container">
+        {{#each marketIndicators.marketFutures}}
+          <div class="future-item">
+            <div class="future-name">{{name}}</div>
+            <div class="future-value-container">
+              <span class="future-value">{{value}}</span>
+              <span class="future-change {{#if isPositive}}positive{{else}}negative{{/if}}">
+                {{#if isPositive}}↑{{else}}↓{{/if}} {{change}} ({{percentChange}})
+              </span>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+  
+  {{#if marketIndicators.volatilityIndices.length}}
+    <div class="subsection">
+      <div class="subsection-title">Volatility Indices</div>
+      <div class="volatility-container">
+        {{#each marketIndicators.volatilityIndices}}
+          <div class="volatility-card">
+            <div class="volatility-name">{{name}}</div>
+            <div class="volatility-value" style="color: {{color}};">{{value}}</div>
+            <div class="volatility-trend" style="color: {{color}};">{{trend}}</div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+  
+  {{#if marketIndicators.economicEvents.length}}
+    <div class="subsection">
+      <div class="subsection-title">Upcoming Economic Events</div>
+      <div class="events-container">
+        {{#each marketIndicators.economicEvents}}
+          <div class="event-card">
+            <div class="event-date">{{date}}</div>
+            <div class="event-name">{{event}}</div>
+            <div class="event-importance">{{importance}}</div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+</div>

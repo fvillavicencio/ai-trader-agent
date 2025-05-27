@@ -1,0 +1,58 @@
+{
+  "metadata": {
+    "title": "Market Pulse Daily",
+    "version": "1.0.0"
+  },
+  "reportDate": "2025-04-23T14:15:35-04:00",
+  "marketSentiment": {
+    "decision": "HOLD",
+    "summary": "Markets are showing mixed signals with potential for volatility."
+  },
+  "marketIndicators": {
+    "rsi": {
+      "value": 45.5,
+      "description": "Neutral",
+      "source": "Trading View",
+      "sourceUrl": "https://www.tradingview.com/symbols/SPX/",
+      "asOf": "Apr 23, 2025, 2:15 PM EDT"
+    }
+  },
+  "fundamentalMetrics": {
+    "majorIndices": [
+      {
+        "symbol": "SPY",
+        "name": "S&P 500 ETF",
+        "price": 520.75,
+        "change": 2.35,
+        "changePercent": 0.0045,
+        "volume": "65.3M",
+        "recommendation": "Buy"
+      }
+    ],
+    "stocks": [
+      {
+        "symbol": "AAPL",
+        "name": "Apple Inc.",
+        "price": 185.92,
+        "change": 1.25,
+        "changePercent": 0.0068,
+        "volume": "58.3M",
+        "recommendation": "Buy"
+      }
+    ]
+  },
+  "macroeconomicFactors": {
+    "treasuryYields": [
+      {
+        "duration": "2-Year",
+        "yield": 4.95,
+        "change": 0.05
+      },
+      {
+        "duration": "10-Year",
+        "yield": 4.35,
+        "change": -0.02
+      }
+    ]
+  }
+}

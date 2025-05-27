@@ -1,0 +1,38 @@
+{
+  "firstBatch": [
+    {
+      "title": "Market Rally Continues as Investors Embrace Risk",
+      "imageUrl": "https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/volatile/the_perfect_storm/the_perfect_storm_converging_hurricanes_1.jpg",
+      "filename": "the_perfect_storm_converging_hurricanes_1.jpg"
+    },
+    {
+      "title": "Bears Take Control as Recession Fears Mount",
+      "imageUrl": "https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bearish/the_correction_is_coming/michael_burry_big_short.jpg",
+      "filename": "michael_burry_big_short.jpg"
+    },
+    {
+      "title": "Volatility Spikes: Wild Ride Ahead for Investors",
+      "imageUrl": "https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/volatile/the_perfect_storm/the_perfect_storm_converging_hurricanes_1.jpg",
+      "filename": "the_perfect_storm_converging_hurricanes_1.jpg"
+    }
+  ],
+  "secondBatch": [
+    {
+      "title": "Markets Surge on Positive Economic Data",
+      "imageUrl": "https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bullish/trend_is_friend/trend_is_friend_uptrend_chart_finance_1.jpg",
+      "filename": "trend_is_friend_uptrend_chart_finance_1.jpg"
+    },
+    {
+      "title": "Recession Fears Grow as Economic Indicators Weaken",
+      "imageUrl": "https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bullish/trend_is_friend/trend_is_friend_uptrend_chart_finance_1.jpg",
+      "filename": "trend_is_friend_uptrend_chart_finance_1.jpg"
+    },
+    {
+      "title": "Market Volatility Reaches New Highs",
+      "imageUrl": "https://market-pulse-daily-title-images.s3.us-east-2.amazonaws.com/bullish/trend_is_friend/trend_is_friend_uptrend_chart_finance_1.jpg",
+      "filename": "trend_is_friend_uptrend_chart_finance_1.jpg"
+    }
+  ],
+  "uniqueImagesCount": 3,
+  "duplicateImagesCount": 2
+}

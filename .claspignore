@@ -1,0 +1,32 @@
+# Ignore everything by default
+/*
+
+# But include .gs files only in the project root
+!/*.gs
+
+# Explicitly ignore specific files that might cause conflicts
+Code.js
+Code
+
+# Ignore all subdirectories
+*/
+
+# Ignore all .js files
+**/*.js
+
+# Ignore all HTML files
+**/*.html
+*.html
+
+# Ignore all JSON files except appsscript.json
+**/*.json
+*.json
+!appsscript.json
+
+# Ignore node_modules and other project folders
+node_modules/
+perplexity-retrieval-lambda/
+Ghost-Post-Template/
+local_dev/
+market-pulse-handlebars/
+market-pulse-lambda/

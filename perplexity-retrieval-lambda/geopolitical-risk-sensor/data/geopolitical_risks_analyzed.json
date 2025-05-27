@@ -1,0 +1,54 @@
+{
+  "macroeconomicFactors": {
+    "geopoliticalRisks": {
+      "global": "US-China tensions escalate with calls for a Pacific Defense Pact, while Middle East conflicts intensify, impacting global stability. Trade wars and sanctions continue to disrupt markets, with significant implications for commodities and currencies.",
+      "risks": [
+        {
+          "name": "US-China Tensions",
+          "description": "Escalating tensions between the US and China, with calls for a Pacific Defense Pact to counter China's influence in Asia.",
+          "region": "Asia",
+          "impactLevel": "High",
+          "source": "Foreign Affairs",
+          "sourceUrl": "https://www.foreignaffairs.com/china/case-pacific-defense-pact-ely-ratner"
+        },
+        {
+          "name": "Middle East Conflicts",
+          "description": "Iran's influence in Yemen and nuclear negotiations with the US contribute to regional instability, affecting global energy markets.",
+          "region": "Middle East",
+          "impactLevel": "High",
+          "source": "Peter Zeihan via Google News",
+          "sourceUrl": "https://news.google.com/rss/articles/CBMib0FVX3lxTE90UjRaTm13ZjhyaF8zWFI0aGNacWlwdlNSV25BakZhUjdZZEY3Ny1jMlBNMm55eUp0RG5KdHExZEpkWlh6OGh3RU11bGU2ZFdVc1RrVTBiaGx3MG9FMnduLVB0dEQ3MVVMRkJxWnVKdw?oc=5"
+        },
+        {
+          "name": "Trade Wars and Sanctions",
+          "description": "Ongoing trade tensions and tariff policies, particularly between the US and EU, disrupt global trade dynamics and market stability.",
+          "region": "Global",
+          "impactLevel": "High",
+          "source": "CNN",
+          "sourceUrl": "https://www.cnn.com/2025/05/25/business/trump-eu-tariff-delay"
+        },
+        {
+          "name": "Global Threat Complexity",
+          "description": "The US DIA's threat assessment highlights growing complexity in global threats, including cyber risks and military buildups.",
+          "region": "Global",
+          "impactLevel": "Medium",
+          "source": "Google News",
+          "sourceUrl": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxQRHdGSkV3dFY3aFVaZThqWmNmTkRGdFZCRlMxaXl4Wmg3U242QlJUSmtZYnM0QTJnZzVNd0dXa3NlYlVCU2FFZl9ab1dBZ2p2ZDJTeGdrVUwxQjZOSlZ6NDZqNWFKOWJGcTBwUXN5TEZaYzZmUzl0Y1ZyN0JoWXB3ejJQVVY4X0pkTXFiRTNPWlVYUE81Wkxuazh3SE1PX0xaVmZlc3Y4MEpRd3BxaGdXSVdsaVNNR1Y1MkdpSE54S0JHQndhTVpjNw?oc=5"
+        },
+        {
+          "name": "Political Instability",
+          "description": "Domestic political instability in countries like Venezuela and South Africa poses risks to local economies and investor confidence.",
+          "region": "Global",
+          "impactLevel": "Medium",
+          "source": "Fox News",
+          "sourceUrl": "https://www.foxnews.com/world/us-warns-venezuela-now-poses-highest-risk-american-travelers"
+        }
+      ],
+      "source": "Aggregated from multiple geopolitical risk assessments",
+      "sourceUrl": "https://www.cfr.org/global-conflict-tracker",
+      "lastUpdated": "2025-05-27T22:55:40.421Z"
+    }
+  },
+  "geopoliticalRiskIndex": 85,
+  "summary": "The current geopolitical landscape is marked by heightened tensions between the US and China, with calls for a Pacific Defense Pact to counter China's influence, as highlighted by Foreign Affairs. This development could lead to increased military spending and strategic realignments in Asia, affecting defense stocks and regional markets. In the Middle East, Iran's growing influence in Yemen and ongoing nuclear negotiations with the US, as reported by Peter Zeihan and Foreign Affairs, contribute to regional instability, potentially impacting oil prices and energy markets. Trade tensions persist, with Trump's tariff policies affecting US-EU relations and global trade dynamics, as noted by CNN and BBC News. These trade disputes could lead to volatility in commodities and currency markets. Additionally, the US DIA's threat assessment underscores the complexity of global threats, including cyber risks and military buildups, which could influence defense and cybersecurity sectors. Finally, domestic political instability in countries like Venezuela and South Africa, as reported by Fox News, poses risks to local economies and investor confidence. Overall, these geopolitical themes present significant challenges and opportunities for investors, with potential impacts on global markets, commodities, and currencies."
+}

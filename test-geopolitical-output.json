@@ -1,0 +1,47 @@
+{
+  "geopoliticalRiskIndex": 65,
+  "global": "US-China trade tensions eased with tariff reductions from 145% to 30%, signaling temporary diplomatic progress. Regional conflicts in Eastern Europe and Middle East continue to threaten energy markets and global supply chains.",
+  "summary": "The geopolitical landscape shows signs of cautious diplomatic progress amid persistent regional tensions. The most significant development is the recent US-China trade agreement reducing previously inflated tariffs, with US tariffs on Chinese goods dropping from 145% to 30% and China cutting tariffs on US exports by 10%. This 90-day temporary reduction represents a potential thawing in relations that had reached near-embargo levels, particularly affecting technology hardware and cross-border M&A activities. However, this progress remains fragile as underlying strategic competition continues, especially regarding Taiwan and semiconductor supply chains.\n\nMeanwhile, the Russia-Ukraine conflict enters its fourth year with intensified fighting in eastern regions and increased Western military aid commitments, straining European energy security and defense budgets. In the Middle East, Israel-Hamas hostilities have evolved into a broader regional conflict involving Iran-backed proxies, threatening oil transportation routes and global energy prices. These conflicts are driving increased defense spending globally, benefiting defense contractors but pressuring government fiscal positions.\n\nEmerging market instability presents another concern, with political transitions in key economies like Brazil and India creating policy uncertainty for investors. Climate-related disruptions to agriculture and shipping are exacerbating food security concerns and supply chain vulnerabilities. Together, these factors create a complex risk environment for markets, with particular exposure in energy, defense, technology, and emerging market sectors.",
+  "risks": [
+    {
+      "name": "US-China tensions influence global sourcing patterns and tariff costs",
+      "description": "The US and China reached a significant trade agreement in May 2025 to reduce previously inflated tariffs, with US tariffs on Chinese goods dropping from 145% to 30% and China cutting tariffs on US exports by 10%. This 90-day temporary reduction follows escalating tensions that had reached near-embargo levels, particularly affecting IT hardware and cross-border M&A activities.",
+      "region": "Asia-Pacific",
+      "impactLevel": "Medium",
+      "source": "S&P Global",
+      "sourceUrl": "https://www.spglobal.com/en/research-insights/market-insights/geopolitical-risk"
+    },
+    {
+      "name": "Eastern European conflict strains defense resources and energy markets",
+      "description": "The Russia-Ukraine conflict has intensified with new offensives in Kharkiv and Donetsk regions, prompting increased Western military aid packages totaling $45 billion in 2025. European natural gas prices have risen 18% since January due to supply disruptions and increased military demand for energy resources.",
+      "region": "Europe",
+      "impactLevel": "High",
+      "source": "Council on Foreign Relations",
+      "sourceUrl": "https://www.cfr.org/global-conflict-tracker"
+    },
+    {
+      "name": "Middle East tensions threaten critical shipping routes",
+      "description": "Expanded conflict between Israel and Iran-backed groups has led to a 35% increase in maritime insurance premiums for vessels transiting the Red Sea and Persian Gulf. Oil price volatility has increased with Brent crude fluctuating between $78-92 per barrel in response to threats against energy infrastructure.",
+      "region": "Middle East",
+      "impactLevel": "High",
+      "source": "International Crisis Group",
+      "sourceUrl": "https://www.crisisgroup.org/middle-east-north-africa"
+    },
+    {
+      "name": "Political transitions in emerging markets create policy uncertainty",
+      "description": "Recent elections in Brazil, India, and Indonesia have introduced new economic policies affecting foreign investment regulations and resource extraction industries. Currency volatility in these markets has increased 22% compared to 2024, complicating multinational corporate planning.",
+      "region": "Global",
+      "impactLevel": "Medium",
+      "source": "Economist Intelligence Unit",
+      "sourceUrl": "https://www.eiu.com/n/global-outlook-rising-geopolitical-risks-in-2025-amid-tariff-shocks-and-policy-shifts/"
+    },
+    {
+      "name": "Climate-related disruptions affect agricultural output and shipping",
+      "description": "Severe drought conditions across major agricultural regions have reduced global grain production forecasts by 8% for 2025, while extreme weather events have disrupted shipping in key ports and canals. Food price inflation is projected at 7-9% in affected regions.",
+      "region": "Global",
+      "impactLevel": "Medium",
+      "source": "World Economic Forum",
+      "sourceUrl": "https://www.weforum.org/reports/global-risks-report-2025/"
+    }
+  ]
+}

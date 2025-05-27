@@ -1,0 +1,140 @@
+{
+  "meta": {
+    "newsletterName": "Market Pulse Daily",
+    "date": "2025-04-22T10:57:00-04:00",
+    "analysisType": "Daily Market Analysis",
+    "generatedAt": "2025-04-22T11:00:00-04:00"
+  },
+  "decisionSummary": {
+    "decision": "Watch for Better Price Action",
+    "justification": "The current market environment is characterized by high volatility and extreme fear, as indicated by the VIX and Fear & Greed Index. The forward P/E ratio is above 18, suggesting overvaluation, while geopolitical tensions add further uncertainty. The dollar's depreciation and rising gold prices, alongside a normal yield curve, indicate mixed signals for economic growth. Given these factors, a cautious approach is recommended, with a focus on monitoring for better price action and considering selling calls to capitalize on high volatility.",
+    "source": { "name": "Market Pulse Daily Analysis Engine" },
+    "timestamp": "2025-04-22T10:57:00-04:00"
+  },
+  "marketSentiment": {
+    "summary": "Markets are experiencing extreme fear with high volatility, indicating caution.",
+    "analystComments": [
+      {
+        "analyst": "Market Strategist",
+        "comment": "The current median estimate from Fed officials indicates there will be two 0.25% rate cuts in 2025.",
+        "symbols": [],
+        "source": { "name": "Park Avenue Securities Monthly Market Commentary" },
+        "timestamp": "2025-04-22T10:57:00-04:00"
+      },
+      {
+        "analyst": "Financial Markets Analyst",
+        "comment": "Financial markets are unsettled. Stocks are in a correction, the dollar is depreciating, and the spread of ten-year Treasury yields above two-year yields is the widest since early 2022.",
+        "symbols": [],
+        "source": { "name": "Comerica Economic Insights" },
+        "timestamp": "2025-04-22T10:57:00-04:00"
+      },
+      {
+        "analyst": "Market Analyst",
+        "comment": "Emerging markets were a bright spot, delivering positive returns, while the bond market stayed flat despite mounting economic uncertainty.",
+        "symbols": [],
+        "source": { "name": "Old Point National Bank Market Commentary" },
+        "timestamp": "2025-04-22T10:57:00-04:00"
+      }
+    ],
+    "source": { "name": "CNN Fear & Greed Index", "url": "https://www.cnn.com/markets/fear-and-greed" },
+    "timestamp": "2025-04-22T10:54:00-04:00"
+  },
+  "marketIndicators": {
+    "majorIndices": [
+      { "name": "S&P 500", "symbol": "^GSPC", "price": 5255.82, "change": 97.62, "percentChange": 1.89, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance", "url": "https://finance.yahoo.com/quote/%5EGSPC/" } },
+      { "name": "Dow Jones Industrial Average", "symbol": "^DJI", "price": 38895.77, "change": 725.36, "percentChange": 1.90, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance", "url": "https://finance.yahoo.com/quote/%5EDJI/" } },
+      { "name": "NASDAQ Composite", "symbol": "^IXIC", "price": 16207.334, "change": 336.43, "percentChange": 2.12, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance", "url": "https://finance.yahoo.com/quote/%5EIXIC/" } },
+      { "name": "Russell 2000", "symbol": "^RUT", "price": 1866.438, "change": 26.12, "percentChange": 1.42, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance", "url": "https://finance.yahoo.com/quote/%5ERUT/" } }
+    ],
+    "sectorPerformance": [
+      { "name": "Consumer Discretionary", "percentChange": 2.5, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Utilities", "percentChange": 2.3, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Financials", "percentChange": 2.1, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Communication Services", "percentChange": 2.1, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Technology", "percentChange": 1.9, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Energy", "percentChange": 1.8, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Real Estate", "percentChange": 1.8, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Materials", "percentChange": 1.6, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Consumer Staples", "percentChange": 1.5, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Healthcare", "percentChange": 1.4, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } },
+      { "name": "Industrials", "percentChange": 1.1, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance" } }
+    ]
+  },
+  "marketFutures": {
+    "consolidated": [
+      { "name": "S&P 500 Futures", "symbol": "ES=F", "last": 5257.25, "change": 98.00, "percentChange": 1.90, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance", "url": "https://finance.yahoo.com/quote/ES=F/" } },
+      { "name": "Dow Futures", "symbol": "YM=F", "last": 38900.00, "change": 730.00, "percentChange": 1.91, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance", "url": "https://finance.yahoo.com/quote/YM=F/" } },
+      { "name": "Nasdaq Futures", "symbol": "NQ=F", "last": 16210.00, "change": 340.00, "percentChange": 2.14, "timestamp": "2025-04-22T10:54:00-04:00", "source": { "name": "Yahoo Finance", "url": "https://finance.yahoo.com/quote/NQ=F/" } }
+    ],
+    "source": { "name": "Yahoo Finance" },
+    "timestamp": "2025-04-22T10:54:00-04:00"
+  },
+  "fedPolicy": {
+    "currentRate": {
+      "rate": 5.33,
+      "rangeLow": 5.25,
+      "rangeHigh": 5.50,
+      "source": { "name": "FRED" },
+      "timestamp": "2025-04-22T10:54:00-04:00"
+    },
+    "meetings": [
+      { "date": "2025-05-01", "type": "FOMC Meeting", "context": "Expected to hold rates steady.", "source": { "name": "Federal Reserve" } },
+      { "date": "2025-06-13", "type": "FOMC Meeting", "context": "Potential for first rate cut.", "source": { "name": "Federal Reserve" } }
+    ],
+    "forwardGuidance": "Fed officials signal two rate cuts in 2025, but market pricing is more cautious.",
+    "fedFundsFutures": {
+      "impliedRate": 5.15,
+      "probabilities": [
+        { "rate": 5.25, "probability": 0.61, "meetingDate": "2025-05-01" },
+        { "rate": 5.00, "probability": 0.39, "meetingDate": "2025-05-01" }
+      ],
+      "table": [
+        { "label": "No Change", "value": 5.25, "probability": 0.61 },
+        { "label": "Cut 25bps", "value": 5.00, "probability": 0.39 }
+      ],
+      "source": { "name": "CME FedWatch", "url": "https://www.cmegroup.com/" },
+      "timestamp": "2025-04-22T10:54:00-04:00"
+    },
+    "source": { "name": "FRED" },
+    "timestamp": "2025-04-22T10:54:00-04:00"
+  },
+  "sp500Analysis": {
+    "marketPath": {
+      "rsi": 40.7,
+      "trend": "Neutral",
+      "explanation": "Developed by J. Welles Wilder Jr. in 1978, the Relative Strength Index (RSI) is a 0–100 momentum oscillator: readings > 70 signal overbought, < 30 oversold, and 30–70 neutral (with 50 marking 'no trend'). Values above 50 imply bullish momentum; below 50, bearish momentum.",
+      "source": { "name": "Tradier (RSI)", "url": "https://developer.tradier.com/documentation/markets/get-timesales" },
+      "timestamp": "2025-04-22T10:55:00-04:00"
+    },
+    "indexLevel": 5257.02,
+    "peRatio": 23.32,
+    "epsTTM": 22.47,
+    "forwardEstimates": [
+      { "year": "2025", "eps": 71.51, "impliedIndex": 1072.65, "pe": 15, "source": { "name": "S&P Global" } },
+      { "year": "2026", "eps": 80.63, "impliedIndex": 1209.45, "pe": 15, "source": { "name": "S&P Global" } }
+    ],
+    "targets": {
+      "high": 6000,
+      "low": 4500,
+      "median": 5250,
+      "mean": 5200,
+      "source": { "name": "Market Analysts" },
+      "timestamp": "2025-04-22T10:55:00-04:00"
+    },
+    "movingAverages": {
+      "ma50": 5200.5,
+      "ma200": 4950.2,
+      "source": { "name": "Yahoo Finance" },
+      "timestamp": "2025-04-22T10:55:00-04:00"
+    },
+    "topHoldings": [
+      { "symbol": "AAPL", "name": "APPLE INC", "weight": 6.63, "sector": "Technology", "price": 170.15, "change": 1.25, "percentChange": 0.74, "source": { "name": "State Street Global Advisors" }, "timestamp": "2025-04-16T19:49:00-04:00" },
+      { "symbol": "MSFT", "name": "MICROSOFT CORP", "weight": 6.10, "sector": "Technology", "price": 315.80, "change": 2.10, "percentChange": 0.67, "source": { "name": "State Street Global Advisors" }, "timestamp": "2025-04-16T19:49:00-04:00" },
+      { "symbol": "NVDA", "name": "NVIDIA CORP", "weight": 5.42, "sector": "Technology", "price": 900.25, "change": 6.50, "percentChange": 0.73, "source": { "name": "State Street Global Advisors" }, "timestamp": "2025-04-16T19:49:00-04:00" },
+      { "symbol": "AMZN", "name": "AMAZON.COM INC", "weight": 3.61, "sector": "Consumer Discretionary", "price": 185.20, "change": 1.40, "percentChange": 0.76, "source": { "name": "State Street Global Advisors" }, "timestamp": "2025-04-16T19:49:00-04:00" },
+      { "symbol": "META", "name": "META PLATFORMS INC CLASS A", "weight": 2.43, "sector": "Communication Services", "price": 320.10, "change": 2.05, "percentChange": 0.64, "source": { "name": "State Street Global Advisors" }, "timestamp": "2025-04-16T19:49:00-04:00" }
+    ],
+    "source": { "name": "Market Pulse Daily Analysis Engine" },
+    "timestamp": "2025-04-22T10:55:00-04:00"
+  }
+}

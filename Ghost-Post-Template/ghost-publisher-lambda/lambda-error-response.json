@@ -1,0 +1,15 @@
+{
+  "status": 502,
+  "data": {
+    "message": "Internal server error"
+  },
+  "headers": {
+    "date": "Mon, 12 May 2025 14:27:49 GMT",
+    "content-type": "application/json",
+    "content-length": "36",
+    "connection": "close",
+    "x-amzn-requestid": "30df0fa2-f868-4fb2-aecf-4d3f23767569",
+    "x-amzn-errortype": "InternalServerErrorException",
+    "x-amz-apigw-id": "KdXH2HM-iYcEmCA="
+  }
+}

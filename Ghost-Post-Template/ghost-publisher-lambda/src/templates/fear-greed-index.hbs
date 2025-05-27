@@ -1,0 +1,78 @@
+{{#if fearGreedIndex}}
+<div class="section-container fear-greed-section">
+  <div class="section-title">Fear & Greed Index</div>
+  
+  <div class="fear-greed-container">
+    <div class="fear-greed-gauge-container">
+      <!-- Slider visualization similar to HTML format -->
+      <div style="position: relative; height: 12px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+        <!-- Shadow (behind) -->
+        <div style="position: absolute; top: 50%; left: {{fearGreedIndex.currentValue}}%; transform: translate(-50%, -50%); width: 18px; height: 18px; background-color: #333; border-radius: 50%; z-index: 1;"></div>
+        <!-- Thumb (front) -->
+        <div style="position: absolute; top: 50%; left: {{fearGreedIndex.currentValue}}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
+      </div>
+      
+      <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
+        <div>Extreme Fear</div>
+        <div>Fear</div>
+        <div>Neutral</div>
+        <div>Greed</div>
+        <div>Extreme Greed</div>
+      </div>
+      
+      <h4 style="margin-top: 15px; margin-bottom: 15px; font-size: 1rem; font-weight: bold; color: #2d3748;">Historical Trend</h4>
+      
+      <div class="fear-greed-gauge">
+        <div class="fear-greed-scale">
+          <div class="fear-greed-label fear-label">Extreme Fear</div>
+          <div class="fear-greed-label fear-label">Fear</div>
+          <div class="fear-greed-label neutral-label">Neutral</div>
+          <div class="fear-greed-label greed-label">Greed</div>
+          <div class="fear-greed-label greed-label">Extreme Greed</div>
+        </div>
+        
+        <div class="fear-greed-meter">
+          <div class="fear-greed-indicator" style="left: calc({{fearGreedIndex.currentValue}}% - 15px);">
+            <div class="fear-greed-pointer"></div>
+            <div class="fear-greed-value">{{fearGreedIndex.currentValue}}</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="fear-greed-description">
+        <p>The Fear & Greed Index measures market sentiment. A reading of 0 means "Extreme Fear" while a reading of 100 means "Extreme Greed". The current reading of <strong>{{fearGreedIndex.currentValue}}</strong> indicates <strong>{{fearGreedIndex.currentClassification}}</strong>.</p>
+      </div>
+    </div>
+    
+    <div class="fear-greed-history">
+      <div class="fear-greed-history-title">Historical Values</div>
+      <div class="fear-greed-history-grid">
+        <div class="fear-greed-history-item">
+          <div class="fear-greed-history-label">Previous Close</div>
+          <div class="fear-greed-history-value {{fearGreedIndex.previousDay.classification}}">{{fearGreedIndex.previousDay.value}}</div>
+          <div class="fear-greed-history-classification">{{fearGreedIndex.previousDay.classification}}</div>
+        </div>
+        <div class="fear-greed-history-item">
+          <div class="fear-greed-history-label">1 Week Ago</div>
+          <div class="fear-greed-history-value {{fearGreedIndex.oneWeekAgo.classification}}">{{fearGreedIndex.oneWeekAgo.value}}</div>
+          <div class="fear-greed-history-classification">{{fearGreedIndex.oneWeekAgo.classification}}</div>
+        </div>
+        <div class="fear-greed-history-item">
+          <div class="fear-greed-history-label">1 Month Ago</div>
+          <div class="fear-greed-history-value {{fearGreedIndex.oneMonthAgo.classification}}">{{fearGreedIndex.oneMonthAgo.value}}</div>
+          <div class="fear-greed-history-classification">{{fearGreedIndex.oneMonthAgo.classification}}</div>
+        </div>
+        <div class="fear-greed-history-item">
+          <div class="fear-greed-history-label">1 Year Ago</div>
+          <div class="fear-greed-history-value {{fearGreedIndex.oneYearAgo.classification}}">{{fearGreedIndex.oneYearAgo.value}}</div>
+          <div class="fear-greed-history-classification">{{fearGreedIndex.oneYearAgo.classification}}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="fear-greed-source">
+    Source: <a href="{{fearGreedIndex.sourceUrl}}" target="_blank">{{fearGreedIndex.source}}</a> ({{fearGreedIndex.asOf}})
+  </div>
+</div>
+{{/if}}

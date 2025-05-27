@@ -1,0 +1,77 @@
+          
+          <!-- Market Futures (if available) -->
+          {{#if marketIndicators.marketFutures}}
+            <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Market Futures</div>
+              <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                {{#each marketIndicators.marketFutures}}
+                  <div class="futures-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}};">
+                    <div class="label-col" style="font-weight: bold; font-size: clamp(1rem, 2.5vw, 1.1rem); min-width: 0; max-width: 100%; flex: 1 1 0; word-break: break-word;">{{name}}</div>
+                    <div style="flex: 1 1 0; text-align: right; font-size: clamp(1rem, 2.5vw, 1.1rem); min-width: 0; max-width: 100%; word-break: break-word;">{{price}}</div>
+                    <div style="color: {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}}; font-weight: bold; margin-left: 10px; font-size: clamp(0.95rem, 2vw, 1.05rem);">{{#if (gt change 0)}}&#8593;{{else}}&#8595;{{/if}} {{change}}</div>
+                  </div>
+                {{/each}}
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.futuresSourceUrl}}">{{marketIndicators.futuresSource}}</a>, as of {{marketIndicators.futuresAsOf}}
+              </div>
+            </div>
+          {{/if}}
+          
+          <!-- Fear & Greed Index -->
+          {{#if marketIndicators.fearGreed}}
+            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Fear & Greed Index:</div>
+                <div style="font-weight: bold; color: {{marketIndicators.fearGreed.color}}; font-size: clamp(1.1rem, 3vw, 1.35rem);">{{marketIndicators.fearGreed.value}}</div>
+              </div>
+              
+              <div style="position: relative; height: 12px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+                <!-- Shadow (behind) -->
+                <div style="position: absolute; top: 50%; left: {{marketIndicators.fearGreed.value}}%; transform: translate(-50%, -50%); width: 18px; height: 18px; background-color: #333; border-radius: 50%; z-index: 1;"></div>
+                <!-- Thumb (front) -->
+                <div style="position: absolute; top: 50%; left: {{marketIndicators.fearGreed.value}}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
+                <div>Extreme Fear</div>
+                <div>Fear</div>
+                <div>Neutral</div>
+                <div>Greed</div>
+                <div>Extreme Greed</div>
+              </div>
+              
+              <div style="font-size: clamp(0.95rem, 2.5vw, 1.05rem); color: #555; margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid {{marketIndicators.fearGreed.color}}; display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 8px;">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; max-width: 100%; flex: 2 1 200px;">
+                  <span style="font-weight: bold;">{{marketIndicators.fearGreed.category}}:</span>
+                  <span style="white-space: normal; overflow: visible; text-overflow: clip; line-height:1.4; word-break: break-word;">{{marketIndicators.fearGreed.description}}</span>
+                </div>
+                <span style="margin-left: 24px; font-size: clamp(0.92rem, 2vw, 1.01rem); color: #888; white-space: nowrap; text-align: right; flex: 1 1 120px; min-width: 0; max-width: 100%;">
+                   One Week Ago: {{marketIndicators.fearGreed.oneWeekAgo}} |  One Month Ago: {{marketIndicators.fearGreed.oneMonthAgo}}
+                </span>
+              </div>
+              
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.fearGreed.sourceUrl}}">{{marketIndicators.fearGreed.source}}</a>, as of {{marketIndicators.fearGreed.asOf}}
+              </div>
+            </div>
+          {{/if}}
+         
+          <!-- Volatility Indices -->
+          {{#if marketIndicators.volatilityIndices}}
+            <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Volatility Indices</div>
+              <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                {{#each marketIndicators.volatilityIndices}}
+                  <div class="vix-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (eq trend "Rising")}}#f44336{{else}}#4caf50{{/if}};">
+                    <div class="label-col" style="font-weight: bold; font-size: clamp(1rem, 2.5vw, 1.1rem); min-width: 0; max-width: 100%; flex: 1 1 0; word-break: break-word;">{{name}}</div>
+                    <div style="flex: 1 1 0; text-align: right; font-size: clamp(1rem, 2.5vw, 1.1rem); min-width: 0; max-width: 100%; word-break: break-word;">{{value}}</div>
+                    <div style="color: {{#if (eq trend "Rising")}}#f44336{{else}}#4caf50{{/if}}; font-weight: bold; margin-left: 10px; font-size: clamp(0.95rem, 2vw, 1.05rem);">{{#if (eq trend "Rising")}}&#8593;{{else}}&#8595;{{/if}} {{trend}}</div>
+                  </div>
+                {{/each}}
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.volatilitySourceUrl}}">{{marketIndicators.volatilitySource}}</a>, as of {{marketIndicators.volatilityAsOf}}
+              </div>
+            </div>
+          {{/if}}

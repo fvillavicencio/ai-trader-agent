@@ -1,46 +1,49 @@
 {
   "retrieved": {
-    "rss": 20,
-    "googleNews": 20,
+    "rss": 10,
+    "googleNews": 10,
     "newsApi": 6,
-    "rapidApi": 15,
+    "InsightSentry": 15,
     "zeihan": 2,
-    "total": 63
+    "total": 43
   },
   "final": {
-    "rss": 20,
-    "googleNews": 19,
-    "newsApi": 5,
-    "rapidApi": 15,
-    "zeihan": 1,
-    "total": 60
+    "rss": 10,
+    "googleNews": 10,
+    "newsApi": 6,
+    "InsightSentry": 15,
+    "zeihan": 2,
+    "total": 43
   },
   "sourceBreakdown": {
     "Foreign Affairs": 3,
-    "Fox News World": 17,
-    "Google News": 19,
+    "Fox News World": 7,
+    "Google News": 10,
+    "Fox News": 1,
     "CNN": 4,
     "BBC News": 1,
+    "financialjuice": 1,
+    "Forbes": 1,
+    "globeandmail": 2,
     "Reuters": 1,
-    "FirstSquawk": 3,
-    "PiQSuite": 1,
-    "thehill": 1,
-    "iNewsroom": 1,
-    "SEC": 2,
-    "businesswire.com": 1,
-    "MarketWatch": 2,
-    "ny times": 1,
+    "PiQSuite": 2,
+    "Seeking Alpha": 1,
+    "zerohedge": 1,
+    "neilksethi": 1,
+    "SpencerHakimian": 1,
+    "coinpedia.org": 1,
     "Benzinga": 1,
-    "investopedia.com": 1,
-    "Peter Zeihan via Google News": 1
+    "accessnewswire.com": 1,
+    "cointelegraph": 1,
+    "Peter Zeihan via Google News": 2
   },
   "topicBreakdown": {
-    "sanctions": 3,
-    "military conflict": 13,
-    "diplomacy": 3,
-    "nuclear": 5,
-    "terrorism": 1,
-    "tariffs": 8,
-    "energy": 1
+    "sanctions": 2,
+    "military conflict": 7,
+    "diplomacy": 2,
+    "nuclear": 3,
+    "tariffs": 5,
+    "energy": 1,
+    "terrorism": 1
   }
 }

@@ -1,0 +1,40 @@
+<div class="events-section">
+  {{#if economicEvents}}
+    <div class="economic-events-container">
+      <h3 class="events-section-title">Upcoming Events</h3>
+      <div class="events-list">
+        {{#each economicEvents}}
+          <div class="event-item">
+            <div class="event-date-time">
+              <div class="event-date-display">{{date}}</div>
+              <div class="event-time-display">{{time}}</div>
+            </div>
+            <div class="event-details">
+              <div class="event-name">{{event}}</div>
+              <div class="event-source">{{source}}</div>
+            </div>
+            <div class="event-values">
+              {{#if forecast}}
+                <div class="event-forecast">Forecast: {{forecast}}</div>
+              {{/if}}
+              {{#if previous}}
+                <div class="event-previous">Previous: {{previous}}</div>
+              {{/if}}
+              {{#if actual}}
+                {{#unless (stringContains actual 'N/A')}}
+                  <div class="event-actual">Actual: {{actual}}</div>
+                {{/unless}}
+              {{/if}}
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  {{/if}}
+  
+  {{#if source}}
+    <div class="data-source">
+      Source: <a href="{{sourceUrl}}">{{source}}</a>, as of {{asOf}}
+    </div>
+  {{/if}}
+</div>

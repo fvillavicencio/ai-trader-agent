@@ -1,0 +1,1035 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Market Pulse Daily - Analysis</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --base-font-size: 14px;
+      --spacing-base: 1rem;
+      --spacing-small: 0.5rem;
+    }
+    body {
+      font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      font-size: var(--base-font-size);
+      margin: 0;
+      padding: 0;
+      background-color: #f5f7fa;
+    }
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: var(--spacing-base);
+      width: 100%;
+      box-sizing: border-box;
+      background-color: white;
+    }
+    .section, .card, .stock-card, .indices-table, .sector-table, .futures-table, .volatility-table, .events-table, .yields-table {
+      max-width: 100%;
+      width: 100%;
+      box-sizing: border-box;
+      padding: var(--spacing-base);
+      margin-bottom: var(--spacing-base);
+    }
+    .label-col {
+      flex: 0 1 auto;
+      min-width: 0;
+      font-weight: bold;
+    }
+    .row, .flex-row {
+      display: flex;
+      flex-direction: row;
+      gap: var(--spacing-base);
+    }
+    .stock-cards-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--spacing-base);
+    }
+    .stock-card {
+      flex: 1 1 48%;
+      min-width: 260px;
+      max-width: 48%;
+    }
+    .decision-banner {
+      font-size: 1rem;
+    }
+    .card-title, .title {
+      font-size: 1.2rem;
+    }
+    .small-text {
+      font-size: 0.85rem;
+    }
+    @media (max-width: 800px)  { :root { --base-font-size: 12px; } }
+    @media (min-width: 1200px) { :root { --base-font-size: 16px; } }
+    @media (max-width: 600px) {
+      .index-card > div {font-size: 1.05rem !important; text-align: left !important;}
+      .container { padding: var(--spacing-small) !important; }
+      .section, .card, .indices-table, .sector-table, .futures-table, .volatility-table, .events-table, .yields-table { padding: var(--spacing-small) !important; margin-bottom: var(--spacing-small) !important; }
+      .footer, .decision-banner { font-size: 0.7rem !important; }
+      .flex-row, .row { flex-direction: column !important; gap: var(--spacing-small) !important; }
+      .label-col { width: 100% !important; min-width: 0 !important; }
+      .stock-cards-container { flex-direction: column !important; gap: var(--spacing-small) !important; }
+      .stock-card { min-width: 0 !important; max-width: 100% !important; width: 100% !important; }
+    }
+    h1, h2, h3, h4, h5, h6 {
+      font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+      color: #1a365d;
+      font-weight: 600;
+      margin-top: 0;
+      line-height: 1.3;
+    }
+    
+    h1 {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+    
+    h2 {
+      font-size: 2rem;
+      text-align: center;
+      margin-bottom: 1.2rem;
+      color: #1a365d;
+    }
+    
+    h3 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    
+    .section {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 2rem;
+    }
+    
+    .card, .stock-card {
+      width: 100%;
+      box-sizing: border-box;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .etf-holdings-container {
+      margin-bottom: 15px;
+      padding: 28px 32px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .etf-holdings-header {
+      font-weight: bold;
+      font-size: clamp(1.1rem,2vw,1.25rem);
+      margin-bottom: 15px;
+      color: #1a365d;
+      text-align: center;
+    }
+    .etf-holdings-cards {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      justify-content: space-around;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .etf-holding-card {
+      flex: 1 1 calc(32% - 10px);
+      min-width:120px;
+      max-width:32%;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+      padding: 10px 8px 6px 8px;
+      border-left: 5px solid #2563eb;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+    }
+    .etf-holding-header {
+      font-weight: bold;
+      font-size: clamp(0.95rem, 2vw, 1.05rem);
+      margin-bottom: 4px;
+    }
+    .etf-holding-table {
+      margin-bottom: 10px;
+      font-size: clamp(0.9rem, 2vw, 1rem);
+      color: #444;
+    }
+    .etf-holding-rows {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    .etf-holding-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #f8f9fa;
+      border-radius: 4px;
+      padding: 5px 6px;
+    }
+    .etf-holding-symbol {
+      font-weight: bold;
+      color: #2563eb;
+      font-size: 0.85em;
+    }
+    .etf-holding-name {
+      flex: 1;
+      margin-left: 8px;
+      color: #222;
+      font-size: 0.75em;
+    }
+    .etf-holding-weight {
+      margin-left: 8px;
+      color: #444;
+      font-size: 0.75em;
+    }
+    .etf-holding-source {
+      font-size: 10px;
+      color: #888;
+      margin-top: auto;
+      text-align: right;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header -->
+    <div class="header" style="text-align: center;">
+      <h1 class="title" style="font-size: 2.5rem;">{{metadata.title}}</h1>
+      <div class="subtitle" style="font-size: 1.1rem;">{{reportDateDisplay}}</div>
+      {{#if isTest}}
+        <div class="test-badge">TEST REPORT</div>
+      {{/if}}
+    </div>
+
+    <!-- Decision Box -->
+    {{#if marketSentiment}}
+      <div class="decision-banner" style="background-color: #FFF8E1; border-left: 5px solid #FFA500; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 1.5rem 1rem; border-radius: 1rem; margin: 1.5rem 0;">
+        <div class="decision-text" style="color: #FFA500; font-weight: bold; text-align: center; font-size: clamp(1.6rem, 5vw, 2.8rem); line-height: 1.1; display: flex; align-items: center; justify-content: center; width: 100%;" id="decision">
+          <span style="margin-right: 10px;">
+            {{#if (stringContains marketSentiment.decision "buy")}}
+              ↑
+            {{else if (stringContains marketSentiment.decision "sell")}}
+              ↓
+            {{else if (stringContains marketSentiment.decision "hold")}}
+              →
+            {{else}}
+              ⚠️
+            {{/if}}
+          </span>
+          {{marketSentiment.decision}}
+        </div>
+        <div style="font-size: 16px; color: #555; margin-top: 8px; text-align: center;" id="decision-summary">{{marketSentiment.summary}}</div>
+      </div>
+    {{/if}}
+
+    <!-- Justification Section -->
+    {{#if marketSentiment.justification}}
+      <div class="section">
+        <h2 style="font-size: 1.8rem; margin-bottom: 1rem; color: #1a365d;">Justification</h2>
+        <div style="line-height: 1.6; color: #444; font-size: 1.1em;" id="justification-section">{{marketSentiment.justification}}</div>
+      </div>
+    {{/if}}
+    
+    <!-- Market Sentiment Section -->
+    {{#if marketSentiment}}
+      <div class="section">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #1a365d;">Market Sentiment</h2>
+        
+        {{#if marketSentiment.overall}}
+          <div style="background-color: #f8f9fa; padding: 12px; margin-bottom: 15px; border-radius: 4px; border-left: 2px solid #2196f3;">
+            <div style="font-size: 1em; font-weight: bold; display: inline;">Overall:</div>
+            <div style="font-size: 1em; display: inline; margin-left: 5px;">{{marketSentiment.overall}}</div>
+          </div>
+        {{/if}}
+        
+        {{#if marketSentiment.analysts}}
+          {{#each marketSentiment.analysts}}
+            <div class="analyst-card" style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">{{name}}</div>
+              <div style="font-style: italic; margin-bottom: 5px;">"{{comment}}"</div>
+              
+              {{#if mentionedSymbols.length}}
+                <div style="margin-top: 5px;">
+                  <span style="font-size: 0.9em; color: #666;">Mentioned: </span>
+                  {{#each mentionedSymbols}}
+                    <span style="font-size: 0.9em; background-color: #e9ecef; padding: 2px 6px; border-radius: 4px; margin-right: 5px;">{{this}}</span>
+                  {{/each}}
+                </div>
+              {{/if}}
+              
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <span style="color: #2196f3;">{{source}}</span>
+                {{#if sourceUrl}}<a href="{{sourceUrl}}" target="_blank" style="color: #2196f3; text-decoration: none;"> (link)</a>{{/if}}
+              </div>
+            </div>
+          {{/each}}
+        {{/if}}
+      </div>
+    {{/if}}
+    
+    <!-- Key Market Indicators Section -->
+    {{#if marketIndicators}}
+      <div class="section">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #1a365d;">Key Market Indicators</h2>
+        <div style='margin-top: 15px;'>
+          
+          <!-- Major Indices -->
+          {{#if marketIndicators.majorIndices}}
+            <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Major Indices</div>
+              <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                {{#each marketIndicators.majorIndices}}
+                  <div class="index-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}};">
+                    <div class="label-col" style="font-weight: bold; font-size: 0.9rem; min-width: 180px; max-width: 100%; flex: 1.8 1 0; word-break: break-word;">{{name}}</div>
+                    <div style="flex: 1 1 0; text-align: right; font-size: 0.9rem; min-width: 0; max-width: 100%; word-break: break-word;">{{price}}</div>
+                    <div style="color: {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}}; font-weight: bold; margin-left: 10px; font-size: 0.9rem;">{{#if (gt change 0)}}&#8593;{{else}}&#8595;{{/if}} {{change}}</div>
+                  </div>
+                {{/each}}
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.sourceUrl}}">{{marketIndicators.source}}</a>, as of {{marketIndicators.asOf}}
+              </div>
+            </div>
+          {{/if}}
+        
+          <!-- Market Overview Row -->
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; margin-bottom: 20px;">
+            <!-- Sector Performance -->
+            {{#if marketIndicators.sectorPerformance}}
+              <div style="flex: 1; min-width: 280px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+                <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Sector Performance</div>
+                <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                  {{#each marketIndicators.sectorPerformance}}
+                    <div class="sector-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}};">
+                      <div class="label-col" style="font-weight: bold; font-size: 0.9rem; min-width: 180px; max-width: 100%; flex: 1.8 1 0; word-break: break-word;">{{name}}</div>
+                      <div style="color: {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}}; font-weight: bold; margin-left: 10px; font-size: 0.9rem;">{{#if (gt change 0)}}&#8593;{{else}}&#8595;{{/if}} {{change}}%</div>
+                     </div>
+                  {{/each}}
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{marketIndicators.sectorSourceUrl}}">{{marketIndicators.sectorSource}}</a>, as of {{marketIndicators.sectorAsOf}}
+                </div>
+              </div>
+            {{/if}}
+            
+            <!-- Market Futures (if available) -->
+            {{#if marketIndicators.marketFutures}}
+              <div style="flex: 1; min-width: 280px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0;">
+                <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Market Futures</div>
+                <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                  {{#each marketIndicators.marketFutures}}
+                    <div class="futures-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}};">
+                      <div class="label-col" style="font-weight: bold; font-size: 0.9rem; min-width: 180px; max-width: 100%; flex: 1.8 1 0; word-break: break-word;">{{name}}</div>
+                      <div style="flex: 1 1 0; text-align: right; font-size: 0.9rem; min-width: 0; max-width: 100%; word-break: break-word;">{{price}}</div>
+                      <div style="color: {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}}; font-weight: bold; margin-left: 10px; font-size: 0.9rem;">{{#if (gt change 0)}}&#8593;{{else}}&#8595;{{/if}} {{change}}</div>
+                    </div>
+                  {{/each}}
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{marketIndicators.futuresSourceUrl}}">{{marketIndicators.futuresSource}}</a>, as of {{marketIndicators.futuresAsOf}}
+                </div>
+              </div>
+            {{/if}}
+          </div>
+          
+          <!-- Fear & Greed Index -->
+          {{#if marketIndicators.fearGreed}}
+            <div style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.25rem); margin-bottom: 10px;">Fear & Greed Index:</div>
+                <div style="font-weight: bold; color: {{marketIndicators.fearGreed.color}}; font-size: clamp(1.1rem, 3vw, 1.25rem);">{{marketIndicators.fearGreed.value}}</div>
+              </div>
+              
+              <div style="position: relative; height: 12px; background: linear-gradient(to right, #e53935 0%, #fb8c00 25%, #ffeb3b 50%, #7cb342 75%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+                <!-- Shadow (behind) -->
+                <div style="position: absolute; top: 50%; left: {{marketIndicators.fearGreed.value}}%; transform: translate(-50%, -50%); width: 18px; height: 18px; background-color: #333; border-radius: 50%; z-index: 1;"></div>
+                <!-- Thumb (front) -->
+                <div style="position: absolute; top: 50%; left: {{marketIndicators.fearGreed.value}}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
+              </div>
+              
+              <div style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px;">
+                <div>Extreme Fear</div>
+                <div>Fear</div>
+                <div>Neutral</div>
+                <div>Greed</div>
+                <div>Extreme Greed</div>
+              </div>
+              
+              <div style="font-size: 0.9rem; color: #555; margin-top: 10px; padding: 8px; background-color: rgba(0,0,0,0.03); border-radius: 4px; border-left: 3px solid {{marketIndicators.fearGreed.color}}; display: flex; flex-wrap: wrap; justify-content: flex-start; align-items: center; gap: 8px; overflow: hidden;">
+                <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; max-width: 100%; flex: 1 1 auto; overflow: hidden;">
+                  <span style="font-weight: bold; flex-shrink: 0;">{{marketIndicators.fearGreed.category}}:</span>
+                  <span style="overflow: hidden; line-height:1.4;">{{marketIndicators.fearGreed.description}}</span>
+                </div>
+                <div style="margin-top: 5px; font-size: 0.85rem; color: #888; width: 100%; text-align: right;">
+                   Previous Day: {{marketIndicators.fearGreed.previousDay}} | One Week Ago: {{marketIndicators.fearGreed.oneWeekAgo}} | One Month Ago: {{marketIndicators.fearGreed.oneMonthAgo}}
+                </div>
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.fearGreed.sourceUrl}}">{{marketIndicators.fearGreed.source}}</a>, as of {{marketIndicators.fearGreed.asOf}}
+              </div>
+            </div>
+          {{/if}}
+         
+          <!-- Volatility Indices -->
+          {{#if marketIndicators.volatilityIndices}}
+            <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Volatility Indices</div>
+              <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                {{#each marketIndicators.volatilityIndices}}
+                  <div class="vix-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (eq trend "Rising")}}#f44336{{else}}#4caf50{{/if}};">
+                    <div class="label-col" style="font-weight: bold; font-size: 0.9rem; min-width: 180px; max-width: 100%; flex: 1.8 1 0; word-break: break-word;">{{name}}</div>
+                    <div style="flex: 1 1 0; text-align: right; font-size: 0.9rem; min-width: 0; max-width: 100%; word-break: break-word;">{{value}}</div>
+                    <div style="color: {{#if (eq trend "Rising")}}#f44336{{else}}#4caf50{{/if}}; font-weight: bold; margin-left: 10px; font-size: 0.9rem;">{{#if (eq trend "Rising")}}&#8593;{{else}}&#8595;{{/if}} {{trend}}</div>
+                  </div>
+                {{/each}}
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.volatilitySourceUrl}}">{{marketIndicators.volatilitySource}}</a>, as of {{marketIndicators.volatilityAsOf}}
+              </div>
+            </div>
+          {{/if}}
+          <!-- Path of Least Resistance (RSI) -->
+          {{#if marketIndicators.rsi}}
+            <div class="rsi-container" style="margin-bottom: 15px; padding: 28px 32px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div class="rsi-header" style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">Path of Least Resistance</div>
+              <div class="rsi-content" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap;">
+                <div class="rsi-label" style="font-weight: bold; font-size: 0.9rem">Relative Strength Index (14-day)</div>
+                <div class="rsi-value" style="font-weight: bold; font-size: 0.9rem; color: #757575;">{{marketIndicators.rsi.description}} (RSI={{marketIndicators.rsi.value}})</div>
+              </div>
+              <div class="rsi-gauge" style="position: relative; height: 12px; background: linear-gradient(to right, #e53935 0%, #757575 30%, #757575 70%, #43a047 100%); border-radius: 5px; margin: 10px 0;">
+                <div class="rsi-gauge-pointer" style="position: absolute; top: 50%; left: {{marketIndicators.rsi.value}}%; transform: translate(-50%, -50%); width: 18px; height: 18px; background-color: #333; border-radius: 50%; z-index: 1;"></div>
+                <div class="rsi-gauge-pointer-inner" style="position: absolute; top: 50%; left: {{marketIndicators.rsi.value}}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%; z-index: 2;"></div>
+              </div>
+              <div class="rsi-explanation" style="display: flex; justify-content: space-between; font-size: 12px; color: #757575; margin-top: 5px; flex-wrap: wrap;">
+                <div>Oversold</div>
+                <div>Neutral</div>
+                <div>Overbought</div>
+              </div>
+              <div class="rsi-explanation-text" style="font-size: 13px; color: #555; line-height: 1.4; margin-top: 12px;">
+                Developed by J. Welles Wilder Jr. in 1978, the <a href="https://www.investopedia.com/terms/r/rsi.asp" target="_blank" style="color:#2563eb; text-decoration:underline;">Relative Strength Index (RSI)</a> is a 0–100 momentum oscillator: readings &gt; 70 signal overbought, &lt; 30 oversold, and 30–70 neutral (with 50 marking "no trend"). Values above 50 imply bullish momentum; below 50, bearish momentum.
+              </div>
+              <div class="rsi-source" style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.rsi.sourceUrl}}" style="color:#2563eb; text-decoration:underline;">{{marketIndicators.rsi.source}}</a>, as of {{marketIndicators.rsi.asOf}}
+              </div>
+            </div>
+          {{/if}}
+
+          <!-- S&P 500 Analysis -->
+          {{#if sp500}}
+            <div class="section" style="background-color: white; border-radius: 8px; padding: 15px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <h2 style="color: #333; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-top: 0; text-align: center; font-size: 2rem;">S&P 500 Analysis</h2>
+              
+              <div class="row" style="display: flex; flex-direction: row; gap: 12px; justify-content: flex-start; align-items: stretch; margin-bottom: 24px; flex-wrap: wrap;">
+                <!-- Current S&P 500 Index Level -->
+                <div class="index-card" style="flex:1.15; min-width:220px; max-width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-right:8px; gap:0; width:100%; position: relative; padding-bottom: 20px; border: 1px solid #e2e8f0;">
+                  <div class="index-card-header" style="font-weight: 700; font-size: clamp(1rem,2vw,1.1rem); color: #1e293b; margin-bottom: 14px; text-align:center; letter-spacing:0.01em;">Current S&P 500 Index Level</div>
+                  <div class="index-card-value" style="font-size: clamp(2rem, 5vw, 2.4em); font-weight: bold; color: #2563eb; letter-spacing:0.01em; line-height:1; margin-bottom: 7px;">{{sp500.indexLevel}}</div>
+                  <div class="index-card-source" style="font-size: 10px; color: #888; position: absolute; bottom: 6px; right: 10px; line-height:1.35;">
+                    Source: <a href="{{sp500.source.url}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{sp500.source.name}}</a>, as of {{sp500.source.asOf}}
+                  </div>
+                </div>
+              
+                <!-- S&P 500 Trailing P/E Ratio -->
+                <div class="pe-card" style="flex:1; min-width:220px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 20px 24px 18px 24px; display: flex; flex-direction: column; justify-content: center; border: 1px solid #e2e8f0; max-width:100%; width:100%; position: relative; padding-bottom: 24px;">
+                  <div class="pe-card-header" style="font-weight: bold; font-size: clamp(1rem,2vw,1.1rem); margin-bottom: 8px;">S&P 500 Trailing P/E Ratio</div>
+                  <div class="pe-card-table" style="overflow-x:auto;">
+                    <table style="width: 100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
+                      <thead>
+                        <tr style="background:#4B2991; text-align:center; font-weight:600; color:#fff; font-size:0.9em;">
+                          <th style="padding:16px 0 12px 0;">Current</th>
+                          <th>5-Year Avg</th>
+                          <th>10-Year Avg</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
+                          <td style="font-weight:bold; color:#111; font-size: 0.85rem;">{{sp500.peRatio.ttmFormatted}}</td>
+                          <td style="color:#111; font-size: 0.85rem;">{{sp500.peRatio.fiveYearAvgFormatted}}</td>
+                          <td style="color:#111; font-size: 0.85rem;">{{sp500.peRatio.tenYearAvgFormatted}}</td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  <div class="pe-card-source" style="font-size: 10px; color: #888; position: absolute; bottom: 6px; right: 10px; line-height:1.35;">
+                    Source: <a href="{{sp500.peRatio.sourceUrl}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{sp500.peRatio.source}}</a>, as of {{sp500.peRatio.asOf}}
+                  </div>
+                </div>
+              </div>
+
+              <!-- S&P 500 Earnings Per Share (Trailing 12M) -->
+              <div class="earnings-container" style="margin-bottom: 15px; padding: 28px 32px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="earnings-header label-col" style="font-weight: bold; font-size: clamp(1.1rem,2vw,1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">S&P 500 Earnings Per Share (Trailing 12M)</div>
+                <div class="earnings-table" style="overflow-x:auto;">
+                  <table style="width:100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
+                    <thead>
+                      <tr style="background:#B91C1C; text-align:center; font-weight:600; color:#fff; font-size:0.9em;">
+                        <th style="padding:16px 0 12px 0;">S&P 500 EPS (TTM)</th>
+                        <th>Target at 15x</th>
+                        <th>Target at 17x</th>
+                        <th>Target at 20x</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
+                        <td style="font-weight:bold; color:#111; font-size: 0.85rem;">{{sp500.eps.ttmFormatted}}</td>
+                        <td style="color:#111; font-size: 0.85rem;">{{sp500.eps.targetAt15xFormatted}}</td>
+                        <td style="color:#111; font-size: 0.85rem;">{{sp500.eps.targetAt17xFormatted}}</td>
+                        <td style="color:#111; font-size: 0.85rem;">{{sp500.eps.targetAt20xFormatted}}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+                <div class="earnings-source" style="font-size: 10px; color: #888; margin-top: 8px; text-align: right;">
+                  Source: <a href="{{sp500.eps.sourceUrl}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{sp500.eps.source}}</a>, as of {{sp500.eps.asOf}}
+                </div>
+              </div>
+
+              <!-- S&P 500 Forward EPS & Implied Index Values -->
+              <div class="forward-eps-container" style="margin-bottom: 15px; padding: 28px 32px; background-color: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                <div class="forward-eps-header label-col" style="font-weight: bold; font-size: clamp(1.1rem,2vw,1.25rem); margin-bottom: 15px; color: #1a365d; text-align: center;">S&P 500 Forward EPS & Implied Index Values (2025 & 2026)</div>
+                <div class="forward-eps-table" style="overflow-x:auto;">
+                  <table style="width:100%; border-collapse:separate; border-spacing:0 14px; background: #fff; margin-bottom: 10px; border-radius:10px; overflow:hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.04); font-size: clamp(0.95rem, 2vw, 1.05rem);">
+                    <thead>
+                      <tr style="background:#166534; text-align:center; font-weight:600; color:#fff; font-size:0.9em;">
+                        <th style="padding:16px 0 12px 0;">Annual Estimate</th>
+                        <th>Forward EPS</th>
+                        <th>15x</th>
+                        <th>% vs Index</th>
+                        <th>17x</th>
+                        <th>% vs Index</th>
+                        <th>20x</th>
+                        <th>% vs Index</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {{#each sp500.forwardEps}}
+                        <tr style="text-align:center; background:#fff; border-bottom:1px solid #e5e7eb; color:#111;">
+                          <td style="font-weight:bold; color:#111; font-size: 0.85rem;">{{year}}</td>
+                          <td style="font-weight:bold; color:#111; font-size: 0.85rem;">{{epsFormatted}}</td>
+                          <td style='color:#111; font-size: 0.85rem;'>{{targetAt15xFormatted}}</td>
+                          <td style='color:#111; font-size: 0.85rem;'>{{percentVsIndex15x}}%</td>
+                          <td style='color:#111; font-size: 0.85rem;'>{{targetAt17xFormatted}}</td>
+                          <td style='color:#111; font-size: 0.85rem;'>{{percentVsIndex17x}}%</td>
+                          <td style='color:#111; font-size: 0.85rem;'>{{targetAt20xFormatted}}</td>
+                          <td style='color:#111; font-size: 0.85rem;'>{{percentVsIndex20x}}%</td>
+                        </tr>
+                      {{/each}}
+                    </tbody>
+                  </table>
+                </div>
+                <div class="forward-eps-source" style="font-size: 10px; color: #888; margin-top: 8px; text-align: right;">
+                  Source: <a href="{{sp500.forwardEpsSource.url}}" target="_blank" style="color:#2563eb; text-decoration:underline;">{{sp500.forwardEpsSource.name}}</a>, as of {{sp500.forwardEpsSource.asOf}}
+                </div>
+              </div>
+            </div>
+          {{/if}}
+          <!-- Top 5 Weighted Stocks in Major Indices -->
+          {{#if marketIndicators.topHoldings}}
+            <div class="etf-holdings-container">
+              <div class="etf-holdings-header label-col">Top 5 Weighted Stocks in Major Indices</div>
+              <div class="etf-holdings-cards" style="display: flex; flex-direction: row; gap: 10px; justify-content: space-between; flex-wrap: nowrap; width: 100%;">
+                {{#each marketIndicators.topHoldings}}
+                  <div class="etf-holding-card" style="flex: 0 0 30%; min-width: 0; max-width: 30%;">
+                    <div class="etf-holding-header">{{name}} <span>({{symbol}})</span></div>
+                    <div class="etf-holding-table">Top 5 Holdings:</div>
+                    <div class="etf-holding-rows">
+                      {{#each holdings}}
+                        <div class="etf-holding-row">
+                          <span class="etf-holding-symbol">{{symbol}}</span>
+                          <span class="etf-holding-name">{{name}}</span>
+                          <span class="etf-holding-weight">{{weight}}%</span>
+                        </div>
+                      {{/each}}
+                    </div>
+                    <div class="etf-holding-source">
+                      Source: <a href="{{sourceUrl}}" target="_blank">{{source}}</a>, as of {{asOf}}
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            </div>
+          {{/if}}
+          
+          <!-- Upcoming Economic Events -->
+          {{#if economicEvents}}
+            <div style="margin-bottom: 15px; padding: 18px 20px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: bold; margin-bottom: 14px; font-size: clamp(1.1rem, 3vw, 1.25rem);">Upcoming Events</div>
+              <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                {{#each economicEvents}}
+                  <div style="display: flex; flex-wrap: nowrap; align-items: flex-start; padding: 8px 10px; border-radius: 5px; background-color: #ffffff; border: 1px solid #e2e8f0;">
+                    <div style="min-width: 110px; flex: 0 0 110px;">
+                      <div style="font-size: 0.85rem; font-weight: 500; color: #2196f3;">{{date}}, {{time}}</div>
+                    </div>
+                    <div style="flex: 3 1 250px; margin: 0 15px 0 5px; min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis;">
+                      <div style="font-weight: bold; margin-bottom: 2px; font-size: clamp(1rem, 2vw, 1.1rem); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{name}}</div>
+                      <div style="font-size: clamp(0.9rem, 2vw, 1rem); color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">{{source}}</div>
+                    </div>
+                    <div style="flex: 1 1 120px; min-width: 120px; max-width: 100%; text-align: right; color: #555; font-size: 0.85rem;">
+                      {{#if forecast}}<div style="margin-bottom: 2px;"><span style="color: #2563eb; font-weight: 500;">Forecast:</span> {{forecast}}</div>{{/if}}
+                      <div><span style="color: #64748b; font-weight: 500;">Previous:</span> {{previous}}</div>
+                    </div>
+                  </div>
+                {{/each}}
+              </div>
+            </div>
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+    
+    <!-- Fundamental Metrics Section -->
+    {{#if fundamentalMetrics}}
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 28px 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 100%;">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #1a365d; text-align: center;">Fundamental Metrics</h2>
+        
+        {{#if fundamentalMetrics.majorIndices}}
+          <div class="subsection">
+            <h3 style="margin-top: 30px;">Major Indices</h3>
+            <div class="stocks-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; align-items: stretch; justify-items: stretch;">
+              {{#each fundamentalMetrics.majorIndices}}
+                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+                    <!-- Left: Symbol and Company Name -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">{{symbol}}</div>
+                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">{{name}}</div>
+                    </div>
+                    <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+                      <div style="font-weight: bold; font-size: 0.95em; color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; margin-bottom: 2px; white-space: nowrap;">{{#unless (startsWith price "$")}}${{/unless}}{{price}} <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}};">{{#if (gt priceChange 0)}}&#8593;{{else}}&#8595;{{/if}}</span> <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; font-weight: normal;">{{#unless (startsWith priceChange "$")}}${{/unless}}{{priceChange}}</span> <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; font-weight: normal;">({{percentChange}})</span></div>
+                    </div>
+                  </div>
+                  <!-- Metrics Table -->
+                  <div style="padding: 10px 12px; background-color: white;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                      <tbody>
+                        {{#each metrics}}
+                          <tr>
+                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">{{name}}</td>
+                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
+                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{decodeHtml value}}
+                            </td>
+                          </tr>
+                        {{/each}}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+        
+        {{#if fundamentalMetrics.topHoldings}}
+          <div class="subsection">
+            <h3 style="margin-top: 30px;">Top Index Holdings</h3>
+            <div class="stocks-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; align-items: stretch; justify-items: stretch;">
+              {{#each fundamentalMetrics.topHoldings}}
+                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+                    <!-- Left: Symbol and Company Name -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">{{symbol}}</div>
+                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">{{name}}</div>
+                    </div>
+                    <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+                      <div style="font-weight: bold; font-size: 0.95em; color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; margin-bottom: 2px; white-space: nowrap;">{{#unless (startsWith price "$")}}${{/unless}}{{price}} <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}};">{{#if (gt priceChange 0)}}&#8593;{{else}}&#8595;{{/if}}</span> <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; font-weight: normal;">{{#unless (startsWith priceChange "$")}}${{/unless}}{{priceChange}}</span> <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; font-weight: normal;">({{percentChange}})</span></div>
+                    </div>
+                  </div>
+                  <!-- Metrics Table -->
+                  <div style="padding: 10px 12px; background-color: white;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                      <tbody>
+                        {{#each metrics}}
+                          <tr>
+                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">{{name}}</td>
+                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
+                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{decodeHtml value}}
+                            </td>
+                          </tr>
+                        {{/each}}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+        
+        {{#if fundamentalMetrics.otherStocks}}
+          <div class="subsection">
+            <h3 style="margin-top: 30px;">Other Stocks</h3>
+            <div class="stocks-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; align-items: stretch; justify-items: stretch;">
+              {{#each fundamentalMetrics.otherStocks}}
+                <div class="stock-card" style="border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); width: 100%; min-width: 100%;">
+                  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 12px; background-color: #f8f9fa;">
+                    <!-- Left: Symbol and Company Name -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; min-width: 130px;">
+                      <div style="font-weight: bold; font-size: 16px; color: #000; letter-spacing: 0.5px;">{{symbol}}</div>
+                      <div style="font-size: 11px; font-style: italic; color: #555; font-weight: normal; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;">{{name}}</div>
+                    </div>
+                    <!-- Right: Price, Arrow, Price Change, Percent Change (single line) -->
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; min-width: 130px;">
+                      <div style="font-weight: bold; font-size: 0.95em; color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; margin-bottom: 2px; white-space: nowrap;">{{#unless (startsWith price "$")}}${{/unless}}{{price}} <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}};">{{#if (gt priceChange 0)}}&#8593;{{else}}&#8595;{{/if}}</span> <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; font-weight: normal;">{{#unless (startsWith priceChange "$")}}${{/unless}}{{priceChange}}</span> <span style="color: {{#if (gt priceChange 0)}}#4CAF50{{else}}#f44336{{/if}}; font-weight: normal;">({{percentChange}})</span></div>
+                    </div>
+                  </div>
+                  <!-- Metrics Table -->
+                  <div style="padding: 10px 12px; background-color: white;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 0.9em;">
+                      <tbody>
+                        {{#each metrics}}
+                          <tr>
+                            <td style="color: #777; padding: 4px 10px 4px 0; text-align: left;">{{name}}</td>
+                            <td style="font-weight: bold; color: #222; padding: 4px 0; text-align: right;">
+                              {{#if (or (eq name "52-Week High") (eq name "52-Week Low") (eq name "Open") (eq name "Close") (eq name "Day High") (eq name "Day Low") (eq name "Previous Close") (eq name "Market Cap") (eq name "Target Price"))}}{{#unless (startsWith value "$")}}${{/unless}}{{/if}}{{decodeHtml value}}
+                            </td>
+                          </tr>
+                        {{/each}}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              {{/each}}
+            </div>
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+    
+    <!-- Macroeconomic Factors Section -->
+    {{#if macroeconomicFactors}}
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 28px 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 100%;">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #1a365d; text-align: center;">Macroeconomic Factors</h2>
+        
+        <!-- Treasury Yields -->
+        {{#if macroeconomicFactors.treasuryYields}}
+          <style>
+            @media (max-width: 600px) {
+              .yield-separator { display: none !important; }
+              .yields-row { flex-direction: column !important; }
+              .yields-cell { min-width: 100% !important; border-right: none !important; }
+            }
+            @media (min-width: 601px) {
+              .yields-row { flex-direction: row !important; }
+              .yields-cell { min-width: 90px !important; }
+            }
+          </style>
+        
+          <div style="margin-bottom: 20px;">
+            <div style="font-weight: bold; margin-bottom: 10px; font-size: clamp(1.1rem, 3vw, 1.25rem);">Treasury Yields</div>
+            <div class="yields-row" style="display: flex; flex-wrap: wrap; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-bottom: 10px;">
+              {{#each macroeconomicFactors.treasuryYields.yields}}
+                <div class="yields-cell" style="flex: 1 1 90px; min-width: 90px; max-width: 100%; text-align: center; padding: 0 10px; position: relative; box-sizing: border-box;">
+                  <div style="color: #666; font-size: clamp(0.95rem, 2vw, 1.05rem); margin-bottom: 8px;">{{maturity}}</div>
+                  <div style="color: #4CAF50; font-weight: bold; font-size: clamp(1.1rem, 2.5vw, 1.25rem);">
+                    {{rate}}%
+                  </div>
+                  {{#unless @last}}
+                    <div class="yield-separator" style="position: absolute; top: 10%; right: 0; bottom: 10%; width: 3px; background-color: #4CAF50; border-radius: 2px;"></div>
+                  {{/unless}}
+                </div>
+              {{/each}}
+            </div>
+
+            <div style="margin-top: 15px; padding-left: 15px; border-left: 4px solid {{macroeconomicFactors.treasuryYields.yieldCurve.color}};">
+              <div style="font-weight: bold; font-size: clamp(0.95rem, 2vw, 1.05rem); margin-bottom: 5px;">Yield Curve: {{macroeconomicFactors.treasuryYields.yieldCurve.status}}</div>
+              <div style="color: #555; font-size: clamp(0.9rem, 2vw, 1rem);">{{macroeconomicFactors.treasuryYields.yieldCurve.description}}</div>
+            </div>
+            <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+              Source: <a href="{{macroeconomicFactors.treasuryYields.sourceUrl}}">{{macroeconomicFactors.treasuryYields.source}}</a>, as of {{macroeconomicFactors.treasuryYields.asOf}}
+            </div>
+          </div>
+        {{/if}}
+        <!-- Federal Reserve Policy -->
+        {{#if macroeconomicFactors.fedPolicy}}
+          <div style="background-color: #f8f9fa; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 10px;">
+            <div style="background-color:rgb(19, 52, 79); color: white; padding: 12px; text-align: center;">
+              <div style="font-size: clamp(1.05rem, 2vw, 1.15em); font-weight: bold; margin-bottom: 4px;">Federal Reserve Policy</div>
+              <div style="font-size: clamp(0.92rem, 1.5vw, 0.98em); color: rgba(255,255,255,0.8);">Market Consensus</div>
+            </div>
+            <div style="padding: 15px; background-color: white;">
+              <!-- Forward Guidance Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: 0.9rem; color: #333; line-height: 1.6; word-break: break-word;">{{macroeconomicFactors.fedPolicy.guidance}}</div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.guidanceSourceUrl}}">{{macroeconomicFactors.fedPolicy.guidanceSource}}</a>, as of {{macroeconomicFactors.fedPolicy.guidanceAsOf}}
+                </div>
+              </div>
+              
+              <!-- Current Rate Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: 1rem; font-weight: bold; margin-bottom: 5px;">Current Federal Funds Rate</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; min-width: 0;">
+                  <div style="color: #4CAF50; font-weight: bold; font-size: 1.1rem;">
+                    {{macroeconomicFactors.fedPolicy.currentRate}}
+                  </div>
+                  <div style="color: #666; font-size: 0.9rem; min-width: 0; max-width: 100%;">
+                    Range: {{macroeconomicFactors.fedPolicy.rateRange}}
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.rateSourceUrl}}">{{macroeconomicFactors.fedPolicy.rateSource}}</a>, as of {{macroeconomicFactors.fedPolicy.rateAsOf}}
+                </div>
+              </div>
+              
+              <!-- Federal Funds Futures Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: 1rem; font-weight: bold; margin-bottom: 5px;">Federal Funds Futures</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                  <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; min-width: 0;">
+                    <div style="color: #666; font-size: 0.9rem; min-width: 0; max-width: 100%;">Current Price: <span style="font-weight: bold; font-size: 1.1rem;">{{macroeconomicFactors.fedPolicy.futuresPrice}}</span></div>
+                    <div style="color: #666; font-size: 0.9rem; min-width: 0; max-width: 100%; text-align: right;">Implied Rate: <span style="font-weight: bold; font-size: 1.1rem;">{{macroeconomicFactors.fedPolicy.impliedRate}}%</span></div>
+                  </div>
+                </div>
+                <div style="font-size: 1rem; font-weight: bold; margin-bottom: 5px; margin-top: 20px;">Rate Change Probabilities</div>
+                <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; min-width: 0;">
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #4CAF50; font-size: 1rem; font-weight: bold;">&#8595;</span>
+                    <div style="color: #4CAF50; font-weight: bold; font-size: 1rem;">{{macroeconomicFactors.fedPolicy.cutProbability}}%</div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #757575; font-size: 1rem; font-weight: bold;">&#8594;</span>
+                    <div style="color: #757575; font-weight: bold; font-size: 1rem;">{{macroeconomicFactors.fedPolicy.holdProbability}}%</div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 5px;">
+                    <span style="color: #f44336; font-size: 1rem; font-weight: bold;">&#8593;</span>
+                    <div style="color: #f44336; font-weight: bold; font-size: 1rem;">{{macroeconomicFactors.fedPolicy.hikeProbability}}%</div>
+                  </div>
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 15px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.futuresSourceUrl}}">{{macroeconomicFactors.fedPolicy.futuresSource}}</a>, as of {{macroeconomicFactors.fedPolicy.futuresAsOf}}
+                </div>
+              </div>
+              
+              <!-- Meeting Schedule Section -->
+              <div style="margin-bottom: 15px;">
+                <div style="font-size: 1rem; font-weight: bold; margin-bottom: 5px;">Meeting Schedule</div>
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+                  <div style="color: #666; font-size: 0.8rem; min-width: 0; max-width: 48%;">Last FOMC Meeting - {{macroeconomicFactors.fedPolicy.lastMeeting}}</div>
+                  <div style="color: #666; font-size: 0.8rem; min-width: 0; max-width: 48%; text-align: right;">Next FOMC Meeting - {{macroeconomicFactors.fedPolicy.nextMeeting}}</div>
+                </div>
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <a href="{{macroeconomicFactors.fedPolicy.meetingSourceUrl}}">{{macroeconomicFactors.fedPolicy.meetingSource}}</a>, as of {{macroeconomicFactors.fedPolicy.meetingAsOf}}
+                </div>
+              </div>
+            </div>
+          </div>
+        {{/if}}
+      
+        <!-- Inflation -->
+        {{#if macroeconomicFactors.inflation}}
+          <div style="margin-bottom: 20px; margin-top: 30px;">
+            <div style="font-weight: bold; margin-bottom: 10px; font-size: clamp(1.1rem, 3vw, 1.25rem);">Inflation</div>
+            <div style="display: flex; flex-wrap: wrap; gap: 10px;">
+              <!-- CPI Card -->
+              {{#if macroeconomicFactors.inflation.cpi}}
+                <div style="flex: 1; min-width: 250px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                  <div style="background-color: #3498db; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: clamp(0.9rem, 2vw, 1rem);">Consumer Price Index<br>(CPI)</div>
+                  <div style="padding: 15px; text-align: center; background-color: white; border: 1px solid #3498db; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                    <div style="display: flex; justify-content: space-around; gap: 10px;">
+                      <div style="flex: 1; min-width: 80px;">
+                        <div style="color: #555; font-size: 0.9rem; margin-bottom: 2px;">Headline</div>
+                        <div style="color: #2c3e50; font-weight: bold; font-size: 1rem;">{{macroeconomicFactors.inflation.cpi.headline}}%</div>
+                      </div>
+                      <div style="flex: 1; min-width: 80px;">
+                        <div style="color: #555; font-size: 0.9rem; margin-bottom: 2px;">Core</div>
+                        <div style="color: #2c3e50; font-size: 1rem;">{{macroeconomicFactors.inflation.cpi.core}}%</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+              
+              <!-- PCE Card -->
+              {{#if macroeconomicFactors.inflation.pce}}
+                <div style="flex: 1; min-width: 250px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+                  <div style="background-color: #e67e22; color: white; padding: 10px; text-align: center; font-weight: bold; font-size: clamp(0.9rem, 2vw, 1rem);">Personal Consumption Expenditure<br>(PCE)</div>
+                  <div style="padding: 15px; text-align: center; background-color: white; border: 1px solid #e67e22; border-top: none; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;">
+                    <div style="display: flex; justify-content: space-around; gap: 10px;">
+                      <div style="flex: 1; min-width: 80px;">
+                        <div style="color: #555; font-size: 0.9rem; margin-bottom: 2px;">Headline</div>
+                        <div style="color: #2c3e50; font-weight: bold; font-size: 1rem;">{{macroeconomicFactors.inflation.pce.headline}}%</div>
+                      </div>
+                      <div style="flex: 1; min-width: 80px;">
+                        <div style="color: #555; font-size: 0.9rem; margin-bottom: 2px;">Core</div>
+                        <div style="color: #2c3e50; font-size: 1rem;">{{macroeconomicFactors.inflation.pce.core}}%</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              {{/if}}
+            </div>
+           
+            <!-- Inflation Expectations -->
+            {{#if macroeconomicFactors.inflation.expectations}}
+              <div style="background-color: #f8f9fa; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-top: 10px;">
+                <div style="background-color:rgb(19, 52, 79); color: white; padding: 12px; text-align: center;">
+                  <div style="font-size: clamp(1.05rem, 2vw, 1.15em); font-weight: bold; margin-bottom: 4px;">Inflation Expectations</div>
+                  <div style="font-size: clamp(0.92rem, 1.5vw, 0.98em); color: rgba(255,255,255,0.8);">Market Consensus</div>
+                </div>
+                <div style="padding: 15px; background-color: white;">
+                  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px;">
+                    {{#each macroeconomicFactors.inflation.expectations}}
+                      <div style="text-align: center;">
+                        <div style="color: #2196F3; font-size: 1rem; margin-bottom: 6px;">{{period}}</div>
+                        <div style="color: #2c3e50; font-weight: bold; font-size: 1.1rem;">{{value}}%</div>
+                      </div>
+                    {{/each}}
+                  </div>
+                </div>
+                <div style="font-size: 0.7rem; color: #666; text-align: right; padding: 0 15px 10px 15px; background-color: white;">Source: <a href="{{macroeconomicFactors.inflation.expectationsSource.url}}" style="color: #2196F3; text-decoration: none;">{{macroeconomicFactors.inflation.expectationsSource.name}}</a>{{#if macroeconomicFactors.inflation.expectationsSource.lastUpdated}}, as of {{macroeconomicFactors.inflation.expectationsSource.lastUpdated}}{{/if}}</div>
+              </div>
+            {{/if}}
+            <!-- Inflation Trend Analysis -->
+            {{#if macroeconomicFactors.inflation.trendAnalysis}}
+              <div style="margin-top: 20px; background-color: #4CAF50; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                <div style="background-color: #4CAF50; color: white; padding: 12px; text-align: center;">
+                  <div style="font-size: clamp(1.05rem, 2vw, 1.15em); font-weight: bold; margin-bottom: 4px;">Inflation Trend Analysis</div>
+                  <div style="font-size: clamp(0.92rem, 1.5vw, 0.98em); color: rgba(255,255,255,0.9);">Current Market Insights</div>
+                </div>
+                <div style="padding: 15px; background-color: white;">
+                  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;">
+                    <div style="text-align: center; border-right: 1px solid #eee; padding-right: 10px;">
+                      <div style="color: #4CAF50; font-size: 1rem; margin-bottom: 6px; font-weight: bold;">Trend</div>
+                      <div style="color: #2c3e50; font-weight: bold; font-size: 1rem;">{{macroeconomicFactors.inflation.trendAnalysis.direction}}</div>
+                    </div>
+                    <div style="text-align: center; border-right: 1px solid #eee; padding-right: 10px;">
+                      <div style="color: #2196F3; font-size: 1rem; margin-bottom: 6px; font-weight: bold;">Outlook</div>
+                      <div style="color: #2c3e50; font-size: 0.8rem; line-height: 1.4;">{{macroeconomicFactors.inflation.trendAnalysis.outlook}}</div>
+                    </div>
+                    <div style="text-align: center;">
+                      <div style="color: #9C27B0; font-size: 1rem; margin-bottom: 6px; font-weight: bold;">Market Impact</div>
+                      <div style="color: #2c3e50; font-size: 0.8rem; line-height: 1.4;">{{macroeconomicFactors.inflation.trendAnalysis.marketImpact}}</div>
+                    </div>
+                  </div>
+                </div>
+                <div style="font-size: 0.7rem; color: #666; text-align: right; padding: 0 15px 10px 15px; background-color: white;">Source: <a href="{{macroeconomicFactors.inflation.trendAnalysis.sourceUrl}}" style="color: #2196F3; text-decoration: none;">{{macroeconomicFactors.inflation.trendAnalysis.source}}</a>, as of {{macroeconomicFactors.inflation.trendAnalysis.asOf}}</div>
+              </div>
+            {{/if}}
+            
+          </div>
+        {{/if}}
+      </div>
+    {{/if}}
+    
+    <!-- Analyst Commentary Section -->
+    {{#if analystCommentary}}
+      <div class="section" style="background-color: white; border-radius: 8px; padding: 28px 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 100%;">
+        <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #1a365d; text-align: center;">Analyst Commentary</h2>
+        
+        <div style="margin-bottom: 15px; text-align: center;">
+          <button id="toggleAnalysts" style="background-color: #1a365d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;">Show/Hide Analyst Comments</button>
+        </div>
+        
+        <div id="analystContainer">
+          <!-- Overall Market Sentiment -->
+          {{#if analystCommentary.overall}}
+            <div style="background-color: #f8f9fa; padding: 12px; margin-bottom: 15px; border-radius: 4px; border-left: 2px solid #2196f3;">
+              <div style="font-size: 1em; font-weight: bold; display: inline;">Overall:</div>
+              <div style="font-size: 1em; display: inline; margin-left: 5px;">{{analystCommentary.overall}}</div>
+            </div>
+          {{/if}}
+          
+          <!-- Individual Analyst Commentary -->
+          {{#if analystCommentary.analysts}}
+            {{#each analystCommentary.analysts}}
+              <div class="analyst-card" style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+                <div style="font-weight: bold; margin-bottom: 5px;">{{name}}</div>
+                <div style="font-style: italic; margin-bottom: 5px;">"{{comment}}"</div>
+                
+                {{#if mentionedSymbols}}
+                  <div style="margin-top: 5px;">
+                    <span style="font-size: 0.9em; color: #666;">Mentioned: </span>
+                    {{#each mentionedSymbols}}
+                      <span style="font-size: 0.9em; background-color: #e9ecef; padding: 2px 6px; border-radius: 4px; margin-right: 5px;">{{this}}</span>
+                    {{/each}}
+                  </div>
+                {{/if}}
+                
+                <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                  Source: <span style="color: #2196f3;">{{source}}</span>
+                  {{#if date}}
+                    <span style="margin-left: 5px;">as of {{date}}</span>
+                  {{/if}}
+                </div>
+              </div>
+            {{/each}}
+          {{/if}}
+        </div>
+      </div>
+    {{/if}}
+    
+    <!-- Geopolitical Risks Section -->
+    <div class="section" style="background-color: white; border-radius: 8px; padding: 28px 32px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); max-width: 100%;">
+      <h2 style="font-size: 2rem; margin-bottom: 1rem; color: #1a365d; text-align: center;">Geopolitical Risks</h2>
+      
+      <div style="margin-bottom: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 6px; border-left: 4px solid #ff9800;">
+        <div style="font-weight: bold; margin-bottom: 5px;">Global Overview</div>
+        <div style="color: #333;">{{#if geopoliticalRisks.overview}}{{geopoliticalRisks.overview}}{{else}}{{#if macroeconomicFactors.geopoliticalRisks.global}}{{macroeconomicFactors.geopoliticalRisks.global}}{{/if}}{{/if}}</div>
+      </div>
+      
+      {{#if geopoliticalRisks.items}}
+        {{#each geopoliticalRisks.items}}
+          <div style="display: flex; margin-bottom: 15px;">
+            <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">{{#if title}}{{title}}{{else}}{{#if name}}{{name}}{{else}}{{region}}{{/if}}{{/if}}</div>
+              <div style="color: #555; margin-bottom: 5px;">{{#if description}}{{description}}{{else}}{{risk}}{{/if}}</div>
+              <div style="font-size: 10px; color: #757575;">
+                {{#if region}}Region: {{region}}{{/if}}{{#if source}}{{#if region}} • {{/if}}Source: {{source}}{{/if}}
+              </div>
+            </div>
+            <div style="width: 80px; text-align: center; background-color: {{#if (eq impactLevel 'High')}}#f44336{{else if (eq impactLevel 'Medium')}}#ff9800{{else if (eq impactLevel 'Severe')}}#800020{{else}}#4caf50{{/if}}; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
+              <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">{{impactLevel}}</div>
+            </div>
+          </div>
+        {{/each}}
+      {{/if}}
+    </div>
+
+    <!-- Disclaimer -->
+    <div class="disclaimer" style="margin-top: 15px; padding: 15px; background-color: #e6f2ff; border-radius: 8px; font-size: 11px; color: #666; line-height: 1.4;">
+      <p><strong>Disclaimer:</strong> The information provided in this report is for informational purposes only and does not constitute investment advice. Market Pulse Daily does not guarantee the accuracy, completeness, or timeliness of the information provided. The content should not be construed as an offer to sell or the solicitation of an offer to buy any security. Market Pulse Daily is not responsible for any investment decisions made based on the information provided in this report.</p>
+      <p>Past performance is not indicative of future results. Investing in securities involves risks, including the potential loss of principal. Market data and analysis are sourced from third parties believed to be reliable, but Market Pulse Daily makes no representations regarding the accuracy or completeness of such information.</p>
+      <p>Market Pulse Daily may hold positions in securities mentioned in this report. Readers should conduct their own due diligence before making any investment decisions.</p>
+    </div>
+    
+    <!-- Footer -->
+    <div class="footer" style="margin-top: 15px; padding: 20px; background-color: #1a365d; color: white; text-align: center; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+      <div style="font-weight: bold; margin-bottom: 10px;">Market Pulse Daily - Actionable Trading Insights</div>
+      <div style="font-size: 12px; color: #e2e8f0;">&copy; {{currentYear}} Market Pulse Daily. All rights reserved.</div>
+    </div>
+  </div>
+</body>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Toggle analyst comments
+    const toggleAnalystsButton = document.getElementById('toggleAnalysts');
+    const analystContainer = document.getElementById('analystContainer');
+    
+    if (toggleAnalystsButton && analystContainer) {
+      toggleAnalystsButton.addEventListener('click', function() {
+        if (analystContainer.style.display === 'none') {
+          analystContainer.style.display = 'block';
+          toggleAnalystsButton.textContent = 'Hide Analyst Comments';
+        } else {
+          analystContainer.style.display = 'none';
+          toggleAnalystsButton.textContent = 'Show Analyst Comments';
+        }
+      });
+    }
+  });
+</script>
+</html>

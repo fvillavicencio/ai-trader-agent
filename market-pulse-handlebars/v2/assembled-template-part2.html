@@ -1,0 +1,81 @@
+    
+    <!-- Market Sentiment Section -->
+    {{#if marketSentiment}}
+      <div class="section">
+        <h2>Market Sentiment</h2>
+        
+        {{#if marketSentiment.overall}}
+          <div style="background-color: #f8f9fa; padding: 12px; margin-bottom: 15px; border-radius: 4px;">
+            <div style="font-size: 1em; font-weight: bold; display: inline;">Overall:</div>
+            <div style="font-size: 1em; display: inline; margin-left: 5px;">{{marketSentiment.overall}}</div>
+          </div>
+        {{/if}}
+        
+        {{#if marketSentiment.analysts}}
+          {{#each marketSentiment.analysts}}
+            <div class="analyst-card" style="padding: 15px; background-color: #f8f9fa; border-radius: 6px; margin-bottom: 15px;">
+              <div style="font-weight: bold; margin-bottom: 5px;">{{name}}</div>
+              <div style="font-style: italic; margin-bottom: 5px;">"{{comment}}"</div>
+              
+              {{#if mentionedSymbols.length}}
+                <div style="margin-top: 5px;">
+                  <span style="font-size: 0.9em; color: #666;">Mentioned: </span>
+                  {{#each mentionedSymbols}}
+                    <span style="font-size: 0.9em; background-color: #e9ecef; padding: 2px 6px; border-radius: 4px; margin-right: 5px;">{{this}}</span>
+                  {{/each}}
+                </div>
+              {{/if}}
+              
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <span style="color: #2196f3;">{{source}}</span>
+                {{#if sourceUrl}}<a href="{{sourceUrl}}" target="_blank" style="color: #2196f3; text-decoration: none;"> (link)</a>{{/if}}
+              </div>
+            </div>
+          {{/each}}
+        {{/if}}
+      </div>
+    {{/if}}
+    
+    <!-- Key Market Indicators Section -->
+    {{#if marketIndicators}}
+      <div class="section">
+        <h2>Key Market Indicators</h2>
+        <div style='margin-top: 15px;'>
+          
+          <!-- Major Indices -->
+          {{#if marketIndicators.majorIndices}}
+            <div style="margin-bottom: 15px; padding: 12px; background-color: #f9f9f9; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+              <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Major Indices</div>
+              <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                {{#each marketIndicators.majorIndices}}
+                  <div class="index-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}};">
+                    <div class="label-col" style="font-weight: bold; font-size: clamp(1rem, 2.5vw, 1.1rem); min-width: 0; max-width: 100%; flex: 1 1 0; word-break: break-word;">{{name}}</div>
+                    <div style="flex: 1 1 0; text-align: right; font-size: clamp(1rem, 2.5vw, 1.1rem); min-width: 0; max-width: 100%; word-break: break-word;">{{price}}</div>
+                    <div style="color: {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}}; font-weight: bold; margin-left: 10px; font-size: clamp(0.95rem, 2vw, 1.05rem);">{{#if (gt change 0)}}&#8593;{{else}}&#8595;{{/if}} {{change}}</div>
+                  </div>
+                {{/each}}
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.sourceUrl}}">{{marketIndicators.source}}</a>, 
+                {{#if marketIndicators.asOf}} {{marketIndicators.asOf}}{{/if}}
+              </div>
+            </div>
+          {{/if}}
+        
+          <!-- Sector Performance -->
+          {{#if marketIndicators.sectorPerformance}}
+            <div style="flex: 1; margin-right: 16px; padding: 14px 9px;background: #fff; border-radius: 8px; box-shadow: none; max-width: 100%; border: 1px solid #e0e0e0;">
+              <div style="font-weight: bold; font-size: clamp(1.1rem, 3vw, 1.35rem); margin-bottom: 10px; text-align: center;">Sector Performance</div>
+              <div class="row" style="display: flex; flex-direction: column; gap: 8px;">
+                {{#each marketIndicators.sectorPerformance}}
+                  <div class="sector-card" style="display: flex; align-items: center; flex-wrap: wrap; padding: 8px; background-color: #ffffff; border-radius: 4px; border-left: 3px solid {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}};">
+                    <div class="label-col" style="font-weight: bold; font-size: clamp(1rem, 2.5vw, 1.1rem); min-width: 0; max-width: 100%; flex: 1 1 0; word-break: break-word;">{{name}}</div>
+                    <div style="color: {{#if (gt change 0)}}#4caf50{{else}}#f44336{{/if}}; font-weight: bold; margin-left: 10px; font-size: clamp(0.95rem, 2vw, 1.05rem);">{{#if (gt change 0)}}&#8593;{{else}}&#8595;{{/if}} {{change}}%</div>
+                   </div>
+                {{/each}}
+              </div>
+              <div style="font-size: 10px; color: #888; margin-top: 10px; text-align: right;">
+                Source: <a href="{{marketIndicators.sectorSourceUrl}}">{{marketIndicators.sectorSource}}</a>, as of {{marketIndicators.sectorAsOf}}
+              </div>
+            </div>
+          {{/if}}

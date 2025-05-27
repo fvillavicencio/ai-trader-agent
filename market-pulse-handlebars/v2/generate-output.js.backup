@@ -1,0 +1,935 @@
+const fs = require('fs');
+const Handlebars = require('handlebars');
+const path = require('path');
+
+// Register Handlebars helpers
+Handlebars.registerHelper('gt', function(a, b) {
+  return a > b;
+});
+
+Handlebars.registerHelper('lt', function(a, b) {
+  return a < b;
+});
+
+Handlebars.registerHelper('currentYear', function() {
+  return new Date().getFullYear();
+});
+
+Handlebars.registerHelper('formatDate', function(date) {
+  if (!date) return '';
+  const options = { year: 'numeric', month: 'short', day: 'numeric' };
+  return new Date(date).toLocaleDateString('en-US', options);
+});
+
+Handlebars.registerHelper('formatTime', function(time) {
+  if (!time) return '';
+  return time;
+});
+
+Handlebars.registerHelper('eq', function(a, b) {
+  return a === b;
+});
+
+Handlebars.registerHelper('neq', function(a, b) {
+  return a !== b;
+});
+
+Handlebars.registerHelper('and', function() {
+  return Array.prototype.every.call(arguments, Boolean);
+});
+
+Handlebars.registerHelper('or', function() {
+  return Array.prototype.slice.call(arguments, 0, -1).some(Boolean);
+});
+
+Handlebars.registerHelper('gte', function(a, b) {
+  return a >= b;
+});
+
+Handlebars.registerHelper('lte', function(a, b) {
+  return a <= b;
+});
+
+Handlebars.registerHelper('stringContains', function(str, substring) {
+  if (typeof str !== 'string') return false;
+  return str.includes(substring);
+});
+
+Handlebars.registerHelper('formatNumber', function(num, precision) {
+  if (num === undefined || num === null) return '';
+  return Number(num).toFixed(precision || 0);
+});
+
+Handlebars.registerHelper('formatPercentage', function(num) {
+  if (num === undefined || num === null) return '';
+  return Number(num).toFixed(2) + '%';
+});
+
+Handlebars.registerHelper('ifCond', function(v1, operator, v2, options) {
+  switch (operator) {
+    case '==': return (v1 == v2) ? options.fn(this) : options.inverse(this);
+    case '===': return (v1 === v2) ? options.fn(this) : options.inverse(this);
+    case '!=': return (v1 != v2) ? options.fn(this) : options.inverse(this);
+    case '!==': return (v1 !== v2) ? options.fn(this) : options.inverse(this);
+    case '<': return (v1 < v2) ? options.fn(this) : options.inverse(this);
+    case '<=': return (v1 <= v2) ? options.fn(this) : options.inverse(this);
+    case '>': return (v1 > v2) ? options.fn(this) : options.inverse(this);
+    case '>=': return (v1 >= v2) ? options.fn(this) : options.inverse(this);
+    case '&&': return (v1 && v2) ? options.fn(this) : options.inverse(this);
+    case '||': return (v1 || v2) ? options.fn(this) : options.inverse(this);
+    default: return options.inverse(this);
+  }
+});
+
+// Check if a string starts with a specific substring
+Handlebars.registerHelper('startsWith', function(str, prefix) {
+  if (typeof str !== 'string') return false;
+  return str.startsWith(prefix);
+});
+
+// Read the assembled template
+const templateSource = fs.readFileSync(path.join(__dirname, 'assembled-template.html'), 'utf8');
+const template = Handlebars.compile(templateSource);
+
+// Read the sample data
+const sampleData = JSON.parse(fs.readFileSync(path.join(__dirname, 'sample-data.json'), 'utf8'));
+
+// Fix data structure to match template expectations
+if (sampleData.marketIndicators && sampleData.marketIndicators.fearGreedIndex) {
+  // Rename fearGreedIndex to fearGreed to match the template
+  sampleData.marketIndicators.fearGreed = {
+    value: sampleData.marketIndicators.fearGreedIndex.currentValue,
+    classification: sampleData.marketIndicators.fearGreedIndex.currentClassification,
+    color: getFearGreedColor(sampleData.marketIndicators.fearGreedIndex.currentValue),
+    source: sampleData.marketIndicators.fearGreedIndex.source,
+    sourceUrl: sampleData.marketIndicators.fearGreedIndex.sourceUrl,
+    asOf: sampleData.marketIndicators.fearGreedIndex.asOf
+  };
+}
+
+// Fix more naming and structure mismatches
+if (sampleData.marketIndicators) {
+  // Move economic events to the top level
+  if (sampleData.marketIndicators.economicEvents) {
+    sampleData.economicEvents = sampleData.marketIndicators.economicEvents.map(event => {
+      return {
+        date: event.date,
+        time: event.time,
+        name: event.event,
+        source: event.source,
+        forecast: event.forecast,
+        previous: event.previous
+      };
+    });
+  }
+
+  // Fix top holdings (etfHoldings -> topHoldings)
+  if (sampleData.marketIndicators.sp500 && sampleData.marketIndicators.sp500.etfHoldings) {
+    sampleData.marketIndicators.topHoldings = sampleData.marketIndicators.sp500.etfHoldings;
+    
+    // Add source and timestamp information to each ETF holding
+    if (sampleData.marketIndicators.topHoldings && Array.isArray(sampleData.marketIndicators.topHoldings)) {
+      sampleData.marketIndicators.topHoldings = sampleData.marketIndicators.topHoldings.map(holding => {
+        return {
+          ...holding,
+          source: "ETF Database",
+          sourceUrl: "https://etfdb.com/",
+          asOf: "Apr 22, 2025, 4:00 PM EDT"
+        };
+      });
+    }
+  }
+}
+
+// Fix fundamentalMetrics structure
+if (sampleData.fundamentalMetrics) {
+  // Create a properly structured fundamentalMetrics object
+  const transformedFundamentalMetrics = {
+    majorIndices: [],
+    magnificentSeven: [],
+    otherStocks: []
+  };
+
+  // Define category symbols
+  const indicesSymbols = ['SPY', 'QQQ', 'DIA', 'IWM'];
+  const magSevenSymbols = ['AAPL', 'MSFT', 'GOOGL', 'GOOG', 'AMZN', 'META', 'NVDA', 'TSLA'];
+
+  // Process all stocks from the metrics data
+  if (sampleData.fundamentalMetrics.majorIndices) {
+    transformedFundamentalMetrics.majorIndices = sampleData.fundamentalMetrics.majorIndices.map(stock => {
+      // Format metrics for display
+      const formattedMetrics = [];
+      if (stock.metrics) {
+        // Convert metrics object to array of name/value pairs for the template
+        Object.entries(stock.metrics).forEach(([key, value]) => {
+          const metricName = getMetricDisplayName(key);
+          const formattedValue = formatMetricValue(key, value);
+          formattedMetrics.push({ name: metricName, value: formattedValue });
+        });
+      }
+
+      return {
+        symbol: stock.symbol,
+        name: stock.name,
+        price: formatNumber(stock.price),
+        priceChange: formatNumber(stock.priceChange || 0),
+        percentChange: formatNumber(stock.changesPercentage || 0),
+        metrics: formattedMetrics
+      };
+    });
+  }
+
+  // Process magnificent seven
+  if (sampleData.fundamentalMetrics.magSeven) {
+    transformedFundamentalMetrics.magnificentSeven = sampleData.fundamentalMetrics.magSeven.map(stock => {
+      // Format metrics for display
+      const formattedMetrics = [];
+      if (stock.metrics) {
+        // Convert metrics object to array of name/value pairs for the template
+        Object.entries(stock.metrics).forEach(([key, value]) => {
+          const metricName = getMetricDisplayName(key);
+          const formattedValue = formatMetricValue(key, value);
+          formattedMetrics.push({ name: metricName, value: formattedValue });
+        });
+      }
+
+      return {
+        symbol: stock.symbol,
+        name: stock.name,
+        price: formatNumber(stock.price),
+        priceChange: formatNumber(stock.priceChange || 0),
+        percentChange: formatNumber(stock.changesPercentage || 0),
+        metrics: formattedMetrics
+      };
+    });
+  }
+
+  // Process other stocks
+  if (sampleData.fundamentalMetrics.otherStocks) {
+    transformedFundamentalMetrics.otherStocks = sampleData.fundamentalMetrics.otherStocks.map(stock => {
+      // Format metrics for display
+      const formattedMetrics = [];
+      if (stock.metrics) {
+        // Convert metrics object to array of name/value pairs for the template
+        Object.entries(stock.metrics).forEach(([key, value]) => {
+          const metricName = getMetricDisplayName(key);
+          const formattedValue = formatMetricValue(key, value);
+          formattedMetrics.push({ name: metricName, value: formattedValue });
+        });
+      }
+
+      return {
+        symbol: stock.symbol,
+        name: stock.name,
+        price: formatNumber(stock.price),
+        priceChange: formatNumber(stock.priceChange || 0),
+        percentChange: formatNumber(stock.changesPercentage || 0),
+        metrics: formattedMetrics
+      };
+    });
+  }
+
+  // Replace the original fundamentalMetrics with our transformed version
+  sampleData.fundamentalMetrics = transformedFundamentalMetrics;
+}
+
+// Add fundamental metrics data
+if (!sampleData.fundamentalMetrics) {
+  sampleData.fundamentalMetrics = {
+    majorIndices: [
+      {
+        symbol: "SPY",
+        name: "SPDR S&P 500 ETF",
+        price: 502.18,
+        priceChange: 1.53,
+        percentChange: 0.31,
+        metrics: [
+          { name: "P/E Ratio", value: "23.47" },
+          { name: "Dividend Yield", value: "1.32%" },
+          { name: "52W High", value: "$518.84" },
+          { name: "52W Low", value: "$420.16" },
+          { name: "Volume", value: "78.4M" },
+          { name: "Beta", value: "1.0" },
+          { name: "Sector", value: "Index ETF" },
+          { name: "Assets", value: "$482.5B" }
+        ]
+      },
+      {
+        symbol: "QQQ",
+        name: "Invesco QQQ Trust",
+        price: 438.76,
+        priceChange: 2.15,
+        percentChange: 0.49,
+        metrics: [
+          { name: "P/E Ratio", value: "31.82" },
+          { name: "Dividend Yield", value: "0.48%" },
+          { name: "52W High", value: "$445.89" },
+          { name: "52W Low", value: "$334.56" },
+          { name: "Volume", value: "42.7M" },
+          { name: "Beta", value: "1.15" },
+          { name: "Sector", value: "Tech ETF" },
+          { name: "Assets", value: "$245.8B" }
+        ]
+      },
+      {
+        symbol: "DIA",
+        name: "SPDR Dow Jones ETF",
+        price: 383.42,
+        priceChange: -1.24,
+        percentChange: -0.32,
+        metrics: [
+          { name: "P/E Ratio", value: "21.63" },
+          { name: "Dividend Yield", value: "1.85%" },
+          { name: "52W High", value: "$392.41" },
+          { name: "52W Low", value: "$323.58" },
+          { name: "Volume", value: "3.2M" },
+          { name: "Beta", value: "0.92" },
+          { name: "Sector", value: "Industrial ETF" },
+          { name: "Assets", value: "$32.1B" }
+        ]
+      },
+      {
+        symbol: "IWM",
+        name: "iShares Russell 2000 ETF",
+        price: 202.37,
+        priceChange: -0.87,
+        percentChange: -0.43,
+        metrics: [
+          { name: "P/E Ratio", value: "18.95" },
+          { name: "Dividend Yield", value: "1.21%" },
+          { name: "52W High", value: "$218.63" },
+          { name: "52W Low", value: "$175.42" },
+          { name: "Volume", value: "29.8M" },
+          { name: "Beta", value: "1.25" },
+          { name: "Sector", value: "Small Cap ETF" },
+          { name: "Assets", value: "$58.3B" }
+        ]
+      }
+    ],
+    magnificentSeven: [
+      {
+        symbol: "AAPL",
+        name: "Apple Inc.",
+        price: 169.32,
+        priceChange: 0.87,
+        percentChange: 0.52,
+        metrics: [
+          { name: "P/E Ratio", value: "28.22" },
+          { name: "Forward P/E", value: "26.8" },
+          { name: "PEG Ratio", value: "2.45" },
+          { name: "Price/Book", value: "35.7" },
+          { name: "Price/Sales", value: "7.82" },
+          { name: "Debt/Equity", value: "1.45" },
+          { name: "ROE", value: "147.8%" },
+          { name: "Sector", value: "Technology" },
+          { name: "Industry", value: "Consumer Electronics" }
+        ]
+      },
+      {
+        symbol: "MSFT",
+        name: "Microsoft Corp.",
+        price: 416.78,
+        priceChange: 3.21,
+        percentChange: 0.78,
+        metrics: [
+          { name: "P/E Ratio", value: "35.67" },
+          { name: "Forward P/E", value: "32.4" },
+          { name: "PEG Ratio", value: "2.18" },
+          { name: "Price/Book", value: "14.3" },
+          { name: "Price/Sales", value: "12.65" },
+          { name: "Debt/Equity", value: "0.32" },
+          { name: "ROE", value: "38.2%" },
+          { name: "Sector", value: "Technology" },
+          { name: "Industry", value: "Software Infrastructure" }
+        ]
+      },
+      {
+        symbol: "AMZN",
+        name: "Amazon.com Inc.",
+        price: 182.87,
+        priceChange: 1.45,
+        percentChange: 0.80,
+        metrics: [
+          { name: "P/E Ratio", value: "56.32" },
+          { name: "Forward P/E", value: "42.7" },
+          { name: "PEG Ratio", value: "1.85" },
+          { name: "Price/Book", value: "8.9" },
+          { name: "Price/Sales", value: "2.87" },
+          { name: "Debt/Equity", value: "0.45" },
+          { name: "ROE", value: "15.8%" },
+          { name: "Sector", value: "Consumer Cyclical" },
+          { name: "Industry", value: "Internet Retail" }
+        ]
+      },
+      {
+        symbol: "NVDA",
+        name: "NVIDIA Corp.",
+        price: 879.25,
+        priceChange: 15.32,
+        percentChange: 1.77,
+        metrics: [
+          { name: "P/E Ratio", value: "73.15" },
+          { name: "Forward P/E", value: "48.3" },
+          { name: "PEG Ratio", value: "1.25" },
+          { name: "Price/Book", value: "42.6" },
+          { name: "Price/Sales", value: "32.45" },
+          { name: "Debt/Equity", value: "0.18" },
+          { name: "ROE", value: "87.2%" },
+          { name: "Sector", value: "Technology" },
+          { name: "Industry", value: "Semiconductors" }
+        ]
+      }
+    ],
+    otherStocks: [
+      {
+        symbol: "JPM",
+        name: "JPMorgan Chase & Co.",
+        price: 182.56,
+        priceChange: -1.23,
+        percentChange: -0.67,
+        metrics: [
+          { name: "P/E Ratio", value: "11.03" },
+          { name: "Forward P/E", value: "10.8" },
+          { name: "PEG Ratio", value: "1.85" },
+          { name: "Price/Book", value: "1.65" },
+          { name: "Dividend Yield", value: "2.45%" },
+          { name: "ROE", value: "15.2%" },
+          { name: "ROA", value: "1.32%" },
+          { name: "Sector", value: "Financial Services" },
+          { name: "Industry", value: "Banks - Diversified" }
+        ]
+      },
+      {
+        symbol: "PFE",
+        name: "Pfizer Inc.",
+        price: 27.85,
+        priceChange: -0.32,
+        percentChange: -1.14,
+        metrics: [
+          { name: "P/E Ratio", value: "46.42" },
+          { name: "Forward P/E", value: "12.3" },
+          { name: "PEG Ratio", value: "2.65" },
+          { name: "Price/Book", value: "1.85" },
+          { name: "Dividend Yield", value: "5.74%" },
+          { name: "ROE", value: "3.8%" },
+          { name: "ROA", value: "1.65%" },
+          { name: "Sector", value: "Healthcare" },
+          { name: "Industry", value: "Drug Manufacturers" }
+        ]
+      },
+      {
+        symbol: "XOM",
+        name: "Exxon Mobil Corp.",
+        price: 118.42,
+        priceChange: 2.15,
+        percentChange: 1.85,
+        metrics: [
+          { name: "P/E Ratio", value: "14.52" },
+          { name: "Forward P/E", value: "13.8" },
+          { name: "PEG Ratio", value: "0.85" },
+          { name: "Price/Book", value: "2.15" },
+          { name: "Dividend Yield", value: "3.28%" },
+          { name: "ROE", value: "18.5%" },
+          { name: "ROA", value: "9.8%" },
+          { name: "Sector", value: "Energy" },
+          { name: "Industry", value: "Oil & Gas Integrated" }
+        ]
+      },
+      {
+        symbol: "TSLA",
+        name: "Tesla, Inc.",
+        price: 168.29,
+        priceChange: -2.87,
+        percentChange: -1.68,
+        metrics: [
+          { name: "P/E Ratio", value: "48.23" },
+          { name: "Forward P/E", value: "58.7" },
+          { name: "PEG Ratio", value: "2.15" },
+          { name: "Price/Book", value: "10.85" },
+          { name: "Price/Sales", value: "6.78" },
+          { name: "Debt/Equity", value: "0.12" },
+          { name: "ROE", value: "22.5%" },
+          { name: "Sector", value: "Consumer Cyclical" },
+          { name: "Industry", value: "Auto Manufacturers" }
+        ]
+      }
+    ]
+  };
+}
+
+// Helper function to format metric values appropriately
+function formatMetricValue(key, value) {
+  if (value === null || value === undefined || value === '' || value === 'N/A') {
+    return 'N/A';
+  }
+  
+  // Format based on metric type
+  switch(key) {
+    case 'pe':
+    case 'forwardPE':
+    case 'pegRatio':
+      return Number(value).toFixed(1);
+    case 'divYield':
+    case 'beta':
+      return Number(value).toFixed(2);
+    default:
+      return value;
+  }
+}
+
+// Helper function to get display name for metrics
+function getMetricDisplayName(key) {
+  const metricLabels = {
+    pe: 'P/E Ratio',
+    forwardPE: 'Forward P/E',
+    divYield: 'Dividend Yield',
+    beta: 'Beta',
+    pegRatio: 'PEG Ratio'
+  };
+  
+  return metricLabels[key] || key;
+}
+
+// Helper function to format numbers
+function formatNumber(value) {
+  if (value === null || value === undefined || value === '' || isNaN(value)) {
+    return 'N/A';
+  }
+  return Number(value).toFixed(2);
+}
+
+// Move macroeconomic factors to top level
+if (sampleData.macroeconomicFactors) {
+  // Copy to top level
+  sampleData.macroeconomicFactors = { ...sampleData.macroeconomicFactors };
+}
+
+// Add macroeconomic factors with treasury yields
+sampleData.macroeconomicFactors = {
+  treasuryYields: {
+    yields: [
+      {
+        maturity: "3-Month",
+        rate: "5.28",
+        change: 0.02
+      },
+      {
+        maturity: "2-Year",
+        rate: "4.97",
+        change: 0.05
+      },
+      {
+        maturity: "5-Year",
+        rate: "4.63",
+        change: 0.03
+      },
+      {
+        maturity: "10-Year",
+        rate: "4.62",
+        change: 0.01
+      },
+      {
+        maturity: "30-Year",
+        rate: "4.73",
+        change: -0.01
+      }
+    ],
+    yieldCurve: {
+      status: "Inverted (2Y/10Y)",
+      description: "The yield curve remains inverted, with the 2-year yield 35 basis points higher than the 10-year yield. This inversion has historically been a recession indicator, though the timing can vary significantly.",
+      color: "#f44336" // Red for inverted
+    },
+    source: "U.S. Department of the Treasury",
+    sourceUrl: "https://home.treasury.gov/",
+    asOf: "April 22, 2024 16:00 EST"
+  },
+  fedPolicy: {
+    currentRate: "5.50",
+    rateRange: "5.25% - 5.50%",
+    guidance: "The Federal Reserve has indicated it expects to begin cutting rates later in 2024, with market participants anticipating 2-3 cuts by year-end. However, recent inflation data has raised questions about the timing of the first cut.",
+    guidanceSource: "Federal Reserve",
+    guidanceSourceUrl: "https://www.federalreserve.gov/",
+    guidanceAsOf: "April 22, 2024",
+    rateSource: "Federal Reserve",
+    rateSourceUrl: "https://www.federalreserve.gov/",
+    rateAsOf: "April 22, 2024",
+    lastMeeting: "Previous: March 20, 2024",
+    nextMeeting: "April 30 - May 1, 2024",
+    meetingSource: "Federal Reserve",
+    meetingSourceUrl: "https://www.federalreserve.gov/",
+    meetingAsOf: "April 22, 2024",
+    futuresPrice: "98.75",
+    impliedRate: "5.25",
+    cutProbability: 4.8,
+    holdProbability: 95.2,
+    hikeProbability: 0.0,
+    futuresSource: "CME FedWatch Tool",
+    futuresSourceUrl: "https://www.cmegroup.com/trading/interest-rates/countdown-to-fomc.html",
+    futuresAsOf: "April 22, 2024"
+  },
+  inflation: {
+    cpi: {
+      headline: 3.5,
+      core: 3.8,
+      source: "Bureau of Labor Statistics",
+      sourceUrl: "https://www.bls.gov/cpi/",
+      asOf: "April 10, 2024"
+    },
+    pce: {
+      headline: 2.5,
+      core: 2.8,
+      source: "Bureau of Economic Analysis",
+      sourceUrl: "https://www.bea.gov/",
+      asOf: "April 10, 2024"
+    },
+    expectations: [
+      {
+        period: "1-Year",
+        value: 3.0,
+        color: "#e53935",
+        asOf: "April 10, 2024"
+      },
+      {
+        period: "5-Year",
+        value: 2.5,
+        color: "#ffeb3b",
+        asOf: "April 10, 2024"
+      },
+      {
+        period: "10-Year",
+        value: 2.3,
+        color: "#7cb342",
+        asOf: "April 10, 2024"
+      }
+    ],
+    source: "St. Louis Fed (FRED API)",
+    sourceUrl: "https://fred.stlouisfed.org/",
+    lastUpdated: "Apr 22, 2025, 8:28 PM EDT",
+    trendAnalysis: {
+      analysis: "Inflation is above target, suggesting potential for tighter monetary policy. Continued inflation pressures may lead to higher interest rates, impacting growth stocks.",
+      color: "#f44336", // Red for increasing
+      source: "Bureau of Labor Statistics & Federal Reserve",
+      sourceUrl: "https://www.bls.gov/cpi/",
+      asOf: "April 10, 2024"
+    },
+    source: "Bureau of Labor Statistics & Federal Reserve",
+    sourceUrl: "https://www.bls.gov/cpi/",
+    asOf: "April 10, 2024"
+  }
+};
+
+// Fix sector performance data structure
+if (sampleData.marketIndicators && sampleData.marketIndicators.sectorPerformance) {
+  sampleData.marketIndicators.sectorPerformance = sampleData.marketIndicators.sectorPerformance.map(sector => {
+    return {
+      name: sector.name,
+      change: sector.percentChange !== undefined ? sector.percentChange.toFixed(2) : sector.change
+    };
+  });
+  
+  // Add source and timestamp information for sector performance
+  sampleData.marketIndicators.sectorSource = "S&P Global";
+  sampleData.marketIndicators.sectorSourceUrl = "https://www.spglobal.com/spdji/en/indices/equity/sp-500/";
+  sampleData.marketIndicators.sectorAsOf = "April 22, 2024 16:00 EST";
+}
+
+// Add source and timestamp information for market futures
+if (sampleData.marketIndicators && sampleData.marketIndicators.marketFutures) {
+  sampleData.marketIndicators.futuresSource = "Investing.com";
+  sampleData.marketIndicators.futuresSourceUrl = "https://www.investing.com/indices/indices-futures";
+  sampleData.marketIndicators.futuresAsOf = "April 22, 2024 19:30 EST";
+}
+
+// Add source and timestamp information for volatility indices
+if (sampleData.marketIndicators && sampleData.marketIndicators.volatilityIndices) {
+  sampleData.marketIndicators.volatilitySource = "CBOE";
+  sampleData.marketIndicators.volatilitySourceUrl = "https://www.cboe.com/tradable_products/vix/";
+  sampleData.marketIndicators.volatilityAsOf = "April 22, 2024 16:15 EST";
+}
+
+// Fix Fear and Greed Index data structure
+if (sampleData.marketIndicators) {
+  // Check if fearGreedIndex exists but fearGreed doesn't
+  if (sampleData.marketIndicators.fearGreedIndex && !sampleData.marketIndicators.fearGreed) {
+    const fearGreedData = sampleData.marketIndicators.fearGreedIndex;
+    
+    // Create the fearGreed object with the expected structure
+    sampleData.marketIndicators.fearGreed = {
+      value: fearGreedData.currentValue,
+      category: fearGreedData.currentClassification || "Greed",
+      description: getFearGreedDescription(fearGreedData.currentClassification, fearGreedData.currentValue) || "Market sentiment is showing signs of greed, indicating optimism among investors.",
+      color: getFearGreedColor(fearGreedData.currentValue),
+      previousWeek: fearGreedData.oneWeekAgo?.value || "N/A",
+      previousMonth: fearGreedData.oneMonthAgo?.value || "N/A",
+      source: "CNN Business",
+      sourceUrl: "https://money.cnn.com/data/fear-and-greed/",
+      asOf: "April 22, 2024"
+    };
+  } else if (!sampleData.marketIndicators.fearGreed) {
+    // Create a default fearGreed object if none exists
+    sampleData.marketIndicators.fearGreed = {
+      value: 62,
+      category: "Greed",
+      description: "Market sentiment is showing signs of greed, indicating optimism among investors.",
+      color: "#7cb342",
+      previousWeek: "18",
+      previousMonth: "25",
+      source: "CNN Business",
+      sourceUrl: "https://money.cnn.com/data/fear-and-greed/",
+      asOf: "April 22, 2024"
+    };
+  }
+  
+  // Make sure category and description are not empty
+  if (!sampleData.marketIndicators.fearGreed.category || sampleData.marketIndicators.fearGreed.category === "") {
+    sampleData.marketIndicators.fearGreed.category = "Greed";
+  }
+  
+  if (!sampleData.marketIndicators.fearGreed.description || sampleData.marketIndicators.fearGreed.description === "") {
+    sampleData.marketIndicators.fearGreed.description = "Market sentiment is showing signs of greed, indicating optimism among investors.";
+  }
+}
+
+// Fix RSI data structure
+if (sampleData.marketIndicators && sampleData.marketIndicators.rsi) {
+  const rsi = sampleData.marketIndicators.rsi;
+  
+  // Add category based on RSI value
+  if (!rsi.category) {
+    const rsiValue = parseFloat(rsi.value);
+    
+    // Determine the RSI category (Bullish, Bearish, or Neutral)
+    let category;
+    if (rsiValue > 50) {
+      category = "Bullish";
+    } else if (rsiValue < 50) {
+      category = "Bearish";
+    } else {
+      category = "Neutral";
+    }
+    
+    // Determine color based on RSI value
+    let color;
+    if (rsiValue >= 70) {
+      color = "#43a047"; // Overbought - Green
+    } else if (rsiValue <= 30) {
+      color = "#e53935"; // Oversold - Red
+    } else {
+      color = "#757575"; // Neutral - Gray
+    }
+    
+    // Update the RSI data structure
+    sampleData.marketIndicators.rsi = {
+      ...rsi,
+      category: rsi.status || category,
+      color: rsi.color || color,
+      source: rsi.source || "TradingView",
+      sourceUrl: rsi.sourceUrl || "https://www.tradingview.com/symbols/SPX/",
+      asOf: rsi.asOf || "April 22, 2024"
+    };
+  }
+}
+
+// Add geopolitical risks directly
+sampleData.geopoliticalRisks = {
+  overview: "Heightened tensions in Eastern Europe and the Middle East are increasing market volatility.",
+  risks: [
+    {
+      name: "Russia-Ukraine War Escalation",
+      region: "Eastern Europe",
+      impactLevel: "Severe",
+      description: "The ongoing conflict between Russia and Ukraine continues to destabilize Eastern Europe, with recent escalations in military activity and sanctions intensifying. This has led to heightened volatility in energy and commodity markets, increased risk premiums, and persistent supply chain disruptions, particularly affecting European economies.",
+      color: "#d32f2f" // Red for severe risk
+    },
+    {
+      name: "Israel-Hamas and Regional Middle East Tensions",
+      region: "Middle East",
+      impactLevel: "High",
+      description: "Renewed hostilities between Israel and Hamas, along with broader regional tensions involving Iran and proxy groups, have raised concerns over energy security and shipping routes, particularly in the Red Sea and Persian Gulf. These tensions threaten global oil supply and trade flows.",
+      color: "#f44336" // Red for high risk
+    },
+    {
+      name: "US-China Strategic and Economic Rivalry",
+      region: "Global (US, China, Asia-Pacific)",
+      impactLevel: "High",
+      description: "Persistent tensions between the US and China over trade, technology, and security have resulted in new tariffs, export controls, and investment restrictions. These measures are reshaping global supply chains and increasing costs for businesses worldwide.",
+      color: "#f44336" // Red for high risk
+    },
+    {
+      name: "Red Sea Shipping Disruptions",
+      region: "Red Sea, Global Trade Routes",
+      impactLevel: "High",
+      description: "Attacks on commercial vessels and heightened military presence in the Red Sea have disrupted one of the world's key maritime trade routes. Insurance costs have surged, and rerouting has increased shipping times and costs, impacting global trade flows.",
+      color: "#f44336" // Red for high risk
+    },
+    {
+      name: "Central Bank Policy Uncertainty Amid Geopolitical Shocks",
+      region: "Global (US, Europe, Emerging Markets)",
+      impactLevel: "High",
+      description: "Central banks in advanced economies are facing challenges in balancing inflation control with financial stability, as geopolitical shocks drive up energy and food prices. The risk of policy missteps is elevated, with potential spillovers to global markets.",
+      color: "#f44336" // Red for high risk
+    }
+  ],
+  source: "S&P Global",
+  sourceUrl: "https://www.spglobal.com/",
+  asOf: "Apr 22, 2025, 8:29 PM EDT"
+};
+
+// Add S&P 500 data
+if (!sampleData.sp500) {
+  sampleData.sp500 = {
+    indexLevel: 5287.76,
+    source: "Yahoo Finance",
+    sourceUrl: "https://finance.yahoo.com/quote/%5EGSPC/",
+    asOf: "Apr 22, 2025, 4:58 PM EDT",
+    peRatio: {
+      current: 23.47,
+      fiveYearAvg: 26.59,
+      tenYearAvg: 24.78,
+      source: "Yahoo Finance",
+      sourceUrl: "https://finance.yahoo.com/quote/%5EGSPC/key-statistics/",
+      asOf: "Apr 22, 2025, 8:29 PM EDT"
+    },
+    earnings: {
+      ttm: 22.47,
+      target15x: 336.98,
+      target17x: 381.91,
+      target20x: 449.30,
+      source: "Yahoo Finance",
+      sourceUrl: "https://finance.yahoo.com/quote/%5EGSPC/analysis/",
+      asOf: "Apr 22, 2025, 8:29 PM EDT"
+    }
+  };
+}
+
+// Rename trailingPE to peRatio if needed
+if (sampleData.sp500 && sampleData.sp500.trailingPE && !sampleData.sp500.peRatio) {
+  sampleData.sp500.peRatio = sampleData.sp500.trailingPE;
+  delete sampleData.sp500.trailingPE;
+}
+
+// Delete sp500Analysis if it exists
+if (sampleData.sp500Analysis) {
+  delete sampleData.sp500Analysis;
+}
+
+// Ensure macroeconomicFactors is at the top level
+sampleData.macroeconomicFactors = { ...sampleData.macroeconomicFactors };
+
+// S&P 500 Analysis
+if (sampleData.marketIndicators && sampleData.marketIndicators.sp500) {
+  const sp500 = sampleData.marketIndicators.sp500;
+  
+  // Create proper structure for S&P 500 analysis
+  sampleData.sp500 = {
+    currentLevel: sp500.indexLevel,
+    indexLevel: sp500.indexLevel, // Add this to ensure both properties exist
+    source: sp500.source,
+    sourceUrl: sp500.sourceUrl,
+    asOf: sp500.asOf,
+    peRatio: {
+      current: sp500.trailingPE?.current,
+      fiveYearAvg: sp500.trailingPE?.fiveYearAvg,
+      tenYearAvg: sp500.trailingPE?.tenYearAvg,
+      source: sp500.trailingPE?.source,
+      sourceUrl: sp500.trailingPE?.sourceUrl,
+      asOf: sp500.trailingPE?.asOf
+    },
+    eps: {
+      ttm: sp500.earnings?.ttm,
+      targetAt15x: sp500.earnings?.target15x,
+      targetAt17x: sp500.earnings?.target17x,
+      targetAt20x: sp500.earnings?.target20x,
+      source: sp500.earnings?.source,
+      sourceUrl: sp500.earnings?.sourceUrl,
+      asOf: sp500.earnings?.asOf
+    },
+    forwardEps: sp500.forwardEPS?.values?.map((value, index) => {
+      const currentIndexLevel = sp500.indexLevel || 5287.76;
+      const target15x = (value * 15).toFixed(2);
+      const target17x = (value * 17).toFixed(2);
+      const target20x = (value * 20).toFixed(2);
+      
+      return {
+        year: sp500.forwardEPS?.years?.[index],
+        eps: value,
+        targetAt15x: target15x,
+        percentVsIndex15x: ((target15x / currentIndexLevel - 1) * 100).toFixed(1),
+        targetAt17x: target17x,
+        percentVsIndex17x: ((target17x / currentIndexLevel - 1) * 100).toFixed(1),
+        targetAt20x: target20x,
+        percentVsIndex20x: ((target20x / currentIndexLevel - 1) * 100).toFixed(1)
+      };
+    }),
+    forwardEpsSource: {
+      name: sp500.forwardEPS?.source,
+      url: sp500.forwardEPS?.sourceUrl,
+      asOf: sp500.forwardEPS?.asOf
+    }
+  };
+  
+  // Delete the sp500Analysis property as we're using sp500 directly
+  delete sampleData.sp500Analysis;
+}
+
+// Helper function to get color based on inflation period
+function getInflationColor(period) {
+  const colors = {
+    '1-Year': '#e53935',
+    '2-Year': '#fb8c00',
+    '5-Year': '#ffeb3b',
+    '10-Year': '#7cb342'
+  };
+  return colors[period] || '#2196F3';
+}
+
+// Helper function to get color based on risk level
+function getRiskLevelColor(riskLevel) {
+  if (!riskLevel) return '#757575';
+  
+  switch(riskLevel.toLowerCase()) {
+    case 'high':
+      return '#f44336';
+    case 'medium':
+      return '#ff9800';
+    case 'low':
+      return '#4caf50';
+    default:
+      return '#757575';
+  }
+}
+
+// Helper function to get Fear & Greed description
+function getFearGreedDescription(classification, value) {
+  switch (classification) {
+    case "Extreme Fear":
+      return "Investors are in a state of extreme fear, potentially signaling a buying opportunity as markets may be oversold.";
+    case "Fear":
+      return "Market sentiment is fearful, suggesting caution but possible value opportunities in quality stocks.";
+    case "Neutral":
+      return "Market sentiment is balanced, with investors neither overly optimistic nor pessimistic about current conditions.";
+    case "Greed":
+      return "Investors are showing signs of greed, indicating potential market optimism but also raising concerns about overvaluation.";
+    case "Extreme Greed":
+      return "Markets are showing signs of extreme greed, potentially indicating a market top and suggesting caution for new investments.";
+    default:
+      return `Current market sentiment is at ${value}, indicating ${classification.toLowerCase()} among investors.`;
+  }
+}
+
+// Helper function to get Fear & Greed color
+function getFearGreedColor(value) {
+  if (value <= 25) return "#e53935"; // Extreme Fear - Red
+  if (value <= 45) return "#fb8c00"; // Fear - Orange
+  if (value <= 55) return "#ffeb3b"; // Neutral - Yellow
+  if (value <= 75) return "#7cb342"; // Greed - Light Green
+  return "#43a047"; // Extreme Greed - Green
+}
+
+// Compile the template with the sample data
+const output = template(sampleData);
+
+// Write the output to a file
+fs.writeFileSync(path.join(__dirname, 'output.html'), output);
+
+console.log('Output HTML file generated successfully!');

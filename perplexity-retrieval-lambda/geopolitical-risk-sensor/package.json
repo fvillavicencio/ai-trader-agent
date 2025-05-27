@@ -1,0 +1,30 @@
+{
+  "name": "geopolitical-risk-sensor",
+  "version": "1.0.0",
+  "description": "Service for monitoring and analyzing geopolitical events to identify risks",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "NODE_ENV=test TEST_MODE=true node src/index.js",
+    "dev": "nodemon src/index.js"
+  },
+  "keywords": [
+    "geopolitical",
+    "risk",
+    "analysis",
+    "perplexity",
+    "rss"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "axios": "^1.6.0",
+    "cheerio": "^1.0.0-rc.12",
+    "dotenv": "^16.3.1",
+    "rss-parser": "^3.13.0",
+    "winston": "^3.11.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  }
+}

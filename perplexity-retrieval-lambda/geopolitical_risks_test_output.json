@@ -1,0 +1,234 @@
+{
+  "geopoliticalRiskIndex": 68,
+  "risks": [
+    {
+      "type": "Conflict",
+      "name": "Escalation in Middle East Tensions",
+      "description": "Recent military exchanges between Israel and Hezbollah have intensified, with reports of increased missile strikes and potential ground operations. Financial markets showed immediate reaction with oil prices surging 3.2% on concerns about regional supply disruptions.",
+      "region": "Middle East",
+      "impactLevel": 7.5,
+      "marketImpact": "Energy sector stocks up 2.8%, defense contractors seeing 1.5% gains, while travel and tourism stocks down 1.9%. Gold prices increased by 0.8% as investors seek safe-haven assets.",
+      "sectorImpacts": [
+        {
+          "sector": "Energy",
+          "impact": 8,
+          "direction": "positive"
+        },
+        {
+          "sector": "Defense",
+          "impact": 7,
+          "direction": "positive"
+        },
+        {
+          "sector": "Travel & Tourism",
+          "impact": 6,
+          "direction": "negative"
+        },
+        {
+          "sector": "Commodities",
+          "impact": 5,
+          "direction": "mixed"
+        }
+      ],
+      "expertOpinions": [
+        {
+          "name": "Sarah Johnson",
+          "affiliation": "Goldman Sachs",
+          "opinion": "This escalation could trigger a broader regional conflict with significant implications for global energy markets."
+        },
+        {
+          "name": "Michael Chen",
+          "affiliation": "JP Morgan",
+          "opinion": "We're adjusting our oil price forecasts upward by 5% in response to these developments."
+        }
+      ],
+      "source": "Financial Times",
+      "url": "https://www.ft.com/content/middle-east-conflict-markets",
+      "lastUpdated": "2025-05-15"
+    },
+    {
+      "type": "Monetary Policy",
+      "name": "Federal Reserve Signals Delayed Rate Cuts",
+      "description": "The Federal Reserve has indicated it may delay previously anticipated interest rate cuts due to persistent inflation data. Minutes from the latest FOMC meeting revealed concerns about inflation remaining above the 2% target despite prior monetary tightening.",
+      "region": "United States",
+      "impactLevel": 8.2,
+      "marketImpact": "Treasury yields jumped with the 10-year rising 15 basis points. Banking stocks fell 2.1% while the dollar strengthened 0.7% against a basket of currencies. Growth stocks particularly in tech sector declined 1.8%.",
+      "sectorImpacts": [
+        {
+          "sector": "Banking",
+          "impact": 7,
+          "direction": "negative"
+        },
+        {
+          "sector": "Technology",
+          "impact": 6,
+          "direction": "negative"
+        },
+        {
+          "sector": "Real Estate",
+          "impact": 8,
+          "direction": "negative"
+        },
+        {
+          "sector": "Utilities",
+          "impact": 5,
+          "direction": "negative"
+        }
+      ],
+      "expertOpinions": [
+        {
+          "name": "David Williams",
+          "affiliation": "Morgan Stanley",
+          "opinion": "Markets had priced in at least two rate cuts this year, so this shift in Fed rhetoric represents a significant recalibration."
+        },
+        {
+          "name": "Jennifer Lee",
+          "affiliation": "Bank of America",
+          "opinion": "We're now forecasting only one 25 basis point cut in Q4, down from our previous expectation of three cuts throughout the year."
+        }
+      ],
+      "source": "Bloomberg",
+      "url": "https://www.bloomberg.com/news/articles/fed-signals-rate-cut-delay",
+      "lastUpdated": "2025-05-16"
+    },
+    {
+      "type": "Trade",
+      "name": "EU-China Trade Tensions Escalate",
+      "description": "The European Union has imposed new tariffs on Chinese electric vehicles, citing unfair subsidies. China has threatened retaliatory measures against European luxury goods and agricultural products, raising concerns about a potential trade war between two of the world's largest economies.",
+      "region": "Global",
+      "impactLevel": 6.8,
+      "marketImpact": "European automakers saw mixed reactions with luxury brands falling 3.2% on fears of Chinese retaliation. Chinese EV manufacturers listed in Europe dropped 5.7%. Supply chain and semiconductor stocks declined 2.3% on uncertainty.",
+      "sectorImpacts": [
+        {
+          "sector": "Automotive",
+          "impact": 8,
+          "direction": "mixed"
+        },
+        {
+          "sector": "Luxury Goods",
+          "impact": 7,
+          "direction": "negative"
+        },
+        {
+          "sector": "Semiconductors",
+          "impact": 6,
+          "direction": "negative"
+        },
+        {
+          "sector": "Agriculture",
+          "impact": 5,
+          "direction": "negative"
+        }
+      ],
+      "expertOpinions": [
+        {
+          "name": "Thomas Schmidt",
+          "affiliation": "Deutsche Bank",
+          "opinion": "This marks a significant shift in EU-China trade relations that could have lasting implications for global supply chains."
+        },
+        {
+          "name": "Li Wei",
+          "affiliation": "CICC",
+          "opinion": "Chinese manufacturers will likely accelerate diversification strategies to reduce dependence on European markets."
+        }
+      ],
+      "source": "Reuters",
+      "url": "https://www.reuters.com/business/eu-china-trade-tensions",
+      "lastUpdated": "2025-05-14"
+    },
+    {
+      "type": "Political",
+      "name": "Political Instability in Key Latin American Economy",
+      "description": "Growing protests and legislative gridlock in Brazil have raised concerns about the implementation of fiscal reforms. The Brazilian real has depreciated 4.5% against the dollar in the past week as international investors reassess political risk.",
+      "region": "Latin America",
+      "impactLevel": 5.4,
+      "marketImpact": "Brazilian equities down 3.8%, with state-owned enterprises particularly affected. Regional currencies under pressure with spillover effects to other emerging markets. Commodity exporters seeing increased volatility.",
+      "sectorImpacts": [
+        {
+          "sector": "Emerging Markets",
+          "impact": 7,
+          "direction": "negative"
+        },
+        {
+          "sector": "Commodities",
+          "impact": 6,
+          "direction": "negative"
+        },
+        {
+          "sector": "Banking",
+          "impact": 5,
+          "direction": "negative"
+        },
+        {
+          "sector": "Energy",
+          "impact": 4,
+          "direction": "negative"
+        }
+      ],
+      "expertOpinions": [
+        {
+          "name": "Carlos Mendez",
+          "affiliation": "Itaú BBA",
+          "opinion": "The market is pricing in a risk premium due to uncertainty about the government's ability to pass necessary fiscal measures."
+        },
+        {
+          "name": "Rebecca Martinez",
+          "affiliation": "BlackRock",
+          "opinion": "We're reducing our exposure to Brazilian assets until we see more clarity on the political situation."
+        }
+      ],
+      "source": "Wall Street Journal",
+      "url": "https://www.wsj.com/articles/brazil-political-instability-markets",
+      "lastUpdated": "2025-05-15"
+    },
+    {
+      "type": "Regulatory",
+      "name": "New Global AI Regulations Proposed",
+      "description": "A coalition of G7 countries has announced plans for coordinated regulation of artificial intelligence technologies, focusing on data privacy, algorithmic transparency, and security concerns. The proposed framework would require significant compliance investments from major tech companies.",
+      "region": "Global",
+      "impactLevel": 6.2,
+      "marketImpact": "Large tech companies with significant AI investments saw share prices decline by an average of 2.1%. Smaller AI-focused startups fell more sharply at 4.7%. Cybersecurity firms gained 1.8% as compliance requirements are expected to increase demand.",
+      "sectorImpacts": [
+        {
+          "sector": "Technology",
+          "impact": 8,
+          "direction": "mixed"
+        },
+        {
+          "sector": "Cybersecurity",
+          "impact": 6,
+          "direction": "positive"
+        },
+        {
+          "sector": "Cloud Services",
+          "impact": 5,
+          "direction": "negative"
+        },
+        {
+          "sector": "Data Analytics",
+          "impact": 7,
+          "direction": "negative"
+        }
+      ],
+      "expertOpinions": [
+        {
+          "name": "Priya Sharma",
+          "affiliation": "Gartner",
+          "opinion": "These regulations represent the most significant coordinated effort to govern AI development and could reshape competitive dynamics in the industry."
+        },
+        {
+          "name": "Robert Chen",
+          "affiliation": "KPMG",
+          "opinion": "We estimate compliance costs could reach 3-5% of revenue for companies heavily invested in AI technologies."
+        }
+      ],
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/tech/global-ai-regulation-framework",
+      "lastUpdated": "2025-05-16"
+    }
+  ],
+  "summary": "Global geopolitical risks remain elevated with significant concerns centered around Middle East tensions, monetary policy uncertainty, and growing trade disputes between major economies. The Federal Reserve's hawkish stance has particularly impacted financial markets, while escalating conflicts in the Middle East continue to create volatility in energy markets. Regulatory developments in technology and ongoing political instability in emerging markets represent additional sources of market uncertainty.",
+  "source": "Perplexity API Enhanced Retrieval (Test Data)",
+  "sourceUrl": "https://perplexity.ai/",
+  "lastUpdated": "2025-05-16"
+}

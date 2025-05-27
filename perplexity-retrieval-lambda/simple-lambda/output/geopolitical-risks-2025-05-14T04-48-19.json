@@ -1,0 +1,63 @@
+{
+  "geopoliticalRiskIndex": 50,
+  "risks": [
+    {
+      "type": "Event",
+      "name": "US-China Trade Tensions Escalate",
+      "description": "The United States and China announced new tariffs on each other's goods, escalating the ongoing trade dispute between the world's two largest economies. Experts weigh in: Analysis Unavailable (System Fallback): \"Expert analysis could not be retrieved at this time.\"",
+      "region": "Global, United States, China",
+      "impactLevel": 5,
+      "marketImpact": "Market impact data unavailable. This is a fallback analysis due to API processing limitations. Sector impacts: Global Markets: Mixed (Specific impact data unavailable). global Markets: Mixed (Regional impact assessment unavailable)",
+      "source": "Financial Times",
+      "url": "https://www.ft.com/content/global-economy",
+      "lastUpdated": "05/13/2025"
+    },
+    {
+      "type": "Event",
+      "name": "Federal Reserve Signals Interest Rate Decision",
+      "description": "The Federal Reserve indicated it may adjust its monetary policy stance in response to recent economic data, affecting expectations for future interest rate movements. Experts weigh in: Analysis Unavailable (System Fallback): \"Expert analysis could not be retrieved at this time.\"",
+      "region": "United States, Global",
+      "impactLevel": 5,
+      "marketImpact": "Market impact data unavailable. This is a fallback analysis due to API processing limitations. Sector impacts: Banking: Mixed (Bank stocks sensitive to interest rate changes). Real Estate: Negative (Higher rates typically pressure real estate valuations). Technology: Negative (Growth stocks often underperform in higher rate environments)",
+      "source": "Wall Street Journal",
+      "url": "https://www.wsj.com/economy",
+      "lastUpdated": "05/12/2025"
+    },
+    {
+      "type": "Event",
+      "name": "Middle East Conflict Impacts Oil Markets",
+      "description": "Ongoing conflicts in the Middle East have led to concerns about oil supply disruptions, causing volatility in global energy markets. Experts weigh in: Analysis Unavailable (System Fallback): \"Expert analysis could not be retrieved at this time.\"",
+      "region": "Middle East, Global",
+      "impactLevel": 5,
+      "marketImpact": "Market impact data unavailable. This is a fallback analysis due to API processing limitations. Sector impacts: Defense: Positive (Defense stocks typically rise during conflicts). Energy: Mixed (Energy prices often volatile during geopolitical tensions). Tourism: Negative (Travel to affected regions typically decreases)",
+      "source": "Bloomberg",
+      "url": "https://www.bloomberg.com/energy",
+      "lastUpdated": "05/14/2025"
+    },
+    {
+      "type": "Event",
+      "name": "European Central Bank Policy Meeting",
+      "description": "The European Central Bank held its policy meeting, discussing inflation concerns and economic growth prospects across the eurozone. Experts weigh in: Analysis Unavailable (System Fallback): \"Expert analysis could not be retrieved at this time.\"",
+      "region": "Europe",
+      "impactLevel": 5,
+      "marketImpact": "Market impact data unavailable. This is a fallback analysis due to API processing limitations. Sector impacts: Banking: Mixed (Bank stocks sensitive to interest rate changes). Real Estate: Negative (Higher rates typically pressure real estate valuations). Technology: Negative (Growth stocks often underperform in higher rate environments)",
+      "source": "Reuters",
+      "url": "https://www.reuters.com/business/finance",
+      "lastUpdated": "05/13/2025"
+    },
+    {
+      "type": "Event",
+      "name": "Major Cyber Attack Affects Financial Institutions",
+      "description": "Several major financial institutions reported being targeted by sophisticated cyber attacks, raising concerns about financial system security. Experts weigh in: Analysis Unavailable (System Fallback): \"Expert analysis could not be retrieved at this time.\"",
+      "region": "Global",
+      "impactLevel": 5,
+      "marketImpact": "Market impact data unavailable. This is a fallback analysis due to API processing limitations. Sector impacts: Global Markets: Mixed (Specific impact data unavailable). global Markets: Mixed (Regional impact assessment unavailable)",
+      "source": "CNBC",
+      "url": "https://www.cnbc.com/cybersecurity",
+      "lastUpdated": "05/12/2025"
+    }
+  ],
+  "source": "Perplexity API Enhanced Retrieval",
+  "sourceUrl": "https://perplexity.ai/",
+  "lastUpdated": "05/14/2025"
+}

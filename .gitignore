@@ -1,0 +1,60 @@
+# Dependency directories
+node_modules/
+
+# Environment variables
+.env
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Output of test files
+test_output/
+
+# Secrets
+vertex-search/ai-trader-agent-26a2b921b48d.json
+perplexity-retrieval-lambda/simple-lambda/api-gateway-config.json
+perplexity-retrieval-lambda/simple-lambda/update-lambda-env.sh
+
+# API keys and configuration files
+**/api-gateway-config.json
+**/api-keys.json
+**/*config*.json
+**/*update-lambda-env*.sh
+
+# macOS specific files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Thumbnails
+._*
+
+# Files that might appear in the root of a volume
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk

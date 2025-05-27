@@ -1,0 +1,572 @@
+{
+  "date": "April 22, 2025",
+  "headline": "Market Pulse Daily - Analysis",
+  "subtitle": "As of Apr 22, 2025, 1:48 PM EDT",
+  "timestamp": "Apr 22, 2025, 1:48 PM EDT",
+  "decision": {
+    "text": "⚠️ Watch for Better Price Action",
+    "summary": "Market jitters persist as investors weigh tariff impacts and volatility.",
+    "color": "#FFA500"
+  },
+  "justification": "The current market environment is characterized by high volatility and extreme fear, as indicated by a VIX of 32.14 and a Fear & Greed Index at 24. The forward P/E ratio of 23.28 suggests overvaluation, especially with geopolitical tensions and tariff impacts weighing on sentiment. Analysts express caution, with concerns about the sustainability of recent gains and potential downside risks. The USD is weakening while gold is rising, indicating a risk-averse environment. Given these factors, a cautious approach is recommended, with a focus on monitoring for better price action and considering selling calls to capitalize on high volatility.",
+  "marketSentiment": {
+    "overall": "Cautious sentiment prevails amid tariff shocks and volatility.",
+    "analysts": [
+      {
+        "name": "Dan Nathan",
+        "comment": "Increased volatility and uncertainty in the equity markets.",
+        "mentioned": [
+          "NVDA",
+          "MSFT",
+          "AAPL"
+        ],
+        "source": "Mutual of America Economic & Market Perspective: April 2025"
+      },
+      {
+        "name": "Dan Niles",
+        "comment": "Tariffs have shifted expectations toward lower growth and increased volatility.",
+        "mentioned": [
+          "TSLA",
+          "AAPL",
+          "NVDA"
+        ],
+        "source": "IMF Global Financial Stability Report, April 2025"
+      },
+      {
+        "name": "Steve Weiss",
+        "comment": "Concern about tariffs and political risk on U.S. equities.",
+        "mentioned": [
+          "XLP",
+          "XLU"
+        ],
+        "source": "Comerica April 2025 U.S. Economic Outlook"
+      },
+      {
+        "name": "Joe Terranova",
+        "comment": "Unsettled market with selective opportunities in less exposed sectors.",
+        "mentioned": [
+          "GOOGL",
+          "MSFT",
+          "AAPL"
+        ],
+        "source": "Mutual of America Economic & Market Perspective: April 2025"
+      },
+      {
+        "name": "Mohamed El-Erian",
+        "comment": "Risk of a 'growth scare' due to tariff shock and political uncertainty.",
+        "mentioned": [],
+        "source": "Comerica April 2025 U.S. Economic Outlook"
+      },
+      {
+        "name": "Josh Brown",
+        "comment": "Market correction has created opportunities, but sentiment remains cautious.",
+        "mentioned": [
+          "SPY",
+          "IWM"
+        ],
+        "source": "Mutual of America Economic & Market Perspective: April 2025"
+      }
+    ]
+  },
+  "keyIndicators": {
+    "sectors": [
+      {
+        "name": "Consumer Staples",
+        "percentChange": 0.5,
+        "color": "#4caf50",
+        "direction": "up"
+      },
+      {
+        "name": "Technology",
+        "percentChange": -1.2,
+        "color": "#f44336",
+        "direction": "down"
+      },
+      {
+        "name": "Financials",
+        "percentChange": 0.3,
+        "color": "#4caf50",
+        "direction": "up"
+      },
+      {
+        "name": "Energy",
+        "percentChange": -0.7,
+        "color": "#f44336",
+        "direction": "down"
+      }
+    ],
+    "marketFutures": {
+      "asOf": "Apr 22, 2025, 7:00 PM EDT",
+      "consolidated": [
+        {
+          "name": "S&P 500 Futures",
+          "symbol": "ES=F",
+          "last": 5250.25,
+          "percentChange": 0.31,
+          "asOF": "Apr 22, 2025, 6:59 PM EDT"
+        },
+        {
+          "name": "Dow Futures",
+          "symbol": "YM=F",
+          "last": 38250,
+          "percentChange": -0.12,
+          "asOF": "Apr 22, 2025, 6:59 PM EDT"
+        },
+        {
+          "name": "Nasdaq Futures",
+          "symbol": "NQ=F",
+          "last": 18025.75,
+          "percentChange": 0.45,
+          "asOF": "Apr 22, 2025, 6:59 PM EDT"
+        }
+      ]
+    },
+    "fearGreed": {
+      "value": 24,
+      "oneWeekAgo": 18,
+      "oneMonthAgo": 25,
+      "level": "Extreme Fear",
+      "gaugePercent": 24,
+      "labels": [
+        "Extreme Fear",
+        "Fear",
+        "Neutral",
+        "Greed",
+        "Extreme Greed"
+      ],
+      "explanation": "Market sentiment indicator based on various market factors.",
+      "source": "CNN",
+      "sourceUrl": "https://www.cnn.com/markets/fear-and-greed",
+      "asOf": "Apr 22, 2025, 10:54 AM EDT"
+    },
+    "volatilityIndices": [
+      {
+        "name": "CBOE Volatility Index",
+        "value": 32.14,
+        "trend": "Falling",
+        "color": "#f44336"
+      },
+      {
+        "name": "NASDAQ Volatility Index",
+        "value": 35.46,
+        "trend": "Falling",
+        "color": "#f44336"
+      }
+    ],
+    "rsi": {
+      "label": "Relative Strength Index (14-day)",
+      "value": 40.4,
+      "status": "Neutral",
+      "gaugePercent": 40.4,
+      "trend": "Bullish",
+      "trendIcon": "↑",
+      "color": "#2563eb",
+      "explanation": "Developed by J. Welles Wilder Jr. in 1978, the Relative Strength Index (RSI) is a 0–100 momentum oscillator: readings > 70 signal overbought, < 30 oversold, and 30–70 neutral (with 50 marking 'no trend'). Values above 50 imply bullish momentum; below 50, bearish momentum.",
+      "gaugeLabels": [
+        "Oversold",
+        "Neutral",
+        "Overbought"
+      ],
+      "source": "Tradier (RSI)",
+      "sourceUrl": "https://finance.yahoo.com/quote/%5EGSPC",
+      "asOf": "Apr 22, 2025, 1:48 PM EDT"
+    }
+  },
+  "sp500": {
+    "indexLevel": 5245.72,
+    "asOf": "Apr 22, 2025, 1:48 PM EDT",
+    "peRatio": {
+      "current": 23.28,
+      "fiveYearAvg": 26.58,
+      "tenYearAvg": 24.77,
+      "source": "Yahoo Finance"
+    },
+    "epsTrailing": {
+      "eps": 22.47,
+      "target15x": 336.98,
+      "target17x": 381.91,
+      "target20x": 449.3,
+      "source": "Yahoo Finance"
+    },
+    "epsForward": [
+      {
+        "year": 2026,
+        "eps": 80.63,
+        "target15x": 1209.45,
+        "pctVsIndex15x": -76.9,
+        "target17x": 1370.71,
+        "pctVsIndex17x": -73.9,
+        "target20x": 1612.6,
+        "pctVsIndex20x": -69.3
+      },
+      {
+        "year": 2025,
+        "eps": 71.51,
+        "target15x": 1072.65,
+        "pctVsIndex15x": -79.6,
+        "target17x": 1215.67,
+        "pctVsIndex17x": -76.8,
+        "target20x": 1430.2,
+        "pctVsIndex20x": -72.7
+      }
+    ]
+  },
+  "etfHoldings": [
+    {
+      "index": "S&P 500",
+      "symbol": "SPY",
+      "holdings": [
+        {
+          "symbol": "AAPL",
+          "name": "APPLE INC",
+          "weight": 6.63
+        },
+        {
+          "symbol": "MSFT",
+          "name": "MICROSOFT CORP",
+          "weight": 6.1
+        },
+        {
+          "symbol": "NVDA",
+          "name": "NVIDIA CORP",
+          "weight": 5.42
+        },
+        {
+          "symbol": "AMZN",
+          "name": "AMAZON.COM INC",
+          "weight": 3.61
+        },
+        {
+          "symbol": "META",
+          "name": "META PLATFORMS INC CLASS A",
+          "weight": 2.43
+        }
+      ],
+      "source": "State Street Global Advisors",
+      "asOf": "Apr 16, 2025, 7:49 PM EDT"
+    },
+    {
+      "index": "NASDAQ 100",
+      "symbol": "QQQ",
+      "holdings": [
+        {
+          "symbol": "AAPL",
+          "name": "APPLE INC",
+          "weight": 10.92
+        },
+        {
+          "symbol": "MSFT",
+          "name": "MICROSOFT CORP",
+          "weight": 9.12
+        },
+        {
+          "symbol": "NVDA",
+          "name": "NVIDIA CORP",
+          "weight": 7.77
+        },
+        {
+          "symbol": "AMZN",
+          "name": "AMAZON.COM INC",
+          "weight": 5.12
+        },
+        {
+          "symbol": "META",
+          "name": "META PLATFORMS INC CLASS A",
+          "weight": 3.23
+        }
+      ],
+      "source": "Invesco",
+      "asOf": "Apr 16, 2025, 7:49 PM EDT"
+    }
+  ],
+  "upcomingEvents": [
+    {
+      "date": "Apr 23, 2025, 8:00 AM EDT",
+      "description": "US Durable Goods Orders Release"
+    },
+    {
+      "date": "Apr 24, 2025, 2:00 PM EDT",
+      "description": "FOMC Meeting Minutes"
+    }
+  ],
+  "inflation": {
+    "cpi": {
+      "headline": 3.5,
+      "core": 3.8,
+      "asOf": "Mar 2025",
+      "source": "BLS"
+    },
+    "pce": {
+      "headline": 2.8,
+      "core": 2.9,
+      "asOf": "Mar 2025",
+      "source": "BEA"
+    },
+    "expectations": {
+      "oneYear": 3.1,
+      "fiveYear": 2.5,
+      "source": "University of Michigan"
+    }
+  },
+  "etfs": [
+    {
+      "symbol": "IWM",
+      "name": "iShares Russell 2000 ETF",
+      "price": 184.73,
+      "priceChange": 1.99,
+      "percentChange": 1.09,
+      "direction": "up",
+      "metrics": {
+        "volume": "7,980,061",
+        "open": "$185.15",
+        "dayHigh": "$186.39",
+        "dayLow": "$184.55",
+        "fiftyTwoWeekHigh": "$244.98",
+        "fiftyTwoWeekLow": "$171.73"
+      }
+    },
+    {
+      "symbol": "DIA",
+      "name": "SPDR Dow Jones Industrial Average ETF",
+      "price": 389.13,
+      "priceChange": 7.51,
+      "percentChange": 1.97,
+      "direction": "up",
+      "metrics": {
+        "volume": "619,999",
+        "open": "$386.07",
+        "dayHigh": "$389.64",
+        "dayLow": "$385.20",
+        "fiftyTwoWeekHigh": "$451.55",
+        "fiftyTwoWeekLow": "$366.32"
+      }
+    }
+  ],
+  "magnificentSeven": [
+    {
+      "symbol": "AAPL",
+      "name": "Apple Inc",
+      "price": 199.07,
+      "priceChange": 5.91,
+      "percentChange": 3.06,
+      "direction": "up",
+      "metrics": {
+        "volume": "10,589,774",
+        "open": "$196.12",
+        "dayHigh": "$199.14",
+        "dayLow": "$195.97",
+        "fiftyTwoWeekHigh": "$260.10",
+        "fiftyTwoWeekLow": "$164.92",
+        "industry": "Consumer Electronics"
+      }
+    },
+    {
+      "symbol": "MSFT",
+      "name": "Microsoft Corp",
+      "price": 364.18,
+      "priceChange": 5.06,
+      "percentChange": 1.41,
+      "direction": "up",
+      "metrics": {
+        "volume": "4,231,105",
+        "open": "$363.38",
+        "dayHigh": "$364.24",
+        "dayLow": "$359.86",
+        "fiftyTwoWeekHigh": "$468.35",
+        "fiftyTwoWeekLow": "$344.79",
+        "industry": "Software—Infrastructure"
+      }
+    },
+    {
+      "symbol": "GOOGL",
+      "name": "Alphabet Inc",
+      "price": 150.38,
+      "priceChange": 2.71,
+      "percentChange": 1.84,
+      "direction": "up",
+      "metrics": {
+        "volume": "6,131,119",
+        "open": "$148.89",
+        "dayHigh": "$150.41",
+        "dayLow": "$148.54",
+        "fiftyTwoWeekHigh": "$207.05",
+        "fiftyTwoWeekLow": "$140.53",
+        "industry": "Internet Content & Information"
+      }
+    },
+    {
+      "symbol": "AMZN",
+      "name": "Amazon.com Inc",
+      "price": 172.38,
+      "priceChange": 5.06,
+      "percentChange": 3.03,
+      "direction": "up",
+      "metrics": {
+        "volume": "12,518,357",
+        "open": "$169.84",
+        "dayHigh": "$172.56",
+        "dayLow": "$169.35",
+        "fiftyTwoWeekHigh": "$242.52",
+        "fiftyTwoWeekLow": "$151.61",
+        "industry": "Internet Retail"
+      }
+    },
+    {
+      "symbol": "META",
+      "name": "Meta Platforms Inc",
+      "price": 490.49,
+      "priceChange": 5.83,
+      "percentChange": 1.21,
+      "direction": "up",
+      "metrics": {
+        "volume": "4,122,327",
+        "open": "$491.87",
+        "dayHigh": "$494.54",
+        "dayLow": "$486.36",
+        "fiftyTwoWeekHigh": "$740.91",
+        "fiftyTwoWeekLow": "$414.50",
+        "industry": "Internet Content & Information"
+      }
+    },
+    {
+      "symbol": "TSLA",
+      "name": "Tesla Inc",
+      "price": 236.04,
+      "priceChange": 8.55,
+      "percentChange": 3.76,
+      "direction": "up",
+      "metrics": {
+        "volume": "31,576,210",
+        "open": "$230.96",
+        "dayHigh": "$237.81",
+        "dayLow": "$229.85",
+        "fiftyTwoWeekHigh": "$488.54",
+        "fiftyTwoWeekLow": "$141.11",
+        "industry": "Auto Manufacturers"
+      }
+    },
+    {
+      "symbol": "NVDA",
+      "name": "NVIDIA Corp",
+      "price": 98.61,
+      "priceChange": 1.7,
+      "percentChange": 1.76,
+      "direction": "up",
+      "metrics": {
+        "volume": "",
+        "open": "",
+        "dayHigh": "",
+        "dayLow": "",
+        "fiftyTwoWeekHigh": "",
+        "fiftyTwoWeekLow": "",
+        "industry": "Semiconductors"
+      }
+    }
+  ],
+  "inflationTrend": {
+    "trend": "Increasing",
+    "outlook": "Inflation is moderating towards the Fed's target.",
+    "marketImpact": "The moderation in inflation suggests a balanced approach to monetary policy.",
+    "source": "Federal Reserve",
+    "lastUpdated": "Apr 22, 2025, 7:38 AM EDT"
+  },
+  "geopoliticalRisks": [
+    {
+      "title": "US-China Strategic Competition",
+      "description": "The narrowing power gap between China and the United States, coupled with the widening power gap between China and any third-ranking power, is creating a new bipolar system. The Trump administration has identified China as its top national security concern and may increase defense investments to counter China's rise.",
+      "region": "Global, Asia-Pacific",
+      "source": "Munich Security Report",
+      "riskLevel": "High"
+    },
+    {
+      "title": "Rising Geopolitical Tensions",
+      "description": "Heightened geopolitical tensions are currently weighing on global asset prices, with major military conflicts having significant impact. These tensions are causing market volatility and affecting investor sentiment across multiple regions.",
+      "region": "Global",
+      "source": "IMF Blog",
+      "riskLevel": "High"
+    },
+    {
+      "title": "Financial Stability Threats from Geopolitical Events",
+      "description": "Geopolitical risk events are causing adverse economic developments that may endanger financial stability. Unlike other types of risk such as credit risk, geopolitical risks present unique challenges for financial markets and macroprudential policy.",
+      "region": "Global, Europe",
+      "source": "European Central Bank",
+      "riskLevel": "High"
+    },
+    {
+      "title": "Trade Tariffs and Economic Nationalism",
+      "description": "Increasing tariffs and economic nationalism are significantly shaping the global economic outlook for 2025. Despite some easing of inflation and tentative growth resumption, these trade tensions are creating additional headwinds for the global economy.",
+      "region": "Global",
+      "source": "CFA Institute",
+      "riskLevel": "High"
+    },
+    {
+      "title": "BRICS Expansion and Global Order Shift",
+      "description": "The economic, political, and cultural rebalancing represented by the BRICS expansion has reached a point where real multipolarity is emerging. India's External Affairs Minister has highlighted how profoundly the old order is changing, with implications for global governance and economic systems.",
+      "region": "Global, Emerging Markets",
+      "source": "Munich Security Report",
+      "riskLevel": "High"
+    }
+  ],
+  "footer": {
+    "branding": "Market Pulse Daily - Actionable Trading Insights",
+    "copyright": " 2025 Market Pulse Daily. All rights reserved.",
+    "disclaimer": "Disclaimer: The information provided in this report is for general informational purposes only. It is not intended to serve as financial, investment, or trading advice. The data presented may not be accurate, complete, or current, and should not be relied upon as the sole basis for making any trading or investment decisions. Neither the publisher nor any of its affiliates assumes any liability for any losses or damages arising from the use or misinterpretation of this information."
+  },
+  "macroeconomicFactors": {
+    "geopoliticalRisks": {
+      "global": "US-China tensions escalate with calls for a Pacific Defense Pact, while Middle East conflicts intensify, impacting global stability. Trade wars and sanctions continue to disrupt markets, with significant implications for commodities and currencies.",
+      "risks": [
+        {
+          "name": "US-China Tensions",
+          "description": "Escalating tensions between the US and China, with calls for a Pacific Defense Pact to counter China's influence in Asia.",
+          "region": "Asia",
+          "impactLevel": "High",
+          "source": "Foreign Affairs",
+          "sourceUrl": "https://www.foreignaffairs.com/china/case-pacific-defense-pact-ely-ratner"
+        },
+        {
+          "name": "Middle East Conflicts",
+          "description": "Iran's influence in Yemen and nuclear negotiations with the US contribute to regional instability, affecting global energy markets.",
+          "region": "Middle East",
+          "impactLevel": "High",
+          "source": "Peter Zeihan via Google News",
+          "sourceUrl": "https://news.google.com/rss/articles/CBMib0FVX3lxTE90UjRaTm13ZjhyaF8zWFI0aGNacWlwdlNSV25BakZhUjdZZEY3Ny1jMlBNMm55eUp0RG5KdHExZEpkWlh6OGh3RU11bGU2ZFdVc1RrVTBiaGx3MG9FMnduLVB0dEQ3MVVMRkJxWnVKdw?oc=5"
+        },
+        {
+          "name": "Trade Wars and Sanctions",
+          "description": "Ongoing trade tensions and tariff policies, particularly between the US and EU, disrupt global trade dynamics and market stability.",
+          "region": "Global",
+          "impactLevel": "High",
+          "source": "CNN",
+          "sourceUrl": "https://www.cnn.com/2025/05/25/business/trump-eu-tariff-delay"
+        },
+        {
+          "name": "Global Threat Complexity",
+          "description": "The US DIA's threat assessment highlights growing complexity in global threats, including cyber risks and military buildups.",
+          "region": "Global",
+          "impactLevel": "Medium",
+          "source": "Google News",
+          "sourceUrl": "https://news.google.com/rss/articles/CBMiyAFBVV95cUxQRHdGSkV3dFY3aFVaZThqWmNmTkRGdFZCRlMxaXl4Wmg3U242QlJUSmtZYnM0QTJnZzVNd0dXa3NlYlVCU2FFZl9ab1dBZ2p2ZDJTeGdrVUwxQjZOSlZ6NDZqNWFKOWJGcTBwUXN5TEZaYzZmUzl0Y1ZyN0JoWXB3ejJQVVY4X0pkTXFiRTNPWlVYUE81Wkxuazh3SE1PX0xaVmZlc3Y4MEpRd3BxaGdXSVdsaVNNR1Y1MkdpSE54S0JHQndhTVpjNw?oc=5"
+        },
+        {
+          "name": "Political Instability",
+          "description": "Domestic political instability in countries like Venezuela and South Africa poses risks to local economies and investor confidence.",
+          "region": "Global",
+          "impactLevel": "Medium",
+          "source": "Fox News",
+          "sourceUrl": "https://www.foxnews.com/world/us-warns-venezuela-now-poses-highest-risk-american-travelers"
+        }
+      ],
+      "source": "Aggregated from multiple geopolitical risk assessments",
+      "sourceUrl": "https://www.cfr.org/global-conflict-tracker",
+      "lastUpdated": "2025-05-27T23:53:27.025Z"
+    }
+  },
+  "isTest": true,
+  "metadata": {
+    "title": "TEST - Market Pulse Daily with Updated Geopolitical Risks"
+  },
+  "reportDate": "2025-05-27T23:53:27.025Z",
+  "reportDateFormatted": "May 27, 2025 at 7:53 PM EDT",
+  "reportDateDisplay": "As of May 27, 2025 at 7:53 PM EDT"
+}

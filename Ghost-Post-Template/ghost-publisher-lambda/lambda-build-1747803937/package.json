@@ -1,0 +1,11 @@
+{
+  "name": "ghost-publisher-lambda",
+  "version": "1.0.0",
+  "dependencies": {
+    "@tryghost/admin-api": "^1.13.8",
+    "aws-sdk": "^2.1450.0",
+    "axios": "^1.6.2",
+    "dotenv": "^16.5.0",
+    "node-fetch": "^3.3.2"
+  }
+}

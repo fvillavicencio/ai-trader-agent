@@ -1,0 +1,5 @@
+{
+  "mobiledoc": "$(<../ghost-post.json)",
+  "data": "$(<../market_pulse_data.json)",
+  "featureImageUrl": "https://example.com/feature-image.jpg"
+}

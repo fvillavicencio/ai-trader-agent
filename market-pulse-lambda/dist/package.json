@@ -1,0 +1,29 @@
+{
+  "name": "market-pulse-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda function for generating Market Pulse Daily newsletter",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "test": "node test/test-lambda.js",
+    "build": "rm -rf dist && mkdir -p dist/modules dist/utils && cp -r src/* dist/ && mkdir -p dist/src/modules dist/src/utils && cp -r src/modules/* dist/src/modules/ && cp -r src/utils/* dist/src/utils/ && cp package.json dist/ && cd dist && npm install --production",
+    "deploy": "npm run build && cd dist && zip -r ../deployment.zip ."
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "newsletter",
+    "market-pulse-daily"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-s3": "^3.427.0",
+    "aws-sdk": "^2.1574.0",
+    "cheerio": "^1.0.0",
+    "dotenv": "^16.5.0",
+    "handlebars": "^4.7.8"
+  }
+}

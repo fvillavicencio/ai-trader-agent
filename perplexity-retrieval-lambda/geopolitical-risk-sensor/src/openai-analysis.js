@@ -276,16 +276,26 @@ async function analyzeGeopoliticalRisks() {
     // Add the risks if available and sort them by impact level
     if (Array.isArray(analyzedData.risks)) {
       // First map the risks to the correct format
-      const formattedRisks = analyzedData.risks.map(risk => ({
-        name: risk.name || 'Unknown Risk',
-        description: risk.description || 'No description available',
-        region: risk.region || 'Global',
-        impactLevel: risk.impactLevel || 'Medium',
-        // Preserve the exact source information
-        source: risk.source || 'Unknown Source',
-        // Ensure we use the exact URL from the original data
-        sourceUrl: risk.sourceUrl || risk.url || '#'
-      }));
+      const formattedRisks = analyzedData.risks.map(risk => {
+        // Check if this risk has related sources
+        let sourceUrl = risk.sourceUrl || risk.url || '#';
+        
+        // If there are related sources, use the first one's URL if the main sourceUrl is missing
+        if (risk.relatedSources && risk.relatedSources.length > 0 && !risk.sourceUrl) {
+          sourceUrl = risk.relatedSources[0].url || '#';
+        }
+        
+        return {
+          name: risk.name || 'Unknown Risk',
+          description: risk.description || 'No description available',
+          region: risk.region || 'Global',
+          impactLevel: risk.impactLevel || 'Medium',
+          // Preserve the exact source information
+          source: risk.source || 'Unknown Source',
+          // Ensure we use the exact URL from the original data
+          sourceUrl: sourceUrl
+        };
+      });
       
       // Sort risks by impact level (descending)
       const sortedRisks = formattedRisks.sort((a, b) => {
@@ -320,7 +330,14 @@ async function analyzeGeopoliticalRisks() {
     // Print a summary
     console.log('\n=== ANALYSIS SUMMARY ===\n');
     console.log(`Total input items analyzed: ${inputData.length}`);
-    console.log(`Selected top risks: ${analyzedData.risks.length}`);
+    // Check if analyzedData.risks exists before accessing its length
+    if (analyzedData.risks) {
+      console.log(`Selected top risks: ${analyzedData.risks.length}`);
+    } else if (analyzedData.macroeconomicFactors && analyzedData.macroeconomicFactors.geopoliticalRisks && analyzedData.macroeconomicFactors.geopoliticalRisks.risks) {
+      console.log(`Selected top risks: ${analyzedData.macroeconomicFactors.geopoliticalRisks.risks.length}`);
+    } else {
+      console.log('No risks selected');
+    }
     console.log(`Geopolitical Risk Index: ${analyzedData.geopoliticalRiskIndex}/100`);
     
     // Print global overview and summary
@@ -332,45 +349,69 @@ async function analyzeGeopoliticalRisks() {
     
     // Count risks by category
     const categories = {};
-    analyzedData.risks.forEach(risk => {
-      const category = risk.category || 'Uncategorized';
-      categories[category] = (categories[category] || 0) + 1;
-    });
     
-    console.log('\nRisk Categories:');
-    Object.entries(categories).forEach(([category, count]) => {
-      console.log(`${category}: ${count} items`);
-    });
+    // Check if analyzedData.risks exists before iterating
+    if (analyzedData.risks && Array.isArray(analyzedData.risks)) {
+      analyzedData.risks.forEach(risk => {
+        const category = risk.category || 'Uncategorized';
+        categories[category] = (categories[category] || 0) + 1;
+      });
+      
+      console.log('\nRisk Categories:');
+      Object.entries(categories).forEach(([category, count]) => {
+        console.log(`${category}: ${count} items`);
+      });
+    } else {
+      console.log('\nNo risk categories available');
+    }
     
     // Count risks by impact level
     const riskLevels = {};
-    analyzedData.risks.forEach(risk => {
-      const level = risk.impactLevel || 'Unknown';
-      riskLevels[level] = (riskLevels[level] || 0) + 1;
-    });
     
-    console.log('\nRisk Level Distribution:');
-    Object.entries(riskLevels).sort((a, b) => {
-      const order = { 'High': 0, 'Medium': 1, 'Low': 2, 'Unknown': 3 };
-      return (order[a[0]] || 99) - (order[b[0]] || 99);
-    }).forEach(([level, count]) => {
-      console.log(`${level}: ${count} items`);
-    });
+    // Check if analyzedData.risks exists before iterating
+    if (analyzedData.risks && Array.isArray(analyzedData.risks)) {
+      analyzedData.risks.forEach(risk => {
+        const level = risk.impactLevel || 'Unknown';
+        riskLevels[level] = (riskLevels[level] || 0) + 1;
+      });
+      
+      console.log('\nRisk Level Distribution:');
+      Object.entries(riskLevels).sort((a, b) => {
+        const order = { 'High': 0, 'Medium': 1, 'Low': 2, 'Unknown': 3 };
+        return (order[a[0]] || 99) - (order[b[0]] || 99);
+      }).forEach(([level, count]) => {
+        console.log(`${level}: ${count} items`);
+      });
+    } else {
+      console.log('\nNo risk level distribution available');
+    }
     
     // Display the selected top risks
     console.log('\nSelected Top Risks:');
-    analyzedData.risks.forEach((risk, index) => {
-      console.log(`${index + 1}. ${risk.name} (${risk.impactLevel || 'Unknown'}) - ${risk.region || 'Global'}`);
-      console.log(`   Description: ${risk.description.substring(0, 100)}${risk.description.length > 100 ? '...' : ''}`);
-      console.log(`   Primary Source: ${risk.source || 'Unknown'}`);
-      if (risk.relatedSources && risk.relatedSources.length > 0) {
-        console.log(`   Related Sources: ${risk.relatedSources.length}`);
-      }
-      console.log('');
-    });
+    // Check if analyzedData.risks exists before iterating
+    if (analyzedData.risks && Array.isArray(analyzedData.risks)) {
+      analyzedData.risks.forEach((risk, index) => {
+        console.log(`${index + 1}. ${risk.name} (${risk.impactLevel || 'Unknown'}) - ${risk.region || 'Global'}`);
+        console.log(`   Description: ${risk.description.substring(0, 100)}${risk.description.length > 100 ? '...' : ''}`);
+        console.log(`   Primary Source: ${risk.source || 'Unknown'}`);
+        if (risk.relatedSources && risk.relatedSources.length > 0) {
+          console.log(`   Related Sources: ${risk.relatedSources.length}`);
+        }
+        console.log('');
+      });
+    } else {
+      console.log('No risks available to display');
+    }
     
     console.log('\nGlobal Geopolitical Overview:');
-    console.log(analyzedData.global || 'No global overview available');
+    // Check different possible locations of the global overview
+    let globalOverview = 'No global overview available';
+    if (analyzedData.global) {
+      globalOverview = analyzedData.global;
+    } else if (analyzedData.macroeconomicFactors && analyzedData.macroeconomicFactors.geopoliticalRisks && analyzedData.macroeconomicFactors.geopoliticalRisks.global) {
+      globalOverview = analyzedData.macroeconomicFactors.geopoliticalRisks.global;
+    }
+    console.log(globalOverview);
     
     console.log('\nExecutive Summary:');
     console.log(analyzedData.summary || 'No summary available');

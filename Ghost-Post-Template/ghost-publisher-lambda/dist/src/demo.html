@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fear & Greed Index Demo</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+      line-height: 1.6;
+      color: #333;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f8f9fa;
+    }
+    
+    /* Fear & Greed Index - Linear Version */
+    .fear-greed-container {
+      margin-bottom: 2rem;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+
+    .fear-greed-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    .fear-greed-title {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #2d3748;
+    }
+
+    .fear-greed-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #ed8936;
+    }
+
+    .fear-greed-meter {
+      position: relative;
+      height: 12px;
+      background: linear-gradient(to right, #e53e3e, #ed8936, #ecc94b, #48bb78, #38a169);
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .fear-greed-indicator {
+      position: absolute;
+      top: -4px;
+      width: 20px;
+      height: 20px;
+      background-color: #fff;
+      border: 2px solid #2d3748;
+      border-radius: 50%;
+      transform: translateX(-50%);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .fear-greed-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .fear-greed-label {
+      font-size: 0.8rem;
+      color: #4a5568;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .fear-greed-explanation {
+      background-color: #fff;
+      border-left: 4px solid #ed8936;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 0 4px 4px 0;
+      color: #2d3748;
+    }
+
+    .fear-greed-history {
+      margin-top: 20px;
+      text-align: right;
+      color: #718096;
+      font-size: 0.9rem;
+    }
+
+    /* Fear & Greed Chart */
+    .fear-greed-chart-container {
+      height: 200px;
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .fear-greed-chart {
+      width: 100%;
+      height: 100%;
+      position: relative;
+    }
+
+    .fear-greed-chart-zones {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
+
+    .fear-greed-chart-zone {
+      position: absolute;
+      width: 100%;
+      left: 0;
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    .fear-greed-chart-zone-extreme-fear {
+      bottom: 0;
+      height: 20%;
+      background-color: rgba(229, 62, 62, 0.1);
+    }
+
+    .fear-greed-chart-zone-fear {
+      bottom: 20%;
+      height: 20%;
+      background-color: rgba(237, 137, 54, 0.1);
+    }
+
+    .fear-greed-chart-zone-neutral {
+      bottom: 40%;
+      height: 20%;
+      background-color: rgba(236, 201, 75, 0.1);
+    }
+
+    .fear-greed-chart-zone-greed {
+      bottom: 60%;
+      height: 20%;
+      background-color: rgba(72, 187, 120, 0.1);
+    }
+
+    .fear-greed-chart-zone-extreme-greed {
+      bottom: 80%;
+      height: 20%;
+      background-color: rgba(56, 161, 105, 0.1);
+    }
+
+    .fear-greed-chart-line {
+      stroke: #4299e1;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    .fear-greed-chart-point {
+      position: absolute;
+      z-index: 3;
+      width: 8px;
+      height: 8px;
+      background-color: #4299e1;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+    }
+
+    .fear-greed-chart-point-label {
+      position: absolute;
+      font-size: 0.7rem;
+      color: #4a5568;
+      transform: translateX(-50%);
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .fear-greed-chart-y-axis {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-right: 5px;
+    }
+
+    .fear-greed-chart-y-label {
+      font-size: 0.7rem;
+      color: #718096;
+      transform: translateY(50%);
+    }
+
+    .fear-greed-chart-x-axis {
+      position: absolute;
+      bottom: -20px;
+      left: 0;
+      width: 100%;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .fear-greed-chart-x-label {
+      font-size: 0.7rem;
+      color: #718096;
+      text-align: center;
+    }
+
+    /* Collapsible Sections */
+    .collapsible-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .collapsible-header {
+      background-color: #f8f9fa;
+      padding: 12px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+
+    .collapsible-header:hover {
+      background-color: #edf2f7;
+    }
+
+    .collapsible-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #2d3748;
+    }
+
+    .collapsible-icon {
+      color: #718096;
+      transition: transform 0.2s;
+    }
+
+    .collapsible-icon.collapsed {
+      transform: rotate(-90deg);
+    }
+
+    .collapsible-content {
+      padding: 15px;
+      border: 1px solid #e2e8f0;
+      border-top: none;
+      border-radius: 0 0 6px 6px;
+      overflow: hidden;
+      max-height: 2000px;
+      transition: max-height 0.3s ease-in-out;
+    }
+
+    .collapsible-content.collapsed {
+      max-height: 0;
+      padding-top: 0;
+      padding-bottom: 0;
+      border-width: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Fear & Greed Index Demo</h1>
+  
+  <div class="collapsible-section" data-section="fear-greed-index">
+    <div class="collapsible-header">
+      <div class="collapsible-title">Fear & Greed Index</div>
+      <div class="collapsible-icon">▼</div>
+    </div>
+    <div class="collapsible-content">
+      <div class="fear-greed-container">
+        <div class="fear-greed-header">
+          <div class="fear-greed-title">Current: Fear</div>
+          <div class="fear-greed-value">39</div>
+        </div>
+        
+        <div class="fear-greed-meter">
+          <div class="fear-greed-indicator" style="left: 39%;"></div>
+        </div>
+        
+        <div class="fear-greed-labels">
+          <div class="fear-greed-label">Extreme Fear</div>
+          <div class="fear-greed-label">Fear</div>
+          <div class="fear-greed-label">Neutral</div>
+          <div class="fear-greed-label">Greed</div>
+          <div class="fear-greed-label">Extreme Greed</div>
+        </div>
+        
+        <div class="fear-greed-explanation">
+          <p>The Fear and Greed Index is currently in a state of <strong>fear</strong>, indicating a moderate level of market anxiety. This may be a good time to consider buying opportunities.</p>
+        </div>
+        
+        <div class="fear-greed-chart-container">
+          <div class="fear-greed-chart-zones">
+            <div class="fear-greed-chart-zone fear-greed-chart-zone-extreme-fear"></div>
+            <div class="fear-greed-chart-zone fear-greed-chart-zone-fear"></div>
+            <div class="fear-greed-chart-zone fear-greed-chart-zone-neutral"></div>
+            <div class="fear-greed-chart-zone fear-greed-chart-zone-greed"></div>
+            <div class="fear-greed-chart-zone fear-greed-chart-zone-extreme-greed"></div>
+          </div>
+          
+          <div class="fear-greed-chart">
+            <svg width="100%" height="100%" viewBox="0 0 400 200" preserveAspectRatio="none">
+              <polyline 
+                points="
+                  50,158 
+                  150,144 
+                  250,126 
+                  350,122
+                " 
+                class="fear-greed-chart-line" 
+              />
+            </svg>
+            
+            <div class="fear-greed-chart-point" style="left: 12.5%; bottom: 42px;"></div>
+            <div class="fear-greed-chart-point-label" style="left: 12.5%; bottom: 57px;">21</div>
+            
+            <div class="fear-greed-chart-point" style="left: 37.5%; bottom: 56px;"></div>
+            <div class="fear-greed-chart-point-label" style="left: 37.5%; bottom: 71px;">28</div>
+            
+            <div class="fear-greed-chart-point" style="left: 62.5%; bottom: 74px;"></div>
+            <div class="fear-greed-chart-point-label" style="left: 62.5%; bottom: 89px;">37</div>
+            
+            <div class="fear-greed-chart-point" style="left: 87.5%; bottom: 78px;"></div>
+            <div class="fear-greed-chart-point-label" style="left: 87.5%; bottom: 93px;">39</div>
+          </div>
+          
+          <div class="fear-greed-chart-y-axis">
+            <div class="fear-greed-chart-y-label">100</div>
+            <div class="fear-greed-chart-y-label">80</div>
+            <div class="fear-greed-chart-y-label">60</div>
+            <div class="fear-greed-chart-y-label">40</div>
+            <div class="fear-greed-chart-y-label">20</div>
+            <div class="fear-greed-chart-y-label">0</div>
+          </div>
+          
+          <div class="fear-greed-chart-x-axis">
+            <div class="fear-greed-chart-x-label">1 Month Ago</div>
+            <div class="fear-greed-chart-x-label">1 Week Ago</div>
+            <div class="fear-greed-chart-x-label">Yesterday</div>
+            <div class="fear-greed-chart-x-label">Today</div>
+          </div>
+        </div>
+        
+        <div class="fear-greed-history">
+          Previous Day: 37 | One Week Ago: 28 | One Month Ago: 21
+        </div>
+        
+        <div style="font-size: 0.8rem; color: #718096; margin-top: 10px; text-align: right;">
+          Source: CNN Money Fear & Greed Index
+          <br>As of: April 29, 2025 at 4:05 PM EDT
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Add click events to collapsible sections
+      const collapsibleHeaders = document.querySelectorAll('.collapsible-header');
+      
+      collapsibleHeaders.forEach(header => {
+        header.addEventListener('click', function() {
+          const content = this.nextElementSibling;
+          content.classList.toggle('collapsed');
+          const icon = this.querySelector('.collapsible-icon');
+          if (icon) icon.classList.toggle('collapsed');
+        });
+      });
+    });
+  </script>
+</body>
+</html>
