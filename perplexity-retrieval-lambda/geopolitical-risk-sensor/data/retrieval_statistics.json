@@ -1,0 +1,46 @@
+{
+  "retrieved": {
+    "rss": 20,
+    "googleNews": 20,
+    "newsApi": 6,
+    "rapidApi": 15,
+    "zeihan": 2,
+    "total": 63
+  },
+  "final": {
+    "rss": 20,
+    "googleNews": 19,
+    "newsApi": 5,
+    "rapidApi": 15,
+    "zeihan": 1,
+    "total": 60
+  },
+  "sourceBreakdown": {
+    "Foreign Affairs": 3,
+    "Fox News World": 17,
+    "Google News": 19,
+    "CNN": 4,
+    "BBC News": 1,
+    "Reuters": 1,
+    "FirstSquawk": 3,
+    "PiQSuite": 1,
+    "thehill": 1,
+    "iNewsroom": 1,
+    "SEC": 2,
+    "businesswire.com": 1,
+    "MarketWatch": 2,
+    "ny times": 1,
+    "Benzinga": 1,
+    "investopedia.com": 1,
+    "Peter Zeihan via Google News": 1
+  },
+  "topicBreakdown": {
+    "sanctions": 3,
+    "military conflict": 13,
+    "diplomacy": 3,
+    "nuclear": 5,
+    "terrorism": 1,
+    "tariffs": 8,
+    "energy": 1
+  }
+}
