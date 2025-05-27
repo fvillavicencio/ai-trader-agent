@@ -262,9 +262,10 @@ async function analyzeGeopoliticalRisks() {
         geopoliticalRisks: {
           global: analyzedData.global || "Global geopolitical risk level is currently elevated due to multiple factors.",
           risks: [],
-          source: "Aggregated from multiple geopolitical risk assessments",
-          sourceUrl: "https://www.cfr.org/global-conflict-tracker",
-          lastUpdated: new Date().toISOString()
+          // Preserve source information from the original data if available
+          source: analyzedData.source || "Aggregated from multiple geopolitical risk assessments",
+          sourceUrl: analyzedData.sourceUrl || analyzedData.url || "https://www.cfr.org/global-conflict-tracker",
+          lastUpdated: analyzedData.lastUpdated || new Date().toISOString()
         }
       },
       // Keep other top-level properties
@@ -280,8 +281,10 @@ async function analyzeGeopoliticalRisks() {
         description: risk.description || 'No description available',
         region: risk.region || 'Global',
         impactLevel: risk.impactLevel || 'Medium',
+        // Preserve the exact source information
         source: risk.source || 'Unknown Source',
-        sourceUrl: risk.sourceUrl || '#'
+        // Ensure we use the exact URL from the original data
+        sourceUrl: risk.sourceUrl || risk.url || '#'
       }));
       
       // Sort risks by impact level (descending)
