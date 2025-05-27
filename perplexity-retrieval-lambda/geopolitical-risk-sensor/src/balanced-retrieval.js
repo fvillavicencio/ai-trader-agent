@@ -66,10 +66,10 @@ const CONFIG = {
   maxTotalEvents: 50,
   maxAgeHours: 48,
   sourceLimits: {
-    rss: 20,
-    googleNews: 20,
+    rss: 10,
+    googleNews: 10,
     newsApi: 15,
-    rapidApi: 15,
+    InsightSentry: 15,
     zeihan: 5
   },
   similarityThreshold: 0.65,
@@ -509,12 +509,12 @@ async function fetchRapidAPI() {
     
     // Deduplicate and limit
     const deduplicated = deduplicateEvents(events);
-    logger.info(`Retrieved ${deduplicated.length} unique items from RapidAPI InsightSentry`);
+    logger.info(`Retrieved ${deduplicated.length} unique items from InsightSentry`);
     
-    return deduplicated.slice(0, CONFIG.sourceLimits.rapidApi);
+    return deduplicated.slice(0, CONFIG.sourceLimits.InsightSentry);
     
   } catch (error) {
-    logger.error(`Error fetching from RapidAPI InsightSentry: ${error.message}`);
+    logger.error(`Error fetching from InsightSentry: ${error.message}`);
     return [];
   }
 }
@@ -780,10 +780,34 @@ function deduplicateEvents(events) {
 /**
  * Convert events to risks format
  * @param {Array} events - Array of events
- * @returns {Array} - Array of risks
+ * @returns {Array} - Array of risks with valid descriptions
  */
 function eventsToRisks(events) {
-  return events.map((event, index) => {
+  // First filter out events without descriptions or with empty descriptions
+  const validEvents = events.filter(event => {
+    // Check for description presence and minimum length
+    const hasValidDescription = event.description && 
+                               typeof event.description === 'string' && 
+                               event.description.trim().length > 10; // Require at least 10 characters
+    
+    // Check for source URL presence
+    const hasSourceUrl = event.link && typeof event.link === 'string' && event.link.trim().length > 0;
+    
+    // For InsightSentry items, we'll be more lenient if they have a title but no description
+    if (event.retrievalChannel === 'InsightSentry' && !hasValidDescription && event.title) {
+      // If it's an InsightSentry item with a substantial title, use the title as description
+      if (event.title.length > 30) {
+        event.description = event.title;
+        return true;
+      }
+    }
+    
+    return hasValidDescription;
+  });
+  
+  logger.info(`Filtered out ${events.length - validEvents.length} events without valid descriptions`);
+  
+  return validEvents.map((event, index) => {
     // Calculate impact level based on source reputation and keywords
     let impactLevel = 5; // Default impact
     
@@ -794,7 +818,7 @@ function eventsToRisks(events) {
       'Peter Zeihan', 'Financial Times', 'The Economist'
     ];
     
-    if (premiumSources.some(source => event.source.includes(source))) {
+    if (premiumSources.some(source => event.source && event.source.includes(source))) {
       impactLevel += 2;
     }
     
@@ -807,7 +831,7 @@ function eventsToRisks(events) {
       'supply chain disruption', 'economic coercion', 'trade retaliation'
     ];
     
-    if (highImpactKeywords.some(keyword => 
+    if (event.title && highImpactKeywords.some(keyword => 
       event.title.toLowerCase().includes(keyword.toLowerCase())
     )) {
       impactLevel += 1;
@@ -818,15 +842,15 @@ function eventsToRisks(events) {
     
     return {
       id: `risk-${index + 1}`,
-      name: event.title,
+      name: event.title || 'Untitled Risk',
       description: event.description,
-      source: event.source,
-      sourceUrl: event.link,
-      publishedDate: event.publishedDate,
+      source: event.source || 'Unknown Source',
+      sourceUrl: event.link || event.sourceUrl || '',
+      publishedDate: event.publishedDate || new Date().toISOString(),
       impactLevel,
       regions: ['Global'], // Default region
       categories: ['geopolitical'],
-      retrievalChannel: event.retrievalChannel || 'unknown', // Add retrieval channel
+      retrievalChannel: event.retrievalChannel || 'unknown',
       timestamp: new Date().toISOString()
     };
   });
@@ -861,7 +885,7 @@ async function retrieveGeopoliticalRisks() {
         rss: 0,
         googleNews: 0,
         newsApi: 0,
-        rapidApi: 0,
+        InsightSentry: 0,
         zeihan: 0,
         total: 0
       },
@@ -869,7 +893,7 @@ async function retrieveGeopoliticalRisks() {
         rss: 0,
         googleNews: 0,
         newsApi: 0,
-        rapidApi: 0,
+        InsightSentry: 0,
         zeihan: 0,
         total: 0
       },
@@ -881,23 +905,23 @@ async function retrieveGeopoliticalRisks() {
     const rssEvents = await fetchRSSFeeds();
     const googleNewsEvents = await fetchGoogleNewsRSS();
     const newsApiEvents = await fetchNewsAPI();
-    const rapidApiEvents = await fetchRapidAPI();
+    const insightSentryEvents = await fetchRapidAPI();
     const zeihanEvents = await fetchZeihanContent();
     
     // Update retrieved stats
     stats.retrieved.rss = rssEvents.length;
     stats.retrieved.googleNews = googleNewsEvents.length;
     stats.retrieved.newsApi = newsApiEvents.length;
-    stats.retrieved.rapidApi = rapidApiEvents.length;
+    stats.retrieved.InsightSentry = insightSentryEvents.length;
     stats.retrieved.zeihan = zeihanEvents.length;
     stats.retrieved.total = rssEvents.length + googleNewsEvents.length + 
-                           newsApiEvents.length + rapidApiEvents.length + zeihanEvents.length;
+                           newsApiEvents.length + insightSentryEvents.length + zeihanEvents.length;
     
     // Tag events with their source channel
     const taggedRssEvents = rssEvents.map(e => ({ ...e, retrievalChannel: 'rss' }));
     const taggedGoogleNewsEvents = googleNewsEvents.map(e => ({ ...e, retrievalChannel: 'googleNews' }));
     const taggedNewsApiEvents = newsApiEvents.map(e => ({ ...e, retrievalChannel: 'newsApi' }));
-    const taggedRapidApiEvents = rapidApiEvents.map(e => ({ ...e, retrievalChannel: 'rapidApi' }));
+    const taggedInsightSentryEvents = insightSentryEvents.map(e => ({ ...e, retrievalChannel: 'InsightSentry' }));
     const taggedZeihanEvents = zeihanEvents.map(e => ({ ...e, retrievalChannel: 'zeihan' }));
     
     // Combine all events
@@ -905,7 +929,7 @@ async function retrieveGeopoliticalRisks() {
       ...taggedRssEvents,
       ...taggedGoogleNewsEvents,
       ...taggedNewsApiEvents,
-      ...taggedRapidApiEvents,
+      ...taggedInsightSentryEvents,
       ...taggedZeihanEvents
     ];
     
@@ -965,7 +989,7 @@ async function retrieveGeopoliticalRisks() {
     console.log(`  RSS Feeds: ${stats.retrieved.rss}`);
     console.log(`  Google News: ${stats.retrieved.googleNews}`);
     console.log(`  News API: ${stats.retrieved.newsApi}`);
-    console.log(`  RapidAPI: ${stats.retrieved.rapidApi}`);
+    console.log(`  InsightSentry: ${stats.retrieved.InsightSentry}`);
     console.log(`  Zeihan: ${stats.retrieved.zeihan}`);
     console.log(`  Total Retrieved: ${stats.retrieved.total}`);
     
@@ -973,7 +997,7 @@ async function retrieveGeopoliticalRisks() {
     console.log(`  RSS Feeds: ${stats.final.rss}`);
     console.log(`  Google News: ${stats.final.googleNews}`);
     console.log(`  News API: ${stats.final.newsApi}`);
-    console.log(`  RapidAPI: ${stats.final.rapidApi}`);
+    console.log(`  InsightSentry: ${stats.final.InsightSentry}`);
     console.log(`  Zeihan: ${stats.final.zeihan}`);
     console.log(`  Total in Final List: ${stats.final.total}`);
     

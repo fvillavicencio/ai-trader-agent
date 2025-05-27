@@ -218,8 +218,8 @@ function extractValidUrl(item) {
  */
 function convertNewsToEvents(newsItems) {
   return newsItems.map(item => {
-    // Extract a valid URL
-    const validUrl = extractValidUrl(item);
+    // Extract a valid URL from the link field
+    const validUrl = item.link || '';
     
     // Determine the source name
     let sourceName = item.source || 'Unknown Source';
@@ -234,21 +234,33 @@ function convertNewsToEvents(newsItems) {
       }
     }
     
+    // Extract content from the appropriate fields based on the API response structure
+    // The API can return content in either 'content' field or have it embedded in the title
+    let description = '';
+    if (item.content) {
+      description = item.content;
+    } else if (item.summary) {
+      description = item.summary;
+    } else if (item.title && item.title.length > 20) {
+      // If there's no content but the title is substantial, use it as a fallback
+      description = `${item.title}`;
+    }
+    
     return {
       id: item.id || `insight-sentry-${Date.now()}-${Math.random().toString(36).substring(2, 15)}`,
       title: item.title || 'Untitled News Item',
-      description: item.summary || item.content || '',
+      description: description,
       source: sourceName,
-      link: validUrl, // Use the validated URL
+      link: validUrl, // Use the link directly from the API response
       publishedDate: item.published_at || new Date().toISOString(),
       type: 'insight-sentry',
       author: item.author || 'Unknown',
       imageUrl: item.image_url || '',
       sourceId: item.source || 'unknown',
-      retrievalChannel: 'rapidApi', // Add retrieval channel
+      retrievalChannel: 'InsightSentry', // Changed from 'rapidApi' to 'InsightSentry'
       sentiment: item.sentiment,
       categories: item.categories || [],
-      entities: item.entities || []
+      entities: item.related_symbols || []
     };
   });
 }
