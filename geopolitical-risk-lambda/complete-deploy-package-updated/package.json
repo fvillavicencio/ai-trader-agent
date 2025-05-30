@@ -1,0 +1,33 @@
+{
+  "name": "geopolitical-risk-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda function for geopolitical risk analysis",
+  "main": "index.js",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "zip": "zip -r function.zip . -x \"*.git*\" \"*.zip\" \"node_modules/aws-sdk/*\"",
+    "deploy": "aws lambda update-function-code --function-name geopolitical-risk-analyzer --zip-file fileb://function.zip --region us-east-2"
+  },
+  "keywords": [
+    "lambda",
+    "aws",
+    "geopolitical",
+    "risk",
+    "analysis"
+  ],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.817.0",
+    "@aws-sdk/client-lambda": "^3.817.0",
+    "aws-sdk": "^2.1692.0",
+    "axios": "^1.9.0",
+    "dotenv": "^16.5.0",
+    "openai": "^4.103.0",
+    "rss-parser": "^3.13.0",
+    "winston": "^3.17.0"
+  }
+}

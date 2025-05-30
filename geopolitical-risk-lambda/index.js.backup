@@ -1,0 +1,909 @@
+/**
+ * Geopolitical Risk Lambda Function
+ * 
+ * This Lambda function provides two operations:
+ * 1. Retrieve the latest geopolitical risk JSON, formatted for JsonExport.gs
+ * 2. Force a refresh of the data and re-run the analysis
+ * 
+ * The function implements caching to speed up the retrieval operation.
+ * It uses the balanced-retrieval.js and openai-analysis.js implementations for data retrieval and analysis.
+ */
+
+const fs = require('fs');
+const path = require('path');
+const axios = require('axios');
+const { OpenAI } = require('openai');
+
+// Import the balanced retrieval and OpenAI analysis modules
+const balancedRetrieval = require('./balanced-retrieval');
+const openaiAnalysis = require('./openai-analysis');
+
+// Configuration
+const CACHE_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+const TMP_DIR = '/tmp';
+const DATA_DIR = process.env.DATA_DIR || TMP_DIR;
+const RAW_DATA_FILE = path.join(DATA_DIR, 'geopolitical_risks.json');
+const ANALYZED_DATA_FILE = path.join(DATA_DIR, 'geopolitical_risks_analyzed.json');
+const STATUS_FILE = path.join(DATA_DIR, 'analysis_status.json');
+
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+// Global variables for caching
+let cachedData = null;
+let lastCacheTime = null;
+let isProcessing = false;
+
+/**
+ * Lambda handler function
+ */
+exports.handler = async (event, context) => {
+  console.log('INFO', 'Received event:', JSON.stringify(event));
+  
+  try {
+    // Set context.callbackWaitsForEmptyEventLoop to false to allow the Lambda function to return
+    // before background processing is complete
+    context.callbackWaitsForEmptyEventLoop = false;
+    
+    // Log available environment variables for debugging (excluding sensitive values)
+    const safeEnvVars = Object.keys(process.env)
+      .filter(key => !key.includes('KEY') && !key.includes('SECRET') && !key.includes('TOKEN'))
+      .reduce((obj, key) => {
+        obj[key] = process.env[key];
+        return obj;
+      }, {});
+    console.log('INFO', 'Environment variables:', JSON.stringify(safeEnvVars));
+    
+    // Check if this is a status check
+    if (event.queryStringParameters && event.queryStringParameters.status === 'true') {
+      console.log('INFO', 'Processing status check request');
+      
+      // Import the refresh process module
+      const refreshProcess = require('./refresh-process');
+      
+      // Get the current status
+      const status = await refreshProcess.getRefreshStatus();
+      
+      // Return the status
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify(status)
+      };
+    }
+    
+    // Check if this is a refresh request
+    if ((event.path === '/geopolitical-risks/refresh') || 
+        (event.httpMethod === 'POST' && event.body && JSON.parse(event.body).operation === 'refresh') || 
+        (event.action && event.action === 'refresh')) {
+      
+      console.log('INFO', 'Processing refresh request');
+      
+      // Import the refresh process module
+      const refreshProcess = require('./refresh-process');
+      
+      // Start the refresh process asynchronously
+      // We don't await this because we want to return immediately
+      refreshProcess.startRefreshProcess();
+      
+      // Return immediately with a processing status
+      return {
+        statusCode: 202,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          message: 'Refresh operation started',
+          status: 'processing',
+          requestId: context.awsRequestId
+        })
+      };
+    }
+    
+    // Regular request - return the latest analyzed data if available
+    console.log('INFO', 'Processing regular data request');
+    
+    // Import the refresh process module
+    const refreshProcess = require('./refresh-process');
+    
+    // Get the latest analyzed data
+    const latestData = await refreshProcess.getLatestAnalyzedData();
+    
+    // If data is available, return it
+    if (latestData) {
+      console.log('INFO', 'Returning latest analyzed data');
+      console.log('INFO', `Data contains ${latestData.macroeconomicFactors?.geopoliticalRisks?.risks?.length || 0} risk categories`);
+      
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify(latestData)
+      };
+    }
+    
+    // If no data is available, check the current status
+    const status = await refreshProcess.getRefreshStatus();
+    
+    // If a refresh is in progress, return the status
+    if (status.status === 'processing') {
+      console.log('INFO', 'Refresh is in progress, returning status');
+      
+      return {
+        statusCode: 202,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*'
+        },
+        body: JSON.stringify({
+          message: 'Geopolitical risk data is being processed. Please check back in a few moments.',
+          status: 'processing',
+          requestId: context.awsRequestId || `local-${Date.now()}`
+        })
+      };
+    }
+    
+    // If no data is available and no refresh is in progress, start a refresh
+    console.log('INFO', 'No data available and no refresh in progress, starting refresh');
+    
+    // Start the refresh process asynchronously
+    refreshProcess.startRefreshProcess();
+    
+    return {
+      statusCode: 202,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        message: 'Geopolitical risk data is being processed. Please check back in a few moments.',
+        status: 'processing',
+        requestId: context.awsRequestId || `local-${Date.now()}`
+      })
+    };
+  } catch (error) {
+    console.error('ERROR', `Lambda handler error: ${error.message}`);
+    console.error('ERROR', `Error stack: ${error.stack}`);
+    
+    // Log all available information for debugging
+    try {
+      console.error('ERROR', 'Event details:', JSON.stringify(event));
+      console.error('ERROR', 'Context details:', JSON.stringify({
+        functionName: context.functionName,
+        functionVersion: context.functionVersion,
+        memoryLimitInMB: context.memoryLimitInMB,
+        awsRequestId: context.awsRequestId,
+        logGroupName: context.logGroupName,
+        logStreamName: context.logStreamName,
+        remainingTime: context.getRemainingTimeInMillis ? context.getRemainingTimeInMillis() : 'N/A'
+      }));
+    } catch (logError) {
+      console.error('ERROR', 'Failed to log additional debug info:', logError.message);
+    }
+    
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({ 
+        error: 'Internal server error', 
+        message: error.message,
+        status: 'error',
+        requestId: context.awsRequestId || `local-${Date.now()}`
+      })
+    };
+  }
+};
+
+/**
+ * Get the current processing status
+ */
+async function getStatusResponse() {
+  try {
+    if (fs.existsSync(STATUS_FILE)) {
+      const statusData = JSON.parse(fs.readFileSync(STATUS_FILE, 'utf8'));
+      console.log('INFO', `Retrieved status: ${statusData.status}, message: ${statusData.message}`);
+      
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify(statusData)
+      };
+    }
+    
+    // If no status file exists, check if we have cached data
+    if (await getCachedData()) {
+      const status = {
+        status: 'completed',
+        lastUpdated: new Date().toISOString(),
+        message: 'Data is available'
+      };
+      
+      return {
+        statusCode: 200,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+          'Cache-Control': 'no-cache'
+        },
+        body: JSON.stringify(status)
+      };
+    }
+    
+    // No status file and no cached data
+    return {
+      statusCode: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Cache-Control': 'no-cache'
+      },
+      body: JSON.stringify({
+        status: 'unknown',
+        lastUpdated: null,
+        message: 'Status information not available'
+      })
+    };
+  } catch (error) {
+    console.error('ERROR', `Error getting status: ${error.message}`);
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        status: 'error',
+        message: `Error reading status information: ${error.message}`
+      })
+    };
+  }
+}
+
+/**
+ * Handle a refresh request
+ */
+async function handleRefreshRequest() {
+  try {
+    // Check if a refresh is already in progress
+    if (fs.existsSync(STATUS_FILE)) {
+      const statusData = JSON.parse(fs.readFileSync(STATUS_FILE, 'utf8'));
+      if (statusData.status === 'processing') {
+        console.log('INFO', 'Refresh operation already in progress');
+        return {
+          statusCode: 200,
+          headers: {
+            'Content-Type': 'application/json',
+            'Access-Control-Allow-Origin': '*'
+          },
+          body: JSON.stringify({
+            message: 'Refresh operation already in progress',
+            status: 'processing'
+          })
+        };
+      }
+    }
+    
+    // Start the refresh operation asynchronously
+    await startAsyncProcessing(true);
+    
+    return {
+      statusCode: 202,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        message: 'Refresh operation started',
+        status: 'processing'
+      })
+    };
+  } catch (error) {
+    console.error('ERROR', `Error handling refresh request: ${error.message}`);
+    return {
+      statusCode: 500,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      },
+      body: JSON.stringify({
+        status: 'error',
+        message: `Refresh operation failed: ${error.message}`
+      })
+    };
+  }
+}
+
+/**
+ * Update the processing status
+ */
+function updateProcessingStatus(status, message) {
+  try {
+    const statusData = {
+      status: status,
+      lastUpdated: new Date().toISOString(),
+      message: message
+    };
+    fs.writeFileSync(STATUS_FILE, JSON.stringify(statusData, null, 2));
+    console.log('INFO', `Updated status: ${status}, message: ${message}`);
+    return statusData;
+  } catch (error) {
+    console.error('ERROR', `Error updating status file: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Get cached data if available and not expired
+ */
+async function getCachedData() {
+  try {
+    // Check if we have data in the ANALYZED_DATA_FILE
+    if (fs.existsSync(ANALYZED_DATA_FILE)) {
+      const stats = fs.statSync(ANALYZED_DATA_FILE);
+      const fileModTime = stats.mtime.getTime();
+      const now = Date.now();
+      
+      // Check if the file is recent enough (within CACHE_DURATION_MS)
+      if (now - fileModTime < CACHE_DURATION_MS) {
+        console.log('INFO', `Found valid cached data (age: ${Math.round((now - fileModTime) / 1000)} seconds)`);
+        
+        // Read and parse the file
+        const fileContent = fs.readFileSync(ANALYZED_DATA_FILE, 'utf8');
+        const data = JSON.parse(fileContent);
+        
+        // Validate the data structure
+        if (!data || !data.risks || !Array.isArray(data.risks)) {
+          console.warn('WARN', 'Cached data has invalid structure');
+          return null;
+        }
+        
+        // Check if the data has content
+        if (data.risks.length === 0) {
+          console.warn('WARN', 'Cached data contains empty risks array');
+          return null;
+        }
+        
+        return data;
+      } else {
+        console.log('INFO', `Cached data expired (age: ${Math.round((now - fileModTime) / 60000)} minutes)`);
+      }
+    } else {
+      console.log('INFO', 'No cached data file found');
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('ERROR', `Error reading cached data: ${error.message}`);
+    return null;
+  }
+}
+
+/**
+ * Start asynchronous processing of geopolitical risk data
+ */
+async function startAsyncProcessing(forceRefresh = false) {
+  // Create a unique ID for this processing job
+  const jobId = `job-${Date.now()}`;
+  console.log('INFO', `Starting async processing job ${jobId}`);
+  
+  // Update status to indicate processing has started
+  updateProcessingStatus('processing', 'Fetching raw geopolitical risk data');
+  
+  // Start the processing in the background
+  setTimeout(async () => {
+    try {
+      console.log('INFO', `Executing background job ${jobId}`);
+      
+ * Fetch raw geopolitical risk data
+ */
+async function fetchRawGeopoliticalRiskData() {
+  console.log('INFO', 'Starting to fetch real geopolitical risk data...');
+  
+  // Define paths to try for the geopolitical risks data file
+  const dataPaths = [
+    // Path in the Lambda deployment package
+    path.join(__dirname, 'data', 'geopolitical_risks.json'),
+    // Path in the /tmp directory (in case it was previously cached)
+    path.join(TMP_DIR, 'geopolitical_risks.json'),
+    // Absolute path for local development
+    path.resolve(process.cwd(), 'data', 'geopolitical_risks.json')
+  ];
+  
+  // Try to fetch from external API first
+  try {
+    console.log('INFO', 'Attempting to fetch geopolitical risk data from external API');
+    
+    // Use environment variable for API endpoint
+    const apiEndpoint = process.env.RAPIDAPI_ENDPOINT;
+    if (!apiEndpoint) {
+      console.warn('WARN', 'No RAPIDAPI_ENDPOINT environment variable found');
+      throw new Error('No API endpoint configured');
+    }
+    
+    // Fetch the data from the API
+    const response = await axios.get(apiEndpoint, {
+      headers: {
+        'X-RapidAPI-Key': process.env.RAPIDAPI_KEY,
+        'X-RapidAPI-Host': process.env.RAPIDAPI_HOST,
+        'Accept': 'application/json'
+      },
+      timeout: 15000 // 15 second timeout
+    });
+    
+    // Process the API response
+    if (response.data && response.data.items && Array.isArray(response.data.items) && response.data.items.length > 0) {
+      console.log('INFO', `Successfully fetched ${response.data.items.length} items from API`);
+      
+      // Transform the data to our expected format
+      const transformedData = response.data.items.map(item => ({
+        id: item.id || `risk-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+        name: item.title || item.name || 'Untitled Risk',
+        description: item.description || item.summary || 'No description available',
+        source: item.source || 'Unknown Source',
+        sourceUrl: item.url || '',
+        publishedDate: item.published_date || item.publishedDate || new Date().toISOString(),
+        impactLevel: item.risk_level || item.impactLevel || 5,
+        regions: item.regions || ['Global'],
+        categories: item.categories || ['geopolitical']
+      }));
+      
+      // Cache the transformed data
+      fs.writeFileSync(path.join(TMP_DIR, 'geopolitical_risks.json'), JSON.stringify(transformedData, null, 2));
+      console.log('INFO', `Cached ${transformedData.length} items to ${path.join(TMP_DIR, 'geopolitical_risks.json')}`);
+      
+      return transformedData;
+    } else {
+      console.warn('WARN', 'API response did not contain valid items array');
+      throw new Error('Invalid API response format');
+    }
+  } catch (apiError) {
+    console.error('ERROR', `Failed to fetch from API: ${apiError.message}`);
+    // Continue to try local files
+  }
+  
+  // Try each path in sequence
+  for (const dataPath of dataPaths) {
+    try {
+      console.log('INFO', `Attempting to read geopolitical risk data from: ${dataPath}`);
+      
+      // Check if the file exists
+      if (!fs.existsSync(dataPath)) {
+        console.warn('WARN', `File not found at: ${dataPath}`);
+        continue; // Try next path
+      }
+      
+      // Read and parse the file
+      const fileContent = fs.readFileSync(dataPath, 'utf8');
+      const data = JSON.parse(fileContent);
+      
+      // Validate the data
+      if (!Array.isArray(data)) {
+        console.warn('WARN', `Data at ${dataPath} is not an array`);
+        continue; // Try next path
+      }
+      
+      if (data.length === 0) {
+        console.warn('WARN', `Data at ${dataPath} is an empty array`);
+        continue; // Try next path
+      }
+      
+      // Log success
+      console.log('INFO', `Successfully read ${data.length} geopolitical risk items from ${dataPath}`);
+      console.log('INFO', `First item: ${JSON.stringify(data[0]).substring(0, 200)}...`);
+      
+      // Cache the data in the tmp directory for future use
+      if (dataPath !== path.join(TMP_DIR, 'geopolitical_risks.json')) {
+        fs.writeFileSync(path.join(TMP_DIR, 'geopolitical_risks.json'), JSON.stringify(data, null, 2));
+        console.log('INFO', `Cached data to ${path.join(TMP_DIR, 'geopolitical_risks.json')}`);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('ERROR', `Failed to read from ${dataPath}: ${error.message}`);
+      // Continue to the next path
+    }
+  }
+  
+  // If we get here, all attempts have failed
+  console.error('ERROR', 'All attempts to fetch geopolitical risk data have failed');
+  
+  // Instead of throwing an error, return an empty array
+  // This follows the principle of not using hardcoded fallbacks
+  console.log('INFO', 'Returning empty array as fallback');
+  return [];
+}
+
+/**
+ * Analyze geopolitical risks using OpenAI
+ */
+async function analyzeGeopoliticalRisks(rawData) {
+  console.log('INFO', 'Analyzing geopolitical risks...');
+  console.log('INFO', `Processing ${rawData.length} raw data items`);
+  
+  // Initialize OpenAI client
+  const openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY
+  });
+  
+  // Save raw data for debugging
+  const rawDataPath = path.join(TMP_DIR, 'raw_data_for_analysis.json');
+  fs.writeFileSync(rawDataPath, JSON.stringify(rawData, null, 2));
+  console.log('INFO', `Saved raw data for OpenAI analysis to ${rawDataPath}`);
+  
+  // Limit the number of items to process to avoid token limits
+  // Sort by date if available to get the most recent items
+  const sortedData = [...rawData].sort((a, b) => {
+    try {
+      // Safely handle date comparison with fallbacks
+      const dateA = a.publishedDate || a.date || '';
+      const dateB = b.publishedDate || b.date || '';
+      
+      // Convert to strings if they aren't already
+      const strDateA = String(dateA);
+      const strDateB = String(dateB);
+      
+      // Compare dates (most recent first)
+      return strDateB.localeCompare(strDateA);
+    } catch (error) {
+      console.warn('WARN', `Error comparing dates: ${error.message}`);
+      return 0; // Keep original order if comparison fails
+    }
+  });
+  
+  // Take the most recent 60 items (increased from 15)
+  const limitedData = sortedData.slice(0, 60);
+  console.log('INFO', `Limited to ${limitedData.length} most recent items`);
+  
+  // Truncate long descriptions to reduce token count
+  const processedData = limitedData.map(item => ({
+    id: item.id,
+    name: item.name,
+    description: item.description ? item.description.substring(0, 500) + (item.description.length > 500 ? '...' : '') : '',
+    source: item.source,
+    sourceUrl: item.sourceUrl || item.url || '',
+    publishedDate: item.publishedDate || item.date || new Date().toISOString(),
+    regions: Array.isArray(item.regions) ? item.regions : [item.region || 'Global'],
+    categories: Array.isArray(item.categories) ? item.categories : ['geopolitical']
+  }));
+  
+  // Save processed data for debugging
+  const processedDataPath = path.join(TMP_DIR, 'processed_data_for_analysis.json');
+  fs.writeFileSync(processedDataPath, JSON.stringify(processedData, null, 2));
+  console.log('INFO', `Saved processed data for OpenAI analysis to ${processedDataPath}`);
+  
+  // Prepare a more efficient prompt
+  let prompt = `
+  You are a professional geopolitical analyst specializing in market impact analysis for investors.
+  
+  I will provide you with a list of current geopolitical risks. Your task is to:
+  
+  1. Analyze the list of ${processedData.length} geopolitical risks and identify EXACTLY 5 most significant thematic groupings or categories (e.g., US-China tensions, Middle East conflicts, trade wars)
+  2. For each thematic grouping, synthesize insights from all relevant items in the original list
+  3. Provide a DETAILED analysis of each thematic grouping's potential market impact (300-400 words per category)
+  4. Calculate a geopolitical risk index (0-100) based on the severity of these themes
+  5. Create a highly concise global overview (EXACTLY 2 SHORT SENTENCES, maximum 25 words each) that is SPECIFIC about the current geopolitical landscape, mentioning the most significant issues identified in the data without unnecessary words or details
+  6. Create a detailed executive summary (200-300 words) of the current geopolitical landscape focusing on these key themes and their market implications
+  
+  CRITICALLY IMPORTANT: Your output MUST have EXACTLY 5 thematic groupings, no more and no less. Each grouping should synthesize multiple related risks from the input list.
+  
+  CRITICAL: For each thematic grouping, preserve the original source names, timestamps, and URLs from the relevant input items. Do not fabricate any sources.
+  
+  Here is the list of geopolitical risks to analyze:
+  ${JSON.stringify(processedData, null, 2)}
+  
+  GROUPING CRITERIA:
+  - Focus on themes with the highest potential impact on global markets
+  - Ensure diversity across different types of geopolitical concerns (e.g., military conflicts, trade tensions, political instability)
+  - Prioritize recent developments over older news
+  - Create meaningful thematic groupings that investors would find actionable
+  - For each grouping, include at least 3-5 related risk items from the original list to ensure comprehensive coverage
+  
+  FOR EACH THEMATIC GROUPING, YOUR ANALYSIS SHOULD INCLUDE:
+  - Explanation of the key events, developments, and key players in this risk category
+  - Analysis of why these risks matter to global stability and financial markets
+  - Assessment of potential future scenarios
+  - Specific countries or regions affected
+  - Economic and market impacts, including potential effects on specific sectors
+  
+  The descriptions for each risk category should be detailed but concise (300-400 words per category). Focus on quality over quantity.
+
+YOUR RESPONSE MUST BE VALID JSON ONLY. DO NOT include any explanatory text, markdown formatting, or code blocks.
+
+Respond with a JSON object with exactly this structure:
+{
+  "lastUpdated": "${new Date().toISOString()}",
+  "geopoliticalRiskIndex": <number 0-100>,
+  "global": "<highly concise global overview (EXACTLY 2 SHORT SENTENCES, maximum 25 words each)>",
+  "summary": "<detailed executive summary (200-300 words)>",
+  "risks": [
+    {
+      "name": "<thematic grouping name>",
+      "description": "<DETAILED analysis of 300-400 words>",
+      "region": "<affected regions, e.g., 'Global', 'Asia', 'Middle East'>",
+      "impactLevel": "<High, Medium, or Low>",
+      "source": "<primary source for this grouping>",
+      "sourceUrl": "<source URL>",
+      "relatedSources": [
+        {
+          "name": "<source name>",
+          "url": "<source URL>",
+          "timestamp": "<publication timestamp>"
+        }
+      ]
+    }
+    // IMPORTANT: Include EXACTLY 5 thematic groupings, no more and no less
+  ]
+}`;
+  
+  console.log('INFO', `Prompt length: ${prompt.length} characters`);
+  
+  // Call OpenAI API with retry logic
+  const maxRetries = 3;
+  let attempt = 0;
+  let response;
+  
+  while (attempt < maxRetries) {
+    attempt++;
+    console.log('INFO', `OpenAI API call attempt ${attempt} of ${maxRetries}`);
+    
+    try {
+      // Use GPT-3.5-turbo for lower token usage if we're having issues with GPT-4
+      // Use gpt-4o for better performance
+      const model = 'gpt-4o';
+      console.log('INFO', `Making OpenAI API call with ${model} model`);
+      
+      // Set a timeout for the OpenAI API call
+      const timeoutMs = 50000; // 50 seconds
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error(`OpenAI API call timed out after ${timeoutMs}ms`)), timeoutMs);
+      });
+      
+      // Make the API call with a timeout
+      try {
+        response = await Promise.race([
+          openai.chat.completions.create({
+            model: model,
+            messages: [
+              { 
+                role: 'system', 
+                content: 'You are a professional geopolitical analyst specializing in market impact analysis for investors. You excel at synthesizing complex geopolitical events into clear, actionable insights. Your response MUST be in valid JSON format only, with no markdown formatting, no explanations, and no additional text.' 
+              },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.1,
+            response_format: { type: "json_object" },
+            max_tokens: 4000 // Reduced to avoid timeouts
+          }),
+          timeoutPromise
+        ]);
+      } catch (timeoutError) {
+        console.error('ERROR', `OpenAI API call timed out: ${timeoutError.message}`);
+        throw timeoutError;
+      }
+      
+      console.log('INFO', 'OpenAI API call successful');
+      console.log('INFO', `Response model: ${response.model}, finish reason: ${response.choices[0].finish_reason}`);
+      break;
+    } catch (error) {
+      console.error('ERROR', `OpenAI API call failed (attempt ${attempt}): ${error.message}`);
+      
+      // If we encounter a token limit error, reduce the input data size
+      if (error.message.includes('maximum context length') && attempt === 1) {
+        console.log('INFO', 'Token limit exceeded, reducing prompt size...');
+        // Further reduce the data size but keep more items
+        processedData.forEach(item => {
+          item.description = item.description.substring(0, 150) + '...';
+        });
+        
+        // Take a smaller subset if needed
+        const reducedData = processedData.slice(0, 30);
+        
+        // Regenerate the prompt with the reduced data
+        prompt = prompt.replace(
+          /Here is the list of geopolitical risks to analyze:[\s\S]*?GROUPING CRITERIA:/,
+          `Here is the list of geopolitical risks to analyze:
+  ${JSON.stringify(reducedData.map(d => ({name: d.name, description: d.description.substring(0, 100), source: d.source})), null, 1)}
+  
+  GROUPING CRITERIA:`
+        );
+        
+        console.log('INFO', `Reduced prompt length: ${prompt.length} characters`);
+      }
+      
+      if (attempt === maxRetries) {
+        throw new Error(`Failed to call OpenAI API after ${maxRetries} attempts: ${error.message}`);
+      }
+      
+      // Wait before retrying with exponential backoff
+      const backoffTime = 1000 * Math.pow(2, attempt);
+      console.log('INFO', `Waiting ${backoffTime}ms before retry...`);
+      await new Promise(resolve => setTimeout(resolve, backoffTime));
+    }
+  }
+  
+  // Process the response
+  const responseContent = response.choices[0].message.content;
+  console.log('INFO', `Received response from OpenAI with length: ${responseContent.length} characters`);
+  console.log('INFO', `Response preview: ${responseContent.substring(0, 200)}...`);
+  
+  // Save the raw response for debugging
+  const responsePath = path.join(TMP_DIR, 'openai_response_raw.json');
+  fs.writeFileSync(responsePath, responseContent);
+  console.log('INFO', `Saved raw OpenAI response to ${responsePath}`);
+  
+  try {
+    // Try multiple extraction methods for JSON parsing
+    let parsedData = null;
+    
+    // Method 1: Direct parsing
+    try {
+      parsedData = JSON.parse(responseContent);
+      console.log('INFO', 'Successfully parsed JSON directly');
+    } catch (directParseError) {
+      console.warn('WARN', `Direct JSON parsing failed: ${directParseError.message}`);
+    }
+    
+    // Method 2: Extract from markdown code blocks with json tag
+    if (!parsedData) {
+      const jsonCodeBlockMatch = responseContent.match(/```(?:json)\s*\n([\s\S]*?)\n```/);
+      if (jsonCodeBlockMatch && jsonCodeBlockMatch[1]) {
+        try {
+          parsedData = JSON.parse(jsonCodeBlockMatch[1]);
+          console.log('INFO', 'Successfully parsed JSON from code block with json tag');
+        } catch (jsonBlockParseError) {
+          console.warn('WARN', `JSON code block parsing failed: ${jsonBlockParseError.message}`);
+        }
+      }
+    }
+    
+    // Method 3: Extract from any markdown code blocks
+    if (!parsedData) {
+      const anyCodeBlockMatch = responseContent.match(/```([\s\S]*?)```/);
+      if (anyCodeBlockMatch && anyCodeBlockMatch[1]) {
+        // Remove the language identifier if present
+        const potentialJson = anyCodeBlockMatch[1].replace(/^\s*\w+\s*\n/, '');
+        try {
+          parsedData = JSON.parse(potentialJson);
+          console.log('INFO', 'Successfully parsed JSON from generic code block');
+        } catch (anyBlockParseError) {
+          console.warn('WARN', `Generic code block parsing failed: ${anyBlockParseError.message}`);
+        }
+      }
+    }
+    
+    // Method 4: Look for JSON-like structures with curly braces
+    if (!parsedData) {
+      const curlyBraceMatch = responseContent.match(/{[\s\S]*}/);
+      if (curlyBraceMatch) {
+        try {
+          parsedData = JSON.parse(curlyBraceMatch[0]);
+          console.log('INFO', 'Successfully parsed JSON from curly brace extraction');
+        } catch (curlyParseError) {
+          console.warn('WARN', `Curly brace JSON extraction failed: ${curlyParseError.message}`);
+        }
+      }
+    }
+    
+    // If all extraction methods failed, throw an error
+    if (!parsedData) {
+      throw new Error('Could not extract valid JSON from the OpenAI response');
+    }
+    
+    console.log('INFO', 'Successfully parsed OpenAI response as JSON');
+    console.log('INFO', `Parsed data contains ${parsedData.risks ? parsedData.risks.length : 0} risk categories`);
+    
+    // Validate the parsed data
+    if (!parsedData.geopoliticalRiskIndex || !parsedData.global || !parsedData.summary || !Array.isArray(parsedData.risks)) {
+      console.error('ERROR', 'Parsed data is missing required fields');
+      console.error('ERROR', `Data structure: ${JSON.stringify(Object.keys(parsedData))}`);
+      throw new Error('OpenAI response is missing required fields');
+    }
+    
+    // Add timestamp if not present
+    if (!parsedData.lastUpdated) {
+      parsedData.lastUpdated = new Date().toISOString();
+    }
+    
+    // Convert to the format expected by the Ghost post generator
+    const compatibleOutput = {
+      // Create the proper structure with macroeconomicFactors.geopoliticalRisks
+      macroeconomicFactors: {
+        geopoliticalRisks: {
+          global: parsedData.global || "Global geopolitical risk level is currently elevated due to multiple factors.",
+          risks: [],
+          // Preserve source information from the original data if available
+          source: parsedData.source || "Aggregated from multiple geopolitical risk assessments",
+          sourceUrl: parsedData.sourceUrl || parsedData.url || "https://www.cfr.org/global-conflict-tracker",
+          lastUpdated: parsedData.lastUpdated || new Date().toISOString()
+        }
+      },
+      // Keep other top-level properties
+      geopoliticalRiskIndex: parsedData.geopoliticalRiskIndex || 0,
+      summary: parsedData.summary || "No summary available"
+    };
+
+    // Add the risks if available
+    if (Array.isArray(parsedData.risks)) {
+      // Map the risks to the correct format
+      const formattedRisks = parsedData.risks.map(risk => {
+        // Check if this risk has related sources
+        let sourceUrl = risk.sourceUrl || risk.url || '#';
+        
+        // If there are related sources, use the first one's URL if the main sourceUrl is missing
+        if (risk.relatedSources && risk.relatedSources.length > 0 && !risk.sourceUrl) {
+          sourceUrl = risk.relatedSources[0].url || '#';
+        }
+        
+        return {
+          name: risk.name || 'Unknown Risk',
+          description: risk.description || 'No description available',
+          region: risk.region || 'Global',
+          impactLevel: risk.impactLevel || 'Medium',
+          // Preserve the exact source information
+          source: risk.source || 'Unknown Source',
+          // Ensure we use the exact URL from the original data
+          sourceUrl: sourceUrl
+        };
+      });
+      
+      // Assign the risks to the output
+      compatibleOutput.macroeconomicFactors.geopoliticalRisks.risks = formattedRisks;
+    }
+    
+    // Save the parsed response for debugging
+    const parsedPath = path.join(TMP_DIR, 'openai_response_parsed.json');
+    fs.writeFileSync(parsedPath, JSON.stringify(compatibleOutput, null, 2));
+    console.log('INFO', `Saved parsed OpenAI response to ${parsedPath}`);
+    
+    return compatibleOutput;
+  } catch (error) {
+    console.error('ERROR', `Failed to parse OpenAI response as JSON: ${error.message}`);
+    
+    // Log the error and save the problematic response for debugging
+    const errorPath = path.join(TMP_DIR, 'openai_response_error.txt');
+    fs.writeFileSync(errorPath, `Error: ${error.message}\n\nResponse Content:\n${responseContent}`);
+    console.log('INFO', `Saved error details to ${errorPath}`);
+    
+    // Create a minimal fallback response
+    const fallbackResponse = {
+      macroeconomicFactors: {
+        geopoliticalRisks: {
+          global: "Global geopolitical risk level is currently elevated due to processing errors. Please check the logs for details.",
+          risks: [
+            {
+              name: "API Processing Error",
+              description: "The system encountered an error while processing the geopolitical risk analysis. This could be due to API limitations, formatting issues, or other technical problems. Please try again later or contact support if the issue persists.",
+              region: "Global",
+              impactLevel: "Medium",
+              source: "System Diagnostic",
+              sourceUrl: "#"
+            }
+          ],
+          source: "System Diagnostic",
+          sourceUrl: "#",
+          lastUpdated: new Date().toISOString()
+        }
+      },
+      geopoliticalRiskIndex: 50,
+      summary: "The system encountered an error while processing the geopolitical risk analysis. This could be due to API limitations, formatting issues, or other technical problems. Please try again later or contact support if the issue persists."
+    };
+    
+    console.log('INFO', 'Returning fallback response due to parsing error');
+    return fallbackResponse;
+  }
+}

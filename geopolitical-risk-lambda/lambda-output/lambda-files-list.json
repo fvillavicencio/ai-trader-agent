@@ -1,0 +1,8 @@
+{
+  "statusCode": 200,
+  "headers": {
+    "Content-Type": "application/json",
+    "Access-Control-Allow-Origin": "*"
+  },
+  "body": "{\"directory\":\"/tmp\",\"files\":[{\"name\":\"analysis_status.json\",\"path\":\"/tmp/analysis_status.json\",\"size\":117,\"isDirectory\":false,\"modified\":\"2025-05-28T16:15:50.868Z\",\"content\":{\"status\":\"processing\",\"message\":\"Retrieving geopolitical risks\",\"timestamp\":\"2025-05-28T16:15:50.860Z\"}},{\"name\":\"sensor.log\",\"path\":\"/tmp/sensor.log\",\"size\":555,\"isDirectory\":false,\"modified\":\"2025-05-28T16:17:22.013Z\"}]}"
+}

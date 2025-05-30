@@ -1,0 +1,113 @@
+2025-05-28T19:01:42.122Z: INIT_START Runtime Version: nodejs:22.v43	Runtime Version ARN: arn:aws:lambda:us-east-2::runtime:fd2e05b324f99edd3c6e17800b2535deb79bcce74b7506d595a94870b3d9bd2e
+
+2025-05-28T19:01:42.574Z: 2025-05-28T19:01:42.574Z	undefined	INFO	INFO Using data directory: /tmp
+
+2025-05-28T19:01:42.587Z: START RequestId: 688f8005-1ee0-42f2-a7dd-11eb926df3ea Version: $LATEST
+
+2025-05-28T19:01:42.589Z: 2025-05-28T19:01:42.589Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Received event: {"queryStringParameters":{"operation":"refresh"}}
+
+2025-05-28T19:01:42.589Z: 2025-05-28T19:01:42.589Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Environment variables: {"AWS_LAMBDA_FUNCTION_VERSION":"$LATEST","AWS_EXECUTION_ENV":"AWS_Lambda_nodejs22.x","AWS_DEFAULT_REGION":"us-east-2","AWS_LAMBDA_LOG_STREAM_NAME":"2025/05/28/[$LATEST]6466caad3bfa423cb7f6f4e65660b975","AWS_REGION":"us-east-2","PWD":"/var/task","_HANDLER":"index.handler","RAPIDAPI_HOST":"insightsentry.p.rapidapi.com","TZ":":UTC","LAMBDA_TASK_ROOT":"/var/task","LANG":"en_US.UTF-8","AWS_LAMBDA_LOG_GROUP_NAME":"/aws/lambda/geopolitical-risk-analyzer","AWS_LAMBDA_RUNTIME_API":"169.254.100.1:9001","AWS_LAMBDA_FUNCTION_MEMORY_SIZE":"1024","LAMBDA_RUNTIME_DIR":"/var/runtime","_AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1","AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1:2000","SHLVL":"0","LD_LIBRARY_PATH":"/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib","NODE_PATH":"/opt/nodejs/node22/node_modules:/opt/nodejs/node_modules:/var/runtime/node_modules:/var/runtime:/var/task","AWS_LAMBDA_FUNCTION_NAME":"geopolitical-risk-analyzer","PATH":"/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin","AWS_LAMBDA_INITIALIZATION_TYPE":"on-demand","AWS_XRAY_CONTEXT_MISSING":"LOG_ERROR","RAPIDAPI_ENDPOINT":"https://insightsentry.p.rapidapi.com/v2/newsfeed/latest","_AWS_XRAY_DAEMON_PORT":"2000","_X_AMZN_TRACE_ID":"Root=1-68375d95-345bb16c4899d18435d6c9bb;Parent=78d253cdf4788b1e;Sampled=0;Lineage=1:8a3a65de:0"}
+
+2025-05-28T19:01:42.589Z: 2025-05-28T19:01:42.589Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Handling refresh request
+
+2025-05-28T19:01:42.589Z: 2025-05-28T19:01:42.589Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Starting forced refresh
+
+2025-05-28T19:01:42.590Z: 2025-05-28T19:01:42.590Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Starting async processing job job-1748458902590
+
+2025-05-28T19:01:42.590Z: 2025-05-28T19:01:42.590Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Updated processing status: processing - Fetching raw geopolitical risk data
+
+2025-05-28T19:01:42.592Z: END RequestId: 688f8005-1ee0-42f2-a7dd-11eb926df3ea
+
+2025-05-28T19:01:42.592Z: REPORT RequestId: 688f8005-1ee0-42f2-a7dd-11eb926df3ea	Duration: 4.63 ms	Billed Duration: 5 ms	Memory Size: 1024 MB	Max Memory Used: 103 MB	Init Duration: 461.42 ms	
+
+2025-05-28T19:01:47.950Z: START RequestId: 9eba2a80-35dd-4598-b929-1c110fa71652 Version: $LATEST
+
+2025-05-28T19:01:47.951Z: 2025-05-28T19:01:47.951Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Executing background job job-1748458902590
+
+2025-05-28T19:01:47.951Z: 2025-05-28T19:01:47.951Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Updated processing status: processing - Retrieving geopolitical risks
+
+2025-05-28T19:01:47.951Z: 2025-05-28T19:01:47.951Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Using balanced-retrieval module to fetch geopolitical risks
+
+2025-05-28T19:01:48.161Z: 2025-05-28T19:01:48.161Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	Using logs directory: /tmp
+
+2025-05-28T19:01:48.199Z: 2025-05-28T19:01:48.199Z	688f8005-1ee0-42f2-a7dd-11eb926df3ea	INFO	INFO Balanced retrieval using data directory: /tmp
+
+2025-05-28T19:01:48.202Z: [32minfo[39m: Starting balanced geopolitical risk retrieval... {"service":"balanced-retrieval","timestamp":"2025-05-28 19:01:48"}
+
+2025-05-28T19:01:48.204Z: [32minfo[39m: Fetching from RSS feeds... {"service":"balanced-retrieval","timestamp":"2025-05-28 19:01:48"}
+
+2025-05-28T19:01:48.204Z: [32minfo[39m: Fetching from Foreign Affairs... {"service":"balanced-retrieval","timestamp":"2025-05-28 19:01:48"}
+
+2025-05-28T19:01:48.262Z: 2025-05-28T19:01:48.262Z	9eba2a80-35dd-4598-b929-1c110fa71652	INFO	INFO Received event: {"queryStringParameters":{"operation":"status"}}
+
+2025-05-28T19:01:48.262Z: 2025-05-28T19:01:48.262Z	9eba2a80-35dd-4598-b929-1c110fa71652	INFO	INFO Environment variables: {"AWS_LAMBDA_FUNCTION_VERSION":"$LATEST","AWS_EXECUTION_ENV":"AWS_Lambda_nodejs22.x","AWS_DEFAULT_REGION":"us-east-2","AWS_LAMBDA_LOG_STREAM_NAME":"2025/05/28/[$LATEST]6466caad3bfa423cb7f6f4e65660b975","AWS_REGION":"us-east-2","PWD":"/var/task","_HANDLER":"index.handler","RAPIDAPI_HOST":"insightsentry.p.rapidapi.com","TZ":":UTC","LAMBDA_TASK_ROOT":"/var/task","LANG":"en_US.UTF-8","AWS_LAMBDA_LOG_GROUP_NAME":"/aws/lambda/geopolitical-risk-analyzer","AWS_LAMBDA_RUNTIME_API":"169.254.100.1:9001","AWS_LAMBDA_FUNCTION_MEMORY_SIZE":"1024","LAMBDA_RUNTIME_DIR":"/var/runtime","_AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1","AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1:2000","SHLVL":"0","LD_LIBRARY_PATH":"/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib","NODE_PATH":"/opt/nodejs/node22/node_modules:/opt/nodejs/node_modules:/var/runtime/node_modules:/var/runtime:/var/task","AWS_LAMBDA_FUNCTION_NAME":"geopolitical-risk-analyzer","PATH":"/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin","AWS_LAMBDA_INITIALIZATION_TYPE":"on-demand","AWS_XRAY_CONTEXT_MISSING":"LOG_ERROR","RAPIDAPI_ENDPOINT":"https://insightsentry.p.rapidapi.com/v2/newsfeed/latest","_AWS_XRAY_DAEMON_PORT":"2000","_X_AMZN_TRACE_ID":"Root=1-68375d9b-322b3e2030e340e8444648b6;Parent=13e9b982b66d4728;Sampled=0;Lineage=1:8a3a65de:0","PERPLEXITY_MODEL":"sonar-pro","PERPLEXITY_API_URL":"https://api.perplexity.ai/chat/completions","GOOGLE_APPLICATION_CREDENTIALS":"./ai-trader-agent-26a2b921b48d.json","GCP_PROJECT_ID":"ai-trader-agent","LOCATION":"us-central1","DATA_STORE_ID":"694957319452098560","CUSTOM_SEARCH_ENGINE_ID":"a4a8e6461f96f46b0","TEST_MODE":"false","OUTPUT_JSON":"true","LOG_LEVEL":"info","PORT":"3000","ENABLE_CYCLE":"true","CYCLE_INTERVAL_MS":"3600000","DATA_DIR":"./data","SCAN_INTERVAL_HOURS":"6","MAX_EVENT_AGE_DAYS":"7","DEBUG":"false"}
+
+2025-05-28T19:01:48.262Z: 2025-05-28T19:01:48.262Z	9eba2a80-35dd-4598-b929-1c110fa71652	INFO	INFO Handling status request
+
+2025-05-28T19:01:48.268Z: END RequestId: 9eba2a80-35dd-4598-b929-1c110fa71652
+
+2025-05-28T19:01:48.268Z: REPORT RequestId: 9eba2a80-35dd-4598-b929-1c110fa71652	Duration: 316.85 ms	Billed Duration: 317 ms	Memory Size: 1024 MB	Max Memory Used: 112 MB	
+
+2025-05-28T19:01:53.595Z: START RequestId: 328d73bc-cafa-4ac9-bbe7-71fe76328f75 Version: $LATEST
+
+2025-05-28T19:01:53.619Z: 2025-05-28T19:01:53.619Z	328d73bc-cafa-4ac9-bbe7-71fe76328f75	INFO	INFO Received event: {"queryStringParameters":{"operation":"status"}}
+
+2025-05-28T19:01:53.637Z: 2025-05-28T19:01:53.637Z	328d73bc-cafa-4ac9-bbe7-71fe76328f75	INFO	INFO Environment variables: {"AWS_LAMBDA_FUNCTION_VERSION":"$LATEST","AWS_EXECUTION_ENV":"AWS_Lambda_nodejs22.x","AWS_DEFAULT_REGION":"us-east-2","AWS_LAMBDA_LOG_STREAM_NAME":"2025/05/28/[$LATEST]6466caad3bfa423cb7f6f4e65660b975","AWS_REGION":"us-east-2","PWD":"/var/task","_HANDLER":"index.handler","RAPIDAPI_HOST":"insightsentry.p.rapidapi.com","TZ":":UTC","LAMBDA_TASK_ROOT":"/var/task","LANG":"en_US.UTF-8","AWS_LAMBDA_LOG_GROUP_NAME":"/aws/lambda/geopolitical-risk-analyzer","AWS_LAMBDA_RUNTIME_API":"169.254.100.1:9001","AWS_LAMBDA_FUNCTION_MEMORY_SIZE":"1024","LAMBDA_RUNTIME_DIR":"/var/runtime","_AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1","AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1:2000","SHLVL":"0","LD_LIBRARY_PATH":"/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib","NODE_PATH":"/opt/nodejs/node22/node_modules:/opt/nodejs/node_modules:/var/runtime/node_modules:/var/runtime:/var/task","AWS_LAMBDA_FUNCTION_NAME":"geopolitical-risk-analyzer","PATH":"/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin","AWS_LAMBDA_INITIALIZATION_TYPE":"on-demand","AWS_XRAY_CONTEXT_MISSING":"LOG_ERROR","RAPIDAPI_ENDPOINT":"https://insightsentry.p.rapidapi.com/v2/newsfeed/latest","_AWS_XRAY_DAEMON_PORT":"2000","_X_AMZN_TRACE_ID":"Root=1-68375da1-73285c141585d36461db22e6;Parent=4eb1640a49e4f75b;Sampled=0;Lineage=1:8a3a65de:0","PERPLEXITY_MODEL":"sonar-pro","PERPLEXITY_API_URL":"https://api.perplexity.ai/chat/completions","GOOGLE_APPLICATION_CREDENTIALS":"./ai-trader-agent-26a2b921b48d.json","GCP_PROJECT_ID":"ai-trader-agent","LOCATION":"us-central1","DATA_STORE_ID":"694957319452098560","CUSTOM_SEARCH_ENGINE_ID":"a4a8e6461f96f46b0","TEST_MODE":"false","OUTPUT_JSON":"true","LOG_LEVEL":"info","PORT":"3000","ENABLE_CYCLE":"true","CYCLE_INTERVAL_MS":"3600000","DATA_DIR":"./data","SCAN_INTERVAL_HOURS":"6","MAX_EVENT_AGE_DAYS":"7","DEBUG":"false"}
+
+2025-05-28T19:01:53.637Z: 2025-05-28T19:01:53.637Z	328d73bc-cafa-4ac9-bbe7-71fe76328f75	INFO	INFO Handling status request
+
+2025-05-28T19:01:53.640Z: END RequestId: 328d73bc-cafa-4ac9-bbe7-71fe76328f75
+
+2025-05-28T19:01:53.641Z: REPORT RequestId: 328d73bc-cafa-4ac9-bbe7-71fe76328f75	Duration: 45.28 ms	Billed Duration: 46 ms	Memory Size: 1024 MB	Max Memory Used: 112 MB	
+
+2025-05-28T19:01:58.943Z: START RequestId: 3d91d6b9-cb34-4ddb-987f-5d4968c45cf0 Version: $LATEST
+
+2025-05-28T19:01:58.950Z: 2025-05-28T19:01:58.950Z	3d91d6b9-cb34-4ddb-987f-5d4968c45cf0	INFO	INFO Received event: {"queryStringParameters":{"operation":"status"}}
+
+2025-05-28T19:01:58.957Z: 2025-05-28T19:01:58.957Z	3d91d6b9-cb34-4ddb-987f-5d4968c45cf0	INFO	INFO Environment variables: {"AWS_LAMBDA_FUNCTION_VERSION":"$LATEST","AWS_EXECUTION_ENV":"AWS_Lambda_nodejs22.x","AWS_DEFAULT_REGION":"us-east-2","AWS_LAMBDA_LOG_STREAM_NAME":"2025/05/28/[$LATEST]6466caad3bfa423cb7f6f4e65660b975","AWS_REGION":"us-east-2","PWD":"/var/task","_HANDLER":"index.handler","RAPIDAPI_HOST":"insightsentry.p.rapidapi.com","TZ":":UTC","LAMBDA_TASK_ROOT":"/var/task","LANG":"en_US.UTF-8","AWS_LAMBDA_LOG_GROUP_NAME":"/aws/lambda/geopolitical-risk-analyzer","AWS_LAMBDA_RUNTIME_API":"169.254.100.1:9001","AWS_LAMBDA_FUNCTION_MEMORY_SIZE":"1024","LAMBDA_RUNTIME_DIR":"/var/runtime","_AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1","AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1:2000","SHLVL":"0","LD_LIBRARY_PATH":"/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib","NODE_PATH":"/opt/nodejs/node22/node_modules:/opt/nodejs/node_modules:/var/runtime/node_modules:/var/runtime:/var/task","AWS_LAMBDA_FUNCTION_NAME":"geopolitical-risk-analyzer","PATH":"/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin","AWS_LAMBDA_INITIALIZATION_TYPE":"on-demand","AWS_XRAY_CONTEXT_MISSING":"LOG_ERROR","RAPIDAPI_ENDPOINT":"https://insightsentry.p.rapidapi.com/v2/newsfeed/latest","_AWS_XRAY_DAEMON_PORT":"2000","_X_AMZN_TRACE_ID":"Root=1-68375da6-3baad25475744b2e65ec0b14;Parent=19d96bce4a11997e;Sampled=0;Lineage=1:8a3a65de:0","PERPLEXITY_MODEL":"sonar-pro","PERPLEXITY_API_URL":"https://api.perplexity.ai/chat/completions","GOOGLE_APPLICATION_CREDENTIALS":"./ai-trader-agent-26a2b921b48d.json","GCP_PROJECT_ID":"ai-trader-agent","LOCATION":"us-central1","DATA_STORE_ID":"694957319452098560","CUSTOM_SEARCH_ENGINE_ID":"a4a8e6461f96f46b0","TEST_MODE":"false","OUTPUT_JSON":"true","LOG_LEVEL":"info","PORT":"3000","ENABLE_CYCLE":"true","CYCLE_INTERVAL_MS":"3600000","DATA_DIR":"./data","SCAN_INTERVAL_HOURS":"6","MAX_EVENT_AGE_DAYS":"7","DEBUG":"false"}
+
+2025-05-28T19:01:58.957Z: 2025-05-28T19:01:58.957Z	3d91d6b9-cb34-4ddb-987f-5d4968c45cf0	INFO	INFO Handling status request
+
+2025-05-28T19:01:58.962Z: END RequestId: 3d91d6b9-cb34-4ddb-987f-5d4968c45cf0
+
+2025-05-28T19:01:58.962Z: REPORT RequestId: 3d91d6b9-cb34-4ddb-987f-5d4968c45cf0	Duration: 19.17 ms	Billed Duration: 20 ms	Memory Size: 1024 MB	Max Memory Used: 113 MB	
+
+2025-05-28T19:02:04.258Z: START RequestId: b9fd2b46-3e76-449d-a53b-7851ce640754 Version: $LATEST
+
+2025-05-28T19:02:04.300Z: [32minfo[39m: Retrieved 3 relevant items from Foreign Affairs {"service":"balanced-retrieval","timestamp":"2025-05-28 19:02:04"}
+
+2025-05-28T19:02:04.301Z: 2025-05-28T19:02:04.301Z	b9fd2b46-3e76-449d-a53b-7851ce640754	INFO	INFO Received event: {"queryStringParameters":{"operation":"status"}}
+
+2025-05-28T19:02:04.317Z: 2025-05-28T19:02:04.317Z	b9fd2b46-3e76-449d-a53b-7851ce640754	INFO	INFO Environment variables: {"AWS_LAMBDA_FUNCTION_VERSION":"$LATEST","AWS_EXECUTION_ENV":"AWS_Lambda_nodejs22.x","AWS_DEFAULT_REGION":"us-east-2","AWS_LAMBDA_LOG_STREAM_NAME":"2025/05/28/[$LATEST]6466caad3bfa423cb7f6f4e65660b975","AWS_REGION":"us-east-2","PWD":"/var/task","_HANDLER":"index.handler","RAPIDAPI_HOST":"insightsentry.p.rapidapi.com","TZ":":UTC","LAMBDA_TASK_ROOT":"/var/task","LANG":"en_US.UTF-8","AWS_LAMBDA_LOG_GROUP_NAME":"/aws/lambda/geopolitical-risk-analyzer","AWS_LAMBDA_RUNTIME_API":"169.254.100.1:9001","AWS_LAMBDA_FUNCTION_MEMORY_SIZE":"1024","LAMBDA_RUNTIME_DIR":"/var/runtime","_AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1","AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1:2000","SHLVL":"0","LD_LIBRARY_PATH":"/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib","NODE_PATH":"/opt/nodejs/node22/node_modules:/opt/nodejs/node_modules:/var/runtime/node_modules:/var/runtime:/var/task","AWS_LAMBDA_FUNCTION_NAME":"geopolitical-risk-analyzer","PATH":"/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin","AWS_LAMBDA_INITIALIZATION_TYPE":"on-demand","AWS_XRAY_CONTEXT_MISSING":"LOG_ERROR","RAPIDAPI_ENDPOINT":"https://insightsentry.p.rapidapi.com/v2/newsfeed/latest","_AWS_XRAY_DAEMON_PORT":"2000","_X_AMZN_TRACE_ID":"Root=1-68375dac-3283ac5b0335e236549c9b26;Parent=52d64c5cad8fa4d2;Sampled=0;Lineage=1:8a3a65de:0","PERPLEXITY_MODEL":"sonar-pro","PERPLEXITY_API_URL":"https://api.perplexity.ai/chat/completions","GOOGLE_APPLICATION_CREDENTIALS":"./ai-trader-agent-26a2b921b48d.json","GCP_PROJECT_ID":"ai-trader-agent","LOCATION":"us-central1","DATA_STORE_ID":"694957319452098560","CUSTOM_SEARCH_ENGINE_ID":"a4a8e6461f96f46b0","TEST_MODE":"false","OUTPUT_JSON":"true","LOG_LEVEL":"info","PORT":"3000","ENABLE_CYCLE":"true","CYCLE_INTERVAL_MS":"3600000","DATA_DIR":"./data","SCAN_INTERVAL_HOURS":"6","MAX_EVENT_AGE_DAYS":"7","DEBUG":"false"}
+
+2025-05-28T19:02:04.317Z: 2025-05-28T19:02:04.317Z	b9fd2b46-3e76-449d-a53b-7851ce640754	INFO	INFO Handling status request
+
+2025-05-28T19:02:04.319Z: END RequestId: b9fd2b46-3e76-449d-a53b-7851ce640754
+
+2025-05-28T19:02:04.319Z: REPORT RequestId: b9fd2b46-3e76-449d-a53b-7851ce640754	Duration: 60.40 ms	Billed Duration: 61 ms	Memory Size: 1024 MB	Max Memory Used: 113 MB	
+
+2025-05-28T19:02:09.614Z: START RequestId: 2bb820db-cdb1-400b-a01b-0febe88f3895 Version: $LATEST
+
+2025-05-28T19:02:09.616Z: [32minfo[39m: Fetching from Brookings Institution... {"service":"balanced-retrieval","timestamp":"2025-05-28 19:02:09"}
+
+2025-05-28T19:02:09.618Z: 2025-05-28T19:02:09.618Z	2bb820db-cdb1-400b-a01b-0febe88f3895	INFO	INFO Received event: {"queryStringParameters":{"operation":"status"}}
+
+2025-05-28T19:02:09.619Z: 2025-05-28T19:02:09.619Z	2bb820db-cdb1-400b-a01b-0febe88f3895	INFO	INFO Environment variables: {"AWS_LAMBDA_FUNCTION_VERSION":"$LATEST","AWS_EXECUTION_ENV":"AWS_Lambda_nodejs22.x","AWS_DEFAULT_REGION":"us-east-2","AWS_LAMBDA_LOG_STREAM_NAME":"2025/05/28/[$LATEST]6466caad3bfa423cb7f6f4e65660b975","AWS_REGION":"us-east-2","PWD":"/var/task","_HANDLER":"index.handler","RAPIDAPI_HOST":"insightsentry.p.rapidapi.com","TZ":":UTC","LAMBDA_TASK_ROOT":"/var/task","LANG":"en_US.UTF-8","AWS_LAMBDA_LOG_GROUP_NAME":"/aws/lambda/geopolitical-risk-analyzer","AWS_LAMBDA_RUNTIME_API":"169.254.100.1:9001","AWS_LAMBDA_FUNCTION_MEMORY_SIZE":"1024","LAMBDA_RUNTIME_DIR":"/var/runtime","_AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1","AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1:2000","SHLVL":"0","LD_LIBRARY_PATH":"/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib","NODE_PATH":"/opt/nodejs/node22/node_modules:/opt/nodejs/node_modules:/var/runtime/node_modules:/var/runtime:/var/task","AWS_LAMBDA_FUNCTION_NAME":"geopolitical-risk-analyzer","PATH":"/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin","AWS_LAMBDA_INITIALIZATION_TYPE":"on-demand","AWS_XRAY_CONTEXT_MISSING":"LOG_ERROR","RAPIDAPI_ENDPOINT":"https://insightsentry.p.rapidapi.com/v2/newsfeed/latest","_AWS_XRAY_DAEMON_PORT":"2000","_X_AMZN_TRACE_ID":"Root=1-68375db1-70160ca329080ac358ebb29d;Parent=1471f3869bbfdef8;Sampled=0;Lineage=1:8a3a65de:0","PERPLEXITY_MODEL":"sonar-pro","PERPLEXITY_API_URL":"https://api.perplexity.ai/chat/completions","GOOGLE_APPLICATION_CREDENTIALS":"./ai-trader-agent-26a2b921b48d.json","GCP_PROJECT_ID":"ai-trader-agent","LOCATION":"us-central1","DATA_STORE_ID":"694957319452098560","CUSTOM_SEARCH_ENGINE_ID":"a4a8e6461f96f46b0","TEST_MODE":"false","OUTPUT_JSON":"true","LOG_LEVEL":"info","PORT":"3000","ENABLE_CYCLE":"true","CYCLE_INTERVAL_MS":"3600000","DATA_DIR":"./data","SCAN_INTERVAL_HOURS":"6","MAX_EVENT_AGE_DAYS":"7","DEBUG":"false"}
+
+2025-05-28T19:02:09.619Z: 2025-05-28T19:02:09.619Z	2bb820db-cdb1-400b-a01b-0febe88f3895	INFO	INFO Handling status request
+
+2025-05-28T19:02:09.620Z: END RequestId: 2bb820db-cdb1-400b-a01b-0febe88f3895
+
+2025-05-28T19:02:09.620Z: REPORT RequestId: 2bb820db-cdb1-400b-a01b-0febe88f3895	Duration: 5.76 ms	Billed Duration: 6 ms	Memory Size: 1024 MB	Max Memory Used: 113 MB	
+
+2025-05-28T19:02:14.910Z: START RequestId: f0c039ec-f31f-46fb-a82e-5fb64ab99c52 Version: $LATEST
+
+2025-05-28T19:02:14.913Z: 2025-05-28T19:02:14.913Z	f0c039ec-f31f-46fb-a82e-5fb64ab99c52	INFO	INFO Received event: {"queryStringParameters":{"operation":"status"}}
+
+2025-05-28T19:02:14.913Z: 2025-05-28T19:02:14.913Z	f0c039ec-f31f-46fb-a82e-5fb64ab99c52	INFO	INFO Environment variables: {"AWS_LAMBDA_FUNCTION_VERSION":"$LATEST","AWS_EXECUTION_ENV":"AWS_Lambda_nodejs22.x","AWS_DEFAULT_REGION":"us-east-2","AWS_LAMBDA_LOG_STREAM_NAME":"2025/05/28/[$LATEST]6466caad3bfa423cb7f6f4e65660b975","AWS_REGION":"us-east-2","PWD":"/var/task","_HANDLER":"index.handler","RAPIDAPI_HOST":"insightsentry.p.rapidapi.com","TZ":":UTC","LAMBDA_TASK_ROOT":"/var/task","LANG":"en_US.UTF-8","AWS_LAMBDA_LOG_GROUP_NAME":"/aws/lambda/geopolitical-risk-analyzer","AWS_LAMBDA_RUNTIME_API":"169.254.100.1:9001","AWS_LAMBDA_FUNCTION_MEMORY_SIZE":"1024","LAMBDA_RUNTIME_DIR":"/var/runtime","_AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1","AWS_XRAY_DAEMON_ADDRESS":"169.254.100.1:2000","SHLVL":"0","LD_LIBRARY_PATH":"/var/lang/lib:/lib64:/usr/lib64:/var/runtime:/var/runtime/lib:/var/task:/var/task/lib:/opt/lib","NODE_PATH":"/opt/nodejs/node22/node_modules:/opt/nodejs/node_modules:/var/runtime/node_modules:/var/runtime:/var/task","AWS_LAMBDA_FUNCTION_NAME":"geopolitical-risk-analyzer","PATH":"/var/lang/bin:/usr/local/bin:/usr/bin/:/bin:/opt/bin","AWS_LAMBDA_INITIALIZATION_TYPE":"on-demand","AWS_XRAY_CONTEXT_MISSING":"LOG_ERROR","RAPIDAPI_ENDPOINT":"https://insightsentry.p.rapidapi.com/v2/newsfeed/latest","_AWS_XRAY_DAEMON_PORT":"2000","_X_AMZN_TRACE_ID":"Root=1-68375db6-4e5b3c1d4f866bb8470a4320;Parent=2bc2184111a6aeb1;Sampled=0;Lineage=1:8a3a65de:0","PERPLEXITY_MODEL":"sonar-pro","PERPLEXITY_API_URL":"https://api.perplexity.ai/chat/completions","GOOGLE_APPLICATION_CREDENTIALS":"./ai-trader-agent-26a2b921b48d.json","GCP_PROJECT_ID":"ai-trader-agent","LOCATION":"us-central1","DATA_STORE_ID":"694957319452098560","CUSTOM_SEARCH_ENGINE_ID":"a4a8e6461f96f46b0","TEST_MODE":"false","OUTPUT_JSON":"true","LOG_LEVEL":"info","PORT":"3000","ENABLE_CYCLE":"true","CYCLE_INTERVAL_MS":"3600000","DATA_DIR":"./data","SCAN_INTERVAL_HOURS":"6","MAX_EVENT_AGE_DAYS":"7","DEBUG":"false"}
+
+2025-05-28T19:02:14.913Z: 2025-05-28T19:02:14.913Z	f0c039ec-f31f-46fb-a82e-5fb64ab99c52	INFO	INFO Handling status request
+
+2025-05-28T19:02:14.915Z: END RequestId: f0c039ec-f31f-46fb-a82e-5fb64ab99c52
+
+2025-05-28T19:02:14.915Z: REPORT RequestId: f0c039ec-f31f-46fb-a82e-5fb64ab99c52	Duration: 3.93 ms	Billed Duration: 4 ms	Memory Size: 1024 MB	Max Memory Used: 113 MB	

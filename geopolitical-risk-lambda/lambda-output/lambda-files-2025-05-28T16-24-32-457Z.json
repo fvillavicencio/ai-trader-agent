@@ -1,0 +1,24 @@
+{
+  "directory": "/tmp",
+  "files": [
+    {
+      "name": "analysis_status.json",
+      "path": "/tmp/analysis_status.json",
+      "size": 117,
+      "isDirectory": false,
+      "modified": "2025-05-28T16:19:49.857Z",
+      "content": {
+        "status": "processing",
+        "message": "Retrieving geopolitical risks",
+        "timestamp": "2025-05-28T16:19:49.859Z"
+      }
+    },
+    {
+      "name": "sensor.log",
+      "path": "/tmp/sensor.log",
+      "size": 6273,
+      "isDirectory": false,
+      "modified": "2025-05-28T16:24:32.489Z"
+    }
+  ]
+}

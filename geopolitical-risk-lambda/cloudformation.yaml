@@ -1,0 +1,154 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for Geopolitical Risk Analyzer Lambda function'
+
+Parameters:
+  OpenAIApiKey:
+    Type: String
+    Description: OpenAI API Key for geopolitical risk analysis
+    NoEcho: true
+
+Resources:
+  # IAM Role for Lambda function
+  LambdaExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      RoleName: lambda-geopolitical-risk-role
+
+  # Lambda function
+  GeopoliticalRiskAnalyzerFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: geopolitical-risk-analyzer
+      Handler: index.handler
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Runtime: nodejs22.x
+      Timeout: 60
+      MemorySize: 512
+      Environment:
+        Variables:
+          OPENAI_API_KEY: !Ref OpenAIApiKey
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            return {
+              statusCode: 200,
+              body: JSON.stringify({
+                message: 'This is a placeholder. Deploy your actual code using the deploy.sh script.'
+              })
+            };
+          };
+
+  # CloudWatch Event Rule for scheduled refresh (every 6 hours)
+  ScheduledRefreshRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: GeopoliticalRiskRefreshSchedule
+      Description: Triggers the geopolitical risk analyzer refresh operation every 6 hours
+      ScheduleExpression: rate(6 hours)
+      State: ENABLED
+      Targets:
+        - Id: RefreshGeopoliticalRiskData
+          Arn: !GetAtt GeopoliticalRiskAnalyzerFunction.Arn
+          Input: '{"operation": "refresh"}'
+
+  # Permission for CloudWatch Events to invoke Lambda
+  LambdaInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GeopoliticalRiskAnalyzerFunction
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt ScheduledRefreshRule.Arn
+
+  # API Gateway for accessing the Lambda function
+  GeopoliticalRiskApi:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: GeopoliticalRiskAPI
+      Description: API for accessing geopolitical risk data
+      EndpointConfiguration:
+        Types:
+          - REGIONAL
+
+  # API Gateway Resource
+  GeopoliticalRiskResource:
+    Type: AWS::ApiGateway::Resource
+    Properties:
+      RestApiId: !Ref GeopoliticalRiskApi
+      ParentId: !GetAtt GeopoliticalRiskApi.RootResourceId
+      PathPart: geopolitical-risks
+
+  # API Gateway Method for retrieving data
+  GeopoliticalRiskGetMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GeopoliticalRiskApi
+      ResourceId: !Ref GeopoliticalRiskResource
+      HttpMethod: GET
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GeopoliticalRiskAnalyzerFunction.Arn}/invocations
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+
+  # API Gateway Method for refreshing data
+  GeopoliticalRiskPostMethod:
+    Type: AWS::ApiGateway::Method
+    Properties:
+      RestApiId: !Ref GeopoliticalRiskApi
+      ResourceId: !Ref GeopoliticalRiskResource
+      HttpMethod: POST
+      AuthorizationType: NONE
+      Integration:
+        Type: AWS_PROXY
+        IntegrationHttpMethod: POST
+        Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${GeopoliticalRiskAnalyzerFunction.Arn}/invocations
+        IntegrationResponses:
+          - StatusCode: 200
+      MethodResponses:
+        - StatusCode: 200
+
+  # API Gateway Deployment
+  ApiDeployment:
+    Type: AWS::ApiGateway::Deployment
+    DependsOn:
+      - GeopoliticalRiskGetMethod
+      - GeopoliticalRiskPostMethod
+    Properties:
+      RestApiId: !Ref GeopoliticalRiskApi
+      StageName: prod
+
+  # Permission for API Gateway to invoke Lambda
+  ApiGatewayInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !Ref GeopoliticalRiskAnalyzerFunction
+      Action: lambda:InvokeFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${GeopoliticalRiskApi}/*
+
+Outputs:
+  LambdaFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref GeopoliticalRiskAnalyzerFunction
+
+  LambdaFunctionArn:
+    Description: ARN of the Lambda function
+    Value: !GetAtt GeopoliticalRiskAnalyzerFunction.Arn
+
+  ApiEndpoint:
+    Description: URL of the API endpoint
+    Value: !Sub https://${GeopoliticalRiskApi}.execute-api.${AWS::Region}.amazonaws.com/prod/geopolitical-risks
