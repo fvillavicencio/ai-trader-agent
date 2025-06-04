@@ -38,6 +38,10 @@ The solution consists of:
 
 ### Deployment
 
+You have two options for deployment:
+
+#### Standard Deployment
+
 Deploy the entire solution with a single command:
 
 ```
@@ -49,6 +53,24 @@ This script will:
 - Deploy the generator function
 - Deploy the API function
 - Set up Cloud Scheduler for automatic updates
+
+#### Enhanced Deployment with Environment Variables
+
+For a more secure deployment that properly transfers all API keys from your local environment:
+
+```
+node deploy-with-env.js
+```
+
+This enhanced script will:
+- Check for all required environment variables
+- Prompt for any missing variables
+- Deploy the generator function with all necessary API keys
+- Deploy the API function with proper authentication
+- Set up Cloud Scheduler for automatic updates
+- Ensure no API keys are hardcoded in the deployment process
+
+The enhanced deployment is recommended to ensure all data retrieval sources (RSS feeds, Google News, NewsAPI, InsightSentry via RapidAPI, and Zeihan-specific content) have their required API keys properly configured in the Google Cloud environment.
 
 ### Manual Testing
 
