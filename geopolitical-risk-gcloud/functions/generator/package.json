@@ -1,0 +1,16 @@
+{
+  "name": "geopolitical-risk-generator",
+  "version": "1.0.0",
+  "description": "Geopolitical Risk Generator Cloud Function",
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.1.0",
+    "@google-cloud/storage": "^6.9.0",
+    "axios": "^1.3.4",
+    "dotenv": "^16.0.3",
+    "openai": "^4.0.0"
+  },
+  "engines": {
+    "node": "20"
+  }
+}
