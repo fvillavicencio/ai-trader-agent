@@ -20,9 +20,9 @@ if (!fs.existsSync(OUTPUT_DIR)) {
 }
 
 // Configuration
-const NUM_RUNS = 1; // Single run per execution
-const DELAY_MINUTES = 45; // 45 minute delay between test runs
-const PROVIDERS = ['both']; // Using 'both' provider for all runs
+const NUM_RUNS = parseInt(process.env.NUM_RUNS_INTERNAL || '1', 10); // Number of API calls in this script execution
+const DELAY_MINUTES = parseInt(process.env.DELAY_MINUTES_INTERNAL || '45', 10); // Delay between API calls in this script execution
+const PROVIDERS = ['random']; // Use random provider selection (will pick either OpenAI or Perplexity)
 
 // For multiple executions with spacing
 const TOTAL_EXECUTIONS = 5; // Run the script 5 times
@@ -75,13 +75,13 @@ function getProviderDescription(provider) {
 function extractUrls(result) {
   const urls = [];
   
-  if (result && result.risks && Array.isArray(result.risks)) {
-    result.risks.forEach(risk => {
+  if (result && result.data && result.data.risks && Array.isArray(result.data.risks)) {
+    result.data.risks.forEach(risk => {
       if (risk.sources && Array.isArray(risk.sources)) {
         risk.sources.forEach(source => {
           if (source.url && typeof source.url === 'string') {
             urls.push({
-              riskName: risk.title,
+              riskName: risk.name,
               sourceName: source.name,
               url: source.url
             });
@@ -98,13 +98,13 @@ function extractUrls(result) {
 function checkInsightSentrySources(result) {
   const insightSentrySources = [];
   
-  if (result && result.risks && Array.isArray(result.risks)) {
-    result.risks.forEach(risk => {
+  if (result && result.data && result.data.risks && Array.isArray(result.data.risks)) {
+    result.data.risks.forEach(risk => {
       if (risk.sources && Array.isArray(risk.sources)) {
         risk.sources.forEach(source => {
           if (source.name && source.name.toLowerCase() === 'insightsentry') {
             insightSentrySources.push({
-              riskName: risk.title,
+              riskName: risk.name,
               sourceName: source.name,
               url: source.url || 'No URL'
             });
@@ -121,13 +121,13 @@ function checkInsightSentrySources(result) {
 function checkSourcesWithoutUrls(result) {
   const sourcesWithoutUrls = [];
   
-  if (result && result.risks && Array.isArray(result.risks)) {
-    result.risks.forEach(risk => {
+  if (result && result.data && result.data.risks && Array.isArray(result.data.risks)) {
+    result.data.risks.forEach(risk => {
       if (risk.sources && Array.isArray(risk.sources)) {
         risk.sources.forEach(source => {
           if (!source.url || source.url.trim() === '') {
             sourcesWithoutUrls.push({
-              riskName: risk.title,
+              riskName: risk.name,
               sourceName: source.name || 'Unnamed source'
             });
           }
@@ -143,8 +143,8 @@ function checkSourcesWithoutUrls(result) {
 function countSourcesByChannel(result) {
   const channelCounts = {};
   
-  if (result && result.risks && Array.isArray(result.risks)) {
-    result.risks.forEach(risk => {
+  if (result && result.data && result.data.risks && Array.isArray(result.data.risks)) {
+    result.data.risks.forEach(risk => {
       if (risk.sources && Array.isArray(risk.sources)) {
         risk.sources.forEach(source => {
           const channel = source.retrievalChannel || 'unknown';

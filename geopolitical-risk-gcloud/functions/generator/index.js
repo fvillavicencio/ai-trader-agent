@@ -8,6 +8,136 @@
 const functions = require('@google-cloud/functions-framework');
 const { Storage } = require('@google-cloud/storage');
 const axios = require('axios');
+const { fetchAndProcessSourceData } = require('./data-retrieval');
+
+// Inline data validator functions
+/**
+ * Validate geopolitical risk data structure
+ * @param {Object} data - Geopolitical risk data to validate
+ * @returns {Object} - Validation result with errors if any
+ */
+function validateGeopoliticalRiskData(data) {
+  const errors = [];
+  const warnings = [];
+  
+  // Check if data exists
+  if (!data) {
+    errors.push('Data is null or undefined');
+    return { valid: false, errors, warnings };
+  }
+  
+  // Check if data is an object
+  if (typeof data !== 'object') {
+    errors.push(`Data is not an object (got ${typeof data})`);
+    return { valid: false, errors, warnings };
+  }
+  
+  // Check for required top-level fields
+  const requiredFields = ['overview', 'risks', 'lastUpdated'];
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      errors.push(`Missing required field: ${field}`);
+    }
+  }
+  
+  // Check overview
+  if (data.overview) {
+    if (typeof data.overview !== 'string') {
+      errors.push(`Overview is not a string (got ${typeof data.overview})`);
+    } else if (data.overview.length < 100) {
+      warnings.push(`Overview is too short (${data.overview.length} characters)`);
+    }
+  }
+  
+  // Check risks array
+  if (data.risks) {
+    if (!Array.isArray(data.risks)) {
+      errors.push(`Risks is not an array (got ${typeof data.risks})`);
+    } else {
+      // Check if risks array is empty
+      if (data.risks.length === 0) {
+        errors.push('Risks array is empty');
+      } else {
+        // Check each risk
+        data.risks.forEach((risk, index) => {
+          if (!risk.title) {
+            errors.push(`Risk #${index + 1} is missing a title`);
+          }
+          
+          if (!risk.analysis) {
+            errors.push(`Risk #${index + 1} is missing analysis content`);
+          } else if (typeof risk.analysis !== 'string') {
+            errors.push(`Risk #${index + 1} analysis is not a string (got ${typeof risk.analysis})`);
+          } else if (risk.analysis.length < 100) {
+            warnings.push(`Risk #${index + 1} analysis is too short (${risk.analysis.length} characters)`);
+          }
+        });
+      }
+    }
+  }
+  
+  // Check lastUpdated
+  if (data.lastUpdated) {
+    if (typeof data.lastUpdated !== 'string') {
+      errors.push(`lastUpdated is not a string (got ${typeof data.lastUpdated})`);
+    } else {
+      // Check if it's a valid ISO date string
+      try {
+        const date = new Date(data.lastUpdated);
+        if (isNaN(date.getTime())) {
+          errors.push(`lastUpdated is not a valid date: ${data.lastUpdated}`);
+        }
+      } catch (error) {
+        errors.push(`lastUpdated is not a valid date: ${data.lastUpdated}`);
+      }
+    }
+  }
+  
+  // Check meta information if present
+  if (data.meta) {
+    if (typeof data.meta !== 'object') {
+      warnings.push(`meta is not an object (got ${typeof data.meta})`);
+    } else if (!data.meta.provider) {
+      warnings.push('meta is missing provider information');
+    }
+  } else {
+    warnings.push('Missing meta information');
+  }
+  
+  return {
+    valid: errors.length === 0,
+    errors,
+    warnings
+  };
+}
+
+/**
+ * Log validation results
+ * @param {Object} validationResult - Result from validateGeopoliticalRiskData
+ */
+function logValidationResults(validationResult) {
+  const { valid, errors, warnings } = validationResult;
+  
+  if (valid) {
+    console.log('✅ Data validation passed');
+  } else {
+    console.error(`❌ Data validation failed with ${errors.length} errors`);
+  }
+  
+  if (errors.length > 0) {
+    console.error('Errors:');
+    errors.forEach((error, index) => {
+      console.error(`  ${index + 1}. ${error}`);
+    });
+  }
+  
+  if (warnings.length > 0) {
+    console.warn(`⚠️ ${warnings.length} warnings:`);
+    warnings.forEach((warning, index) => {
+      console.warn(`  ${index + 1}. ${warning}`);
+    });
+  }
+}
 
 // Configuration
 const BUCKET_NAME = process.env.BUCKET_NAME || 'geopolitical-risk-data';
@@ -44,8 +174,25 @@ functions.cloudEvent('generateGeopoliticalRiskAnalysis', async (cloudEvent) => {
     // Generate the geopolitical risk analysis
     const geopoliticalRisks = await generateGeopoliticalRisks();
     
-    // Save the data to Cloud Storage
+    // Validate the results before saving
+    console.log('Validating geopolitical risk analysis results...');
+    
+    // Use the data validator
+    const validationResult = validateGeopoliticalRiskData(geopoliticalRisks);
+    logValidationResults(validationResult);
+    
+    if (!validationResult.valid) {
+      console.error('CRITICAL: Invalid geopolitical risk structure');
+      console.error(`Received: ${JSON.stringify(geopoliticalRisks).substring(0, 200)}...`);
+      throw new Error(`Invalid geopolitical risk structure: ${validationResult.errors.join(', ')}`);
+    }
+    
+    console.log(`Analysis contains ${geopoliticalRisks.risks.length} risk categories`);
+    
+    // Save the results to storage
+    console.log('Saving geopolitical risks to storage...');
     await saveToCloudStorage(geopoliticalRisks);
+    console.log('Successfully saved geopolitical risks to storage');
     
     // Update status to completed
     await updateStatus({
@@ -115,120 +262,145 @@ async function saveToCloudStorage(data) {
  * @returns {Promise<Object>} - Geopolitical risk data
  */
 async function generateGeopoliticalRisks() {
-  console.log('Generating geopolitical risk analysis...');
+  console.log('Starting geopolitical risk generation process...');
+
+  let retrievedEventsData = '';
+  try {
+    console.log('Fetching and processing source data...');
+    const events = await fetchAndProcessSourceData();
+    console.log(`Retrieved ${events.length} processed events.`);
+    retrievedEventsData = events.map(event => 
+      `- Title: ${event.title}\n  Source: ${event.source} (${event.sourceType || 'general'})\n  Link: ${event.link}\n  Date: ${event.publishedDate}\n  Snippet: ${(event.content || '').substring(0, 200)}...`
+    ).join('\n\n');
+    if (events.length === 0) {
+        retrievedEventsData = 'No specific recent events found or retrieved. Provide a general analysis.';
+        console.warn('No events retrieved from data sources. AI will perform general analysis.');
+    }
+  } catch (error) {
+    console.error(`Error fetching or processing source data: ${error.message}. Proceeding without external context.`);
+    retrievedEventsData = 'Error retrieving recent events. Provide a general analysis based on your knowledge.';
+  }
+  console.log(`Formatted events data for prompt (first 300 chars): ${retrievedEventsData.substring(0,300)}`);
   
-  // Check if we have valid API keys
+  const existingRisks = await checkForExistingRisks();
+  if (existingRisks) {
+    console.log('Using existing geopolitical risks from today');
+    return existingRisks;
+  }
+  console.log('No existing risks found for today, generating new analysis...');
+
   if (!OPENAI_API_KEY && !PERPLEXITY_API_KEY) {
+    console.error('CRITICAL: No API keys available for any provider.');
     throw new Error('No API keys available for any provider');
   }
-  
-  // Randomly select a provider if both are available
-  let primaryProvider, fallbackProvider;
-  
-  if (OPENAI_API_KEY && PERPLEXITY_API_KEY) {
-    // Both providers available, randomly select one
-    if (Math.random() < 0.5) {
-      primaryProvider = {
-        name: 'openai',
-        function: callOpenAI,
-        args: [createOpenAIPrompt()]
-      };
-      fallbackProvider = {
-        name: 'perplexity',
-        function: callPerplexityAPI,
-        args: [createPerplexityPrompt()]
-      };
-    } else {
-      primaryProvider = {
-        name: 'perplexity',
-        function: callPerplexityAPI,
-        args: [createPerplexityPrompt()]
-      };
-      fallbackProvider = {
-        name: 'openai',
-        function: callOpenAI,
-        args: [createOpenAIPrompt()]
-      };
-    }
-  } else if (OPENAI_API_KEY) {
-    // Only OpenAI available
-    primaryProvider = {
-      name: 'openai',
-      function: callOpenAI,
-      args: [createOpenAIPrompt()]
-    };
-    fallbackProvider = null;
-  } else if (PERPLEXITY_API_KEY) {
-    // Only Perplexity available
-    primaryProvider = {
-      name: 'perplexity',
-      function: callPerplexityAPI,
-      args: [createPerplexityPrompt()]
-    };
-    fallbackProvider = null;
-  }
-  
-  console.log(`Using ${primaryProvider.name} as primary provider${fallbackProvider ? ` and ${fallbackProvider.name} as fallback` : ''}`);
-  
+
+  let provider = determineAIProvider();
+  let primaryAttemptDone = false;
+  let result;
+
+  console.log(`Primary attempt with ${provider}.`);
   try {
-    // Try the primary provider with retries
-    const primaryResult = await executeWithRetry(
-      primaryProvider.function,
-      primaryProvider.args,
-      {
-        maxRetries: 2,
-        minDelay: 300,
-        maxDelay: 1000,
-        useExponentialBackoff: true
-      }
-    );
+    let prompt = provider === 'openai' ? 
+      createOpenAIPrompt(provider, retrievedEventsData) : 
+      createPerplexityPrompt(provider, retrievedEventsData);
     
-    console.log(`Successfully retrieved data from ${primaryProvider.name}`);
-    
-    // Add provider information to the result
-    if (primaryResult && typeof primaryResult === 'object') {
-      primaryResult.meta = primaryResult.meta || {};
-      primaryResult.meta.provider = primaryProvider.name;
+    if (provider === 'openai') {
+      result = await executeWithRetry(callOpenAI, [prompt], {
+        maxRetries: 3,
+        initialDelay: 2000,
+        maxDelay: 10000,
+        providerName: 'OpenAI'
+      });
+    } else { // provider is 'perplexity'
+      result = await executeWithRetry(callPerplexityAPI, [prompt], {
+        maxRetries: 3,
+        initialDelay: 2000,
+        maxDelay: 10000,
+        providerName: 'Perplexity',
+        retrievedEventsDataForFallback: retrievedEventsData // For executeWithRetry's internal fallback
+      });
     }
-    
-    return primaryResult;
+    primaryAttemptDone = true;
+    console.log(`Successfully received response from primary provider ${provider}.`);
+    if (result && typeof result === 'object') {
+      result.meta = result.meta || {};
+      result.meta.provider = provider;
+    }
+    return result;
+
   } catch (primaryError) {
-    console.error(`Primary provider (${primaryProvider.name}) failed after multiple attempts: ${primaryError.message}`);
-    
-    // If no fallback provider is available, throw the error
-    if (!fallbackProvider) {
-      throw new Error(`${primaryProvider.name} failed and no fallback provider is available`);
+    console.error(`Primary provider ${provider} failed: ${primaryError.message}`);
+    if (primaryError.response) {
+      console.error(`Status: ${primaryError.response.status}, Data: ${JSON.stringify(primaryError.response.data)}`);
     }
-    
-    // Try the fallback provider
+    primaryAttemptDone = true;
+
+    // Determine fallback provider
+    const fallbackProvider = provider === 'openai' ? 'perplexity' : 'openai';
+    const fallbackApiKey = fallbackProvider === 'openai' ? OPENAI_API_KEY : PERPLEXITY_API_KEY;
+
+    if (!fallbackApiKey) {
+      console.error(`CRITICAL: Primary provider ${provider} failed and no API key for fallback provider ${fallbackProvider}.`);
+      throw new Error(`Primary provider ${provider} failed and fallback ${fallbackProvider} unavailable (no API key). Original error: ${primaryError.message}`);
+    }
+
+    console.log(`Attempting fallback to ${fallbackProvider} with up to 2 total attempts...`);
     try {
-      console.log(`Attempting fallback provider (${fallbackProvider.name})...`);
+      let fallbackPrompt = fallbackProvider === 'openai' ? 
+        createOpenAIPrompt(fallbackProvider + '-PrimaryFallback', retrievedEventsData) :
+        createPerplexityPrompt(fallbackProvider + '-PrimaryFallback', retrievedEventsData);
       
-      const fallbackResult = await executeWithRetry(
-        fallbackProvider.function,
-        fallbackProvider.args,
-        {
-          maxRetries: 3,
-          minDelay: 500,
-          maxDelay: 1500,
-          useExponentialBackoff: true
-        }
-      );
+      const fallbackFunc = fallbackProvider === 'openai' ? callOpenAI : callPerplexityAPI;
       
-      console.log(`Successfully retrieved data from fallback provider (${fallbackProvider.name})`);
+      result = await executeWithRetry(fallbackFunc, [fallbackPrompt], {
+        maxRetries: 1,      // Initial attempt + 1 retry = 2 total attempts if first fails
+        minDelay: 2000,     // Using similar delay range as primary attempts
+        maxDelay: 10000,
+        providerName: fallbackProvider 
+        // No retrievedEventsDataForFallback needed here as this is the main fallback path
+      });
       
-      // Add provider information to the result
-      if (fallbackResult && typeof fallbackResult === 'object') {
-        fallbackResult.meta = fallbackResult.meta || {};
-        fallbackResult.meta.provider = fallbackProvider.name;
+      console.log(`Successfully received response from fallback provider ${fallbackProvider} after its attempts.`);
+      if (result && typeof result === 'object') {
+        result.meta = result.meta || {};
+        result.meta.provider = fallbackProvider;
+        result.meta.usedPrimaryFallback = true;
       }
-      
-      return fallbackResult;
-    } catch (fallbackError) {
-      console.error(`Both primary and fallback providers failed: ${fallbackError.message}`);
-      throw new Error('All AI providers failed to generate geopolitical risk analysis');
+      return result;
+    } catch (fallbackError_detailed) { 
+      console.error(`CRITICAL: Fallback provider ${fallbackProvider} also failed after its 2 attempts: ${fallbackError_detailed.message}`);
+      if (fallbackError_detailed.response) {
+        console.error(`Status: ${fallbackError_detailed.response.status}, Data: ${JSON.stringify(fallbackError_detailed.response.data)}`);
+      }
+      // Append primary error to the new error message for more context
+      const primaryErrorMessage = primaryError.message || 'Primary provider error details not available.';
+      throw new Error(`Both primary provider ${provider} and fallback provider ${fallbackProvider} (with its 2 attempts) failed. Fallback error: ${fallbackError_detailed.message}. Primary error: ${primaryErrorMessage}`);
     }
   }
+}
+
+/**
+ * Determine which AI provider to use based on available API keys
+ * @returns {string} - Provider name ('openai' or 'perplexity')
+ */
+function determineAIProvider() {
+  // Check which API keys are available
+  const openaiAvailable = !!OPENAI_API_KEY;
+  const perplexityAvailable = !!PERPLEXITY_API_KEY;
+  
+  console.log(`Available providers: ${openaiAvailable ? 'OpenAI' : ''}${openaiAvailable && perplexityAvailable ? ' and ' : ''}${perplexityAvailable ? 'Perplexity' : ''}`);
+  
+  // If only one provider is available, use that one
+  if (openaiAvailable && !perplexityAvailable) {
+    return 'openai';
+  }
+  
+  if (!openaiAvailable && perplexityAvailable) {
+    return 'perplexity';
+  }
+  
+  // If both are available, randomly select one
+  return Math.random() < 0.5 ? 'openai' : 'perplexity';
 }
 
 /**
@@ -400,13 +572,24 @@ async function callPerplexityAPI(prompt) {
  */
 function parseAIResponse(response) {
   try {
+    console.log(`Parsing AI response (length: ${response.length} chars)`);
+    
     // First try direct parsing
     try {
       const data = JSON.parse(response);
       console.log('Successfully parsed JSON directly');
+      
+      // Validate the structure
+      if (!data.risks || !Array.isArray(data.risks)) {
+        console.warn('JSON parsed but missing expected structure (risks array)');
+      } else {
+        console.log(`Found ${data.risks.length} risks in the parsed JSON`);
+      }
+      
       return data;
     } catch (directParseError) {
-      console.log('Direct JSON parsing failed, trying to extract from response...');
+      console.log(`Direct JSON parsing failed: ${directParseError.message}`);
+      console.log('Trying to extract from response...');
     }
     
     // Try to extract JSON from markdown code blocks
@@ -447,51 +630,57 @@ function parseAIResponse(response) {
  * Create the prompt for OpenAI
  * @returns {string} - Prompt for OpenAI
  */
-function createOpenAIPrompt() {
+function createOpenAIPrompt(providerName, retrievedEventsData) {
   const currentDate = new Date();
   const formattedDate = formatDate(currentDate);
   
   return `
 Today's Date: ${formattedDate}
 
-Provide a comprehensive analysis of the current global geopolitical risks affecting financial markets.
+CONTEXT FROM RECENT NEWS AND ANALYSIS (Use this to inform your risk assessment and sourcing):
+${retrievedEventsData}
 
-REQUIREMENTS:
-1. Begin with a concise global overview (200-300 words) summarizing the current geopolitical landscape and its overall impact on financial markets.
-2. Then identify and analyze the 5 most significant geopolitical risk categories currently affecting financial markets.
-3. For each risk category:
-   - Provide a detailed title/name for the risk
-   - Write a comprehensive analysis (300-400 words) explaining:
-     * The nature and background of the risk
-     * Recent developments and current status
-     * Specific impacts on financial markets (asset classes, sectors, regions)
-     * Potential future scenarios and their market implications
-   - Include specific data points, expert opinions, and market reactions
-   - Cite reputable sources where appropriate
+Provide a comprehensive analysis of the current global geopolitical risks affecting financial markets. Format your response as a single, valid JSON object with no explanations or markdown formatting outside the JSON structure.
 
-FORMAT YOUR RESPONSE AS VALID JSON with this exact structure:
+JSON STRUCTURE REQUIREMENTS:
 {
-  "overview": "Comprehensive global overview text here",
+  "lastUpdated": "${new Date().toISOString()}", // ISO 8601 format for the current timestamp
+  "geopoliticalRiskIndex": <Number between 0-100 representing overall current geopolitical risk perception>,
+  "global": "<Concise global summary of the geopolitical landscape and its market impact, approx. 50-75 words>",
+  "executive": "<Executive summary detailing key geopolitical themes, market pressures, and outlook, approx. 100-150 words>",
   "risks": [
+    // Provide 5 distinct geopolitical risk objects here
     {
-      "title": "Risk Category 1 Title",
-      "analysis": "Detailed analysis of risk category 1"
+      "name": "<Specific and descriptive name for Risk Category 1>",
+      "description": "<Detailed description of Risk Category 1: its nature, background, recent developments, and current status. Approx. 150-200 words>",
+      "region": "<Geographic Region primarily affected, e.g., Middle East, Europe, Global, Asia-Pacific, North America, etc.>",
+      "impactLevel": <Numerical impact level on financial markets, 0-10, with 10 being highest impact>,
+      "marketImplications": "<Specific impacts of Risk Category 1 on financial markets: relevant asset classes (equities, bonds, commodities), sectors, and regional markets. Discuss potential future scenarios and their market implications. Approx. 150-200 words>",
+      "sources": [
+        {
+          "name": "<Name of Source 1.1, e.g., 'Reuters', 'Bloomberg', 'Foreign Affairs'>",
+          "url": "<Full, verifiable, and publicly accessible URL for Source 1.1>"
+        },
+        {
+          "name": "<Name of Source 1.2>",
+          "url": "<Full, verifiable, and publicly accessible URL for Source 1.2>"
+        }
+        // Include 2-4 diverse and reputable sources per risk. Ensure URLs are valid.
+      ]
     },
-    {
-      "title": "Risk Category 2 Title",
-      "analysis": "Detailed analysis of risk category 2"
-    },
-    ...and so on for all 5 risk categories
+    // ... (repeat structure for Risk Category 2 through 5)
   ],
-  "lastUpdated": "${new Date().toISOString()}"
+  "provider": "${providerName}"
 }
 
 IMPORTANT GUIDELINES:
-- Focus ONLY on REAL, VERIFIABLE geopolitical risks with documented market impacts
-- Include SPECIFIC details (names, figures, dates, market movements)
-- Ensure analysis is data-driven and factual, not speculative
-- Cover diverse regions and risk types (conflicts, elections, trade tensions, etc.)
-- Do not fabricate information or sources
+- Adhere STRICTLY to the JSON structure provided above.
+- All text content should be well-researched, factual, and data-driven.
+- Source URLs MUST be real, verifiable, and lead directly to the cited information or a highly relevant page.
+- Ensure a balanced perspective by citing diverse and reputable news outlets, academic journals, and think tank reports where possible.
+- Focus on geopolitical risks with clear and demonstrable impacts on financial markets.
+- Include specific details: names of individuals, organizations, key dates, relevant figures, and observed market movements.
+- Do not fabricate information or sources.
 `;
 }
 
@@ -499,9 +688,9 @@ IMPORTANT GUIDELINES:
  * Create the prompt for Perplexity
  * @returns {string} - Prompt for Perplexity
  */
-function createPerplexityPrompt() {
+function createPerplexityPrompt(providerName, retrievedEventsData) {
   // Use the same prompt as OpenAI for consistency
-  return createOpenAIPrompt();
+  return createOpenAIPrompt(providerName, retrievedEventsData);
 }
 
 /**
@@ -511,6 +700,45 @@ function createPerplexityPrompt() {
  */
 function formatDate(date) {
   return date.toISOString().split('T')[0];
+}
+
+/**
+ * Check if geopolitical risk data already exists for today
+ * @returns {Promise<Object|null>} - Existing data or null if not found
+ */
+async function checkForExistingRisks() {
+  try {
+    const storage = new Storage();
+    const bucket = storage.bucket(BUCKET_NAME);
+    const today = formatDate(new Date());
+    const filename = `geopolitical-risks-${today}.json`;
+    
+    console.log(`Checking for existing file: ${filename} in bucket: ${BUCKET_NAME}`);
+    
+    const [exists] = await bucket.file(filename).exists();
+    
+    if (exists) {
+      console.log(`Found existing geopolitical risks for ${today}`);
+      
+      // Download the file
+      const [content] = await bucket.file(filename).download();
+      
+      try {
+        // Parse the content
+        const data = JSON.parse(content.toString());
+        return data;
+      } catch (parseError) {
+        console.error(`Error parsing existing file: ${parseError.message}`);
+        return null;
+      }
+    } else {
+      console.log(`No existing geopolitical risks found for ${today}`);
+      return null;
+    }
+  } catch (error) {
+    console.error(`Error checking for existing risks: ${error.message}`);
+    return null;
+  }
 }
 
 // API Key for authentication
@@ -534,8 +762,8 @@ function validateApiKey(req) {
   return providedKey === API_KEY;
 }
 
-// HTTP function for direct testing
-functions.http('testGeopoliticalRiskGenerator', async (req, res) => {
+// HTTP function for geopolitical risk API
+functions.http('geopoliticalRiskAPI', async (req, res) => {
   try {
     // Set CORS headers
     res.set('Access-Control-Allow-Origin', '*');
