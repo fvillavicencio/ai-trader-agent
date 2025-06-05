@@ -49,6 +49,16 @@ perplexity-retrieval-lambda/simple-lambda/update-lambda-env.sh
 .Spotlight-V100
 .TemporaryItems
 .Trashes
+
+# Large deployment packages
+geopolitical-risk-lambda/fixed-deploy-package.zip
+geopolitical-risk-lambda/zi*
+lambda-deployment-package-fixed.zip
+*.zip
+geopolitical-risk-lambda/function.zip
+
+# Additional API key files
+geopolitical-risk-lambda/lambda-env.json
 .VolumeIcon.icns
 .com.apple.timemachine.donotpresent
 

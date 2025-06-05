@@ -1458,8 +1458,16 @@ function generateFullJsonDataset(analysisJson, debugMode = false) {
         
         // Add risks if available
         if (Array.isArray(geoRisks.risks)) {
+          // Filter out any "Overall Geopolitical Climate" risk items
+          // These should not be included as specific risks since they represent the global overview
+          const filteredRisks = geoRisks.risks.filter(risk => {
+            return risk.name !== "Overall Geopolitical Climate";
+          });
+          
+          Logger.log(`Filtered out ${geoRisks.risks.length - filteredRisks.length} 'Overall Geopolitical Climate' entries from risks array`);
+          
           // Sort risks by impact level (descending)
-          const sortedRisks = [...geoRisks.risks].sort((a, b) => {
+          const sortedRisks = [...filteredRisks].sort((a, b) => {
             // Convert string impact levels to numeric for sorting
             const impactOrder = {
               'Severe': 4,
