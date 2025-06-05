@@ -6,6 +6,9 @@
  * @param {boolean} options.draftOnly - Force the post to be created as a draft
  * @param {boolean} options.skipMembersFetch - Skip fetching members from Ghost API
  * @param {boolean} options.returnHtml - Request HTML content in the response
+ * @param {number} options.maxRetries - Maximum number of retry attempts (default: 3)
+ * @param {number} options.minRetryDelayMs - Minimum delay between retries in ms (default: 1000)
+ * @param {number} options.maxRetryDelayMs - Maximum delay between retries in ms (default: 5000)
  * @returns {Object} - The response from Lambda API
  */
 function publishToGhostWithLambda(jsonData, options = {}) {
@@ -16,6 +19,13 @@ function publishToGhostWithLambda(jsonData, options = {}) {
     const newsletterId = props.getProperty('GHOST_NEWSLETTER_ID') || '67f427c5744a72000854ee8f';
     const lambdaApiUrl = 'https://vrwz4xsvml.execute-api.us-east-2.amazonaws.com/prod/publish';
     const lambdaApiKey = props.getProperty('GHOST_LAMBDA_API_KEY');
+    
+    // Configure retry parameters with defaults if not provided
+    const maxRetries = options.maxRetries !== undefined ? options.maxRetries : 3;
+    const minRetryDelayMs = options.minRetryDelayMs !== undefined ? options.minRetryDelayMs : 1000;
+    const maxRetryDelayMs = options.maxRetryDelayMs !== undefined ? options.maxRetryDelayMs : 5000;
+    
+    Logger.log(`Configured retry parameters: maxRetries=${maxRetries}, minRetryDelayMs=${minRetryDelayMs}, maxRetryDelayMs=${maxRetryDelayMs}`);
     
     // Prepare the request payload
     const payload = {
@@ -34,59 +44,94 @@ function publishToGhostWithLambda(jsonData, options = {}) {
     Logger.log('jsonData keys: ' + Object.keys(jsonData).join(', '));
     Logger.log('draftOnly: ' + !!options.draftOnly);
     
-    // Make the actual API call to the Lambda function
-    let lambdaResponse = null;
     let publishError = null;
+    let lambdaResponse = null;
+    let retryCount = 0;
     
-    try {
-      Logger.log('Calling Lambda API to ' + (options.draftOnly ? 'create draft' : 'publish') + ' article...');
-      const response = UrlFetchApp.fetch(lambdaApiUrl, {
-        method: 'post',
-        contentType: 'application/json',
-        headers: {
-          'x-api-key': lambdaApiKey
-        },
-        payload: JSON.stringify(payload),
-        muteHttpExceptions: true
-      });
-      
-      const responseCode = response.getResponseCode();
-      const responseText = response.getContentText();
-      
-      Logger.log('Lambda API response code: ' + responseCode);
-      Logger.log('Lambda API response: ' + responseText);
-      
-      if (responseCode >= 200 && responseCode < 300) {
-        // Check if the response is HTML directly
-        if (options.returnHtml && (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html'))) {
-          lambdaResponse = { html: responseText };
-          Logger.log('HTML content received directly from Lambda');
-        } else {
-          // Parse as JSON
-          try {
-            lambdaResponse = JSON.parse(responseText);
-            Logger.log('Article successfully ' + (options.draftOnly ? 'saved as draft' : 'published') + ' to Ghost!');
-            
-            // Check if the response body contains HTML
-            if (options.returnHtml && lambdaResponse.body && 
-                typeof lambdaResponse.body === 'string' && 
-                (lambdaResponse.body.startsWith('<!DOCTYPE') || lambdaResponse.body.startsWith('<html'))) {
-              lambdaResponse.html = lambdaResponse.body;
-              Logger.log('HTML content extracted from Lambda response body');
-            }
-          } catch (parseError) {
-            publishError = 'Failed to parse Lambda response: ' + parseError.toString();
-            Logger.log(publishError);
-          }
+    // Retry loop for handling transient errors
+    while (retryCount <= maxRetries) {
+      try {
+        // If this is a retry attempt, log it and add a random delay
+        if (retryCount > 0) {
+          // Calculate a random delay between min and max
+          const retryDelayMs = Math.floor(Math.random() * (maxRetryDelayMs - minRetryDelayMs + 1)) + minRetryDelayMs;
+          Logger.log(`Retry attempt ${retryCount}/${maxRetries} after ${retryDelayMs}ms delay`);
+          
+          // Sleep for the random delay
+          Utilities.sleep(retryDelayMs);
         }
-      } else {
-        publishError = 'Error ' + responseCode + ' ' + (options.draftOnly ? 'creating draft' : 'publishing') + ' article to Ghost. Response: ' + responseText;
+        
+        // Make the actual API call to the Lambda function
+        const response = UrlFetchApp.fetch(lambdaApiUrl, {
+          method: 'post',
+          contentType: 'application/json',
+          headers: {
+            'x-api-key': lambdaApiKey
+          },
+          payload: JSON.stringify(payload),
+          muteHttpExceptions: true
+        });
+        
+        const responseCode = response.getResponseCode();
+        const responseText = response.getContentText();
+        
+        Logger.log('Lambda API response code: ' + responseCode);
+        Logger.log('Lambda API response: ' + responseText);
+        
+        if (responseCode >= 200 && responseCode < 300) {
+          // Check if the response is HTML directly
+          if (options.returnHtml && (responseText.startsWith('<!DOCTYPE') || responseText.startsWith('<html'))) {
+            lambdaResponse = { html: responseText };
+            Logger.log('HTML content received directly from Lambda');
+          } else {
+            // Parse as JSON
+            try {
+              lambdaResponse = JSON.parse(responseText);
+              Logger.log('Article successfully ' + (options.draftOnly ? 'saved as draft' : 'published') + ' to Ghost!');
+              
+              // Check if the response body contains HTML
+              if (options.returnHtml && lambdaResponse.body && 
+                  typeof lambdaResponse.body === 'string' && 
+                  (lambdaResponse.body.startsWith('<!DOCTYPE') || lambdaResponse.body.startsWith('<html'))) {
+                lambdaResponse.html = lambdaResponse.body;
+                Logger.log('HTML content extracted from Lambda response body');
+              }
+            } catch (parseError) {
+              publishError = 'Failed to parse Lambda response: ' + parseError.toString();
+              Logger.log(publishError);
+            }
+          }
+          
+          // Success - break out of the retry loop
+          break;
+        } else {
+          publishError = 'Error ' + responseCode + ' ' + (options.draftOnly ? 'creating draft' : 'publishing') + ' article to Ghost. Response: ' + responseText;
+          Logger.log(publishError);
+          
+          // If we've reached max retries, don't try again
+          if (retryCount >= maxRetries) {
+            Logger.log(`Maximum retry attempts (${maxRetries}) reached. Giving up.`);
+            break;
+          }
+          
+          // Otherwise, increment retry counter and continue the loop
+          retryCount++;
+        }
+      } catch (apiError) {
+        // Exception during API call - may retry
+        publishError = 'Error calling Lambda API: ' + apiError.toString();
         Logger.log(publishError);
+        
+        // If we've reached max retries, don't try again
+        if (retryCount >= maxRetries) {
+          Logger.log(`Maximum retry attempts (${maxRetries}) reached. Giving up.`);
+          break;
+        }
+        
+        // Otherwise, increment retry counter and continue the loop
+        retryCount++;
       }
-    } catch (apiError) {
-      publishError = 'Error calling Lambda API: ' + apiError.toString();
-      Logger.log(publishError);
-    }
+    } // End of retry loop
     
     // If there was an error publishing, log it and send an error email
     if (publishError) {
