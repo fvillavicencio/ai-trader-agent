@@ -102,13 +102,29 @@ function retrieveMacroeconomicFactors() {
     }
     
     // Retrieve geopolitical risks
+    Logger.log("About to call retrieveGeopoliticalRisksData() function...");
     const geopoliticalRisks = retrieveGeopoliticalRisksData();
+    Logger.log("retrieveGeopoliticalRisksData() function returned: " + (geopoliticalRisks ? "data" : "null"));
+    
+    if (geopoliticalRisks) {
+      Logger.log("Geopolitical risks structure: " + JSON.stringify(Object.keys(geopoliticalRisks)));
+      if (geopoliticalRisks.risks) {
+        Logger.log(`Found ${geopoliticalRisks.risks.length} geopolitical risks`);
+        if (geopoliticalRisks.risks.length > 0) {
+          Logger.log(`First risk: ${JSON.stringify(geopoliticalRisks.risks[0])}`);
+        }
+      } else {
+        Logger.log("No risks array found in geopoliticalRisks object");
+      }
+    }
     
     // Check if we have data for each section
     const hasTreasuryYields = treasuryYields && !treasuryYields.error;
     const hasFedPolicy = fedPolicy && !fedPolicy.error;
     const hasInflation = inflation && !inflation.error;
     const hasGeopoliticalRisks = geopoliticalRisks && Array.isArray(geopoliticalRisks.risks) && geopoliticalRisks.risks.length > 0;
+    
+    Logger.log(`Has geopolitical risks: ${hasGeopoliticalRisks}`);
     
     // Create the data object that will be used by formatMacroeconomicFactorsData
     const macroData = {
@@ -656,7 +672,7 @@ function getTreasurySymbol(term) {
  */
 function retrieveGeopoliticalRisksData() {
   try {
-    Logger.log("Retrieving geopolitical risks data...");
+    Logger.log("========== STARTING GEOPOLITICAL RISKS RETRIEVAL ==========");
     
     // Check cache first (24-hour cache for geopolitical risks)
     const scriptCache = CacheService.getScriptCache();
@@ -682,16 +698,38 @@ function retrieveGeopoliticalRisksData() {
     
     // Get the AI provider setting
     const aiProvider = getMacroeconomicAIProvider();
-    Logger.log(`Using AI provider: ${aiProvider || "default (perplexity)"}`);
+    Logger.log(`Using AI provider: ${aiProvider || "default (gcf)"}`);
     
     // Track all errors for better diagnostics
     const errors = [];
     
-    // Use the appropriate implementation based on the AI provider setting
+    // Try Google Cloud Function first as the primary source
+    try {
+      Logger.log("Attempting to retrieve geopolitical risks from Google Cloud Function...");
+      const startTime = new Date().getTime();
+      const result = retrieveGeopoliticalRisksFromGCF();
+      const endTime = new Date().getTime();
+      Logger.log(`Google Cloud Function retrieval succeeded in ${(endTime - startTime)/1000} seconds`);
+      
+      // Validate the result before returning
+      if (result && Array.isArray(result.risks) && result.risks.length > 0) {
+        return result;
+      } else {
+        Logger.log("Google Cloud Function returned invalid data structure");
+        errors.push("GCF implementation returned invalid data structure");
+        // Continue to fallback methods
+      }
+    } catch (gcfError) {
+      Logger.log(`Google Cloud Function retrieval failed: ${gcfError}`);
+      errors.push(`GCF implementation error: ${gcfError.message || gcfError}`);
+      // Continue to fallback methods
+    }
+    
+    // If GCF fails, use the appropriate Perplexity implementation based on the AI provider setting
     if (aiProvider === "perplexity" || !aiProvider) {
       try {
         // Try the enhanced implementation first
-        Logger.log("Using enhanced Perplexity implementation for geopolitical risks");
+        Logger.log("Falling back to enhanced Perplexity implementation for geopolitical risks");
         const startTime = new Date().getTime();
         const result = retrieveGeopoliticalRisksEnhanced();
         const endTime = new Date().getTime();
@@ -732,9 +770,9 @@ function retrieveGeopoliticalRisksData() {
         }
       }
     } else {
-      // For any other provider setting, use the enhanced Perplexity implementation
+      // For any other provider setting, use the enhanced Perplexity implementation as a fallback
       try {
-        Logger.log(`Using enhanced Perplexity implementation for provider setting: ${aiProvider}`);
+        Logger.log(`Falling back to enhanced Perplexity implementation for provider setting: ${aiProvider}`);
         const startTime = new Date().getTime();
         const result = retrieveGeopoliticalRisksEnhanced();
         const endTime = new Date().getTime();
@@ -787,23 +825,23 @@ function retrieveGeopoliticalRisksData() {
     const fallbackData = {
       risks: [
         {
-          name: "API Connection Issue",
-          description: "Geopolitical risk data could not be retrieved due to API connection issues. The system attempted multiple retrieval methods but encountered errors. This is a temporary placeholder until connectivity is restored.",
+          name: "Geopolitical Crystal Ball Needs Polishing",
+          description: "Oops! Our geopolitical analyst is currently stuck in a diplomatic time loop. Or maybe they're just having lunch. Either way, we'll be back to predicting global chaos shortly!",
           region: "Global",
-          impactLevel: "Unknown/10",
-          source: "System Fallback",
-          sourceUrl: "https://perplexity.ai/",
+          impactLevel: "",
+          source: "",
+          sourceUrl: "",
           lastUpdated: formattedDate
         }
       ],
-      source: "Market Pulse Daily System",
-      sourceUrl: "https://perplexity.ai/",
+      source: "",
+      sourceUrl: "",
       lastUpdated: formattedDate,
-      error: `Unable to retrieve geopolitical risks data after multiple attempts. Errors: ${errors.join('; ')}`
+      error: "Geopolitical risk analysis temporarily unavailable."
     };
     
-    // Cache the fallback structure for a shorter period (30 minutes) to encourage retries
-    scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(fallbackData), 30 * 60);
+    // Cache the fallback structure for a shorter period (15 minutes) to encourage retries
+    scriptCache.put('GEOPOLITICAL_RISKS_DATA', JSON.stringify(fallbackData), 15 * 60);
     
     return fallbackData;
   } catch (error) {
@@ -816,19 +854,19 @@ function retrieveGeopoliticalRisksData() {
     return {
       risks: [
         {
-          name: "System Error",
-          description: "Geopolitical risk data retrieval encountered an unexpected system error. The system will automatically retry on the next refresh cycle.",
+          name: "Global Politics Taking a Siesta",
+          description: "Sorry for the snag! Looks like world leaders collectively decided to behave today, leaving our analysts with nothing to report. Or maybe our analyst is just watching cat videos. We'll be back to our regular programming soon!",
           region: "Global",
-          impactLevel: "Unknown/10",
-          source: "System Error Handler",
-          sourceUrl: "https://perplexity.ai/",
+          impactLevel: "",
+          source: "",
+          sourceUrl: "",
           lastUpdated: formattedDate
         }
       ],
-      source: "Market Pulse Daily System",
-      sourceUrl: "https://perplexity.ai/",
+      source: "",
+      sourceUrl: "",
       lastUpdated: formattedDate,
-      error: `Unexpected error in geopolitical risks retrieval: ${error.message || error}`
+      error: "Geopolitical risk analysis temporarily unavailable."
     };
   }
 }

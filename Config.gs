@@ -50,20 +50,19 @@ const TIME_ZONE = "America/New_York";
  */
 function getPerplexityApiKey() {
   try {
-    // Try to get the API key from script properties first
+    // Get the API key from script properties only
     const scriptProperties = PropertiesService.getScriptProperties();
     const apiKey = scriptProperties.getProperty('PERPLEXITY_API_KEY');
     
-    // If found in script properties, return it
-    if (apiKey) {
-      return apiKey;
+    if (!apiKey) {
+      Logger.log("PERPLEXITY_API_KEY not found in script properties");
+      throw new Error("PERPLEXITY_API_KEY not found in script properties");
     }
     
-    // Otherwise, return the hardcoded key (not recommended for production)
-    return PERPLEXITY_API_KEY;
+    return apiKey;
   } catch (error) {
-    Logger.log("Error getting API key: " + error.message);
-    return PERPLEXITY_API_KEY;
+    Logger.log("Error getting Perplexity API key: " + error.message);
+    throw new Error("Failed to retrieve valid Perplexity API key: " + error.message);
   }
 }
 

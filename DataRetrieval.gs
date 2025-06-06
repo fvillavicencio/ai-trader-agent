@@ -608,22 +608,38 @@ function formatMacroeconomicFactorsData(macroData) {
     }
     
     // Format geopolitical risks
-    if (macroData.geopoliticalRisks && Array.isArray(macroData.geopoliticalRisks)) {
+    if (macroData.geopoliticalRisks && macroData.geopoliticalRisks.risks && Array.isArray(macroData.geopoliticalRisks.risks)) {
       formattedText += "**Geopolitical Risks:**\n";
       
+      Logger.log(`Formatting ${macroData.geopoliticalRisks.risks.length} geopolitical risks`);
+      
       // Sort risks by impact level (descending)
-      const sortedRisks = [...macroData.geopoliticalRisks].sort((a, b) => {
+      const sortedRisks = [...macroData.geopoliticalRisks.risks].sort((a, b) => {
         if (a.impactLevel === undefined || a.impactLevel === null) return 1;
         if (b.impactLevel === undefined || b.impactLevel === null) return -1;
-        return b.impactLevel - a.impactLevel;
+        
+        // Handle numeric impact levels
+        if (typeof a.impactLevel === 'number' && typeof b.impactLevel === 'number') {
+          return b.impactLevel - a.impactLevel;
+        }
+        
+        // Handle string impact levels that might contain numbers (e.g., "8/10")
+        const aMatch = String(a.impactLevel).match(/(\d+)/);
+        const bMatch = String(b.impactLevel).match(/(\d+)/);
+        
+        if (aMatch && bMatch) {
+          return parseInt(bMatch[1]) - parseInt(aMatch[1]);
+        }
+        
+        return 0;
       });
       
       for (const risk of sortedRisks) {
         formattedText += `* ${formatValue(risk.name) || 'Unknown Risk'}: ${formatValue(risk.description) || 'No description'}\n`;
         formattedText += `  * Region: ${formatValue(risk.region) || 'Unknown Region'}\n`;
-        formattedText += `  * Impact Level: ${formatValue(risk.impactLevel) || 0}\n`;
+        formattedText += `  * Impact Level: ${formatValue(risk.impactLevel) || 'Unknown'}\n`;
         formattedText += `  * Source: ${formatValue(risk.source) || 'N/A'} (${formatValue(risk.sourceUrl) || 'N/A'})\n`;
-        formattedText += `  * Last Updated: ${formatValue(risk.timestamp) || 'N/A'}\n\n`;
+        formattedText += `  * Last Updated: ${formatValue(risk.lastUpdated || risk.timestamp) || 'N/A'}\n\n`;
       }
     }
     
