@@ -23,18 +23,47 @@ const getBackgroundColor = (riskLevel) => {
 };
 
 /**
+ * Converts a numeric impact level (1-10) to a descriptive string
+ * @param {number|string} impactLevel - The impact level (1-10 or already a string)
+ * @returns {string} - The descriptive impact level (Severe, High, Medium, Low)
+ */
+const convertImpactLevelToString = (impactLevel) => {
+  // If it's already a string that matches one of our levels, return it
+  if (typeof impactLevel === 'string') {
+    const level = impactLevel.toLowerCase();
+    if (level.includes('severe')) return 'Severe';
+    if (level.includes('high')) return 'High';
+    if (level.includes('medium') || level.includes('moderate')) return 'Medium';
+    if (level.includes('low')) return 'Low';
+  }
+  
+  // Convert numeric value to string format
+  const impact = parseFloat(impactLevel) || 5;
+  if (impact >= 8) return 'Severe';
+  if (impact >= 6) return 'High';
+  if (impact >= 4) return 'Medium';
+  return 'Low';
+};
+
+/**
  * Get the risk level color based on the impact level
  * @param {string} impactLevel - The impact level of the risk
  * @returns {string} - The color code
  */
 const getRiskLevelColor = (impactLevel) => {
-  if (!impactLevel || typeof impactLevel !== 'string') return '#f44336'; // Default red
+  if (!impactLevel) return '#f44336'; // Default red
   
-  const level = impactLevel.toLowerCase();
+  const level = typeof impactLevel === 'string' ? impactLevel.toLowerCase() : '';
   if (level.includes('severe')) return '#800020'; // Burgundy for Severe
   if (level.includes('high')) return '#f44336'; // Red for High
   if (level.includes('medium') || level.includes('moderate')) return '#ff9800'; // Orange for Medium
   if (level.includes('low')) return '#4caf50'; // Green for Low
+  
+  // If it's a number, convert it and get the color
+  if (!isNaN(parseFloat(impactLevel))) {
+    const stringLevel = convertImpactLevelToString(impactLevel);
+    return getRiskLevelColor(stringLevel);
+  }
   
   return '#f44336'; // Default red
 };
@@ -96,7 +125,9 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
         <div class="collapsible-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out;">
           <!-- Risk Items -->
           ${risks.map(risk => {
-            const riskColor = getRiskLevelColor(risk.impactLevel);
+            // Convert impact level to string if it's a number
+            const displayImpactLevel = convertImpactLevelToString(risk.impactLevel);
+            const riskColor = getRiskLevelColor(displayImpactLevel);
             return `
               <div style="display: flex; margin-top: 15px; margin-bottom: 15px;">
                 <div style="flex: 1; background-color: #f8f9fa; padding: 15px; border-radius: 6px; margin-right: 10px;">
@@ -107,7 +138,7 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
                   </div>
                 </div>
                 <div style="width: 80px; text-align: center; background-color: ${riskColor}; color: white; border-radius: 6px; padding: 8px 0; display: flex; align-items: center; justify-content: center;">
-                  <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">${risk.impactLevel}</div>
+                  <div style="font-size: 14px; font-weight: bold; line-height: 1.2;">${displayImpactLevel}</div>
                 </div>
               </div>
             `;
