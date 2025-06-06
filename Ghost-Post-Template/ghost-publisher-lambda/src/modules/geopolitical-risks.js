@@ -11,7 +11,7 @@ const { addHeading, addHTML, addDivider } = require('../utils/mobiledoc-helpers'
  * @returns {string} - The background color code
  */
 const getBackgroundColor = (riskLevel) => {
-  if (!riskLevel) return '#1a365d'; // Default dark blue
+  if (!riskLevel || typeof riskLevel !== 'string') return '#1a365d'; // Default dark blue
   
   const level = riskLevel.toLowerCase();
   if (level.includes('severe')) return '#800020'; // Burgundy for Severe
@@ -28,7 +28,7 @@ const getBackgroundColor = (riskLevel) => {
  * @returns {string} - The color code
  */
 const getRiskLevelColor = (impactLevel) => {
-  if (!impactLevel) return '#f44336'; // Default red
+  if (!impactLevel || typeof impactLevel !== 'string') return '#f44336'; // Default red
   
   const level = impactLevel.toLowerCase();
   if (level.includes('severe')) return '#800020'; // Burgundy for Severe
@@ -63,7 +63,10 @@ const addGeopoliticalRisks = (mobiledoc, data) => {
   let overallRiskLevel = 'High'; // Default
   if (risks.length > 0) {
     // Count risk levels
-    const riskLevels = risks.map(risk => risk.impactLevel || '');
+    const riskLevels = risks.map(risk => {
+      const impactLevel = risk.impactLevel || '';
+      return typeof impactLevel === 'string' ? impactLevel : String(impactLevel);
+    });
     if (riskLevels.some(level => level.toLowerCase().includes('severe'))) {
       overallRiskLevel = 'Severe';
     } else if (riskLevels.every(level => level.toLowerCase().includes('low'))) {
