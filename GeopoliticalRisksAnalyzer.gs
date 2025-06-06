@@ -2,8 +2,198 @@
  * Geopolitical Risks Analyzer Module
  * 
  * This module provides an enhanced implementation for retrieving and analyzing geopolitical risks
- * using the Perplexity API with improved prompts and data processing.
+ * using the Google Cloud Function as primary source and Perplexity API as fallback with improved prompts and data processing.
  */
+
+/**
+ * Retrieve geopolitical risks data from the Google Cloud Function
+ * @return {Object} Geopolitical risks data in the format expected by JsonExport.gs
+ */
+function retrieveGeopoliticalRisksFromGCF() {
+  Logger.log('Starting geopolitical risks retrieval from Google Cloud Function...');
+  
+  try {
+    // Get the API key from script properties
+    const scriptProperties = PropertiesService.getScriptProperties();
+    const gcfApiKey = scriptProperties.getProperty('GEOPOLITICAL_RISKS_API_KEY');
+    
+    if (!gcfApiKey) {
+      Logger.log("GEOPOLITICAL_RISKS_API_KEY not found in script properties");
+      throw new Error("GEOPOLITICAL_RISKS_API_KEY not found in script properties");
+    }
+    
+    // Google Cloud Function endpoint
+    const gcfEndpoint = "https://us-central1-geopolitical-risk-analysis.cloudfunctions.net/geopoliticalRiskAPI";
+    
+    // Set up the options for the HTTP request
+    const options = {
+      method: 'get',
+      muteHttpExceptions: true,
+      timeout: 60000, // 60 seconds timeout
+      headers: {
+        'x-api-key': gcfApiKey
+      }
+    };
+    
+    Logger.log("Calling Google Cloud Function endpoint...");
+    const startTime = new Date().getTime();
+    
+    // Make the API request
+    const response = UrlFetchApp.fetch(gcfEndpoint, options);
+    
+    const endTime = new Date().getTime();
+    const executionTime = (endTime - startTime) / 1000;
+    
+    Logger.log(`GCF call completed in ${executionTime.toFixed(2)} seconds`);
+    Logger.log(`Response code: ${response.getResponseCode()}`);
+    
+    // Check if the request was successful
+    if (response.getResponseCode() === 200) {
+      // Parse the response content
+      const responseContent = response.getContentText();
+      
+      // Save the raw response for debugging
+      const fileName = `gcf-raw-response-${new Date().toISOString().replace(/:/g, '-')}.json`;
+      saveToGoogleDrive(fileName, responseContent);
+      Logger.log(`Raw response saved to Google Drive as ${fileName} for inspection`);
+      
+      let responseData;
+      
+      try {
+        responseData = JSON.parse(responseContent);
+        Logger.log(`Response structure keys: ${JSON.stringify(Object.keys(responseData))}`);
+        
+        // Check for nested response structures that might contain the risks array or macroeconomicFactors
+        if (responseData.body && typeof responseData.body === 'string') {
+          try {
+            responseData.body = JSON.parse(responseData.body);
+            Logger.log('Successfully parsed nested body JSON');
+          } catch (nestedParseError) {
+            Logger.log('Failed to parse body as JSON, keeping as string');
+          }
+        }
+        
+        // Look for the expected structure in different possible locations
+        let risks = null;
+        let globalOverview = null;
+        
+        // First, check for the macroeconomicFactors.geopoliticalRisks structure
+        if (responseData.macroeconomicFactors && responseData.macroeconomicFactors.geopoliticalRisks) {
+          const geoRisks = responseData.macroeconomicFactors.geopoliticalRisks;
+          if (geoRisks.risks && Array.isArray(geoRisks.risks)) {
+            risks = geoRisks.risks;
+            globalOverview = geoRisks.global;
+            Logger.log(`Found risks array in macroeconomicFactors.geopoliticalRisks with ${risks.length} items`);
+          }
+        }
+        
+        // Check in body if it exists
+        if (!risks && responseData.body && responseData.body.macroeconomicFactors && 
+            responseData.body.macroeconomicFactors.geopoliticalRisks) {
+          const geoRisks = responseData.body.macroeconomicFactors.geopoliticalRisks;
+          if (geoRisks.risks && Array.isArray(geoRisks.risks)) {
+            risks = geoRisks.risks;
+            globalOverview = geoRisks.global;
+            Logger.log(`Found risks array in body.macroeconomicFactors.geopoliticalRisks with ${risks.length} items`);
+          }
+        }
+        
+        // Check direct risks array
+        if (!risks) {
+          if (responseData.risks && Array.isArray(responseData.risks)) {
+            risks = responseData.risks;
+            Logger.log(`Found risks array at top level with ${risks.length} items`);
+          } else if (responseData.body && responseData.body.risks && Array.isArray(responseData.body.risks)) {
+            risks = responseData.body.risks;
+            Logger.log(`Found risks array in body with ${risks.length} items`);
+          } else if (responseData.data && responseData.data.risks && Array.isArray(responseData.data.risks)) {
+            risks = responseData.data.risks;
+            Logger.log(`Found risks array in data with ${risks.length} items`);
+          } else if (responseData.result && responseData.result.risks && Array.isArray(responseData.result.risks)) {
+            risks = responseData.result.risks;
+            Logger.log(`Found risks array in result with ${risks.length} items`);
+          }
+        }
+        
+        // Check if the response is a raw array of risk items
+        if (!risks && Array.isArray(responseData) && responseData.length > 0) {
+          risks = responseData;
+          Logger.log(`Found response is a direct array of ${risks.length} risk items`);
+        }
+        
+        if (!risks) {
+          // Log the structure for debugging
+          Logger.log(`Response structure does not contain risks array. Full response: ${JSON.stringify(responseData).substring(0, 500)}...`);
+          throw new Error("Invalid response format: missing risks array");
+        }
+        
+        // Log the structure of the first risk item to understand its fields
+        if (risks.length > 0) {
+          Logger.log(`First risk item structure: ${JSON.stringify(risks[0])}`);
+          Logger.log(`First risk item keys: ${Object.keys(risks[0])}`);
+        }
+        
+        // Transform the risks if needed to match expected format
+        const transformedRisks = risks.map(risk => {
+          // Get the impact level value from various possible fields
+          const rawImpactLevel = risk.impactLevel || risk.severity || risk.impact_level || risk.level || 'Medium';
+          
+          // Convert numeric impact level to string format
+          let stringImpactLevel;
+          if (typeof rawImpactLevel === 'number' || !isNaN(parseFloat(rawImpactLevel))) {
+            // It's a numeric value, convert it to string format
+            stringImpactLevel = convertImpactLevelToString(parseFloat(rawImpactLevel));
+          } else {
+            // It's already a string, keep as is
+            stringImpactLevel = rawImpactLevel;
+          }
+          
+          // Ensure each risk has the expected properties
+          return {
+            name: risk.name || risk.title || risk.category || risk.event || risk.riskName || risk.risk || 'Unnamed Risk',
+            description: risk.description || risk.summary || risk.details || risk.analysis || risk.impact || '',
+            region: risk.region || risk.regions?.[0] || risk.location || risk.area || 'Global',
+            impactLevel: stringImpactLevel,
+            source: risk.source || risk.sourceName || '',
+            sourceUrl: risk.sourceUrl || risk.url || risk.source_url || ''
+          };
+        });
+        
+        // Sort risks by impact level from highest to lowest
+        transformedRisks.sort((a, b) => {
+          const impactOrder = { 'Severe': 4, 'High': 3, 'Medium': 2, 'Low': 1 };
+          return (impactOrder[b.impactLevel] || 0) - (impactOrder[a.impactLevel] || 0);
+        });
+        
+        // Construct a properly formatted response
+        const formattedResponse = {
+          timestamp: new Date().toISOString(),
+          risks: transformedRisks,
+          summary: globalOverview || responseData.summary || responseData.body?.summary || 
+                  "Geopolitical risks retrieved from Google Cloud Function"
+        };
+        
+        // Cache the results for future use
+        cacheGeopoliticalRisks(formattedResponse.risks);
+        
+        Logger.log(`Successfully retrieved ${formattedResponse.risks.length} geopolitical risks from Google Cloud Function`);
+        return formattedResponse;
+      } catch (parseError) {
+        Logger.log(`Error parsing GCF response: ${parseError}`);
+        Logger.log(`Raw response content (first 500 chars): ${responseContent.substring(0, 500)}...`);
+        throw new Error(`Failed to parse GCF response: ${parseError.message}`);
+      }
+    } else {
+      // Handle error response
+      Logger.log(`GCF request failed with status code: ${response.getResponseCode()}`);
+      Logger.log(`Error response: ${response.getContentText()}`);
+      throw new Error(`GCF request failed with status code: ${response.getResponseCode()}`);
+    }
+  } catch (error) {
+    Logger.log(`Error in retrieveGeopoliticalRisksFromGCF: ${error}`);
+    throw error;
+  }
+}
 
 /**
  * Main function to retrieve geopolitical risks data using the enhanced multi-step approach
@@ -12,57 +202,230 @@
 function retrieveGeopoliticalRisksEnhanced() {
   Logger.log('Starting enhanced geopolitical risks retrieval...');
   
-  // Get the API key from script properties
-  const apiKey = getPerplexityApiKey();
-  if (!apiKey) {
-    Logger.log("Perplexity API key not found in script properties");
-    throw new Error("Perplexity API key not found in script properties");
-  }
-  
   try {
-    // Step 1: Get recent specific geopolitical events
-    Logger.log("Retrieving recent geopolitical events...");
-    const recentEvents = getRecentGeopoliticalEventsEnhanced(apiKey);
-    
-    if (!recentEvents || recentEvents.length === 0) {
-      Logger.log("No valid geopolitical events found");
-      throw new Error("No valid geopolitical events found");
+    // First try to get data from Google Cloud Function
+    try {
+      Logger.log("Attempting to retrieve geopolitical risks from Google Cloud Function...");
+      
+      // Try using the direct GCF retrieval function first
+      try {
+        Logger.log("Calling retrieveGeopoliticalRisksFromGCF() function directly...");
+        const gcfResult = retrieveGeopoliticalRisksFromGCF();
+        
+        if (gcfResult && gcfResult.risks && Array.isArray(gcfResult.risks) && gcfResult.risks.length > 0) {
+          Logger.log(`Successfully retrieved ${gcfResult.risks.length} geopolitical risks from GCF`);
+          return gcfResult;
+        } else {
+          Logger.log("GCF direct call returned invalid or empty data structure");
+          // Continue with manual GCF call
+        }
+      } catch (directGcfError) {
+        Logger.log(`Direct GCF call failed: ${directGcfError}. Trying manual implementation...`);
+        // Continue with manual GCF call
+      }
+      
+      // Get the API key from script properties
+      const scriptProperties = PropertiesService.getScriptProperties();
+      const gcfApiKey = scriptProperties.getProperty('GEOPOLITICAL_RISKS_API_KEY');
+      
+      if (!gcfApiKey) {
+        Logger.log("GEOPOLITICAL_RISKS_API_KEY not found in script properties");
+        throw new Error("GEOPOLITICAL_RISKS_API_KEY not found in script properties");
+      }
+      
+      // Google Cloud Function endpoint
+      const gcfEndpoint = "https://us-central1-geopolitical-risk-analysis.cloudfunctions.net/geopoliticalRiskAPI";
+      
+      // Set up the options for the HTTP request
+      const options = {
+        method: 'get',
+        muteHttpExceptions: true,
+        timeout: 60000, // 60 seconds timeout
+        headers: {
+          'x-api-key': gcfApiKey
+        }
+      };
+      
+      Logger.log("Calling Google Cloud Function endpoint manually...");
+      const startTime = new Date().getTime();
+      
+      // Make the API request
+      const response = UrlFetchApp.fetch(gcfEndpoint, options);
+      
+      const endTime = new Date().getTime();
+      const executionTime = (endTime - startTime) / 1000;
+      
+      Logger.log(`GCF call completed in ${executionTime.toFixed(2)} seconds`);
+      Logger.log(`Response code: ${response.getResponseCode()}`);
+      
+      // Save the raw response for debugging
+      const fileName = `GCF_Response_${new Date().toISOString().replace(/[:.]/g, '_')}.json`;
+      saveToGoogleDrive(fileName, response.getContentText());
+      Logger.log(`Saved raw GCF response to Google Drive as ${fileName}`);
+      
+      // Check if the request was successful
+      if (response.getResponseCode() === 200) {
+        // Parse the response content
+        const responseContent = response.getContentText();
+        let responseData;
+        
+        try {
+          responseData = JSON.parse(responseContent);
+          Logger.log(`Response structure keys: ${JSON.stringify(Object.keys(responseData))}`);
+          
+          // Look for risks in multiple possible locations
+          let risks = null;
+          
+          // Check for nested response structures that might contain the risks array or macroeconomicFactors
+          if (responseData.body && typeof responseData.body === 'string') {
+            try {
+              responseData.body = JSON.parse(responseData.body);
+              Logger.log('Successfully parsed nested body JSON');
+            } catch (nestedParseError) {
+              Logger.log('Failed to parse body as JSON, keeping as string');
+            }
+          }
+          
+          // First, check for the macroeconomicFactors.geopoliticalRisks structure
+          if (responseData.macroeconomicFactors && responseData.macroeconomicFactors.geopoliticalRisks) {
+            const geoRisks = responseData.macroeconomicFactors.geopoliticalRisks;
+            if (geoRisks.risks && Array.isArray(geoRisks.risks)) {
+              risks = geoRisks.risks;
+              Logger.log(`Found risks array in macroeconomicFactors.geopoliticalRisks with ${risks.length} items`);
+            }
+          }
+          
+          // Check in body if it exists
+          if (!risks && responseData.body && responseData.body.macroeconomicFactors && 
+              responseData.body.macroeconomicFactors.geopoliticalRisks) {
+            const geoRisks = responseData.body.macroeconomicFactors.geopoliticalRisks;
+            if (geoRisks.risks && Array.isArray(geoRisks.risks)) {
+              risks = geoRisks.risks;
+              Logger.log(`Found risks array in body.macroeconomicFactors.geopoliticalRisks with ${risks.length} items`);
+            }
+          }
+          
+          // Check direct risks array
+          if (!risks) {
+            if (responseData.risks && Array.isArray(responseData.risks)) {
+              risks = responseData.risks;
+              Logger.log(`Found risks array at top level with ${risks.length} items`);
+            } else if (responseData.body && responseData.body.risks && Array.isArray(responseData.body.risks)) {
+              risks = responseData.body.risks;
+              Logger.log(`Found risks array in body with ${risks.length} items`);
+            } else if (responseData.data && responseData.data.risks && Array.isArray(responseData.data.risks)) {
+              risks = responseData.data.risks;
+              Logger.log(`Found risks array in data with ${risks.length} items`);
+            } else if (responseData.result && responseData.result.risks && Array.isArray(responseData.result.risks)) {
+              risks = responseData.result.risks;
+              Logger.log(`Found risks array in result with ${risks.length} items`);
+            }
+          }
+          
+          // Check if the response is a raw array of risk items
+          if (!risks && Array.isArray(responseData) && responseData.length > 0) {
+            risks = responseData;
+            Logger.log(`Found response is a direct array of ${risks.length} risk items`);
+          }
+          
+          if (!risks || risks.length === 0) {
+            // Log the structure for debugging
+            Logger.log(`Response structure does not contain valid risks array. Full response: ${JSON.stringify(responseData).substring(0, 500)}...`);
+            throw new Error("Invalid response format: missing or empty risks array");
+          }
+          
+          // Transform the risks if needed to match expected format
+          const transformedRisks = risks.map(risk => {
+            // Ensure each risk has the expected properties
+            return {
+              name: risk.name || risk.title || risk.category || 'Unnamed Risk',
+              description: risk.description || risk.summary || risk.details || '',
+              region: risk.region || risk.regions?.[0] || 'Global',
+              impactLevel: risk.impactLevel || 'Medium',
+              source: risk.source || '',
+              sourceUrl: risk.sourceUrl || risk.url || ''
+            };
+          });
+          
+          // Construct a properly formatted response
+          const formattedResponse = {
+            timestamp: new Date().toISOString(),
+            risks: transformedRisks,
+            summary: responseData.summary || responseData.body?.summary || 
+                    "Geopolitical risks retrieved from Google Cloud Function"
+          };
+          
+          // Cache the results for future use
+          cacheGeopoliticalRisks(formattedResponse.risks);
+          
+          Logger.log(`Successfully retrieved ${formattedResponse.risks.length} geopolitical risks from Google Cloud Function`);
+          return formattedResponse;
+        } catch (parseError) {
+          Logger.log(`Error parsing GCF response: ${parseError}`);
+          Logger.log(`Raw response content (first 500 chars): ${responseContent.substring(0, 500)}...`);
+          throw new Error(`Failed to parse GCF response: ${parseError.message}`);
+        }
+      } else {
+        // Handle error response
+        Logger.log(`GCF request failed with status code: ${response.getResponseCode()}`);
+        Logger.log(`Error response: ${response.getContentText()}`);
+        throw new Error(`GCF request failed with status code: ${response.getResponseCode()}`);
+      }
+    } catch (gcfError) {
+      // If Google Cloud Function fails, fall back to Perplexity implementation
+      Logger.log(`Google Cloud Function error: ${gcfError}. Falling back to Perplexity implementation.`);
+      
+      // Get the Perplexity API key
+      const apiKey = getPerplexityApiKey();
+      if (!apiKey) {
+        Logger.log("Perplexity API key not found in script properties");
+        throw new Error("Perplexity API key not found in script properties");
+      }
+      
+      // Step 1: Get recent specific geopolitical events
+      Logger.log("Retrieving recent geopolitical events...");
+      const recentEvents = getRecentGeopoliticalEventsEnhanced(apiKey);
+      
+      if (!recentEvents || recentEvents.length === 0) {
+        Logger.log("No valid geopolitical events found");
+        throw new Error("No valid geopolitical events found");
+      }
+      
+      Logger.log(`Retrieved ${recentEvents.length} events, processing for diversity...`);
+      
+      // Step 2: Analyze each event in depth with balanced prompt
+      Logger.log("Analyzing events for market impact and expert opinions...");
+      const analyzedEvents = analyzeGeopoliticalEventsEnhanced(recentEvents, apiKey);
+      
+      // Only proceed if we have at least one successfully analyzed event
+      if (!analyzedEvents || analyzedEvents.length === 0) {
+        Logger.log("No events were successfully analyzed");
+        throw new Error("Failed to analyze any geopolitical events");
+      }
+      
+      Logger.log(`Successfully analyzed ${analyzedEvents.length} events`);
+      
+      // Step 3: Create a consolidated analysis with proper formatting
+      Logger.log("Creating consolidated analysis...");
+      const consolidatedAnalysis = createConsolidatedGeopoliticalAnalysisEnhanced(analyzedEvents);
+      
+      if (!consolidatedAnalysis || !consolidatedAnalysis.risks || consolidatedAnalysis.risks.length === 0) {
+        Logger.log("Failed to create valid consolidated analysis");
+        throw new Error("Failed to create valid consolidated analysis");
+      }
+      
+      Logger.log(`Created consolidated analysis with ${consolidatedAnalysis.risks.length} risks`);
+      
+      // Cache the results
+      cacheGeopoliticalRisks(consolidatedAnalysis.risks);
+      
+      // Return the formatted data
+      return {
+        timestamp: new Date().toISOString(),
+        risks: consolidatedAnalysis.risks,
+        summary: consolidatedAnalysis.summary
+      };
     }
-    
-    Logger.log(`Retrieved ${recentEvents.length} events, processing for diversity...`);
-    
-    // Step 2: Analyze each event in depth with balanced prompt
-    Logger.log("Analyzing events for market impact and expert opinions...");
-    const analyzedEvents = analyzeGeopoliticalEventsEnhanced(recentEvents, apiKey);
-    
-    // Only proceed if we have at least one successfully analyzed event
-    if (!analyzedEvents || analyzedEvents.length === 0) {
-      Logger.log("No events were successfully analyzed");
-      throw new Error("Failed to analyze any geopolitical events");
-    }
-    
-    Logger.log(`Successfully analyzed ${analyzedEvents.length} events`);
-    
-    // Step 3: Create a consolidated analysis with proper formatting
-    Logger.log("Creating consolidated analysis...");
-    const consolidatedAnalysis = createConsolidatedGeopoliticalAnalysisEnhanced(analyzedEvents);
-    
-    if (!consolidatedAnalysis || !consolidatedAnalysis.risks || consolidatedAnalysis.risks.length === 0) {
-      Logger.log("Failed to create valid consolidated analysis");
-      throw new Error("Failed to create valid consolidated analysis");
-    }
-    
-    Logger.log(`Created consolidated analysis with ${consolidatedAnalysis.risks.length} risks`);
-    
-    // Cache the results
-    cacheGeopoliticalRisks(consolidatedAnalysis.risks);
-    
-    // Return the formatted data
-    return {
-      timestamp: new Date().toISOString(),
-      risks: consolidatedAnalysis.risks,
-      summary: consolidatedAnalysis.summary
-    };
   } catch (error) {
     Logger.log(`Error retrieving enhanced geopolitical risks: ${error}`);
     
@@ -102,19 +465,19 @@ function retrieveGeopoliticalRisksEnhanced() {
         timestamp: new Date().toISOString(),
         risks: [
           {
-            name: "API Connection Issue",
-            description: "Geopolitical risk data could not be retrieved due to API connection issues. Please check again later for updated information.",
+            name: "World Events Taking a Breather",
+            description: "Looks like global politics decided to take a day off too! Our geopolitical insights are currently on a brief vacation. Don't worry, the world will resume its usual chaos shortly.",
             region: "Global",
-            impactLevel: "Unknown",
-            source: "System",
-            sourceUrl: "https://perplexity.ai/",
+            impactLevel: "",
+            source: "",
+            sourceUrl: "",
             lastUpdated: formattedDate
           }
         ],
-        source: "Perplexity API Enhanced Retrieval",
-        sourceUrl: "https://perplexity.ai/",
+        source: "",
+        sourceUrl: "",
         lastUpdated: formattedDate,
-        error: "Unable to retrieve geopolitical risks data. API connections may be unavailable."
+        error: "Geopolitical risk analysis temporarily unavailable."
       };
     }
   }
@@ -351,9 +714,9 @@ Format your response as a valid JSON array with the following structure:
       
       if (!events || !Array.isArray(events) || events.length === 0) {
         Logger.log("No events found in Perplexity response or invalid format");
-        // Instead of throwing an error, use a fallback mechanism
-        Logger.log("Using fallback geopolitical events");
-        return getHardcodedGeopoliticalEvents();
+        // Instead of throwing an error, use our humorous error handling
+        Logger.log("Handling API failure with humorous message");
+        return handleGeopoliticalApiFailure();
       }
     } catch (parseError) {
       Logger.log(`Error parsing Perplexity response: ${parseError}`);
@@ -361,8 +724,8 @@ Format your response as a valid JSON array with the following structure:
       
       // Check if the response contains text explanation instead of JSON
       if (response.includes("cannot provide") || response.includes("unable to") || response.includes("I don't have")) {
-        Logger.log("Perplexity returned an explanation instead of JSON. Using fallback data.");
-        return getHardcodedGeopoliticalEvents();
+        Logger.log("Perplexity returned an explanation instead of JSON. Handling API failure.");
+        return handleGeopoliticalApiFailure();
       }
       
       // Try to extract JSON from markdown code blocks
@@ -373,20 +736,20 @@ Format your response as a valid JSON array with the following structure:
           if (Array.isArray(events)) {
             Logger.log("Successfully extracted JSON from code block");
             if (events.length === 0) {
-              Logger.log("Empty array in code block. Using fallback data.");
-              return getHardcodedGeopoliticalEvents();
+              Logger.log("Empty array in code block. Handling API failure.");
+              return handleGeopoliticalApiFailure();
             }
           } else {
-            Logger.log("Extracted content is not an array. Using fallback data.");
-            return getHardcodedGeopoliticalEvents();
+            Logger.log("Extracted content is not an array. Handling API failure.");
+            return handleGeopoliticalApiFailure();
           }
         } catch (innerError) {
           Logger.log(`Failed to parse JSON from code block: ${innerError}`);
-          return getHardcodedGeopoliticalEvents();
+          return handleGeopoliticalApiFailure();
         }
       } else {
-        Logger.log("No JSON code block found. Using fallback data.");
-        return getHardcodedGeopoliticalEvents();
+        Logger.log("No JSON code block found. Handling API failure.");
+        return handleGeopoliticalApiFailure();
       }
     }
     
@@ -917,11 +1280,14 @@ function createConsolidatedGeopoliticalAnalysisEnhanced(analyzedEvents) {
       }
     }
     
+    // Convert the numeric impact level to string format
+    const stringImpactLevel = convertImpactLevelToString(parseFloat(event.impactLevel) || 5);
+    
     return {
       name: event.name,
       description: enhancedDescription,
       region: event.region,
-      impactLevel: convertImpactLevelToString(parseFloat(event.impactLevel) || 5), // Convert numeric to string format expected by JsonExport
+      impactLevel: stringImpactLevel,
       marketImpact: enhancedMarketImpact,
       source: event.source || "Perplexity API",
       sourceUrl: sourceUrl
@@ -932,10 +1298,11 @@ function createConsolidatedGeopoliticalAnalysisEnhanced(analyzedEvents) {
   const processedRisks = risks.map(risk => {
     // Parse the numeric impact level or use a default
     const numericLevel = parseFloat(risk.impactLevel) || 5;
+    const stringImpactLevel = convertImpactLevelToString(numericLevel);
     return {
       ...risk,
       _numericImpactLevel: numericLevel,
-      impactLevel: convertImpactLevelToString(numericLevel)
+      impactLevel: stringImpactLevel
     };
   }).sort((a, b) => b._numericImpactLevel - a._numericImpactLevel);
   
@@ -1008,16 +1375,16 @@ function createConsolidatedGeopoliticalAnalysisEnhanced(analyzedEvents) {
     Logger.log("No risks found from primary source, adding error message...");
     
     // Set a clear error message
-    globalAssessment = "Unable to retrieve geopolitical risk data. Please check API connections and try again later.";
+    globalAssessment = "Our crystal ball is temporarily foggy. Geopolitical insights will return after this brief intermission.";
     
     // Add a single risk item explaining the situation
     processedRisks.push({
-      name: "Data Retrieval Error",
-      description: "We were unable to retrieve current geopolitical risk data from our sources. This could be due to API limitations, connection issues, or temporary service disruptions. The system will continue attempting to retrieve this data in future updates.",
+      name: "Geopolitical Analyst on Coffee Break",
+      description: "Sorry to disappoint, but our geopolitical analyst seems to have stepped out for coffee... or possibly joined a spontaneous diplomatic mission to Antarctica. We'll resume world-watching shortly!",
       region: "Global",
       impactLevel: "Unknown",
       source: "System Status",
-      url: "https://www.perplexity.ai/"
+      sourceUrl: ""
     });
   }
   
@@ -1313,7 +1680,13 @@ function callPerplexityAPI(prompt, apiKey, temperature = 0.0) {
   };
   
   try {
-    Logger.log(`Calling Perplexity API with temperature ${temperature}...`);
+    // Enhanced logging for API call
+    Logger.log(`=== PERPLEXITY API REQUEST ===`);
+    Logger.log(`Timestamp: ${new Date().toISOString()}`);
+    Logger.log(`API Key: ${apiKey ? apiKey.substring(0, 5) + '...' + apiKey.substring(apiKey.length - 4) : 'MISSING'}`); // Log partial key for debugging
+    Logger.log(`Temperature: ${temperature}`);
+    Logger.log(`Model: sonar-pro`);
+    Logger.log(`Prompt length: ${prompt.length} characters`);
     
     const options = {
       method: "post",
@@ -1327,31 +1700,78 @@ function callPerplexityAPI(prompt, apiKey, temperature = 0.0) {
       muteHttpExceptions: true
     };
     
+    // Log start time for performance tracking
+    const startTime = new Date().getTime();
     const response = UrlFetchApp.fetch(url, options);
+    const endTime = new Date().getTime();
     const responseCode = response.getResponseCode();
     
+    // Enhanced logging for API response
+    Logger.log(`=== PERPLEXITY API RESPONSE ===`);
+    Logger.log(`Response time: ${endTime - startTime}ms`);
+    Logger.log(`Status code: ${responseCode}`);
+    Logger.log(`Headers: ${JSON.stringify(response.getAllHeaders())}`);
+    
     if (responseCode !== 200) {
-      Logger.log(`Perplexity API error response: ${response.getContentText().substring(0, 500)}`);
+      const errorText = response.getContentText();
+      Logger.log(`ERROR RESPONSE BODY: ${errorText.substring(0, 1000)}`);
+      
+      // Try to parse error response for more details
+      try {
+        const errorJson = JSON.parse(errorText);
+        Logger.log(`Error type: ${errorJson.error?.type || 'Unknown'}`);
+        Logger.log(`Error message: ${errorJson.error?.message || 'No message provided'}`);
+      } catch (parseError) {
+        Logger.log(`Could not parse error response as JSON: ${parseError.message}`);
+      }
+      
       throw new Error(`Perplexity API returned status code ${responseCode}`);
     }
     
     const responseText = response.getContentText();
-    const responseJson = JSON.parse(responseText);
     
-    if (responseJson && responseJson.choices && responseJson.choices.length > 0) {
-      const content = responseJson.choices[0].message.content;
-      Logger.log('Perplexity API response (first 300 chars):');
-      Logger.log(content.substring(0, 300) + '...');
-      return content;
-    } else {
-      throw new Error("Invalid response format from Perplexity API");
+    // Log response size
+    Logger.log(`Response size: ${responseText.length} characters`);
+    
+    try {
+      const responseJson = JSON.parse(responseText);
+      
+      if (responseJson && responseJson.choices && responseJson.choices.length > 0) {
+        const content = responseJson.choices[0].message.content;
+        Logger.log(`Content length: ${content.length} characters`);
+        Logger.log(`Content preview: ${content.substring(0, 300)}...`);
+        
+        // Log usage information if available
+        if (responseJson.usage) {
+          Logger.log(`Usage - Prompt tokens: ${responseJson.usage.prompt_tokens}, Completion tokens: ${responseJson.usage.completion_tokens}, Total: ${responseJson.usage.total_tokens}`);
+        }
+        
+        return content;
+      } else {
+        Logger.log(`Invalid response structure: ${JSON.stringify(responseJson).substring(0, 500)}`);
+        throw new Error("Invalid response format from Perplexity API");
+      }
+    } catch (jsonError) {
+      Logger.log(`Failed to parse response as JSON: ${jsonError.message}`);
+      Logger.log(`Raw response preview: ${responseText.substring(0, 500)}`);
+      throw new Error(`Failed to parse Perplexity API response: ${jsonError.message}`);
     }
   } catch (error) {
-    Logger.log('Perplexity API error:', error);
+    Logger.log(`=== PERPLEXITY API ERROR ===`);
+    Logger.log(`Error: ${error.message}`);
+    Logger.log(`Stack: ${error.stack || 'No stack trace available'}`);
     throw new Error(`Perplexity API error: ${error.message}`);
   }
 }
 
+/**
+ * Handles API failures with a humorous error message instead of using hardcoded data
+ * @returns {Error} Throws an error with a humorous message
+ */
+function handleGeopoliticalApiFailure() {
+  Logger.log('API failure detected, throwing error with humorous message');
+  throw new Error("Our geopolitical analysts are currently on an unexpected coffee break. They'll be back to monitoring world events shortly!");
+}
 
 
 /**
@@ -1411,121 +1831,21 @@ function cacheGeopoliticalRisks(risks) {
 }
 
 /**
- * Test function to invoke the perplexity-retriever Lambda function via API Gateway
- * This function demonstrates how to call the Lambda API endpoint with an API key
- * 
- * @param {string} requestType - Type of data to retrieve ('geopoliticalRisks' or 'marketSentiment')
- * @return {Object} The response from the Lambda function
+ * Clear the cached geopolitical risks data
+ * @return {boolean} True if cache was cleared successfully, false otherwise
  */
-function testPerplexityRetrieverAPI(requestType = 'geopoliticalRisks') {
-  Logger.log(`Testing Perplexity Retriever API with requestType: ${requestType}`);
-  
+function clearGeopoliticalRisksCache() {
   try {
-    // Get the API key from script properties
-    const scriptProperties = PropertiesService.getScriptProperties();
-    const apiKey = scriptProperties.getProperty('PERPLEXITY_LAMBDA_API_KEY');
-    
-    if (!apiKey) {
-      throw new Error("PERPLEXITY_LAMBDA_API_KEY not found in script properties");
-    }
-    
-    // API Gateway endpoint URL
-    const apiUrl = "https://sbyrgndny4.execute-api.us-east-2.amazonaws.com/staging/retrieve";
-    
-    // Prepare the request payload
-    const payload = {
-      requestType: requestType
-    };
-    
-    // Set up the options for the HTTP request
-    const options = {
-      method: 'post',
-      contentType: 'application/json',
-      payload: JSON.stringify(payload),
-      headers: {
-        'x-api-key': apiKey
-      },
-      muteHttpExceptions: true
-    };
-    
-    Logger.log("Calling Lambda API endpoint...");
-    const startTime = new Date().getTime();
-    
-    // Make the API request
-    const response = UrlFetchApp.fetch(apiUrl, options);
-    
-    const endTime = new Date().getTime();
-    const executionTime = (endTime - startTime) / 1000;
-    
-    Logger.log(`API call completed in ${executionTime.toFixed(2)} seconds`);
-    Logger.log(`Response code: ${response.getResponseCode()}`);
-    
-    // Check if the request was successful
-    if (response.getResponseCode() === 200) {
-      // Parse the response content
-      const responseContent = response.getContentText();
-      let responseData;
-      
-      try {
-        responseData = JSON.parse(responseContent);
-        
-        // If the response contains a body field that's a string, parse it
-        if (responseData.body && typeof responseData.body === 'string') {
-          try {
-            responseData.body = JSON.parse(responseData.body);
-            Logger.log('Successfully parsed body JSON');
-          } catch (parseError) {
-            Logger.log('Failed to parse body as JSON, keeping as string');
-          }
-        }
-        
-        // Save the result to a file in Google Drive for inspection
-        const fileName = `lambda-api-response-${requestType}-${new Date().toISOString().replace(/:/g, '-')}.json`;
-        saveToGoogleDrive(fileName, JSON.stringify(responseData, null, 2));
-        Logger.log(`Response saved to Google Drive as ${fileName}`);
-        
-        // Print a summary of the results
-        if (responseData.body && responseData.body.geopoliticalRiskIndex !== undefined) {
-          Logger.log(`Geopolitical Risk Index: ${responseData.body.geopoliticalRiskIndex}`);
-          Logger.log(`Number of risks identified: ${responseData.body.risks ? responseData.body.risks.length : 0}`);
-          
-          if (responseData.body.risks && responseData.body.risks.length > 0) {
-            Logger.log('Top risks:');
-            responseData.body.risks.slice(0, 3).forEach((risk, index) => {
-              Logger.log(`${index + 1}. ${risk.name}`);
-            });
-          }
-        }
-        
-        return responseData;
-      } catch (parseError) {
-        Logger.log(`Error parsing response: ${parseError}`);
-        throw new Error(`Failed to parse API response: ${parseError.message}`);
-      }
-    } else {
-      // Handle error response
-      Logger.log(`API request failed with status code: ${response.getResponseCode()}`);
-      Logger.log(`Error response: ${response.getContentText()}`);
-      
-      if (response.getResponseCode() === 504) {
-        Logger.log("API Gateway timeout - the Lambda function took too long to respond (>29 seconds)");
-        throw new Error("API Gateway timeout - consider using direct Lambda invocation for this operation");
-      } else {
-        throw new Error(`API request failed with status code: ${response.getResponseCode()}`);
-      }
-    }
+    const scriptCache = CacheService.getScriptCache();
+    scriptCache.remove('GEOPOLITICAL_RISKS_CACHED_DATA');
+    Logger.log('Geopolitical risks cache cleared successfully');
+    return true;
   } catch (error) {
-    Logger.log(`Error in testPerplexityRetrieverAPI: ${error}`);
-    throw error;
+    Logger.log(`Error clearing geopolitical risks cache: ${error}`);
+    return false;
   }
 }
 
-/**
- * Helper function to save data to a file in Google Drive
- * @param {string} fileName - Name of the file to save
- * @param {string} content - Content to save to the file
- * @return {DriveFile} The created file object
- */
 function saveToGoogleDrive(fileName, content) {
   try {
     // Check if the output folder exists, create it if not
@@ -1566,55 +1886,49 @@ function formatDate(date) {
 }
 
 /**
- * Test function to run the geopolitical risks API test
- * This function can be run directly from the Apps Script console
- * @return {Object} The API response
+ * Test function for Google Cloud Function geopolitical risks retrieval
+ * @return {Object} The retrieved geopolitical risks data
  */
-function testGeopoliticalRisksAPI() {
-  Logger.log('Starting Geopolitical Risks API Test');
-  Logger.log('This test will call the Lambda API to retrieve geopolitical risks');
+function testGeopoliticalRisksGCF() {
+  Logger.log('Starting Google Cloud Function Geopolitical Risks Test');
+  Logger.log('This test will call the GCF endpoint to retrieve geopolitical risks');
   
   try {
-    const result = testPerplexityRetrieverAPI('geopoliticalRisks');
+    // Clear cache to ensure fresh data retrieval
+    clearGeopoliticalRisksCache();
+    Logger.log('Geopolitical risks cache cleared to ensure fresh data retrieval');
     
-    if (result && result.body && result.body.risks) {
-      Logger.log(`Test Completed Successfully`);
-      Logger.log(`Retrieved ${result.body.risks.length} geopolitical risks with index ${result.body.geopoliticalRiskIndex}`);
-      Logger.log(`Results have been saved to Google Drive in the 'Lambda API Responses' folder`);
+    // Call the GCF retrieval function
+    const startTime = new Date().getTime();
+    const result = retrieveGeopoliticalRisksFromGCF();
+    const endTime = new Date().getTime();
+    const executionTime = (endTime - startTime) / 1000;
+    
+    Logger.log(`Test completed in ${executionTime.toFixed(2)} seconds`);
+    
+    if (result && result.risks && Array.isArray(result.risks)) {
+      Logger.log(`Retrieved ${result.risks.length} geopolitical risks`);
+      
+      // Save the results to Google Drive for inspection
+      const fileName = `gcf-test-results-${new Date().toISOString().replace(/:/g, '-')}.json`;
+      saveToGoogleDrive(fileName, JSON.stringify(result, null, 2));
+      Logger.log(`Test results saved to Google Drive as ${fileName}`);
+      
+      if (result.risks.length > 0) {
+        Logger.log('Top geopolitical risks:');
+        result.risks.slice(0, 3).forEach((risk, index) => {
+          Logger.log(`${index + 1}. ${risk.name || risk.title || risk.category || 'Unnamed Risk'}`);
+        });
+      }
     } else {
-      Logger.log('Test Completed but the response format was unexpected');
+      Logger.log('No geopolitical risks were retrieved or invalid format');
+      Logger.log(`Result structure: ${JSON.stringify(Object.keys(result || {}))}`);
     }
     
     return result;
   } catch (error) {
-    Logger.log(`Error in testGeopoliticalRisksAPI: ${error}`);
-    throw error;
+    Logger.log(`Error in testGeopoliticalRisksGCF: ${error}`);
+    return null;
   }
 }
 
-/**
- * Test function to run the market sentiment API test
- * This function can be run directly from the Apps Script console
- * @return {Object} The API response
- */
-function testMarketSentimentAPI() {
-  Logger.log('Starting Market Sentiment API Test');
-  Logger.log('This test will call the Lambda API to retrieve market sentiment');
-  
-  try {
-    const result = testPerplexityRetrieverAPI('marketSentiment');
-    
-    if (result && result.body) {
-      Logger.log(`Test Completed Successfully`);
-      Logger.log(`Market sentiment data retrieved successfully`);
-      Logger.log(`Results have been saved to Google Drive in the 'Lambda API Responses' folder`);
-    } else {
-      Logger.log('Test Completed but the response format was unexpected');
-    }
-    
-    return result;
-  } catch (error) {
-    Logger.log(`Error in testMarketSentimentAPI: ${error}`);
-    throw error;
-  }
-}
