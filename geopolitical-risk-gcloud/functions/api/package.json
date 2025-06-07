@@ -1,0 +1,14 @@
+{
+  "name": "geopolitical-risk-api",
+  "version": "1.0.0",
+  "description": "Geopolitical Risk API Cloud Function",
+  "main": "index.js",
+  "dependencies": {
+    "@google-cloud/functions-framework": "^3.1.0",
+    "@google-cloud/storage": "^6.9.0",
+    "@google-cloud/pubsub": "^3.7.0"
+  },
+  "engines": {
+    "node": "20"
+  }
+}
