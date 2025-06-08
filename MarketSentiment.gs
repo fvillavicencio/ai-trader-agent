@@ -10,81 +10,109 @@
 function retrieveMarketSentiment() {
   try {
     Logger.log("Retrieving market sentiment data...");
-    
-    // Initialize configuration with default values if needed
-    initializeMarketSentimentConfig();
-    
-    // Check if we have cached data first (cache for 2 hours)
+    initializeMarketSentimentConfig(); // Ensure config is initialized
+
+    // 1. Check cache
     try {
       const scriptCache = CacheService.getScriptCache();
       const cachedData = scriptCache.get('MARKET_SENTIMENT_DATA');
-      
       if (cachedData) {
         const parsedData = JSON.parse(cachedData);
-        const cacheTime = new Date(parsedData.timestamp);
+        const cacheTime = new Date(parsedData.timestamp); // Assumes timestamp is ISO string or parsable
         const currentTime = new Date();
-        const cacheAgeHours = (currentTime - cacheTime) / (1000 * 60 * 60);
+        const cacheAgeHours = (currentTime.getTime() - cacheTime.getTime()) / (1000 * 60 * 60);
         
-        if (cacheAgeHours < 2) {
-          Logger.log("Using cached market sentiment data (less than 2 hours old)");
+        if (cacheAgeHours < 2) { 
+          Logger.log(`Using cached market sentiment data (source: ${parsedData.source || 'N/A'}, age: ${cacheAgeHours.toFixed(2)} hours)`);
           parsedData.fromCache = true;
           return parsedData;
         } else {
-          Logger.log("Cached market sentiment data is more than 2 hours old");
+          Logger.log(`Cached market sentiment data is stale (age: ${cacheAgeHours.toFixed(2)} hours).`);
         }
+      } else {
+        Logger.log("No market sentiment data in cache.");
       }
     } catch (cacheError) {
-      Logger.log("Cache retrieval error: " + cacheError);
-      // Continue execution - we'll get fresh data below
+      Logger.log("Cache retrieval error: " + cacheError + ". Proceeding to fetch fresh data.");
     }
-    
-    // Retrieve market sentiment data from Perplexity
-    const marketSentimentData = retrievePerplexityMarketSentiment();
-    
-    // Check if we have valid data
-    if (marketSentimentData && marketSentimentData.success) {
-      // Extract mentioned stocks from analyst comments
-      const mentionedStocks = extractMentionedStocks(marketSentimentData);
-      Logger.log(`Found ${mentionedStocks.length} mentioned stocks: ${mentionedStocks.join(', ')}`);
+
+    let marketSentimentDataPayload; 
+    let dataSource = '';
+    let success = false;
+    let errorMessage = 'Failed to retrieve data from all sources.'; // Default error
+
+    // 2. Try GCF first
+    Logger.log("Attempting to retrieve sentiment from GCF...");
+    const gcfResult = invokeMarketSentimentGCFInternal();
+
+    if (gcfResult.success && gcfResult.data) {
+      Logger.log("Successfully retrieved data from GCF.");
+      marketSentimentDataPayload = gcfResult.data;
+      dataSource = 'GCF';
+      success = true;
+    } else {
+      Logger.log(`GCF call failed: ${gcfResult.error || 'Unknown GCF error'}. Falling back to Perplexity.`);
+      errorMessage = `GCF Error: ${gcfResult.error || 'Unknown GCF error'}. `;
       
-      // Prepare the result
-      const result = {
+      // 3. Fallback to Perplexity
+      Logger.log("Attempting to retrieve sentiment from Perplexity...");
+      const perplexityResult = retrievePerplexityMarketSentiment(); 
+      if (perplexityResult && perplexityResult.success) {
+        Logger.log("Successfully retrieved data from Perplexity.");
+        marketSentimentDataPayload = perplexityResult; // This is the whole object from Perplexity
+        dataSource = 'Perplexity';
+        success = true;
+      } else {
+        const perplexityErrorMsg = perplexityResult && perplexityResult.error ? perplexityResult.error : (perplexityResult && perplexityResult.message ? perplexityResult.message : 'Unknown Perplexity error');
+        Logger.log(`Perplexity call also failed: ${perplexityErrorMsg}`);
+        errorMessage += `Perplexity Error: ${perplexityErrorMsg}`;
+        success = false;
+      }
+    }
+
+    // 4. Process and return result if successful
+    if (success && marketSentimentDataPayload) {
+      const mentionedStocks = extractMentionedStocks(marketSentimentDataPayload);
+      Logger.log(`Found ${mentionedStocks.length} mentioned stocks from ${dataSource}: ${mentionedStocks.join(', ')}`);
+      
+      const finalResult = {
         success: true,
-        message: "Market sentiment data retrieved successfully.",
-        data: marketSentimentData,
+        message: `Market sentiment data retrieved successfully from ${dataSource}.`,
+        data: marketSentimentDataPayload,
         mentionedStocks: mentionedStocks,
-        timestamp: new Date(),
-        fromCache: false
+        timestamp: new Date().toISOString(),
+        fromCache: false,
+        source: dataSource
       };
       
-      // Cache the result for 2 hours (7200 seconds)
       try {
         const scriptCache = CacheService.getScriptCache();
-        scriptCache.put('MARKET_SENTIMENT_DATA', JSON.stringify(result), 7200);
-        Logger.log("Market sentiment data cached successfully for 2 hours");
+        scriptCache.put('MARKET_SENTIMENT_DATA', JSON.stringify(finalResult), 7200); // Cache for 2 hours
+        Logger.log(`Market sentiment data from ${dataSource} cached successfully.`);
       } catch (cacheError) {
-        Logger.log("Error caching market sentiment data: " + cacheError);
-        // Continue execution - caching is optional
+        Logger.log(`Error caching market sentiment data from ${dataSource}: ${cacheError}`);
       }
-      
-      // Return the results
-      return result;
+      return finalResult;
     } else {
+      Logger.log(`Ultimate failure to retrieve market sentiment: ${errorMessage}`);
       return {
         success: false,
-        message: "Failed to retrieve market sentiment data.",
-        error: marketSentimentData.error || "Unknown error",
-        timestamp: new Date(),
-        fromCache: false
+        message: errorMessage,
+        error: errorMessage,
+        timestamp: new Date().toISOString(),
+        fromCache: false,
+        source: 'None'
       };
     }
-  } catch (error) {
-    Logger.log(`Error retrieving market sentiment data: ${error}`);
+  } catch (error) { 
+    Logger.log(`Critical error in retrieveMarketSentiment: ${error.toString()}\nStack: ${error.stack}`);
     return {
       success: false,
-      message: `Failed to retrieve market sentiment data: ${error}`,
-      timestamp: new Date(),
-      fromCache: false
+      message: `Critical error in retrieveMarketSentiment: ${error.toString()}`,
+      error: error.toString(),
+      timestamp: new Date().toISOString(),
+      fromCache: false,
+      source: 'None'
     };
   }
 }
@@ -721,3 +749,131 @@ function getProminentFinancialFigures() {
   return prominentFigures ? prominentFigures.split(',').map(name => name.trim()) : 
     ["Dan Niles", "Mohamed El-Erian"]; // Default values
 }
+
+/**
+ * Internal function to invoke the Market Sentiment Google Cloud Function.
+ * @return {Object} An object with {success: boolean, data: Object|null, error: String|null, source: 'GCF'}
+ */
+function invokeMarketSentimentGCFInternal() {
+  const GCF_URL = 'https://us-central1-peppy-cosmos-461901-k8.cloudfunctions.net/marketSentimentAPI';
+  const API_KEY_PROPERTY_NAME = 'MARKET_SENTIMENT_API_KEY';
+  let apiKey = '';
+
+  Logger.log("Attempting to fetch market sentiment from GCF...");
+
+  try {
+    apiKey = PropertiesService.getScriptProperties().getProperty(API_KEY_PROPERTY_NAME);
+    if (!apiKey) {
+      const errorMsg = `GCF Error: API Key '${API_KEY_PROPERTY_NAME}' not found in Script Properties.`;
+      Logger.log(errorMsg);
+      return { success: false, data: null, error: errorMsg, source: 'GCF' };
+    }
+  } catch (e) {
+    const errorMsg = `GCF Error retrieving API Key: ${e.toString()}`;
+    Logger.log(errorMsg);
+    return { success: false, data: null, error: errorMsg, source: 'GCF' };
+  }
+
+  const testQuery = 'gas_internal_call'; // Query parameter is not used by GCF
+  const fullUrl = `${GCF_URL}?query=${encodeURIComponent(testQuery)}`;
+
+  const options = {
+    'method': 'GET',
+    'headers': { 'x-api-key': apiKey },
+    'muteHttpExceptions': true,
+    'contentType': 'application/json',
+    'validateHttpsCertificates': true // Good practice
+  };
+
+  try {
+    const response = UrlFetchApp.fetch(fullUrl, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+
+    if (responseCode === 200) {
+      try {
+        const jsonResponse = JSON.parse(responseText);
+        Logger.log('GCF call successful. Data received.');
+        return { success: true, data: jsonResponse, error: null, source: 'GCF' };
+      } catch (e) {
+        const errorMsg = `GCF Error: Failed to parse JSON response. ${e.toString()}`;
+        Logger.log(errorMsg);
+        Logger.log(`GCF Raw Response (first 500 chars): ${responseText.substring(0, 500)}`);
+        return { success: false, data: null, error: errorMsg, source: 'GCF' };
+      }
+    } else {
+      const errorMsg = `GCF Error: Received HTTP ${responseCode}. Response: ${responseText.substring(0, 500)}`;
+      Logger.log(errorMsg);
+      return { success: false, data: null, error: errorMsg, source: 'GCF' };
+    }
+  } catch (e) {
+    const errorMsg = `GCF Error: Failed to fetch. ${e.toString()}`;
+    Logger.log(errorMsg);
+    return { success: false, data: null, error: errorMsg, source: 'GCF' };
+  }
+}
+
+/**
+ * Tests invoking the Market Sentiment Google Cloud Function.
+ */
+function testInvokeMarketSentimentGCF() {
+  const GCF_URL = 'https://us-central1-peppy-cosmos-461901-k8.cloudfunctions.net/marketSentimentAPI';
+  const API_KEY_PROPERTY_NAME = 'MARKET_SENTIMENT_API_KEY';
+  let apiKey = '';
+
+  try {
+    apiKey = PropertiesService.getScriptProperties().getProperty(API_KEY_PROPERTY_NAME);
+    if (!apiKey) {
+      Logger.log(`Error: API Key '${API_KEY_PROPERTY_NAME}' not found in Script Properties.`);
+      return;
+    }
+  } catch (e) {
+    Logger.log(`Error retrieving API Key from Script Properties: ${e.toString()}`);
+    return;
+  }
+
+  // As we established, the query parameter is not currently used by the GCF.
+  // We can send a dummy one or omit it. For this test, let's send a simple one.
+  const testQuery = 'test_query_from_gas';
+  const fullUrl = `${GCF_URL}?query=${encodeURIComponent(testQuery)}`;
+
+  const options = {
+    'method': 'GET',
+    'headers': {
+      'x-api-key': apiKey
+    },
+    'muteHttpExceptions': true, // Important to handle non-200 responses without throwing an error
+    'contentType': 'application/json'
+  };
+
+  Logger.log(`Attempting to call GCF: ${fullUrl}`);
+
+  try {
+    const response = UrlFetchApp.fetch(fullUrl, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+
+    Logger.log(`Response Code: ${responseCode}`);
+    
+    if (responseCode === 200) {
+      Logger.log('GCF Invoked Successfully!');
+      // Attempt to parse and log a snippet if it's JSON
+      try {
+        const jsonResponse = JSON.parse(responseText);
+        Logger.log(`Response (parsed snippet): Overall Sentiment: ${jsonResponse.overallSentiment || 'N/A'}`);
+        // You can log more details or the full responseText if needed for debugging
+        // Logger.log('Full Response Text: ' + responseText);
+      } catch (e) {
+        Logger.log('Response is not valid JSON or does not contain expected fields. Raw response:');
+        Logger.log(responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''));
+      }
+    } else {
+      Logger.log(`Error invoking GCF. Status: ${responseCode}. Response:`);
+      Logger.log(responseText);
+    }
+  } catch (e) {
+    Logger.log(`Failed to fetch GCF. Error: ${e.toString()}`);
+    Logger.log(`Error details: Name: ${e.name}, Message: ${e.message}, Stack: ${e.stack}`);
+  }
+}
+
