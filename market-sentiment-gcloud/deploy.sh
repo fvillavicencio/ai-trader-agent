@@ -74,6 +74,7 @@ gcloud functions deploy $FUNCTION_NAME \
   --ignore-file=.gcloudignore \
   --source=. \
   --env-vars-file=env.yaml \
+  --memory=512MB \
   --timeout=540s
 
 echo "Deployed $FUNCTION_NAME to project $PROJECT_ID in region $REGION."
