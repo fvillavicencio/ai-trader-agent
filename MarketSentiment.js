@@ -721,3 +721,67 @@ function getProminentFinancialFigures() {
   return prominentFigures ? prominentFigures.split(',').map(name => name.trim()) : 
     ["Dan Niles", "Mohamed El-Erian"]; // Default values
 }
+
+/**
+ * Tests invoking the Market Sentiment Google Cloud Function.
+ */
+function testInvokeMarketSentimentGCF() {
+  const GCF_URL = 'https://us-central1-peppy-cosmos-461901-k8.cloudfunctions.net/marketSentimentAPI';
+  const API_KEY_PROPERTY_NAME = 'MARKET_SENTIMENT_API_KEY';
+  let apiKey = '';
+
+  try {
+    apiKey = PropertiesService.getScriptProperties().getProperty(API_KEY_PROPERTY_NAME);
+    if (!apiKey) {
+      Logger.log(`Error: API Key '${API_KEY_PROPERTY_NAME}' not found in Script Properties.`);
+      return;
+    }
+  } catch (e) {
+    Logger.log(`Error retrieving API Key from Script Properties: ${e.toString()}`);
+    return;
+  }
+
+  // As we established, the query parameter is not currently used by the GCF.
+  // We can send a dummy one or omit it. For this test, let's send a simple one.
+  const testQuery = 'test_query_from_gas';
+  const fullUrl = `${GCF_URL}?query=${encodeURIComponent(testQuery)}`;
+
+  const options = {
+    'method': 'GET',
+    'headers': {
+      'x-api-key': apiKey
+    },
+    'muteHttpExceptions': true, // Important to handle non-200 responses without throwing an error
+    'contentType': 'application/json'
+  };
+
+  Logger.log(`Attempting to call GCF: ${fullUrl}`);
+
+  try {
+    const response = UrlFetchApp.fetch(fullUrl, options);
+    const responseCode = response.getResponseCode();
+    const responseText = response.getContentText();
+
+    Logger.log(`Response Code: ${responseCode}`);
+    
+    if (responseCode === 200) {
+      Logger.log('GCF Invoked Successfully!');
+      // Attempt to parse and log a snippet if it's JSON
+      try {
+        const jsonResponse = JSON.parse(responseText);
+        Logger.log(`Response (parsed snippet): Overall Sentiment: ${jsonResponse.overallSentiment || 'N/A'}`);
+        // You can log more details or the full responseText if needed for debugging
+        // Logger.log('Full Response Text: ' + responseText);
+      } catch (e) {
+        Logger.log('Response is not valid JSON or does not contain expected fields. Raw response:');
+        Logger.log(responseText.substring(0, 500) + (responseText.length > 500 ? '...' : ''));
+      }
+    } else {
+      Logger.log(`Error invoking GCF. Status: ${responseCode}. Response:`);
+      Logger.log(responseText);
+    }
+  } catch (e) {
+    Logger.log(`Failed to fetch GCF. Error: ${e.toString()}`);
+    Logger.log(`Error details: Name: ${e.name}, Message: ${e.message}, Stack: ${e.stack}`);
+  }
+}
