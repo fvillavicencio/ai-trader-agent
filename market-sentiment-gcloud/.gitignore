@@ -1,0 +1,9 @@
+# Ignore environment files with secrets
+.env
+env.yaml
+
+# Output files
+market-sentiment-output.json
+
+# Log files
+*.log
