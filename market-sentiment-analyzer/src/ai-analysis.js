@@ -52,7 +52,7 @@ function createMarketSentimentPrompt(commentaryItems) {
         source: item.source,
         sourceType: item.sourceType,
         link: item.link,
-lastUpdated: item.pubDate,
+        pubDate: item.pubDate,
         mentionedStocks: item.mentionedStocks || []
       });
     });
@@ -62,26 +62,27 @@ lastUpdated: item.pubDate,
   const analystComments = Object.keys(analystMap).flatMap(analystName => {
     const items = analystMap[analystName];
     // Sort by date, most recent first
-    items.sort((a, b) => new Date(b.lastUpdated || 0) - new Date(a.lastUpdated || 0));
+    items.sort((a, b) => new Date(b.pubDate || 0) - new Date(a.pubDate || 0));
     // Take the most recent and relevant items (up to 3)
     const relevantItems = items.slice(0, 3);
     return relevantItems.map(item => ({
       name: analystName,
-      // firm: getAnalystFirm(analystName),
       title: item.title,
       content: item.content,
       source: item.source,
       sourceType: item.sourceType,
       link: item.link,
-      lastUpdated: item.lastUpdated,
+      pubDate: item.pubDate,
       mentionedStocks: item.mentionedStocks || []
     }));
   });
 
   // Create the prompt
-  return `You are a financial analyst assistant analyzing market sentiment from specific financial analysts. Your task is to analyze ONLY the commentary provided in the JSON array at the end of this prompt - DO NOT search for or include any additional information.
+  return `You are a senior financial analyst assistant analyzing market sentiment from top financial analysts. Your task is to analyze ONLY the commentary provided in the JSON array at the end of this prompt - DO NOT search for or include any additional information.
 
 Current Date: ${currentDate}
+
+IMPORTANT: For each analyst, the "name" field in your output MUST match the actual analyst's name as provided in the input. NEVER use the firm or team name as the analyst name unless no individual name is available.
 
 Based on ONLY the analyst commentary provided, generate a comprehensive analysis in the following JSON format:
 
@@ -89,8 +90,7 @@ Based on ONLY the analyst commentary provided, generate a comprehensive analysis
   "analysts": [
     {
       "name": "Analyst Name",
-      // "firm": "Firm Name",
-      "commentary": "A single paragraph summarizing their recent comments/views with specific details and market insights",
+      "commentary": "2-3 sentences max summarizing their recent comments/views with specific details and market insights",
       "sentiment": "Bullish/Neutral/Bearish",
       "mentionedStocks": ["AAPL", "MSFT"],
       "source": "Source Name",
@@ -111,22 +111,32 @@ Based on ONLY the analyst commentary provided, generate a comprehensive analysis
     ]
   },
   "overallSentiment": "Bullish/Neutral/Bearish",
-  "summary": "A single paragraph overall market sentiment analysis commenting on themes, risks, issues, contradictions and things to look out for, possibly mentioning specific stocks"
+  "summary": "A focused paragraph highlighting the key emerging themes (e.g., notable events like Trump-Musk interactions, policy impacts, sector rotations) that are evident across multiple analysts' comments, with specific examples from the data"
 }
 
 CRITICAL INSTRUCTIONS:
 1. ONLY analyze commentary from these specific analysts: ${FINANCIAL_ANALYSTS.join(', ')}. If the provided data includes commentary from other sources, DO NOT include them in your analysis.
 2. Your response MUST be VALID JSON and NOTHING ELSE.
 3. Do NOT include any explanations, markdown formatting, code blocks, or any text before or after the JSON.
-4. For each analyst, provide a SINGLE PARAGRAPH summary of their views, mentioning specific stocks they discussed.
-5. For the overall summary, provide a SINGLE PARAGRAPH that covers themes, risks, contradictions, and things to watch for.
-6. For each analyst, you MUST ONLY use the URLs provided in the input data for that analyst. NEVER invent, fabricate, or guess a URL. If multiple URLs are provided, select the single most relevant one. If no real URL is available, set the field to null.
-7. Do not use URLs from any external source or your own knowledge. Only use URLs that are present in the provided commentary for each analyst.
-8. Only include the analysts for whom you have data.
+4. For each analyst, provide NO MORE THAN 3 SENTENCES summarizing their views, mentioning specific stocks they discussed.
+5. ONLY include analysts who have actual content in the data - if an analyst has no retrieved content, DO NOT include them in the output.
+6. The overall summary MUST focus on emerging themes that appear across multiple analysts' comments, not just general market conditions.
+7. For each analyst, you MUST ONLY use the URLs provided in the input data for that analyst. NEVER invent, fabricate, or guess a URL. If multiple URLs are provided, select the single most relevant one. If no real URL is available, set the field to null.
+8. Do not use URLs from any external source or your own knowledge. Only use URLs that are present in the provided commentary for each analyst.
 9. Ensure all JSON is properly formatted with double quotes around keys and string values.
 10. Do not include any comments within the JSON structure.
 11. Do not include the string \`\`\`json or \`\`\` anywhere in your response.
 12. If you are unsure about any part of the instructions, please err on the side of caution and follow the most conservative interpretation.
+
+ADDITIONAL QUALITY GUIDELINES:
+1. For "sentiment" values, be precise in your analysis - assign "Bullish" only when the analyst clearly expresses positive outlook, "Bearish" when clearly negative, and "Neutral" when mixed or uncertain.
+2. When extracting stock symbols, ensure they are actual ticker symbols (e.g., "AAPL" not "Apple"). Look for standard ticker formats in the text.
+3. In "commonThemes" and "emergingTrends", prioritize specific market sectors, monetary policy implications, geopolitical factors, and economic indicators that multiple analysts mention.
+4. For "contradictions", highlight specific disagreements on market direction, sector performance, or individual stocks - not just general tone differences.
+5. The "summary" should synthesize the most important insights across all analysts with specific examples, focusing on actionable intelligence for investors.
+6. When multiple analysts discuss the same topic (e.g., Fed policy, specific earnings reports), explicitly compare their perspectives in your analysis.
+7. Identify any time-sensitive catalysts or upcoming events mentioned by analysts that could impact markets.
+8. If analysts mention specific numerical targets (e.g., S&P levels, interest rate expectations), include these precise figures in your analysis.
 
 Below is a JSON array of analyst commentary objects. Use ONLY this data for your analysis.
 
@@ -164,15 +174,27 @@ function parseAIResponse(content) {
 async function callOpenAI(prompt) {
   logger.info('Calling OpenAI API for market sentiment analysis');
   
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || apiKey === 'your_openai_api_key_here') {
-    throw new Error('Valid OpenAI API key not found in environment variables');
+  // Get the API key and trim any whitespace
+  const openaiApiKey = (process.env.OPENAI_API_KEY || '').trim();
+  if (!openaiApiKey) {
+    throw new Error('OpenAI API key not found in environment variables');
   }
   
+  // Basic validation of API key format
+  if (!openaiApiKey.startsWith('sk-') || openaiApiKey.length < 40) {
+    logger.error('OpenAI API key appears to be invalid (incorrect format)');
+    throw new Error('OpenAI API key has incorrect format');
+  }
+  
+  // Log key details for debugging (without revealing the full key)
+  logger.info(`OpenAI API key: length=${openaiApiKey.length}, starts with=${openaiApiKey.substring(0, 5)}..., contains hyphens=${openaiApiKey.includes('-')}`);
+  
   try {
+    logger.info('Making request to OpenAI API...');
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
       {
+        // Use model from env or fallback to gpt-4o or gpt-3.5-turbo
         model: process.env.OPENAI_MODEL || 'gpt-4o',
         messages: [
           { role: 'system', content: 'You are a financial analyst assistant.' },
@@ -185,17 +207,46 @@ async function callOpenAI(prompt) {
       {
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        timeout: 90000 // 90 seconds timeout
+          'Authorization': `Bearer ${openaiApiKey}`
+        }
       }
     );
     
-    // Extract and parse the response
+    logger.info('Received response from OpenAI API');
+    
+    if (!response.data?.choices?.[0]?.message?.content) {
+      throw new Error('Invalid response from OpenAI API');
+    }
+    
     const content = response.data.choices[0].message.content;
     return parseAIResponse(content);
   } catch (error) {
-    logger.error(`OpenAI API error: ${error.response?.data?.error?.message || error.message}`);
+    if (error.response) {
+      const errorData = error.response.data || {};
+      const errorDetails = JSON.stringify(errorData, null, 2);
+      
+      logger.error(`OpenAI API error (${error.response.status}): ${errorData?.error?.message || error.message}`);
+      logger.error(`Full error details: ${errorDetails}`);
+      
+      // Check for specific error codes
+      if (error.response.status === 401) {
+        logger.error('OpenAI API key is invalid or expired. Please check your API key.');
+        // Log key details for debugging (without revealing the full key)
+        logger.error(`Key used: starts with ${openaiApiKey.substring(0, 5)}..., length=${openaiApiKey.length}`);
+      } else if (error.response.status === 429) {
+        logger.error('OpenAI API rate limit exceeded. Consider using a different API key or waiting before retrying.');
+      } else if (error.response.status === 404) {
+        logger.error('OpenAI API endpoint or model not found. Check if the model specified exists and is available to your account.');
+      }
+    } else if (error.request) {
+      // Request was made but no response received
+      logger.error(`OpenAI API request error (no response): ${error.message}`);
+      logger.error('This could indicate a network issue or timeout');
+    } else {
+      // Error setting up the request
+      logger.error(`OpenAI API setup error: ${error.message}`);
+    }
+    
     throw new Error(`OpenAI request failed: ${error.message}`);
   }
 }
@@ -206,9 +257,8 @@ async function callOpenAI(prompt) {
  * @returns {Promise<Object>} - Parsed JSON response
  */
 async function callPerplexity(prompt) {
-  // Stronger instruction to Perplexity to preserve analyst name
-  const nameInstruction = 'IMPORTANT: For each analyst, the "name" field in your output MUST match the actual analyst\'s name as provided in the input. NEVER use the firm or team name as the analyst name unless no individual name is available.';
-  const perplexityPrompt = `${nameInstruction}\n\n${prompt}`;
+  // Use the same prompt for Perplexity as we do for OpenAI
+  const perplexityPrompt = prompt;
   logger.info('Calling Perplexity API for market sentiment analysis');
   
   const apiKey = process.env.PERPLEXITY_API_KEY;
@@ -266,7 +316,7 @@ function generateFallbackResponse(commentaryItems, error) {
       if (!analystMap[analyst]) {
         analystMap[analyst] = {
           name: analyst,
-          // firm: getAnalystFirm(analyst),
+          firm: getAnalystFirm(analyst),
           items: [],
           mentionedStocks: new Set(),
           mentionedSectors: new Set()
@@ -304,7 +354,7 @@ function generateFallbackResponse(commentaryItems, error) {
     
     return {
       name: analystName,
-      // firm: analyst.firm,
+      firm: analyst.firm,
       sentiment: sentiment,
       commentary: commentary || 'No recent commentary available',
       mentionedStocks: Array.from(analyst.mentionedStocks),
@@ -351,17 +401,35 @@ async function analyzeMarketSentiment(commentaryItems, providerOverride) {
     { name: 'perplexity', func: callPerplexity },
     { name: 'openai', func: callOpenAI }
   ];
-  if (providerOverride) {
+  
+  // If no override is provided, randomly shuffle the providers
+  if (!providerOverride) {
+    // Fisher-Yates shuffle algorithm
+    for (let i = providerOrder.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [providerOrder[i], providerOrder[j]] = [providerOrder[j], providerOrder[i]];
+    }
+    logger.info(`Randomly selected provider order: ${providerOrder.map(p => p.name).join(', ')}`);
+  } else {
+    // If override is provided, filter to just that provider
     providerOrder = providerOrder.filter(p => p.name === providerOverride);
+    logger.info(`Using provider override: ${providerOverride}`);
   }
 
   // Filter to available providers
+  logger.info('Checking available AI providers...');
   const availableProviders = providerOrder.filter(provider => {
     const key = provider.name === 'perplexity' 
       ? process.env.PERPLEXITY_API_KEY 
       : process.env.OPENAI_API_KEY;
-    return key && key !== `your_${provider.name}_api_key_here`;
+    const isAvailable = key && key !== `your_${provider.name}_api_key_here`;
+    logger.info(`Provider ${provider.name} available: ${isAvailable ? 'Yes' : 'No'} (key ${key ? 'exists' : 'missing'})`);
+    return isAvailable;
   });
+  
+  logger.info(`Final available providers: ${availableProviders.map(p => p.name).join(', ')}`);
+  logger.info(`Will try providers in this order: ${availableProviders.map(p => p.name).join(' -> ')}`);
+  
 
   if (availableProviders.length === 0) {
     logger.error('No AI providers available - using fallback');
