@@ -1,0 +1,18 @@
+{
+  "name": "fear-greed-chart-generator",
+  "version": "1.0.0",
+  "description": "AWS Lambda function to generate Fear and Greed Index charts for Market Pulse Daily",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Market Pulse Daily",
+  "license": "MIT",
+  "dependencies": {
+    "aws-sdk": "^2.1502.0",
+    "luxon": "^3.4.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

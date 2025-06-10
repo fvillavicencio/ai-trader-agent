@@ -1,0 +1,21 @@
+steps:
+  # Install dependencies
+  - name: 'gcr.io/cloud-builders/npm'
+    args: ['install']
+    dir: 'gcf'
+    
+  # Deploy the function
+  - name: 'gcr.io/cloud-builders/gcloud'
+    args:
+      - 'functions'
+      - 'deploy'
+      - 'collectFearAndGreedData'
+      - '--runtime=nodejs18'
+      - '--trigger-http'
+      - '--allow-unauthenticated'
+      - '--entry-point=collectFearAndGreedData'
+      - '--memory=256MB'
+      - '--timeout=120s'
+      - '--env-vars-file=env.yaml'
+      - '--region=us-east1'
+    dir: 'gcf'

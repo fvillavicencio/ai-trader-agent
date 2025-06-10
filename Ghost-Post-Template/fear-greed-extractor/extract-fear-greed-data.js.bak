@@ -1,0 +1,581 @@
+/**
+ * Fear and Greed Index Data Extractor
+ * 
+ * This script connects to Ghost as an admin, retrieves all articles,
+ * extracts the fear and greed index data, and generates a CSV file
+ * with timestamps and values sorted in descending order.
+ */
+
+require('dotenv').config({ path: '../.env' });
+const fs = require('fs');
+const path = require('path');
+const GhostAdminAPI = require('@tryghost/admin-api');
+let GhostContentAPI;
+
+try {
+  GhostContentAPI = require('@tryghost/content-api');
+} catch (error) {
+  console.log('Content API package not found, will attempt to use Admin API only.');
+}
+
+const cheerio = require('cheerio');
+
+// Parse command line arguments for API key and URL if provided
+let cmdGhostApiKey = null;
+let cmdGhostUrl = null;
+let cmdContentApiKey = null;
+let useContentApi = false;
+
+process.argv.forEach((arg, index) => {
+  if (arg === '--key' && process.argv[index + 1]) {
+    cmdGhostApiKey = process.argv[index + 1];
+  }
+
+// Get API keys and URL from environment variables or command line arguments
+const ghostApiKey = options.key || process.env.GHOST_API_KEY;
+const contentApiKey = options.contentKey || process.env.GHOST_CONTENT_API_KEY;
+const ghostUrl = options.url || process.env.GHOST_URL;
+
+// Validate API keys and URL
+if (!ghostApiKey && !contentApiKey) {
+  console.error('Error: No API keys provided');
+  console.error('Please provide either a Ghost Admin API key or Content API key');
+  console.error('You can set these using environment variables GHOST_API_KEY and GHOST_CONTENT_API_KEY');
+  console.error('Or using command line arguments --key and --content-key');
+  process.exit(1);
+}
+
+if (!ghostUrl) {
+  console.error('Error: No Ghost URL provided');
+  console.error('Please provide a Ghost URL using the GHOST_URL environment variable or --url argument');
+  console.error('Example: https://your-ghost-blog.com');
+  process.exit(1);
+}
+
+// Initialize API clients
+let adminApi = null;
+let contentApi = null;
+
+if (ghostApiKey) {
+  try {
+    // Extract API ID and Secret for logging
+    const apiKeyParts = ghostApiKey.split(':');
+    if (apiKeyParts.length !== 2) {
+      console.error('Error: Invalid Admin API key format');
+      console.error('Admin API key should be in the format "id:secret"');
+      process.exit(1);
+    }
+    
+    console.log(`API Key ID: ${apiKeyParts[0]}`);
+    console.log(`API Key Secret length: ${apiKeyParts[1].length} characters`);
+    
+    // Initialize Admin API client
+    adminApi = new GhostAdminAPI({
+      url: ghostUrl,
+      key: ghostApiKey,
+      version: 'v5.0'
+    });
+    
+    console.log('Admin API client initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Admin API client:', error.message);
+  }
+}
+
+if (contentApiKey) {
+  try {
+    // Initialize Content API client
+    contentApi = new GhostContentAPI({
+      url: ghostUrl,
+      key: contentApiKey,
+      version: 'v5.0'
+    });
+    
+    console.log('Content API client initialized successfully');
+  } catch (error) {
+    console.error('Error initializing Content API client:', error.message);
+  }
+}
+
+console.log('Starting Fear and Greed Index data extraction...');
+
+// Data structure to hold all fear and greed data points
+const fearGreedData = [];
+
+/**
+ * Extract fear and greed data from HTML content
+ * @param {string} html - The HTML content of the post
+ * @param {string} publishedAt - The publication timestamp of the post
+ * @returns {Array} - Array of data points extracted from the post
+ */
+function extractFearGreedData(html, publishedAt) {
+  const $ = cheerio.load(html);
+  const dataPoints = [];
+  
+  console.log('Searching for Fear and Greed Index in post...');
+  
+  // First, check if the HTML contains the phrase "Fear and Greed Index"
+  if (!html.includes('Fear and Greed Index')) {
+    console.log('Post does not contain "Fear and Greed Index" text - skipping detailed parsing');
+    return dataPoints;
+  }
+  
+  console.log('Found "Fear and Greed Index" text in the post');
+  
+  // Extract Fear and Greed Index data from SVG elements
+  const svgElements = $('svg');
+  console.log(`Found ${svgElements.length} SVG elements in the post`);
+  
+  if (svgElements.length > 0) {
+    // Look for text elements within SVG that contain numeric values
+    const svgTextElements = $('svg text');
+    console.log(`Found ${svgTextElements.length} text elements in SVG`);
+    
+    // Create a map to store values by position
+    const valuesByPosition = {};
+    
+    // Extract values from SVG text elements
+    svgTextElements.each((i, textElement) => {
+      const textContent = $(textElement).text().trim();
+      const numericValue = parseInt(textContent, 10);
+      
+      if (!isNaN(numericValue) && numericValue >= 0 && numericValue <= 100) {
+        // Get position attributes
+        const x = $(textElement).attr('x') || '';
+        const xPercent = x.includes('%') ? parseFloat(x) : null;
+        
+        console.log(`Found numeric value ${numericValue} at position x=${x}`);
+        
+        // Map position to time period
+        if (xPercent !== null) {
+          if (xPercent >= 85 && xPercent <= 95) {
+            // Current value (around 90%)
+            valuesByPosition['current'] = numericValue;
+            console.log(`Identified as current value: ${numericValue}`);
+          } else if (xPercent >= 60 && xPercent <= 70) {
+            // Previous day (around 65%)
+            valuesByPosition['previousDay'] = numericValue;
+            console.log(`Identified as previous day value: ${numericValue}`);
+          } else if (xPercent >= 30 && xPercent <= 40) {
+            // Previous week (around 35%)
+            valuesByPosition['previousWeek'] = numericValue;
+            console.log(`Identified as previous week value: ${numericValue}`);
+          } else if (xPercent >= 5 && xPercent <= 15) {
+            // Previous month (around 10%)
+            valuesByPosition['previousMonth'] = numericValue;
+            console.log(`Identified as previous month value: ${numericValue}`);
+          }
+        }
+      }
+    });
+    
+    // Look for labels that confirm our position mapping
+    const divElements = $('div');
+    divElements.each((i, div) => {
+      const divText = $(div).text().trim();
+      const divStyle = $(div).attr('style') || '';
+      
+      // Check for labels like "One Month Ago", "One Week Ago", etc.
+      if (divText.includes('Month Ago') && divStyle.includes('left: 10%')) {
+        console.log('Found "One Month Ago" label at 10% position');
+      } else if (divText.includes('Week Ago') && divStyle.includes('left: 35%')) {
+        console.log('Found "One Week Ago" label at 35% position');
+      } else if ((divText.includes('Yesterday') || divText.includes('Day Ago')) && divStyle.includes('left: 65%')) {
+        console.log('Found "Previous Day" label at 65% position');
+      } else if (divText.includes('Today') && divStyle.includes('left: 90%')) {
+        console.log('Found "Today" label at 90% position');
+      }
+    });
+    
+    // Add data points for each time period found
+    if (valuesByPosition['current']) {
+      const currentDate = new Date(publishedAt);
+      dataPoints.push({
+        timestamp: publishedAt,
+        value: valuesByPosition['current']
+      });
+      console.log(`Added current data point: ${valuesByPosition['current']} at ${publishedAt}`);
+      
+      // Add previous day data point if available
+      if (valuesByPosition['previousDay']) {
+        const previousDay = new Date(currentDate);
+        previousDay.setDate(previousDay.getDate() - 1);
+        dataPoints.push({
+          timestamp: previousDay.toISOString(),
+          value: valuesByPosition['previousDay']
+        });
+        console.log(`Added previous day data point: ${valuesByPosition['previousDay']} at ${previousDay.toISOString()}`);
+      }
+      
+      // Add previous week data point if available
+      if (valuesByPosition['previousWeek']) {
+        const previousWeek = new Date(currentDate);
+        previousWeek.setDate(previousWeek.getDate() - 7);
+        dataPoints.push({
+          timestamp: previousWeek.toISOString(),
+          value: valuesByPosition['previousWeek']
+        });
+        console.log(`Added previous week data point: ${valuesByPosition['previousWeek']} at ${previousWeek.toISOString()}`);
+      }
+      
+      // Add previous month data point if available
+      if (valuesByPosition['previousMonth']) {
+        const previousMonth = new Date(currentDate);
+        previousMonth.setMonth(previousMonth.getMonth() - 1);
+        dataPoints.push({
+          timestamp: previousMonth.toISOString(),
+          value: valuesByPosition['previousMonth']
+        });
+        console.log(`Added previous month data point: ${valuesByPosition['previousMonth']} at ${previousMonth.toISOString()}`);
+      }
+    }
+  }
+  
+  // If we found data points from SVG, return them
+  if (dataPoints.length > 0) {
+    return dataPoints;
+  }
+  
+  // If no SVG data found, try alternative extraction methods
+  
+  // Try to extract the Fear and Greed Index value directly from text
+  try {
+    // Look for patterns like "Fear and Greed Index: 65" or "Fear and Greed Index is at 65"
+    const fearGreedRegex = /Fear and Greed Index[:\s]+(is\s+at\s+)?(\d+)/i;
+    const fearGreedMatch = html.match(fearGreedRegex);
+    
+    if (fearGreedMatch && fearGreedMatch[2]) {
+      const indexValue = parseInt(fearGreedMatch[2], 10);
+      if (!isNaN(indexValue) && indexValue >= 0 && indexValue <= 100) {
+        console.log(`Found Fear and Greed Index value in text: ${indexValue}`);
+        dataPoints.push({
+          timestamp: publishedAt,
+          value: indexValue
+        });
+      }
+    }
+  } catch (error) {
+    console.log(`Error extracting Fear and Greed Index from text: ${error.message}`);
+  }
+  
+  // Check for figure elements that might contain the data
+  const figureElements = $('figure');
+  console.log(`Found ${figureElements.length} figure elements in the post`);
+  
+  // Check each figure for Fear and Greed Index content
+  figureElements.each((i, figure) => {
+    const figureContent = $(figure).text();
+    if (figureContent.includes('Fear and Greed Index')) {
+      console.log('Found a figure element with Fear and Greed Index content!');
+      // Try to extract numeric values from the figure
+      const numericMatches = figureContent.match(/\b(\d+)\b/g);
+      if (numericMatches && numericMatches.length > 0) {
+        console.log(`Found numeric values in figure: ${numericMatches.join(', ')}`);
+        // Use the first numeric value as the current index value
+        const currentValue = parseInt(numericMatches[0], 10);
+        if (!isNaN(currentValue)) {
+          dataPoints.push({
+            timestamp: publishedAt,
+            value: currentValue
+          });
+          console.log(`Added data point from figure: ${currentValue} at ${publishedAt}`);
+        }
+      }
+    }
+  });
+  
+  return dataPoints;
+        let timestamp;
+        const dateElement = $(element).find('text:contains("As of")');
+        console.log(`Found ${dateElement.length} date elements with 'As of'`);
+        
+        if (dateElement.length) {
+          const dateText = dateElement.text().replace('As of ', '').trim();
+          console.log(`Found date text: "${dateText}"`);
+          try {
+            const parsedDate = new Date(dateText);
+            if (!isNaN(parsedDate.getTime())) {
+              timestamp = parsedDate.toISOString();
+              console.log(`Successfully parsed date: ${timestamp}`);
+            } else {
+              console.log(`Could not parse date: ${dateText}, using post published date instead`);
+              timestamp = publishedAt;
+            }
+          } catch (e) {
+            console.log(`Error parsing date: ${dateText}, using post published date instead`);
+            timestamp = publishedAt;
+          }
+        } else {
+          console.log('No date element found, using post published date');
+          timestamp = publishedAt;
+        }
+        
+        // Add current value
+        dataPoints.push({
+          timestamp,
+          value: currentValue
+        });
+        console.log(`Added current value data point: ${currentValue} at ${timestamp}`);
+      }
+      
+      // Get the full SVG text to extract historical data points
+      const svgText = $(element).html();
+      console.log('Searching for historical data points in SVG...');
+      
+      // Extract previous day value
+      const previousDayMatch = svgText.match(/Previous\s*(?:Close|Day).*?([0-9]+)\s*<\/text>/is);
+      if (previousDayMatch && previousDayMatch[1]) {
+        console.log(`Found previous day match: ${previousDayMatch[1]}`);
+        const previousValue = parseInt(previousDayMatch[1], 10);
+        if (!isNaN(previousValue)) {
+          // Calculate previous day date (1 day before)
+          const previousDate = new Date(timestamp);
+          previousDate.setDate(previousDate.getDate() - 1);
+          const previousTimestamp = previousDate.toISOString();
+          
+          dataPoints.push({
+            timestamp: previousTimestamp,
+            value: previousValue
+          });
+          console.log(`Added previous day data point: ${previousValue} at ${previousTimestamp}`);
+        }
+      } else {
+        console.log('No previous day value found');
+      }
+      
+      // Extract one week ago
+      const oneWeekMatch = svgText.match(/(?:One\s*Week\s*Ago|1\s*Week).*?([0-9]+)\s*<\/text>/is);
+      if (oneWeekMatch && oneWeekMatch[1]) {
+        console.log(`Found one week ago match: ${oneWeekMatch[1]}`);
+        const weekValue = parseInt(oneWeekMatch[1], 10);
+        if (!isNaN(weekValue)) {
+          // Calculate one week ago date
+          const weekAgoDate = new Date(timestamp);
+          weekAgoDate.setDate(weekAgoDate.getDate() - 7);
+          const weekAgoTimestamp = weekAgoDate.toISOString();
+          
+          dataPoints.push({
+            timestamp: weekAgoTimestamp,
+            value: weekValue
+          });
+          console.log(`Added one week ago data point: ${weekValue} at ${weekAgoTimestamp}`);
+        }
+      } else {
+        console.log('No one week ago value found');
+      }
+      
+      // Extract one month ago
+      const oneMonthMatch = svgText.match(/(?:One\s*Month\s*Ago|1\s*Month).*?([0-9]+)\s*<\/text>/is);
+      if (oneMonthMatch && oneMonthMatch[1]) {
+        console.log(`Found one month ago match: ${oneMonthMatch[1]}`);
+        const monthValue = parseInt(oneMonthMatch[1], 10);
+        if (!isNaN(monthValue)) {
+          // Calculate one month ago date
+          const monthAgoDate = new Date(timestamp);
+          monthAgoDate.setMonth(monthAgoDate.getMonth() - 1);
+          const monthAgoTimestamp = monthAgoDate.toISOString();
+          
+          dataPoints.push({
+            timestamp: monthAgoTimestamp,
+            value: monthValue
+          });
+          console.log(`Added one month ago data point: ${monthValue} at ${monthAgoTimestamp}`);
+        }
+      } else {
+        console.log('No one month ago value found');
+      }
+    }
+  });
+  
+  
+  console.log(`Total data points extracted from post: ${dataPoints.length}`);
+  return dataPoints;
+}
+
+/**
+ * Process all posts and extract fear and greed data
+ */
+async function processAllPosts() {
+  console.log('Fetching posts from Ghost...');
+  console.log(`Ghost URL: ${ghostUrl}`);
+  
+  // Try to use Admin API first, then fall back to Content API if available
+  let api = adminApi;
+  let apiType = 'Admin API';
+  
+  // If we don't have any API client available, exit
+  if (!adminApi && !contentApi) {
+    console.error('Error: No valid API client available');
+    console.error('Please provide either a valid Admin API key or Content API key');
+    process.exit(1);
+  }
+  
+  if (adminApi) {
+    console.log(`Using Admin API key: ${ghostApiKey.split(':')[0]}:****`);
+  } else if (contentApi && contentApiKey) {
+    api = contentApi;
+    apiType = 'Content API';
+    console.log(`Using Content API key: ${contentApiKey.substring(0, 4)}****`);
+  } else {
+    console.log('Using Content API with placeholder key (may fail)');
+  }
+  
+  try {
+    // Test connection first
+    console.log(`Testing Ghost ${apiType} connection...`);
+    
+    if (adminApi) {
+      console.log('Attempting to read site data with Admin API...');
+      const siteData = await adminApi.site.read();
+      console.log(`Connected to Ghost site: ${siteData.title}`);
+      console.log('Site data:', JSON.stringify(siteData, null, 2).substring(0, 200) + '...');
+    } else {
+      const settings = await contentApi.settings.browse();
+      console.log(`Connected to Ghost site: ${settings.title}`);
+    }
+  } catch (error) {
+    console.error(`Error connecting to Ghost ${apiType}:`);
+    console.error(`Status: ${error.type || 'Unknown error type'}`);
+    console.error(`Code: ${error.code || 'No error code'}`);
+    console.error(`Message: ${error.message || 'No error message'}`);
+    
+    if (error.code === 'UNKNOWN_ADMIN_API_KEY') {
+      console.error('\nThe Admin API key appears to be invalid or expired.');
+      console.error('Please check that:');
+      console.error('1. The API key is correctly formatted (id:secret)');
+      console.error('2. The API key has Admin API access');
+      console.error('3. The API key has not been revoked or expired');
+      console.error('\nAlternatively, try using the Content API with --use-content-api flag');
+    } else if (error.message && error.message.includes('content api key')) {
+      console.error('\nThe Content API key appears to be invalid.');
+      console.error('Please provide a valid Content API key with --content-key');
+    }
+    
+    process.exit(1);
+  }
+  
+  let page = 1;
+  let hasMorePages = true;
+  let totalPosts = 0;
+  let postsWithData = 0;
+  
+  // Set a higher page limit to ensure we get all posts back to April 2025
+  const maxPages = 20; // This should be enough to get all posts, but won't hardcode a specific date
+  
+  while (hasMorePages && page <= maxPages) {
+    try {
+      // Fetch posts with HTML content included
+      console.log(`Fetching page ${page} of ${maxPages} (max)...`);
+      
+      let response;
+      if (adminApi) {
+        console.log('Using Admin API to browse posts with these options:');
+        const options = {
+          limit: 100, // Maximum allowed by Ghost API
+          page: page,
+          include: ['html', 'title', 'published_at'],
+          formats: ['html'],
+          order: 'published_at DESC' // Ensure we get posts in chronological order
+        };
+        console.log(JSON.stringify(options, null, 2));
+        
+        try {
+          // Try a different approach - first get the total count
+          console.log('First trying to get post count...');
+          const meta = await adminApi.posts.browse({limit: 1});
+          console.log(`Total posts according to meta: ${meta.meta ? meta.meta.pagination.total : 'unknown'}`);
+          
+          // Now try to get the actual posts
+          console.log(`Now fetching page ${page} of posts...`);
+          response = await adminApi.posts.browse(options);
+        } catch (innerError) {
+          console.error(`Inner error fetching posts: ${innerError.message}`);
+          console.error('Error details:', innerError);
+          throw innerError; // Re-throw to be caught by the outer catch
+        }
+      } else {
+        response = await contentApi.posts.browse({
+          limit: 50,
+          page: page,
+          include: ['html'],
+          formats: ['html']
+        });
+      }
+      
+      if (!response || response.length === 0) {
+        console.log('No more posts found.');
+        hasMorePages = false;
+        break;
+      }
+      
+      totalPosts += response.length;
+      console.log(`Processing page ${page} (${response.length} posts)...`);
+      
+      // Process each post
+      for (const post of response) {
+        console.log(`\nProcessing post: "${post.title}" (published: ${post.published_at})`);
+        
+        // Check if the post contains SVG elements
+        if (post.html && post.html.includes('<svg')) {
+          console.log(`Post contains SVG elements - checking for Fear and Greed Index data...`);
+          const data = extractFearGreedData(post.html, post.published_at);
+          
+          if (data.length > 0) {
+            postsWithData++;
+            fearGreedData.push(...data);
+            console.log(`SUCCESS: Found ${data.length} data points in post: ${post.title}`);
+          } else {
+            console.log(`No Fear and Greed Index data found in this post despite having SVG elements`);
+          }
+        } else {
+          console.log(`Post does not contain any SVG elements - skipping`);
+        }
+      }
+      
+      page++;
+      
+    } catch (error) {
+      console.error(`Error fetching posts on page ${page}:`, error.message || error);
+      hasMorePages = false;
+    }
+  }
+  
+  console.log(`\nProcessed ${totalPosts} posts, found data in ${postsWithData} posts.`);
+  console.log(`Total data points extracted: ${fearGreedData.length}`);
+  
+  // Sort data by timestamp in descending order
+  fearGreedData.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  
+  // Generate CSV file
+  generateCsv();
+}
+
+/**
+ * Generate CSV file from the collected data
+ */
+function generateCsv() {
+  const csvRows = [];
+  
+  // Add header
+  csvRows.push('timestamp,fear_and_greed_index_value');
+  
+  // Add data rows
+  fearGreedData.forEach(item => {
+    csvRows.push(`${item.timestamp},${item.value}`);
+  });
+  
+  // Write to file
+  const csvContent = csvRows.join('\n');
+  const outputPath = path.join(__dirname, 'fear_greed_data.csv');
+  
+  fs.writeFileSync(outputPath, csvContent);
+  console.log(`\nCSV file generated: ${outputPath}`);
+  console.log(`Contains ${fearGreedData.length} data points sorted by timestamp (descending).`);
+}
+
+// Run the script
+console.log('Starting Fear and Greed Index data extraction...');
+processAllPosts().catch(error => {
+  console.error('Error:', error);
+  process.exit(1);
+});
