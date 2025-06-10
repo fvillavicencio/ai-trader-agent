@@ -247,7 +247,8 @@ function retrievePerplexityMarketSentiment() {
         'Accept': 'application/json'
       },
       payload: JSON.stringify(payload),
-      muteHttpExceptions: true
+      muteHttpExceptions: true,
+      timeout: 300000 // 300 seconds (5 minutes) timeout
     };
     
     // Log the payload for debugging (omit sensitive information)
@@ -844,7 +845,8 @@ function testInvokeMarketSentimentGCF() {
       'x-api-key': apiKey
     },
     'muteHttpExceptions': true, // Important to handle non-200 responses without throwing an error
-    'contentType': 'application/json'
+    'contentType': 'application/json',
+    'timeout': 300000 // 300 seconds (5 minutes) timeout
   };
 
   Logger.log(`Attempting to call GCF: ${fullUrl}`);
