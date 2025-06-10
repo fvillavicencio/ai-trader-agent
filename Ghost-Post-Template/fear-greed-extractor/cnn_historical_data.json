@@ -1,0 +1,1520 @@
+[
+  {
+    "date": "2025-06-09",
+    "timestamp_ms": 1749520239749,
+    "score": 62.2,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-06-09",
+    "timestamp_ms": 1717977600000,
+    "score": 44.74285714285715,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-10",
+    "timestamp_ms": 1718064000000,
+    "score": 44.4,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-11",
+    "timestamp_ms": 1718150400000,
+    "score": 46.57142857142857,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-06-12",
+    "timestamp_ms": 1718236800000,
+    "score": 44.57142857142858,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-13",
+    "timestamp_ms": 1718323200000,
+    "score": 41.11428571428572,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-16",
+    "timestamp_ms": 1718582400000,
+    "score": 43.285714285714285,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-17",
+    "timestamp_ms": 1718668800000,
+    "score": 41.28571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-19",
+    "timestamp_ms": 1718841600000,
+    "score": 38.714285714285715,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-20",
+    "timestamp_ms": 1718928000000,
+    "score": 39.05714285714286,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-23",
+    "timestamp_ms": 1719187200000,
+    "score": 37.77142857142858,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-24",
+    "timestamp_ms": 1719273600000,
+    "score": 37.285714285714285,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-25",
+    "timestamp_ms": 1719360000000,
+    "score": 40.88571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-26",
+    "timestamp_ms": 1719446400000,
+    "score": 45.51428571428571,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-06-27",
+    "timestamp_ms": 1719532800000,
+    "score": 44.31428571428571,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-06-30",
+    "timestamp_ms": 1719792000000,
+    "score": 47.94285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-01",
+    "timestamp_ms": 1719878400000,
+    "score": 49.74285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-02",
+    "timestamp_ms": 1719964800000,
+    "score": 48.371428571428574,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-04",
+    "timestamp_ms": 1720137600000,
+    "score": 49.714285714285715,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-07",
+    "timestamp_ms": 1720396800000,
+    "score": 51.057142857142864,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-08",
+    "timestamp_ms": 1720483200000,
+    "score": 50.57142857142856,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-09",
+    "timestamp_ms": 1720569600000,
+    "score": 54.60000000000001,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-10",
+    "timestamp_ms": 1720656000000,
+    "score": 49.4,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-11",
+    "timestamp_ms": 1720742400000,
+    "score": 54.371428571428574,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-14",
+    "timestamp_ms": 1721001600000,
+    "score": 57.74285714285715,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-07-15",
+    "timestamp_ms": 1721088000000,
+    "score": 57.02857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-07-16",
+    "timestamp_ms": 1721174400000,
+    "score": 46.114285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-17",
+    "timestamp_ms": 1721260800000,
+    "score": 45.94285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-18",
+    "timestamp_ms": 1721347200000,
+    "score": 43,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-07-21",
+    "timestamp_ms": 1721606400000,
+    "score": 48.42857142857144,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-22",
+    "timestamp_ms": 1721692800000,
+    "score": 46.857142857142854,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-23",
+    "timestamp_ms": 1721779200000,
+    "score": 38.614285714285714,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-07-24",
+    "timestamp_ms": 1721865600000,
+    "score": 39.07142857142857,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-07-25",
+    "timestamp_ms": 1721952000000,
+    "score": 42.542857142857144,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-07-28",
+    "timestamp_ms": 1722211200000,
+    "score": 42.07142857142857,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-07-29",
+    "timestamp_ms": 1722297600000,
+    "score": 40.800000000000004,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-07-30",
+    "timestamp_ms": 1722384000000,
+    "score": 46.885714285714286,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-07-31",
+    "timestamp_ms": 1722470400000,
+    "score": 42.68571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-01",
+    "timestamp_ms": 1722556800000,
+    "score": 41.385714285714286,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-04",
+    "timestamp_ms": 1722816000000,
+    "score": 33.05714285714286,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-05",
+    "timestamp_ms": 1722902400000,
+    "score": 19.014285714285712,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2024-08-06",
+    "timestamp_ms": 1722988800000,
+    "score": 16.557142857142857,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2024-08-07",
+    "timestamp_ms": 1723075200000,
+    "score": 17.65714285714286,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2024-08-08",
+    "timestamp_ms": 1723161600000,
+    "score": 24.085714285714285,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2024-08-11",
+    "timestamp_ms": 1723420800000,
+    "score": 23.8,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2024-08-12",
+    "timestamp_ms": 1723507200000,
+    "score": 25.514285714285712,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-13",
+    "timestamp_ms": 1723593600000,
+    "score": 26.428571428571434,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-14",
+    "timestamp_ms": 1723680000000,
+    "score": 32.37142857142857,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-15",
+    "timestamp_ms": 1723766400000,
+    "score": 33.74285714285715,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-18",
+    "timestamp_ms": 1724025600000,
+    "score": 39.88571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-19",
+    "timestamp_ms": 1724112000000,
+    "score": 44.68571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-08-20",
+    "timestamp_ms": 1724198400000,
+    "score": 50.228571428571435,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-08-21",
+    "timestamp_ms": 1724284800000,
+    "score": 46.77142857142858,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-08-22",
+    "timestamp_ms": 1724371200000,
+    "score": 51.57142857142857,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-08-25",
+    "timestamp_ms": 1724630400000,
+    "score": 52.94285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-08-26",
+    "timestamp_ms": 1724716800000,
+    "score": 52.28571428571429,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-08-27",
+    "timestamp_ms": 1724803200000,
+    "score": 51.08571428571429,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-08-28",
+    "timestamp_ms": 1724889600000,
+    "score": 56.057142857142864,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-08-29",
+    "timestamp_ms": 1724976000000,
+    "score": 60.314285714285724,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-02",
+    "timestamp_ms": 1725321600000,
+    "score": 56.34285714285714,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-03",
+    "timestamp_ms": 1725408000000,
+    "score": 56.62857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-04",
+    "timestamp_ms": 1725494400000,
+    "score": 50.62857142857143,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-09-05",
+    "timestamp_ms": 1725580800000,
+    "score": 39.34285714285715,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-09-08",
+    "timestamp_ms": 1725840000000,
+    "score": 41.971428571428575,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-09-09",
+    "timestamp_ms": 1725926400000,
+    "score": 39.6857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-09-10",
+    "timestamp_ms": 1726012800000,
+    "score": 43.08571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-09-11",
+    "timestamp_ms": 1726099200000,
+    "score": 42.97142857142857,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-09-12",
+    "timestamp_ms": 1726185600000,
+    "score": 48.62857142857143,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-09-15",
+    "timestamp_ms": 1726444800000,
+    "score": 50.31428571428571,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-09-16",
+    "timestamp_ms": 1726531200000,
+    "score": 54.62857142857143,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-09-17",
+    "timestamp_ms": 1726617600000,
+    "score": 55.17142857142858,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-18",
+    "timestamp_ms": 1726704000000,
+    "score": 63.80000000000001,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-19",
+    "timestamp_ms": 1726790400000,
+    "score": 61.2,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-22",
+    "timestamp_ms": 1727049600000,
+    "score": 63.85714285714287,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-23",
+    "timestamp_ms": 1727136000000,
+    "score": 66.42857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-24",
+    "timestamp_ms": 1727222400000,
+    "score": 65.74285714285715,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-25",
+    "timestamp_ms": 1727308800000,
+    "score": 70.74285714285713,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-26",
+    "timestamp_ms": 1727395200000,
+    "score": 67.31428571428572,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-29",
+    "timestamp_ms": 1727654400000,
+    "score": 73.6857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-09-30",
+    "timestamp_ms": 1727740800000,
+    "score": 70.31428571428572,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-01",
+    "timestamp_ms": 1727827200000,
+    "score": 70.57142857142857,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-02",
+    "timestamp_ms": 1727913600000,
+    "score": 69.42857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-03",
+    "timestamp_ms": 1728000000000,
+    "score": 71.4,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-06",
+    "timestamp_ms": 1728259200000,
+    "score": 70.82857142857144,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-07",
+    "timestamp_ms": 1728345600000,
+    "score": 71.17142857142856,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-08",
+    "timestamp_ms": 1728432000000,
+    "score": 71.14285714285715,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-09",
+    "timestamp_ms": 1728518400000,
+    "score": 70.28571428571429,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-10",
+    "timestamp_ms": 1728604800000,
+    "score": 71.65714285714286,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-13",
+    "timestamp_ms": 1728864000000,
+    "score": 74.22857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-14",
+    "timestamp_ms": 1728950400000,
+    "score": 71.14285714285715,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-15",
+    "timestamp_ms": 1729036800000,
+    "score": 69.02857142857142,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-16",
+    "timestamp_ms": 1729123200000,
+    "score": 68.57142857142857,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-17",
+    "timestamp_ms": 1729209600000,
+    "score": 72.42857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-20",
+    "timestamp_ms": 1729468800000,
+    "score": 69.8,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-21",
+    "timestamp_ms": 1729555200000,
+    "score": 70.37142857142858,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-22",
+    "timestamp_ms": 1729641600000,
+    "score": 63.199999999999996,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-23",
+    "timestamp_ms": 1729728000000,
+    "score": 62.94285714285714,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-24",
+    "timestamp_ms": 1729814400000,
+    "score": 58.74285714285715,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-27",
+    "timestamp_ms": 1730073600000,
+    "score": 60.85714285714287,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-28",
+    "timestamp_ms": 1730160000000,
+    "score": 60.057142857142864,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-29",
+    "timestamp_ms": 1730246400000,
+    "score": 57.2,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-10-30",
+    "timestamp_ms": 1730332800000,
+    "score": 40.45714285714286,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-10-31",
+    "timestamp_ms": 1730419200000,
+    "score": 50.48571428571429,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-11-03",
+    "timestamp_ms": 1730678400000,
+    "score": 42.42857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-11-04",
+    "timestamp_ms": 1730764800000,
+    "score": 43.54285714285715,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-11-05",
+    "timestamp_ms": 1730851200000,
+    "score": 44,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-11-06",
+    "timestamp_ms": 1730937600000,
+    "score": 59.05714285714286,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-07",
+    "timestamp_ms": 1731024000000,
+    "score": 59.42857142857144,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-10",
+    "timestamp_ms": 1731283200000,
+    "score": 66.6,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-11",
+    "timestamp_ms": 1731369600000,
+    "score": 66.71428571428571,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-12",
+    "timestamp_ms": 1731456000000,
+    "score": 66.31428571428572,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-13",
+    "timestamp_ms": 1731542400000,
+    "score": 60.314285714285724,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-14",
+    "timestamp_ms": 1731628800000,
+    "score": 51.199999999999996,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-11-17",
+    "timestamp_ms": 1731888000000,
+    "score": 50.285714285714285,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-11-18",
+    "timestamp_ms": 1731974400000,
+    "score": 49.51428571428572,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-11-19",
+    "timestamp_ms": 1732060800000,
+    "score": 49.51428571428572,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-11-20",
+    "timestamp_ms": 1732147200000,
+    "score": 56.60000000000001,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-21",
+    "timestamp_ms": 1732233600000,
+    "score": 60.71428571428572,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-24",
+    "timestamp_ms": 1732492800000,
+    "score": 62.88571428571429,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-25",
+    "timestamp_ms": 1732579200000,
+    "score": 65.91428571428573,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-26",
+    "timestamp_ms": 1732665600000,
+    "score": 64.4,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-11-28",
+    "timestamp_ms": 1732838400000,
+    "score": 65,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-12-01",
+    "timestamp_ms": 1733097600000,
+    "score": 65.31428571428572,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-12-02",
+    "timestamp_ms": 1733184000000,
+    "score": 59.57142857142858,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-12-03",
+    "timestamp_ms": 1733270400000,
+    "score": 57.48571428571429,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-12-04",
+    "timestamp_ms": 1733356800000,
+    "score": 54.91428571428572,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-05",
+    "timestamp_ms": 1733443200000,
+    "score": 52.142857142857146,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-08",
+    "timestamp_ms": 1733702400000,
+    "score": 49.25714285714287,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-09",
+    "timestamp_ms": 1733788800000,
+    "score": 46.971428571428575,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-10",
+    "timestamp_ms": 1733875200000,
+    "score": 49.2,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-11",
+    "timestamp_ms": 1733961600000,
+    "score": 47.114285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-12",
+    "timestamp_ms": 1734048000000,
+    "score": 49.114285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-15",
+    "timestamp_ms": 1734307200000,
+    "score": 56.057142857142864,
+    "rating": "greed"
+  },
+  {
+    "date": "2024-12-16",
+    "timestamp_ms": 1734393600000,
+    "score": 51.4,
+    "rating": "neutral"
+  },
+  {
+    "date": "2024-12-17",
+    "timestamp_ms": 1734480000000,
+    "score": 33.12857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-12-18",
+    "timestamp_ms": 1734566400000,
+    "score": 19.514285714285716,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2024-12-19",
+    "timestamp_ms": 1734652800000,
+    "score": 27.600000000000005,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-12-22",
+    "timestamp_ms": 1734912000000,
+    "score": 30.142857142857146,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-12-23",
+    "timestamp_ms": 1734998400000,
+    "score": 34.51428571428571,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-12-25",
+    "timestamp_ms": 1735171200000,
+    "score": 34.17142857142857,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-12-26",
+    "timestamp_ms": 1735257600000,
+    "score": 33.82857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-12-29",
+    "timestamp_ms": 1735516800000,
+    "score": 28.6,
+    "rating": "fear"
+  },
+  {
+    "date": "2024-12-30",
+    "timestamp_ms": 1735603200000,
+    "score": 26.314285714285713,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-01",
+    "timestamp_ms": 1735776000000,
+    "score": 24.314285714285717,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-01-02",
+    "timestamp_ms": 1735862400000,
+    "score": 28.885714285714283,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-05",
+    "timestamp_ms": 1736121600000,
+    "score": 33.77142857142857,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-06",
+    "timestamp_ms": 1736208000000,
+    "score": 34.31428571428572,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-07",
+    "timestamp_ms": 1736294400000,
+    "score": 31.914285714285718,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-09",
+    "timestamp_ms": 1736467200000,
+    "score": 25.62857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-12",
+    "timestamp_ms": 1736726400000,
+    "score": 25.34285714285715,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-13",
+    "timestamp_ms": 1736812800000,
+    "score": 25.142857142857142,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-14",
+    "timestamp_ms": 1736899200000,
+    "score": 27.428571428571427,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-15",
+    "timestamp_ms": 1736985600000,
+    "score": 27.342857142857145,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-16",
+    "timestamp_ms": 1737072000000,
+    "score": 36.02857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-20",
+    "timestamp_ms": 1737417600000,
+    "score": 39.91428571428572,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-21",
+    "timestamp_ms": 1737504000000,
+    "score": 41.62857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-22",
+    "timestamp_ms": 1737590400000,
+    "score": 43.68571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-23",
+    "timestamp_ms": 1737676800000,
+    "score": 45.800000000000004,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-01-26",
+    "timestamp_ms": 1737936000000,
+    "score": 37.971428571428575,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-27",
+    "timestamp_ms": 1738022400000,
+    "score": 40.62857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-28",
+    "timestamp_ms": 1738108800000,
+    "score": 42.4,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-01-29",
+    "timestamp_ms": 1738195200000,
+    "score": 45.91428571428571,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-01-30",
+    "timestamp_ms": 1738281600000,
+    "score": 43.771428571428565,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-02",
+    "timestamp_ms": 1738540800000,
+    "score": 37.4,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-03",
+    "timestamp_ms": 1738627200000,
+    "score": 37.142857142857146,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-04",
+    "timestamp_ms": 1738713600000,
+    "score": 38.62857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-05",
+    "timestamp_ms": 1738800000000,
+    "score": 39.68571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-06",
+    "timestamp_ms": 1738886400000,
+    "score": 38.371428571428574,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-09",
+    "timestamp_ms": 1739145600000,
+    "score": 44.714285714285715,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-10",
+    "timestamp_ms": 1739232000000,
+    "score": 45.4,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-02-11",
+    "timestamp_ms": 1739318400000,
+    "score": 41.371428571428574,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-12",
+    "timestamp_ms": 1739404800000,
+    "score": 46.60000000000001,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-02-13",
+    "timestamp_ms": 1739491200000,
+    "score": 43.68571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-17",
+    "timestamp_ms": 1739836800000,
+    "score": 46.800000000000004,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-02-18",
+    "timestamp_ms": 1739923200000,
+    "score": 47.628571428571426,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-02-19",
+    "timestamp_ms": 1740009600000,
+    "score": 44.228571428571435,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-20",
+    "timestamp_ms": 1740096000000,
+    "score": 36.971428571428575,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-23",
+    "timestamp_ms": 1740355200000,
+    "score": 29.542857142857144,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-02-24",
+    "timestamp_ms": 1740441600000,
+    "score": 24.199999999999996,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-02-25",
+    "timestamp_ms": 1740528000000,
+    "score": 21.25714285714286,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-02-26",
+    "timestamp_ms": 1740614400000,
+    "score": 12.757142857142858,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-02-27",
+    "timestamp_ms": 1740700800000,
+    "score": 20.657142857142855,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-02",
+    "timestamp_ms": 1740960000000,
+    "score": 12.342857142857143,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-03",
+    "timestamp_ms": 1741046400000,
+    "score": 11.042857142857143,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-04",
+    "timestamp_ms": 1741132800000,
+    "score": 11.514285714285714,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-05",
+    "timestamp_ms": 1741219200000,
+    "score": 17.2,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-06",
+    "timestamp_ms": 1741305600000,
+    "score": 17.642857142857146,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-09",
+    "timestamp_ms": 1741564800000,
+    "score": 17.071428571428573,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-10",
+    "timestamp_ms": 1741651200000,
+    "score": 15.114285714285716,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-11",
+    "timestamp_ms": 1741737600000,
+    "score": 15.914285714285715,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-12",
+    "timestamp_ms": 1741824000000,
+    "score": 15.185714285714287,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-13",
+    "timestamp_ms": 1741910400000,
+    "score": 22.057142857142857,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-16",
+    "timestamp_ms": 1742169600000,
+    "score": 22.571428571428573,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-17",
+    "timestamp_ms": 1742256000000,
+    "score": 22.228571428571428,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-18",
+    "timestamp_ms": 1742342400000,
+    "score": 24.4285714285714,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-19",
+    "timestamp_ms": 1742428800000,
+    "score": 24,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-20",
+    "timestamp_ms": 1742515200000,
+    "score": 25.0285714285714,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-03-23",
+    "timestamp_ms": 1742774400000,
+    "score": 29.7714285714286,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-03-24",
+    "timestamp_ms": 1742860800000,
+    "score": 30.4571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-03-25",
+    "timestamp_ms": 1742947200000,
+    "score": 27.8,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-03-26",
+    "timestamp_ms": 1743033600000,
+    "score": 28.5428571428571,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-03-27",
+    "timestamp_ms": 1743120000000,
+    "score": 21.7428571428571,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-30",
+    "timestamp_ms": 1743379200000,
+    "score": 19.2857142857143,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-03-31",
+    "timestamp_ms": 1743465600000,
+    "score": 15.6285714285714,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-01",
+    "timestamp_ms": 1743552000000,
+    "score": 18.6408163265306,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-02",
+    "timestamp_ms": 1743638400000,
+    "score": 6.04346076458752,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-03",
+    "timestamp_ms": 1743724800000,
+    "score": 3.9984126984127,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-06",
+    "timestamp_ms": 1743984000000,
+    "score": 4.5334637964775,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-07",
+    "timestamp_ms": 1744070400000,
+    "score": 3.38610038610039,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-08",
+    "timestamp_ms": 1744156800000,
+    "score": 12.2666666666667,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-09",
+    "timestamp_ms": 1744243200000,
+    "score": 8.30751879699248,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-10",
+    "timestamp_ms": 1744329600000,
+    "score": 19.3643784786642,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-13",
+    "timestamp_ms": 1744588800000,
+    "score": 19.5882783882784,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-14",
+    "timestamp_ms": 1744675200000,
+    "score": 18.2144665461121,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-15",
+    "timestamp_ms": 1744761600000,
+    "score": 14.4428571428571,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-16",
+    "timestamp_ms": 1744848000000,
+    "score": 20.3571428571429,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-17",
+    "timestamp_ms": 1744934400000,
+    "score": 19.4714285714286,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-20",
+    "timestamp_ms": 1745193600000,
+    "score": 21.6447971781305,
+    "rating": "extreme fear"
+  },
+  {
+    "date": "2025-04-21",
+    "timestamp_ms": 1745280000000,
+    "score": 26.2,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-04-22",
+    "timestamp_ms": 1745366400000,
+    "score": 28.4285714285714,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-04-23",
+    "timestamp_ms": 1745452800000,
+    "score": 36.8571428571429,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-04-24",
+    "timestamp_ms": 1745539200000,
+    "score": 35.3714285714286,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-04-27",
+    "timestamp_ms": 1745798400000,
+    "score": 36.3142857142857,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-04-28",
+    "timestamp_ms": 1745884800000,
+    "score": 35.7714285714286,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-04-29",
+    "timestamp_ms": 1745971200000,
+    "score": 42.6857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-04-30",
+    "timestamp_ms": 1746057600000,
+    "score": 41.4857142857143,
+    "rating": "fear"
+  },
+  {
+    "date": "2025-05-01",
+    "timestamp_ms": 1746144000000,
+    "score": 54.4285714285714,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-05-04",
+    "timestamp_ms": 1746403200000,
+    "score": 58.2571428571429,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-05",
+    "timestamp_ms": 1746489600000,
+    "score": 55.0285714285714,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-06",
+    "timestamp_ms": 1746576000000,
+    "score": 59.2285714285714,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-07",
+    "timestamp_ms": 1746662400000,
+    "score": 61.4857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-08",
+    "timestamp_ms": 1746748800000,
+    "score": 62.9714285714286,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-11",
+    "timestamp_ms": 1747008000000,
+    "score": 66.4857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-12",
+    "timestamp_ms": 1747094400000,
+    "score": 69,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-13",
+    "timestamp_ms": 1747180800000,
+    "score": 70.4285714285714,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-14",
+    "timestamp_ms": 1747267200000,
+    "score": 69.1714285714286,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-15",
+    "timestamp_ms": 1747353600000,
+    "score": 70.4,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-18",
+    "timestamp_ms": 1747612800000,
+    "score": 69.4,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-19",
+    "timestamp_ms": 1747699200000,
+    "score": 68.7428571428571,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-20",
+    "timestamp_ms": 1747785600000,
+    "score": 65.6857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-21",
+    "timestamp_ms": 1747872000000,
+    "score": 65.6,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-22",
+    "timestamp_ms": 1747958400000,
+    "score": 63.8857142857143,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-26",
+    "timestamp_ms": 1748304000000,
+    "score": 65.3142857142857,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-27",
+    "timestamp_ms": 1748390400000,
+    "score": 63.8571428571429,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-28",
+    "timestamp_ms": 1748476800000,
+    "score": 62.4,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-05-29",
+    "timestamp_ms": 1748563200000,
+    "score": 61.6,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-06-01",
+    "timestamp_ms": 1748822400000,
+    "score": 54.3142857142857,
+    "rating": "neutral"
+  },
+  {
+    "date": "2025-06-02",
+    "timestamp_ms": 1748908800000,
+    "score": 56.1142857142857,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-06-03",
+    "timestamp_ms": 1748995200000,
+    "score": 59.1142857142857,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-06-04",
+    "timestamp_ms": 1749081600000,
+    "score": 59.3714285714286,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-06-05",
+    "timestamp_ms": 1749168000000,
+    "score": 60.8571428571429,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-06-08",
+    "timestamp_ms": 1749427200000,
+    "score": 62.2,
+    "rating": "greed"
+  },
+  {
+    "date": "2025-06-09",
+    "timestamp_ms": 1749513599000,
+    "score": 62.2,
+    "rating": "greed"
+  }
+]

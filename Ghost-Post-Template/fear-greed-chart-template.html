@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fear and Greed Index</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@2.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.0.1/build/global/luxon.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@1.2.0/dist/chartjs-adapter-luxon.min.js"></script>
+    <style>
+        body {
+            font-family: 'Roboto', 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #ffffff;
+            color: #202124;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        h1 {
+            font-size: 22px;
+            font-weight: 500;
+            color: #202124;
+            margin: 0;
+        }
+        .header-right {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+        }
+        .current-value {
+            font-size: 28px;
+            font-weight: 500;
+            color: #202124;
+        }
+        .current-rating {
+            font-size: 14px;
+            font-weight: 500;
+            padding: 4px 8px;
+            border-radius: 4px;
+            margin-top: 4px;
+        }
+        .last-updated {
+            font-size: 12px;
+            color: #5f6368;
+            margin-top: 8px;
+        }
+        .time-period-selector {
+            display: flex;
+            margin-bottom: 16px;
+            border-bottom: 1px solid #f1f3f4;
+            padding-bottom: 8px;
+        }
+        .time-period-btn {
+            background: none;
+            border: none;
+            padding: 8px 16px;
+            margin-right: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            color: #5f6368;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+        .time-period-btn:hover {
+            background-color: #f1f3f4;
+        }
+        .time-period-btn.active {
+            color: #1a73e8;
+            font-weight: 500;
+            position: relative;
+        }
+        .time-period-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: -9px;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: #1a73e8;
+        }
+        .current-value {
+            font-size: 28px;
+            font-weight: 400;
+            margin-right: 8px;
+        }
+        .current-rating {
+            font-size: 14px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        .header-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .header-right {
+            text-align: right;
+        }
+        .last-updated {
+            font-size: 12px;
+            color: #5f6368;
+        }
+        /* Updated legend styles */
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 10px;
+            padding-top: 8px;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 0 16px 0 0;
+            font-size: 9px;
+            color: #5f6368;
+            white-space: nowrap;
+        }
+        .legend-color {
+            width: 10px;
+            height: 10px;
+            border-radius: 2px;
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header-info">
+            <h1>Fear and Greed Index</h1>
+            <div class="header-right">
+                <div id="currentValueDisplay" class="current-value">--</div>
+                <div id="currentRatingDisplay" class="current-rating">--</div>
+                <div class="last-updated">Last updated: <span id="lastUpdated">Loading...</span></div>
+            </div>
+        </div>
+        
+        <div class="time-period-selector">
+            <button class="time-period-btn" data-period="1W">1W</button>
+            <button class="time-period-btn" data-period="1M">1M</button>
+            <button class="time-period-btn" data-period="3M">3M</button>
+            <button class="time-period-btn" data-period="YTD">YTD</button>
+            <button class="time-period-btn active" data-period="1Y">1Y</button>
+            <button class="time-period-btn" data-period="3Y">3Y</button>
+            <button class="time-period-btn" data-period="ALL">ALL</button>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="fearGreedChart"></canvas>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: rgba(231, 76, 60, 0.2);"></div>
+                <span>Extreme Fear (0-25)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: rgba(243, 156, 18, 0.2);"></div>
+                <span>Fear (25-45)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: rgba(52, 152, 219, 0.2);"></div>
+                <span>Neutral (45-55)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: rgba(46, 204, 113, 0.2);"></div>
+                <span>Greed (55-75)</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background-color: rgba(39, 174, 96, 0.2);"></div>
+                <span>Extreme Greed (75-100)</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allData = [];
+        let chart = null;
+        let currentPeriod = '1Y';
+        
+        // Function to load data from the CSV file
+        async function loadData() {
+            try {
+                // Use relative path to load the CSV file
+                const response = await fetch('historical_data.csv');
+                const csvText = await response.text();
+                
+                // Parse CSV
+                const rows = csvText.trim().split('\n');
+                const headers = rows[0].split(',');
+                
+                const data = rows.slice(1).map(row => {
+                    const values = row.split(',');
+                    return {
+                        timestamp: parseInt(values[0]),
+                        score: parseFloat(values[1]),
+                        rating: values[2]
+                    };
+                });
+                
+                // Sort data by timestamp ascending
+                return data.sort((a, b) => a.timestamp - b.timestamp);
+            } catch (error) {
+                console.error('Error loading data:', error);
+                return [];
+            }
+        }
+
+        // Function to filter data based on selected time period
+        function filterDataByPeriod(data, period) {
+            if (!data || data.length === 0) return [];
+            
+            const now = new Date();
+            let filterDate = new Date();
+            
+            switch(period) {
+                case '1W': // 1 week
+                    filterDate.setDate(now.getDate() - 7);
+                    break;
+                case '1M': // 1 month
+                    filterDate.setMonth(now.getMonth() - 1);
+                    break;
+                case '3M': // 3 months
+                    filterDate.setMonth(now.getMonth() - 3);
+                    break;
+                case 'YTD': // Year to date
+                    filterDate = new Date(now.getFullYear(), 0, 1); // January 1st of current year
+                    break;
+                case '1Y': // 1 year
+                    filterDate.setFullYear(now.getFullYear() - 1);
+                    break;
+                case '3Y': // 3 years
+                    filterDate.setFullYear(now.getFullYear() - 3);
+                    break;
+                case 'ALL': // All data
+                    return data;
+                default: // Default to 1 year
+                    filterDate.setFullYear(now.getFullYear() - 1);
+            }
+            
+            return data.filter(item => item.timestamp >= filterDate.getTime());
+        }
+
+        // Function to get background color based on the score
+        function getBackgroundColor(score) {
+            if (score <= 25) return '#E74C3C'; // Extreme Fear
+            if (score <= 45) return '#F39C12'; // Fear
+            if (score <= 55) return '#3498DB'; // Neutral
+            if (score <= 75) return '#2ECC71'; // Greed
+            return '#27AE60'; // Extreme Greed
+        }
+
+        // Function to get rating background color
+        function getRatingBackgroundColor(rating) {
+            switch(rating.toLowerCase()) {
+                case 'extreme fear': return 'rgba(231, 76, 60, 0.2)';
+                case 'fear': return 'rgba(243, 156, 18, 0.2)';
+                case 'neutral': return 'rgba(52, 152, 219, 0.2)';
+                case 'greed': return 'rgba(46, 204, 113, 0.2)';
+                case 'extreme greed': return 'rgba(39, 174, 96, 0.2)';
+                default: return 'rgba(189, 195, 199, 0.2)';
+            }
+        }
+
+        // Function to get rating text color
+        function getRatingTextColor(rating) {
+            switch(rating.toLowerCase()) {
+                case 'extreme fear': return '#c0392b';
+                case 'fear': return '#d35400';
+                case 'neutral': return '#2980b9';
+                case 'greed': return '#27ae60';
+                case 'extreme greed': return '#1e8449';
+                default: return '#7f8c8d';
+            }
+        }
+
+        // Function to format date
+        function formatDate(timestamp) {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('en-US', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric' 
+            });
+        }
+        
+        // Function to update the time period buttons
+        function updateTimePeriodButtons(period) {
+            document.querySelectorAll('.time-period-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.period === period) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // Function to update chart with new data
+        function updateChart(period) {
+            if (!allData || allData.length === 0) return;
+            
+            // Update active button
+            updateTimePeriodButtons(period);
+            currentPeriod = period;
+            
+            // Filter data based on selected period
+            const filteredData = filterDataByPeriod(allData, period);
+            
+            if (filteredData.length === 0) {
+                document.getElementById('fearGreedChart').innerHTML = 'No data available for the selected period';
+                return;
+            }
+            
+            // Update the last updated info and current value
+            const lastItem = filteredData[filteredData.length - 1];
+            document.getElementById('lastUpdated').textContent = formatDate(lastItem.timestamp);
+            
+            // Update current value and rating display
+            const currentValueDisplay = document.getElementById('currentValueDisplay');
+            const currentRatingDisplay = document.getElementById('currentRatingDisplay');
+            
+            currentValueDisplay.textContent = lastItem.score.toFixed(1);
+            currentRatingDisplay.textContent = lastItem.rating;
+            currentRatingDisplay.style.backgroundColor = getRatingBackgroundColor(lastItem.rating);
+            currentRatingDisplay.style.color = getRatingTextColor(lastItem.rating);
+            
+            // If chart already exists, update it
+            if (chart) {
+                chart.data.labels = filteredData.map(item => new Date(item.timestamp));
+                chart.data.datasets[0].data = filteredData.map(item => ({
+                    x: new Date(item.timestamp),
+                    y: item.score
+                }));
+                chart.data.datasets[0].pointBackgroundColor = filteredData.map(item => 
+                    getBackgroundColor(item.score));
+                
+                // Update x-axis time unit based on period
+                let timeUnit = 'month';
+                if (period === '1W') timeUnit = 'day';
+                else if (period === '1M') timeUnit = 'week';
+                
+                chart.options.scales.x.time.unit = timeUnit;
+                chart.update();
+            } else {
+                createChart(filteredData, period);
+            }
+        }
+
+        // Function to create the chart
+        function createChart(data, period) {
+            // Prepare data for Chart.js
+            const chartData = {
+                labels: data.map(item => new Date(item.timestamp)),
+                datasets: [{
+                    label: 'Fear and Greed Index',
+                    data: data.map(item => ({
+                        x: new Date(item.timestamp),
+                        y: item.score
+                    })),
+                    borderColor: '#1a73e8',
+                    borderWidth: 2,
+                    pointBackgroundColor: data.map(item => getBackgroundColor(item.score)),
+                    pointRadius: 0,
+                    pointHoverRadius: 4,
+                    fill: false,
+                    tension: 0.1
+                }]
+            };
+            
+            // Determine time unit based on period
+            let timeUnit = 'month';
+            if (period === '1W') timeUnit = 'day';
+            else if (period === '1M') timeUnit = 'week';
+            
+            // Create the chart
+            const ctx = document.getElementById('fearGreedChart').getContext('2d');
+            chart = new Chart(ctx, {
+                type: 'line',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false
+                    },
+                    scales: {
+                        x: {
+                            type: 'time',
+                            time: {
+                                unit: timeUnit,
+                                displayFormats: {
+                                    day: 'MMM d',
+                                    week: 'MMM d',
+                                    month: 'MMM yyyy'
+                                }
+                            },
+                            grid: {
+                                display: false
+                            },
+                            ticks: {
+                                maxRotation: 0,
+                                autoSkip: true,
+                                color: '#5f6368'
+                            },
+                            border: {
+                                display: false
+                            }
+                        },
+                        y: {
+                            min: 0,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)',
+                                drawBorder: false,
+                                lineWidth: 1
+                            },
+                            ticks: {
+                                color: '#5f6368',
+                                padding: 8,
+                                callback: function(value) {
+                                    if (value === 0 || value === 25 || value === 50 || 
+                                        value === 75 || value === 100) {
+                                        return value;
+                                    }
+                                    return '';
+                                }
+                            },
+                            border: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                            titleColor: '#202124',
+                            bodyColor: '#5f6368',
+                            borderColor: 'rgba(0, 0, 0, 0.1)',
+                            borderWidth: 1,
+                            padding: 12,
+                            cornerRadius: 4,
+                            callbacks: {
+                                title: function(tooltipItems) {
+                                    return formatDate(tooltipItems[0].raw.x);
+                                },
+                                label: function(context) {
+                                    // Access the score directly from the context
+                                    const score = context.raw.y;
+                                    // Find the corresponding data item to get the rating
+                                    const dataItem = data.find(item => {
+                                        return new Date(item.timestamp).getTime() === context.raw.x.getTime();
+                                    });
+                                    const rating = dataItem ? dataItem.rating : '';
+                                    return `Score: ${score.toFixed(1)} (${rating})`;
+                                }
+                            }
+                        },
+                        legend: {
+                            display: false
+                        },
+                        annotation: {
+                            annotations: {
+                                extremeFearZone: {
+                                    type: 'box',
+                                    yMin: 0,
+                                    yMax: 25,
+                                    backgroundColor: 'rgba(231, 76, 60, 0.1)',
+                                    borderColor: 'transparent',
+                                    drawTime: 'beforeDatasetsDraw'
+                                },
+                                fearZone: {
+                                    type: 'box',
+                                    yMin: 25,
+                                    yMax: 45,
+                                    backgroundColor: 'rgba(243, 156, 18, 0.1)',
+                                    borderColor: 'transparent',
+                                    drawTime: 'beforeDatasetsDraw'
+                                },
+                                neutralZone: {
+                                    type: 'box',
+                                    yMin: 45,
+                                    yMax: 55,
+                                    backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                                    borderColor: 'transparent',
+                                    drawTime: 'beforeDatasetsDraw'
+                                },
+                                greedZone: {
+                                    type: 'box',
+                                    yMin: 55,
+                                    yMax: 75,
+                                    backgroundColor: 'rgba(46, 204, 113, 0.1)',
+                                    borderColor: 'transparent',
+                                    drawTime: 'beforeDatasetsDraw'
+                                },
+                                extremeGreedZone: {
+                                    type: 'box',
+                                    yMin: 75,
+                                    yMax: 100,
+                                    backgroundColor: 'rgba(39, 174, 96, 0.1)',
+                                    borderColor: 'transparent',
+                                    drawTime: 'beforeDatasetsDraw'
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Initialize the chart when the page loads
+        async function initializeApp() {
+            // Load all data
+            allData = await loadData();
+            
+            if (!allData || allData.length === 0) {
+                console.error('No data available');
+                return;
+            }
+            
+            // Set up time period button event listeners
+            document.querySelectorAll('.time-period-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const period = btn.dataset.period;
+                    updateChart(period);
+                });
+            });
+            
+            // Initialize with 1Y period (default)
+            updateChart('1Y');
+        }
+        
+        // Start the app when the page loads
+        window.addEventListener('load', initializeApp);
+    </script>
+</body>
+</html>
