@@ -240,7 +240,7 @@ function retrieveGeopoliticalRisksEnhanced() {
       const options = {
         method: 'get',
         muteHttpExceptions: true,
-        timeout: 60000, // 60 seconds timeout
+        timeout: 300000, // 300 seconds (5 minutes) timeout
         headers: {
           'x-api-key': gcfApiKey
         }
@@ -1849,7 +1849,7 @@ function clearGeopoliticalRisksCache() {
 function saveToGoogleDrive(fileName, content) {
   try {
     // Check if the output folder exists, create it if not
-    const folderName = 'Lambda API Responses';
+    const folderName = 'Market Pulse Daily';
     let folder;
     
     // Try to find the folder
