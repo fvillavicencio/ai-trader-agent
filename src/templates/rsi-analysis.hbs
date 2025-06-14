@@ -1,0 +1,36 @@
+<div class="market-pulse-section rsi-container" style="width: 100%; margin: 5px 0 15px 0;">
+  <div style="background-color: white; border-radius: 8px; padding: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <div style="font-size: 1.1rem; color: #4a5568;">
+        <span style="font-weight: bold;">S&P 500 Path of Least Resistance</span> 
+        <span style="font-size: 0.95rem;">(14-day Relative Strength Index)</span>
+      </div>
+      <!-- RSI Value Display -->
+      <div style="display: flex; align-items: center;">
+        <div style="font-size: 1.8rem; font-weight: bold; color: #2d3748; margin-right: 10px;">{{rsi.value}}</div>
+        <div style="padding: 4px 12px; border-radius: 12px; font-weight: 600; font-size: 0.9rem; white-space: nowrap; background-color: {{#ifCond rsi.trend '===' 'Uptrend'}}#7c3aed{{else}}{{#ifCond rsi.trend '===' 'Downtrend'}}#e53e3e{{else}}#718096{{/ifCond}}{{/ifCond}}; color: white;">
+          {{rsi.trend}}
+        </div>
+      </div>
+    </div>
+    
+    <!-- RSI Slider with smooth red-gray-green gradient -->
+    <div style="position: relative; height: 8px; background: linear-gradient(90deg, #c53030 0%, #d33e2c 15%, #e14d28 30%, #b8c2cc 50%, #a3c65d 70%, #6fcf97 85%, #2f855a 100%); border-radius: 5px; margin-bottom: 5px; overflow: visible;">
+      <div style="position: absolute; top: 50%; left: {{rsi.gaugePercent}}%; transform: translate(-50%, -50%); width: 12px; height: 12px; background-color: #fff; border: 2px solid #333; border-radius: 50%;"></div>
+    </div>
+    
+    <div style="display: flex; justify-content: space-between; font-size: 12px; color: #718096; margin-bottom: 15px;">
+      <div>Oversold</div>
+      <div>Neutral</div>
+      <div>Overbought</div>
+    </div>
+    
+    <div style="font-size: 0.8rem; color: #4a5568; margin-bottom: 15px; line-height: 1.5;">
+      Developed by J. Welles Wilder Jr. in 1978, the <a href="https://www.investopedia.com/terms/r/rsi.asp?ref=market-pulse-daily.ghost.io" target="_blank" style="color: #3182ce; text-decoration: none;">Relative Strength Index (RSI)</a> is a 0-100 momentum oscillator: readings &gt; 70 signal overbought, &lt; 30 oversold, and 30-70 neutral (with 50 marking "no trend"). Values above 50 imply bullish momentum; below 50, bearish momentum.
+    </div>
+    
+    <div style="font-size: 0.8rem; color: #718096; text-align: right; margin-top: 10px;">
+      Source: <a href="{{rsi.sourceUrl}}" target="_blank" style="color: #3182ce; text-decoration: none;">{{rsi.source}}</a> as of {{rsi.asOf}}
+    </div>
+  </div>
+</div>
